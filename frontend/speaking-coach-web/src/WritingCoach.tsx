@@ -1,18 +1,20 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-// Lokalda .env fayl bo'lmasa, localhost:5000'ga tushadi.
-// Vercel'ga deploy qilinganda VITE_API_URL environment variable orqali
-// haqiqiy backend manziliga (masalan Railway URL'iga) yo'naltiriladi.
+// Recorder.tsx bilan bir xil manzil — backend bitta, faqat yo'l (path) farq
+// qiladi (/api/writing/... vs /api/speaking/...).
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-const API_URL = `${API_BASE}/api/speaking/submit`;
+const API_URL = `${API_BASE}/api/writing/submit`;
 
 const TOPICS = [
-  'Describe your favorite city and why you like it.',
-  'Talk about a skill you would like to learn.',
-  'Describe a memorable trip you took.',
+  'Do you think social media has a positive or negative effect on society? Explain your view.',
+  'Describe a piece of technology that has changed your daily life.',
+  'Should university education be free for everyone? Give your opinion with reasons.',
 ];
 
-type Status = 'idle' | 'recording' | 'uploading' | 'done' | 'error';
+const MIN_CHARS = 20;
+const MAX_CHARS = 5000;
+
+type Status = 'idle' | 'uploading' | 'done' | 'error';
 
 interface ScoreWithReasoning {
   score: number;
@@ -25,9 +27,12 @@ interface CorrectionItem {
   explanation: string;
 }
 
-interface EvaluationResult {
-  transcript: string;
-  fluency: ScoreWithReasoning;
+// Speaking'dan farqli rubrika: Fluency o'rniga Task Achievement va
+// Coherence & Cohesion — bular yozma matn uchun mazmunliroq mezonlar
+// (backend'dagi WritingEvaluationResult bilan bir xil shakl).
+interface WritingEvaluationResult {
+  taskAchievement: ScoreWithReasoning;
+  coherenceCohesion: ScoreWithReasoning;
   grammar: ScoreWithReasoning;
   vocabulary: ScoreWithReasoning;
   topCorrections: CorrectionItem[];
@@ -37,12 +42,9 @@ interface EvaluationResult {
 
 interface SubmitResponse {
   submissionId: string;
-  evaluation: EvaluationResult;
+  evaluation: WritingEvaluationResult;
 }
 
-// Backend /api/speaking/history'dan shu ko'rinishda qaytadi — PromptData va
-// ResponseData bazada jsonb (matn) sifatida saqlangani uchun, bu yerda ham
-// oddiy string bo'lib keladi va JSON.parse bilan ochiladi.
 interface HistoryItem {
   id: string;
   createdAtUtc: string;
@@ -50,14 +52,13 @@ interface HistoryItem {
   responseData: string;
 }
 
-export function Recorder() {
+export function WritingCoach() {
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
   const [topic] = useState(TOPICS[0]);
+  const [text, setText] = useState('');
   const [result, setResult] = useState<SubmitResponse | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
 
   useEffect(() => {
     loadHistory();
@@ -65,56 +66,32 @@ export function Recorder() {
 
   async function loadHistory() {
     try {
-      const response = await fetch(`${API_BASE}/api/speaking/history`);
+      const response = await fetch(`${API_BASE}/api/writing/history`);
       if (!response.ok) return; // tarix ixtiyoriy — o'chib qolsa ham asosiy funksiya ishlayveradi
       const data: HistoryItem[] = await response.json();
       setHistory(data);
     } catch {
-      // Tarmoq xatosi bo'lsa ham jim o'tkazamiz — bu asosiy yozib-baholash
-      // oqimini to'xtatishga arzimaydi.
+      // Tarmoq xatosi bo'lsa ham jim o'tkazamiz.
     }
   }
 
-  async function startRecording() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      chunksRef.current = [];
-
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) chunksRef.current.push(event.data);
-      };
-
-      recorder.onstop = async () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-        stream.getTracks().forEach((track) => track.stop());
-        await uploadAudio(blob);
-      };
-
-      recorder.start();
-      mediaRecorderRef.current = recorder;
-      setStatus('recording');
-      setMessage('Yozilmoqda...');
-      setResult(null);
-    } catch {
+  async function submitEssay() {
+    if (text.trim().length < MIN_CHARS) {
       setStatus('error');
-      setMessage('Mikrofonga ruxsat berilmadi yoki xato yuz berdi');
+      setMessage(`Matn juda qisqa (kamida ${MIN_CHARS} belgi kerak)`);
+      return;
     }
-  }
 
-  function stopRecording() {
-    mediaRecorderRef.current?.stop();
     setStatus('uploading');
-    setMessage('Yuklanmoqda va baholanmoqda... (bu 5-15 soniya davom etishi mumkin)');
-  }
-
-  async function uploadAudio(blob: Blob) {
-    const formData = new FormData();
-    formData.append('audio', blob, 'recording.webm');
-    formData.append('topic', topic);
+    setMessage('Yuborilmoqda va baholanmoqda... (bu 5-15 soniya davom etishi mumkin)');
+    setResult(null);
 
     try {
-      const response = await fetch(API_URL, { method: 'POST', body: formData });
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, text }),
+      });
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => ({}));
@@ -128,31 +105,53 @@ export function Recorder() {
       loadHistory(); // yangi urinish ro'yxatga qo'shilishi uchun tarixni qayta yuklaymiz
     } catch (err) {
       setStatus('error');
-      setMessage(err instanceof Error ? err.message : "Yuklab bo'lmadi");
+      setMessage(err instanceof Error ? err.message : "Yuborib bo'lmadi");
     }
   }
 
-  const isRecording = status === 'recording';
   const isBusy = status === 'uploading';
+  const charsLeft = MAX_CHARS - text.length;
 
   return (
     <div style={{ marginTop: '1.5rem' }}>
       <p style={{ fontStyle: 'italic', marginBottom: '1rem' }}>Mavzu: {topic}</p>
 
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        disabled={isBusy}
+        maxLength={MAX_CHARS}
+        rows={8}
+        placeholder="Shu mavzuda inglizcha insho yozing..."
+        style={{
+          width: '100%',
+          padding: '0.75rem',
+          fontSize: '1rem',
+          fontFamily: 'inherit',
+          border: '1px solid #d1d5db',
+          borderRadius: '0.5rem',
+          boxSizing: 'border-box',
+          resize: 'vertical',
+        }}
+      />
+      <p style={{ fontSize: '0.8rem', color: charsLeft < 0 ? '#dc2626' : '#6b7280', marginTop: '0.25rem' }}>
+        {text.length}/{MAX_CHARS} belgi
+      </p>
+
       <button
-        onClick={isRecording ? stopRecording : startRecording}
+        onClick={submitEssay}
         disabled={isBusy}
         style={{
           padding: '0.75rem 1.5rem',
           fontSize: '1rem',
-          backgroundColor: isRecording ? '#dc2626' : '#2563eb',
+          backgroundColor: '#2563eb',
           color: 'white',
           border: 'none',
           borderRadius: '0.5rem',
           cursor: isBusy ? 'not-allowed' : 'pointer',
         }}
       >
-        {isRecording ? "⏹ To'xtatish" : '🎙 Yozishni boshlash'}
+        ✍️ Yuborish
       </button>
 
       <p style={{ marginTop: '1rem', color: status === 'error' ? '#dc2626' : '#374151' }}>
@@ -161,11 +160,9 @@ export function Recorder() {
 
       {result && (
         <div style={{ marginTop: '1.5rem', padding: '1rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem' }}>
-          <h3>Transkript</h3>
-          <p style={{ color: '#4b5563' }}>{result.evaluation.transcript}</p>
-
           <h3>Baholash</h3>
-          <ScoreRow label="Ravonlik (Fluency)" data={result.evaluation.fluency} />
+          <ScoreRow label="Vazifani bajarish (Task Achievement)" data={result.evaluation.taskAchievement} />
+          <ScoreRow label="Mantiqiy bog'lanish (Coherence & Cohesion)" data={result.evaluation.coherenceCohesion} />
           <ScoreRow label="Grammatika" data={result.evaluation.grammar} />
           <ScoreRow label="Lug'at boyligi" data={result.evaluation.vocabulary} />
 
@@ -219,13 +216,11 @@ function ScoreRow({ label, data }: { label: string; data: ScoreWithReasoning }) 
 
 function HistoryRow({ item }: { item: HistoryItem }) {
   // promptData/responseData bazada jsonb (matn) sifatida saqlangan —
-  // shuning uchun bu yerda JSON.parse bilan ochamiz. Agar format kutilganidan
-  // farq qilsa (masalan kelajakda Writing turi qo'shilsa, shakli boshqacha
-  // bo'lishi mumkin), try/catch bilan xato butun ro'yxatni buzmasligini
-  // ta'minlaymiz.
+  // shuning uchun bu yerda JSON.parse bilan ochamiz. Bitta yaroqsiz yozuv
+  // butun ro'yxatni buzmasin deb try/catch bilan o'raymiz.
   try {
-    const prompt = JSON.parse(item.promptData) as { topic: string };
-    const response = JSON.parse(item.responseData) as EvaluationResult;
+    const prompt = JSON.parse(item.promptData) as { topic: string; text: string };
+    const response = JSON.parse(item.responseData) as WritingEvaluationResult;
     const date = new Date(item.createdAtUtc).toLocaleString();
 
     return (
@@ -233,8 +228,8 @@ function HistoryRow({ item }: { item: HistoryItem }) {
         <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>{date}</div>
         <div style={{ fontStyle: 'italic' }}>{prompt.topic}</div>
         <div style={{ fontSize: '0.9rem' }}>
-          Ravonlik: {response.fluency.score} · Grammatika: {response.grammar.score} · Lug'at:{' '}
-          {response.vocabulary.score}
+          Vazifa: {response.taskAchievement.score} · Bog'lanish: {response.coherenceCohesion.score} · Grammatika:{' '}
+          {response.grammar.score} · Lug'at: {response.vocabulary.score}
         </div>
       </li>
     );

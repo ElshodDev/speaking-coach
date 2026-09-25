@@ -8,6 +8,10 @@
     <UserSecretsId>speaking-coach-api-secrets</UserSecretsId>
   </PropertyGroup>
 
+  <!-- Gemini uchun hali ham oddiy HttpClient ishlatiladi (tashqi paket
+       kerak emas). Quyidagi ikkita paket esa ma'lumotlar bazasi (Postgres)
+       bilan ishlash uchun — bular EF Core'ning "stable" (preview emas)
+       versiyalari, .NET 10 bilan mos. -->
   <ItemGroup>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.4">

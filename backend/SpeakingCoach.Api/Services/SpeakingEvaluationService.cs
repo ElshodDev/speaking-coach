@@ -3,19 +3,9 @@ using System.Text.Json.Serialization;
 
 namespace SpeakingCoach.Api.Services;
 
-// Bu record'lar Gemini'dan qaytadigan JSON'ga aynan mos keladi.
+// Bu record Gemini'dan qaytadigan JSON'ga aynan mos keladi.
 // Property nomini o'zgartirsangiz, PromptTemplate'dagi OUTPUT FORMAT
 // qismini ham yangilang — ikkalasi sinxron turishi kerak.
-
-public record ScoreWithReasoning(
-    [property: JsonPropertyName("score")] int Score,
-    [property: JsonPropertyName("reasoning")] string Reasoning);
-
-public record CorrectionItem(
-    [property: JsonPropertyName("original")] string Original,
-    [property: JsonPropertyName("corrected")] string Corrected,
-    [property: JsonPropertyName("explanation")] string Explanation);
-
 public record SpeakingEvaluationResult(
     [property: JsonPropertyName("transcript")] string Transcript,
     [property: JsonPropertyName("fluency")] ScoreWithReasoning Fluency,
@@ -37,33 +27,16 @@ public interface ISpeakingEvaluationService
 /// transkripsiya va baholash bitta so'rovda amalga oshadi.
 /// Google AI Studio (aistudio.google.com/apikey) bepul API kalit beradi,
 /// kredit karta talab qilmaydi — shuning uchun bu yerda tanlangan.
+///
+/// So'rovni Gemini'ga yuborish (model fallback + retry) endi GeminiClient
+/// ichida — bu klass faqat PROMPT MATNI va NATIJANI O'QISH bilan shug'ullanadi
+/// (Writing bilan solishtiring: WritingEvaluationService.cs xuddi shu
+/// GeminiClient'ni ishlatadi, faqat boshqa prompt va boshqa natija shakli
+/// bilan).
 /// </summary>
 public class GeminiSpeakingService : ISpeakingEvaluationService
 {
-    private readonly HttpClient _http;
-    private readonly string _apiKey;
-
-    // Model nomi vaqt o'tishi bilan yangilanishi mumkin — agar 404 yoki
-    // "model not found" xatosi chiqsa, https://ai.google.dev/gemini-api/docs/models
-    // sahifasidan joriy bepul tier model nomini tekshiring. (gemini-2.0-flash
-    // 2026 yil davomida to'xtatilgan, gemini-3.6-flash'ga almashtirildi —
-    // buni Gemini API'ning o'z xato xabaridan bilib oldik.)
-    private const string Model = "gemini-3.6-flash";
-
-    // Eng yangi/kuchli flash model (yuqoridagi Model) talab yuqori bo'lganda
-    // 503 "high demand" qaytarishi ma'lum muammo — hatto pullik tarifda ham
-    // xabar berilgan. Shuning uchun u band bo'lsa, yengilroq va odatda
-    // ko'proq bo'sh sig'imga ega FallbackModel'ga avtomatik o'tamiz
-    // (natija sifati bir oz farq qilishi mumkin, lekin funksiya ishlab turadi).
-    private const string FallbackModel = "gemini-3.5-flash-lite";
-    private static readonly string[] ModelsInPriorityOrder = { Model, FallbackModel };
-
-    // Har bir model uchun faqat 1 marta qayta urinamiz (2s kutib), keyin
-    // darhol keyingi modelga o'tamiz — chunki 503 javobining o'zi ham
-    // 6-24 soniya davom etishi mumkin (yuqoridagi log'da ko'ringandek),
-    // shuning uchun bitta modelda uzoq "tiqilib qolish" o'rniga tezroq
-    // zaxira modelga o'tish umumiy kutish vaqtini qisqartiradi.
-    private static readonly int[] RetryDelaysMs = { 2000 };
+    private readonly GeminiClient _geminiClient;
 
     private const string PromptTemplate = """
         You are an English speaking coach for Uzbek-speaking learners (B1-B2 level).
@@ -96,13 +69,9 @@ public class GeminiSpeakingService : ISpeakingEvaluationService
         }}
         """;
 
-    public GeminiSpeakingService(IConfiguration config, IHttpClientFactory httpClientFactory)
+    public GeminiSpeakingService(GeminiClient geminiClient)
     {
-        _apiKey = config["Gemini:ApiKey"]
-            ?? throw new InvalidOperationException(
-                "Gemini:ApiKey sozlanmagan. Lokalda: dotnet user-secrets set \"Gemini:ApiKey\" \"...\". " +
-                "Railway/Render'da: Gemini__ApiKey environment variable (qo'sh pastki chiziq).");
-        _http = httpClientFactory.CreateClient();
+        _geminiClient = geminiClient;
     }
 
     public async Task<SpeakingEvaluationResult> EvaluateAsync(
@@ -134,70 +103,11 @@ public class GeminiSpeakingService : ISpeakingEvaluationService
             }
         };
 
-        var response = await SendToGeminiWithFallbackAsync(requestBody, ct);
-
-        using var doc = JsonDocument.Parse(await response.Content.ReadAsStreamAsync(ct));
-        var text = doc.RootElement
-            .GetProperty("candidates")[0]
-            .GetProperty("content")
-            .GetProperty("parts")[0]
-            .GetProperty("text")
-            .GetString()
-            ?? throw new InvalidOperationException("Gemini bo'sh javob qaytardi");
+        var response = await _geminiClient.SendWithFallbackAsync(requestBody, ct);
+        var text = await GeminiClient.ExtractTextAsync(response, ct);
 
         return JsonSerializer.Deserialize<SpeakingEvaluationResult>(
             text, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
             ?? throw new InvalidOperationException($"Gemini javobini o'qib bo'lmadi: {text}");
-    }
-
-    /// <summary>
-    /// Har bir model uchun: birinchi urinish + RetryDelaysMs.Length ta qayta
-    /// urinish (orada kutib). Faqat 503 (ServiceUnavailable) va 429
-    /// (TooManyRequests) qayta urinishga arziydi — boshqa xatolar (masalan
-    /// 400 — noto'g'ri so'rov, 401/403 — noto'g'ri API kalit) qayta
-    /// urinsangiz ham o'zgarmaydi, shuning uchun darhol otiladi.
-    /// Model retrylari tugab, hali ham band bo'lsa — ModelsInPriorityOrder
-    /// dagi keyingi (yengilroq) modelga o'tamiz.
-    /// </summary>
-    private async Task<HttpResponseMessage> SendToGeminiWithFallbackAsync(object requestBody, CancellationToken ct)
-    {
-        string? lastErrorBody = null;
-        System.Net.HttpStatusCode? lastStatus = null;
-
-        foreach (var model in ModelsInPriorityOrder)
-        {
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={_apiKey}";
-
-            for (var attempt = 0; attempt <= RetryDelaysMs.Length; attempt++)
-            {
-                var response = await _http.PostAsJsonAsync(url, requestBody, ct);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    return response;
-                }
-
-                lastErrorBody = await response.Content.ReadAsStringAsync(ct);
-                lastStatus = response.StatusCode;
-                var isRetryable = response.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable
-                    || response.StatusCode == System.Net.HttpStatusCode.TooManyRequests;
-
-                if (!isRetryable)
-                {
-                    throw new InvalidOperationException($"Gemini API xatosi ({response.StatusCode}): {lastErrorBody}");
-                }
-
-                if (attempt < RetryDelaysMs.Length)
-                {
-                    await Task.Delay(RetryDelaysMs[attempt], ct);
-                }
-            }
-            // Shu model uchun barcha urinishlar tugadi (baribir 503/429) —
-            // tashqi foreach ModelsInPriorityOrder'dagi keyingi modelga o'tadi.
-        }
-
-        throw new InvalidOperationException(
-            $"Barcha modellar band ({lastStatus}), {ModelsInPriorityOrder.Length} ta model, "
-            + $"har biri {RetryDelaysMs.Length + 1} marta sinaldi. Oxirgi xato: {lastErrorBody}");
     }
 }
