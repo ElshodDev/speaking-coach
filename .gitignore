@@ -12,3 +12,4 @@ frontend/**/.env.local
 .vs/
 .vscode/
 *.user
+frontend/**/*.tsbuildinfo
