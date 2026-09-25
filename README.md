@@ -150,14 +150,39 @@ jadvalidan, faqat `Type` ustuni bo'yicha ajratilib o'qiladi.
   Render'ning fayl tizimi "ephemeral" (server qayta ishga tushganda
   o'chadi). Faqat baholash natijasi (matn, ball) bazada doimiy saqlanadi.
 
+## LLM baholash barqarorligi
+
+Muammo: LLM hakam sifatida 100% deterministik emas — `temperature=0.2`
+bo'lsa ham, bitta va aynan bir xil insho yoki audio ikki marta
+yuborilsa, ballar farq qilishi mumkin. Agar farq katta bo'lsa,
+foydalanuvchi "grammatikam 65 dan 80 ga ko'tarildi" deb o'ylashi mumkin,
+aslida esa hech narsa o'zgarmagan — shunchaki model tasodifiyligi.
+
+Yechim: har bir natija ostida **"Barqarorlikni tekshirish (5x)"** tugmasi
+bor. U aynan o'sha kirishni (audio brauzer xotirasida saqlanadi, matn —
+oxirgi yuborilgan versiya) Gemini'ga yana 5 marta **ketma-ket** yuboradi
+va har bir mezon bo'yicha ballar, o'rtacha, min–max farqi va baho
+(≤5 barqaror, 6–15 o'rtacha, >15 beqaror) jadvalini ko'rsatadi.
+
+Texnik tafsilotlar:
+- Test so'rovlari `?save=false` bilan yuboriladi — backend baholaydi,
+  lekin bazaga yozmaydi. Aks holda "Oldingi urinishlar" 5 ta bir xil
+  yozuv bilan to'lib ketardi.
+- Ketma-ket, parallel emas: parallel 5 ta so'rov Gemini bepul tier'ining
+  daqiqalik limitiga (429) darhol urilardi.
+- Bitta urinish xato bersa, qolganlari davom etadi; statistika faqat
+  muvaffaqiyatlilar bo'yicha hisoblanadi.
+- Kod: `frontend/.../src/Stability.tsx` (umumiy hisob-kitob va jadval),
+  `Recorder.tsx` va `WritingCoach.tsx` uni ishlatadi.
+
 ## Keyingi texnik qadamlar
 
 1. ✅ ~~PostgreSQL + EF Core~~ — bajarildi
 2. ✅ ~~Deploy (Vercel + Render + Neon)~~ — bajarildi
 3. ✅ ~~Writing oqimi~~ — bajarildi (Gemini so'rov qismi `GeminiClient`ga
    chiqarildi, Speaking va Writing endi shu bitta klassni ishlatadi)
-4. Bir xil audio/matnni bir necha marta yuborib, ball qanchalik
-   tarqalishini o'lchash (LLM baholash barqarorligi)
+4. ✅ ~~LLM baholash barqarorligini o'lchash~~ — bajarildi (pastdagi
+   bo'limga qarang)
 5. Reading / Listening turlari — `ActivityType` enum'ida joy tayyor, lekin
    hali endpoint/UI yo'q
 6. Foydalanuvchi hisoblari (login) — hozir "Oldingi urinishlar" hammaga
@@ -176,6 +201,9 @@ jadvalidan, faqat `Type` ustuni bo'yicha ajratilib o'qiladi.
   nega bir xil narsa, lekin yozilishi farq qiladi?
 - Writing qo'shilganda nega yangi EF Core migratsiya (`dotnet ef
   migrations add ...`) kerak bo'lmadi?
+- Barqarorlik testida nega `?save=false` kerak, va nega so'rovlar
+  parallel emas, ketma-ket yuboriladi? Farq 20 ball chiqsa, bu mahsulot
+  uchun nimani anglatadi?
 
 Javob berolmasangiz — tegishli fayllarni (`Program.cs`,
 `Services/GeminiClient.cs`, `Services/WritingEvaluationService.cs`,

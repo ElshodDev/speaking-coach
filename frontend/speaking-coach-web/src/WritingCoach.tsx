@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { STABILITY_RUNS, StabilityTable, computeStats, runSequentially, type DimensionStats } from './Stability';
 
 // Recorder.tsx bilan bir xil manzil — backend bitta, faqat yo'l (path) farq
 // qiladi (/api/writing/... vs /api/speaking/...).
@@ -59,6 +60,13 @@ export function WritingCoach() {
   const [text, setText] = useState('');
   const [result, setResult] = useState<SubmitResponse | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  // Barqarorlik testi oxirgi MUVAFFAQIYATLI yuborilgan matnni ishlatadi —
+  // foydalanuvchi keyin textarea'ni tahrirlasa ham, test aynan baholangan
+  // matn ustida o'tadi (aks holda boshqa matnni solishtirgan bo'lamiz).
+  const [lastSubmittedText, setLastSubmittedText] = useState<string | null>(null);
+  const [stability, setStability] = useState<{ stats: DimensionStats[]; failed: number } | null>(null);
+  const [testProgress, setTestProgress] = useState('');
+  const [isTesting, setIsTesting] = useState(false);
 
   useEffect(() => {
     loadHistory();
@@ -75,6 +83,57 @@ export function WritingCoach() {
     }
   }
 
+  // Bitta yuborish — oddiy oqim (save=true) ham, barqarorlik testi
+  // (save=false) ham shu funksiyani ishlatadi.
+  async function postEssay(essay: string, save: boolean): Promise<SubmitResponse> {
+    const url = save ? API_URL : `${API_URL}?save=false`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topic, text: essay }),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => ({}));
+      throw new Error(errorBody.error ?? errorBody.detail ?? `Server xatosi: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  async function runStabilityTest() {
+    if (!lastSubmittedText) return;
+    const essay = lastSubmittedText;
+    setIsTesting(true);
+    setStability(null);
+    setTestProgress(`0/${STABILITY_RUNS} bajarildi...`);
+
+    const { results, failed } = await runSequentially(
+      STABILITY_RUNS,
+      () => postEssay(essay, false),
+      (done, failedSoFar) =>
+        setTestProgress(`${done}/${STABILITY_RUNS} bajarildi${failedSoFar ? ` (${failedSoFar} ta xato)` : ''}...`),
+    );
+
+    setIsTesting(false);
+    if (results.length === 0) {
+      setTestProgress("Birorta ham urinish muvaffaqiyatli bo'lmadi — keyinroq qayta urinib ko'ring.");
+      return;
+    }
+
+    const evals = results.map((r) => r.evaluation);
+    setStability({
+      stats: [
+        computeStats('Vazifa', evals.map((e) => e.taskAchievement.score)),
+        computeStats("Bog'lanish", evals.map((e) => e.coherenceCohesion.score)),
+        computeStats('Grammatika', evals.map((e) => e.grammar.score)),
+        computeStats("Lug'at", evals.map((e) => e.vocabulary.score)),
+      ],
+      failed,
+    });
+    setTestProgress('');
+  }
+
   async function submitEssay() {
     if (text.trim().length < MIN_CHARS) {
       setStatus('error');
@@ -85,20 +144,12 @@ export function WritingCoach() {
     setStatus('uploading');
     setMessage('Yuborilmoqda va baholanmoqda... (bu 5-15 soniya davom etishi mumkin)');
     setResult(null);
+    setStability(null);
+    setTestProgress('');
 
     try {
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, text }),
-      });
-
-      if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({}));
-        throw new Error(errorBody.error ?? errorBody.detail ?? `Server xatosi: ${response.status}`);
-      }
-
-      const data: SubmitResponse = await response.json();
+      const data = await postEssay(text, true);
+      setLastSubmittedText(text);
       setResult(data);
       setStatus('done');
       setMessage('Tayyor');
@@ -109,7 +160,7 @@ export function WritingCoach() {
     }
   }
 
-  const isBusy = status === 'uploading';
+  const isBusy = status === 'uploading' || isTesting;
   const charsLeft = MAX_CHARS - text.length;
 
   return (
@@ -185,8 +236,31 @@ export function WritingCoach() {
             <strong>💬 {result.evaluation.encouragement}</strong>
           </p>
           <p style={{ color: '#2563eb' }}>Keyingi fokus: {result.evaluation.nextFocus}</p>
+
+          <button
+            onClick={runStabilityTest}
+            disabled={isBusy || !lastSubmittedText}
+            style={{
+              marginTop: '0.5rem',
+              padding: '0.5rem 1rem',
+              fontSize: '0.9rem',
+              backgroundColor: 'white',
+              color: '#2563eb',
+              border: '1px solid #2563eb',
+              borderRadius: '0.5rem',
+              cursor: isBusy ? 'not-allowed' : 'pointer',
+            }}
+          >
+            🔁 Barqarorlikni tekshirish ({STABILITY_RUNS}x)
+          </button>
+          <p style={{ color: '#6b7280', fontSize: '0.8rem', marginBottom: 0 }}>
+            Aynan shu matnni yana {STABILITY_RUNS} marta baholatib, ballar qanchalik o'zgarishini ko'rsatadi.
+          </p>
+          {testProgress && <p style={{ fontSize: '0.9rem' }}>{testProgress}</p>}
         </div>
       )}
+
+      {stability && <StabilityTable stats={stability.stats} failed={stability.failed} />}
 
       {history.length > 0 && (
         <div style={{ marginTop: '2rem' }}>

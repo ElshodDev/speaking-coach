@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { STABILITY_RUNS, StabilityTable, computeStats, runSequentially, type DimensionStats } from './Stability';
 
 // Lokalda .env fayl bo'lmasa, localhost:5000'ga tushadi.
 // Vercel'ga deploy qilinganda VITE_API_URL environment variable orqali
@@ -56,6 +57,13 @@ export function Recorder() {
   const [topic] = useState(TOPICS[0]);
   const [result, setResult] = useState<SubmitResponse | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  // Oxirgi yozuv xotirada saqlanadi — barqarorlik testida AYNAN SHU audio
+  // qayta-qayta yuboriladi (serverda audio doimiy saqlanmaydi, shuning uchun
+  // uni brauzerda ushlab turamiz).
+  const [lastBlob, setLastBlob] = useState<Blob | null>(null);
+  const [stability, setStability] = useState<{ stats: DimensionStats[]; failed: number } | null>(null);
+  const [testProgress, setTestProgress] = useState('');
+  const [isTesting, setIsTesting] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
@@ -88,6 +96,7 @@ export function Recorder() {
       recorder.onstop = async () => {
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
         stream.getTracks().forEach((track) => track.stop());
+        setLastBlob(blob);
         await uploadAudio(blob);
       };
 
@@ -96,6 +105,8 @@ export function Recorder() {
       setStatus('recording');
       setMessage('Yozilmoqda...');
       setResult(null);
+      setStability(null);
+      setTestProgress('');
     } catch {
       setStatus('error');
       setMessage('Mikrofonga ruxsat berilmadi yoki xato yuz berdi');
@@ -108,20 +119,58 @@ export function Recorder() {
     setMessage('Yuklanmoqda va baholanmoqda... (bu 5-15 soniya davom etishi mumkin)');
   }
 
-  async function uploadAudio(blob: Blob) {
+  // Bitta yuborish — oddiy oqim (save=true) ham, barqarorlik testi
+  // (save=false) ham shu funksiyani ishlatadi.
+  async function postAudio(blob: Blob, save: boolean): Promise<SubmitResponse> {
     const formData = new FormData();
     formData.append('audio', blob, 'recording.webm');
     formData.append('topic', topic);
 
+    const url = save ? API_URL : `${API_URL}?save=false`;
+    const response = await fetch(url, { method: 'POST', body: formData });
+
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => ({}));
+      throw new Error(errorBody.error ?? errorBody.detail ?? `Server xatosi: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  async function runStabilityTest() {
+    if (!lastBlob) return;
+    setIsTesting(true);
+    setStability(null);
+    setTestProgress(`0/${STABILITY_RUNS} bajarildi...`);
+
+    const { results, failed } = await runSequentially(
+      STABILITY_RUNS,
+      () => postAudio(lastBlob, false),
+      (done, failedSoFar) =>
+        setTestProgress(`${done}/${STABILITY_RUNS} bajarildi${failedSoFar ? ` (${failedSoFar} ta xato)` : ''}...`),
+    );
+
+    setIsTesting(false);
+    if (results.length === 0) {
+      setTestProgress("Birorta ham urinish muvaffaqiyatli bo'lmadi — keyinroq qayta urinib ko'ring.");
+      return;
+    }
+
+    const evals = results.map((r) => r.evaluation);
+    setStability({
+      stats: [
+        computeStats('Ravonlik', evals.map((e) => e.fluency.score)),
+        computeStats('Grammatika', evals.map((e) => e.grammar.score)),
+        computeStats("Lug'at", evals.map((e) => e.vocabulary.score)),
+      ],
+      failed,
+    });
+    setTestProgress('');
+  }
+
+  async function uploadAudio(blob: Blob) {
     try {
-      const response = await fetch(API_URL, { method: 'POST', body: formData });
-
-      if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({}));
-        throw new Error(errorBody.error ?? errorBody.detail ?? `Server xatosi: ${response.status}`);
-      }
-
-      const data: SubmitResponse = await response.json();
+      const data = await postAudio(blob, true);
       setResult(data);
       setStatus('done');
       setMessage('Tayyor');
@@ -133,7 +182,7 @@ export function Recorder() {
   }
 
   const isRecording = status === 'recording';
-  const isBusy = status === 'uploading';
+  const isBusy = status === 'uploading' || isTesting;
 
   return (
     <div style={{ marginTop: '1.5rem' }}>
@@ -188,8 +237,31 @@ export function Recorder() {
             <strong>💬 {result.evaluation.encouragement}</strong>
           </p>
           <p style={{ color: '#2563eb' }}>Keyingi fokus: {result.evaluation.nextFocus}</p>
+
+          <button
+            onClick={runStabilityTest}
+            disabled={isBusy || !lastBlob}
+            style={{
+              marginTop: '0.5rem',
+              padding: '0.5rem 1rem',
+              fontSize: '0.9rem',
+              backgroundColor: 'white',
+              color: '#2563eb',
+              border: '1px solid #2563eb',
+              borderRadius: '0.5rem',
+              cursor: isBusy ? 'not-allowed' : 'pointer',
+            }}
+          >
+            🔁 Barqarorlikni tekshirish ({STABILITY_RUNS}x)
+          </button>
+          <p style={{ color: '#6b7280', fontSize: '0.8rem', marginBottom: 0 }}>
+            Aynan shu yozuvni yana {STABILITY_RUNS} marta baholatib, ballar qanchalik o'zgarishini ko'rsatadi.
+          </p>
+          {testProgress && <p style={{ fontSize: '0.9rem' }}>{testProgress}</p>}
         </div>
       )}
+
+      {stability && <StabilityTable stats={stability.stats} failed={stability.failed} />}
 
       {history.length > 0 && (
         <div style={{ marginTop: '2rem' }}>

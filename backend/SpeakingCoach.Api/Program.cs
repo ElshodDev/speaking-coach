@@ -82,7 +82,16 @@ app.MapPost("/api/speaking/submit", async (
         await audioFile.CopyToAsync(memoryStream);
         audioBytes = memoryStream.ToArray();
     }
-    await File.WriteAllBytesAsync(filePath, audioBytes, default);
+
+    // ?save=false — barqarorlik testi (bir xil audio'ni bir necha marta
+    // yuborish) tarixni "axlat" bilan to'ldirmasligi uchun. Standart holatda
+    // (parametr berilmasa) true — oddiy foydalanuvchi oqimi o'zgarmaydi.
+    var shouldSave = !bool.TryParse(request.Query["save"], out var saveFlag) || saveFlag;
+
+    if (shouldSave)
+    {
+        await File.WriteAllBytesAsync(filePath, audioBytes, default);
+    }
 
     try
     {
@@ -92,16 +101,19 @@ app.MapPost("/api/speaking/submit", async (
         // Natijani bazaga yozamiz. Bu Gemini so'rovidan KEYIN qilinadi —
         // agar Gemini xato qaytarsa (masalan 503), hech narsa saqlanmaydi,
         // shuning uchun tarixda faqat muvaffaqiyatli urinishlar ko'rinadi.
-        var activity = new Activity
+        if (shouldSave)
         {
-            Id = submissionId,
-            Type = ActivityType.Speaking,
-            CreatedAtUtc = DateTime.UtcNow,
-            PromptData = System.Text.Json.JsonSerializer.Serialize(new { topic }),
-            ResponseData = System.Text.Json.JsonSerializer.Serialize(evaluation),
-        };
-        db.Activities.Add(activity);
-        await db.SaveChangesAsync();
+            var activity = new Activity
+            {
+                Id = submissionId,
+                Type = ActivityType.Speaking,
+                CreatedAtUtc = DateTime.UtcNow,
+                PromptData = System.Text.Json.JsonSerializer.Serialize(new { topic }),
+                ResponseData = System.Text.Json.JsonSerializer.Serialize(evaluation),
+            };
+            db.Activities.Add(activity);
+            await db.SaveChangesAsync();
+        }
 
         return Results.Ok(new { submissionId, evaluation });
     }
@@ -145,7 +157,8 @@ app.MapPost("/api/writing/submit", async (
     WritingSubmitRequest request,
     IWritingEvaluationService evaluationService,
     AppDbContext db,
-    ILogger<Program> logger) =>
+    ILogger<Program> logger,
+    bool save = true) =>
 {
     if (string.IsNullOrWhiteSpace(request.Topic))
     {
@@ -178,16 +191,21 @@ app.MapPost("/api/writing/submit", async (
         logger.LogInformation("Writing submission {Id}: Gemini'ga yuborilmoqda ({Length} belgi)", submissionId, request.Text.Length);
         var evaluation = await evaluationService.EvaluateAsync(request.Topic, request.Text);
 
-        var activity = new Activity
+        // ?save=false — barqarorlik testi (bir xil matnni bir necha marta
+        // yuborish) tarixni "axlat" bilan to'ldirmasligi uchun.
+        if (save)
         {
-            Id = submissionId,
-            Type = ActivityType.Writing,
-            CreatedAtUtc = DateTime.UtcNow,
-            PromptData = System.Text.Json.JsonSerializer.Serialize(new { topic = request.Topic, text = request.Text }),
-            ResponseData = System.Text.Json.JsonSerializer.Serialize(evaluation),
-        };
-        db.Activities.Add(activity);
-        await db.SaveChangesAsync();
+            var activity = new Activity
+            {
+                Id = submissionId,
+                Type = ActivityType.Writing,
+                CreatedAtUtc = DateTime.UtcNow,
+                PromptData = System.Text.Json.JsonSerializer.Serialize(new { topic = request.Topic, text = request.Text }),
+                ResponseData = System.Text.Json.JsonSerializer.Serialize(evaluation),
+            };
+            db.Activities.Add(activity);
+            await db.SaveChangesAsync();
+        }
 
         return Results.Ok(new { submissionId, evaluation });
     }
