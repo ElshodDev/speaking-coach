@@ -2,6 +2,8 @@
 // o'lchamlar styles.css'dagi o'zgaruvchilardan keladi.
 import type { ReactNode } from 'react';
 import type { HistoryItem } from './api';
+import { common, getLang, localeOf, msg, useT } from './i18n';
+import { uiMsg } from './locales/ui';
 
 export interface ScoreWithReasoning {
   score: number;
@@ -16,18 +18,30 @@ export interface CorrectionItem {
 
 /** Ballni darajaga aylantiradi: rang va qisqa so'z shunga qarab tanlanadi. */
 export function levelOf(score: number): { key: 'great' | 'good' | 'mid' | 'low'; label: string } {
-  if (score >= 85) return { key: 'great', label: "A'lo" };
-  if (score >= 70) return { key: 'good', label: 'Yaxshi' };
-  if (score >= 50) return { key: 'mid', label: "O'rtacha" };
-  return { key: 'low', label: 'Ishlash kerak' };
+  const key = score >= 85 ? 'great' : score >= 70 ? 'good' : score >= 50 ? 'mid' : 'low';
+  return { key, label: msg(uiMsg).level[key] };
 }
 
-export function PageHeader({ title, subtitle, onBack }: { title: string; subtitle?: string; onBack?: () => void }) {
+/** Sana va vaqt joriy til formatida. */
+export const formatDateTime = (iso: string) => new Date(iso).toLocaleString(localeOf(getLang()));
+
+export function PageHeader({
+  title,
+  subtitle,
+  onBack,
+  backLabel,
+}: {
+  title: string;
+  subtitle?: string;
+  onBack?: () => void;
+  backLabel?: string;
+}) {
+  const t = useT(uiMsg);
   return (
     <div className="page-header">
       {onBack && (
         <button className="back" onClick={onBack}>
-          ← Mashqlar
+          ← {backLabel ?? t.practiceBack}
         </button>
       )}
       <h1>{title}</h1>
@@ -37,6 +51,7 @@ export function PageHeader({ title, subtitle, onBack }: { title: string; subtitl
 }
 
 export function ScoreBar({ label, data }: { label: string; data: ScoreWithReasoning }) {
+  useT(uiMsg); // til almashganda daraja nomi ham yangilansin
   const lvl = levelOf(data.score);
   return (
     <div className="score">
@@ -55,10 +70,11 @@ export function ScoreBar({ label, data }: { label: string; data: ScoreWithReason
 }
 
 export function Corrections({ items }: { items: CorrectionItem[] }) {
+  const t = useT(uiMsg);
   if (items.length === 0) return null;
   return (
     <>
-      <h3 style={{ marginTop: 18 }}>Tuzatishlar</h3>
+      <h3 style={{ marginTop: 18 }}>{t.corrections}</h3>
       <ul className="corrections">
         {items.map((c, i) => (
           <li key={i}>
@@ -72,11 +88,12 @@ export function Corrections({ items }: { items: CorrectionItem[] }) {
 }
 
 export function Feedback({ encouragement, nextFocus }: { encouragement: string; nextFocus: string }) {
+  const t = useT(uiMsg);
   return (
     <div className="stack" style={{ marginTop: 16 }}>
       <div className="encourage">💬 {encouragement}</div>
       <p className="small">
-        <strong>Keyingi fokus:</strong> {nextFocus}
+        <strong>{t.nextFocus}</strong> {nextFocus}
       </p>
     </div>
   );
@@ -88,10 +105,11 @@ export function Feedback({ encouragement, nextFocus }: { encouragement: string; 
  * yiqitmasligi uchun har biri alohida himoyalangan.
  */
 export function HistoryList({ items, renderRow }: { items: HistoryItem[]; renderRow: (item: HistoryItem) => ReactNode }) {
+  const t = useT(uiMsg);
   if (items.length === 0) return null;
   return (
     <div className="card">
-      <h3>Oldingi urinishlar ({items.length})</h3>
+      <h3>{t.history(items.length)}</h3>
       <ul className="history">
         {items.map((item) => {
           let row: ReactNode = null;
@@ -102,7 +120,7 @@ export function HistoryList({ items, renderRow }: { items: HistoryItem[]; render
           }
           return row ? (
             <li key={item.id}>
-              <div className="muted tiny">{new Date(item.createdAtUtc).toLocaleString()}</div>
+              <div className="muted tiny">{formatDateTime(item.createdAtUtc)}</div>
               {row}
             </li>
           ) : null;
@@ -114,14 +132,15 @@ export function HistoryList({ items, renderRow }: { items: HistoryItem[]; render
 
 /** Kirmagan foydalanuvchiga tarix nega bo'sh ekanini tushuntiradi. */
 export function GuestNote({ loggedIn, onLogin }: { loggedIn: boolean; onLogin?: () => void }) {
+  const t = useT(uiMsg);
+  const c = useT(common);
   if (loggedIn) return null;
   return (
     <div className="card soft small">
-      Siz mehmon sifatida ishlayapsiz — natijalar baholanadi, lekin saqlanmaydi va takrorlash kartalariga
-      aylanmaydi.{' '}
+      {t.guest}{' '}
       {onLogin && (
         <button className="btn-link" onClick={onLogin}>
-          Kirish →
+          {c.loginArrow}
         </button>
       )}
     </div>

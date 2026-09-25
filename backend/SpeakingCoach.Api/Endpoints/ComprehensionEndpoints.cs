@@ -23,6 +23,7 @@ public static class ComprehensionEndpoints
         {
             app.MapPost($"/api/{path}/generate", async (
                 ComprehensionGenerateRequest? body,
+                HttpRequest request,
                 IComprehensionService service,
                 AppDbContext db,
                 ILogger<Program> logger) =>
@@ -59,7 +60,7 @@ public static class ComprehensionEndpoints
                 catch (Exception ex)
                 {
                     logger.LogError(ex, "{Kind} mashqini yaratishda xato", path);
-                    return Results.Problem(detail: ex.Message, statusCode: 502);
+                    return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);
                 }
             }).RequireRateLimiting("ai");
 
@@ -74,7 +75,7 @@ public static class ComprehensionEndpoints
                     .FirstOrDefaultAsync(p => p.Id == body.ExerciseId && p.Type == type);
                 if (pending is null)
                 {
-                    return Results.NotFound(new { error = "Mashq topilmadi yoki muddati o'tgan — yangisini oling" });
+                    return Results.NotFound(request.Error("exercise.not_found"));
                 }
 
                 var exercise = GeminiClient.DeserializeStrict<ComprehensionExercise>(pending.Payload);
@@ -84,9 +85,9 @@ public static class ComprehensionEndpoints
                 {
                     result = GeminiComprehensionService.Grade(exercise, body.Answers ?? new List<int>());
                 }
-                catch (ArgumentException ex)
+                catch (UserInputException ex)
                 {
-                    return Results.BadRequest(new { error = ex.Message });
+                    return Results.BadRequest(request.Error(ex.Key, ex.Args));
                 }
 
                 // Mashq bir marta ishlatiladi: javob berildi — o'chiramiz.

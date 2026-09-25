@@ -142,6 +142,26 @@ p {
   height: 30px;
   border-radius: 8px;
 }
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.avatar[aria-current='page'] {
+  border-color: var(--surface);
+  box-shadow: 0 0 0 2px var(--primary);
+}
 
 /* Pastki menyu: telefonda ekran pastida (bosh barmoq yetadigan joyda),
    katta ekranda — sahifa tepasida. */
@@ -912,4 +932,109 @@ table.data td {
   width: 20px;
   height: 20px;
   accent-color: var(--primary);
+}
+
+/* ---------- Lug'at ---------- */
+
+.vocab-search {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.vocab-search .input {
+  flex: 1;
+  min-width: 0;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 6px;
+}
+.chips button {
+  flex: none;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.chips button[aria-pressed='true'] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  font-weight: 600;
+}
+.chips .n {
+  opacity: 0.75;
+  margin-left: 2px;
+}
+.vocab-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+}
+.vocab-list .card {
+  margin-bottom: 10px;
+  padding: 14px 16px;
+}
+.vocab-word {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.vocab-word strong {
+  font-size: 1.12rem;
+}
+.vocab-meaning {
+  font-weight: 600;
+  margin-top: 4px;
+}
+.status {
+  flex: none;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.status-new {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+.status-learning {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+.status-known {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.cta .btn {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* Til tanlagich (tepadagi panel) */
+.lang-select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+/* Tor telefonda brend nomi yashiriladi — belgisi qoladi, joy tilga va streakka. */
+@media (max-width: 400px) {
+  .brand .brand-name {
+    display: none;
+  }
 }

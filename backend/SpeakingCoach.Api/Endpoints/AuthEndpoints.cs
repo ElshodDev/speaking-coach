@@ -8,22 +8,22 @@ public static class AuthEndpoints
 {
     public static void MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/auth/register", async (AuthRequest body, AuthService auth) =>
+        app.MapPost("/api/auth/register", async (AuthRequest body, HttpRequest request, AuthService auth) =>
         {
             var result = await auth.RegisterAsync(body.Email, body.Password);
             return result.Error is null
                 ? Results.Ok(new { token = result.Token, email = result.Email })
-                : Results.BadRequest(new { error = result.Error });
+                : Results.BadRequest(request.Error(result.Error, result.ErrorArgs ?? []));
         }).RequireRateLimiting("auth");
 
-        app.MapPost("/api/auth/login", async (AuthRequest body, AuthService auth) =>
+        app.MapPost("/api/auth/login", async (AuthRequest body, HttpRequest request, AuthService auth) =>
         {
             var result = await auth.LoginAsync(body.Email, body.Password);
             // 401 — "kim ekaningizni tasdiqlab bo'lmadi". 400 (noto'g'ri
             // so'rov shakli) emas, chunki so'rov shakli to'g'ri edi.
             return result.Error is null
                 ? Results.Ok(new { token = result.Token, email = result.Email })
-                : Results.Json(new { error = result.Error }, statusCode: StatusCodes.Status401Unauthorized);
+                : Results.Json(request.Error(result.Error, result.ErrorArgs ?? []), statusCode: StatusCodes.Status401Unauthorized);
         }).RequireRateLimiting("auth");
 
         app.MapPost("/api/auth/logout", async (HttpRequest request, AuthService auth) =>
@@ -38,7 +38,7 @@ public static class AuthEndpoints
         {
             var user = await auth.GetCurrentUserAsync(request);
             return user is null
-                ? Results.Json(new { error = "Tizimga kirilmagan" }, statusCode: StatusCodes.Status401Unauthorized)
+                ? Results.Json(request.Error("auth.not_logged_in"), statusCode: StatusCodes.Status401Unauthorized)
                 : Results.Ok(new { email = user.Email });
         });
     }

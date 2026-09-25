@@ -43,7 +43,7 @@ builder.Services.AddRateLimiter(options =>
     options.OnRejected = async (context, ct) =>
     {
         await context.HttpContext.Response.WriteAsJsonAsync(
-            new { error = "Juda ko'p so'rov yuborildi — bir daqiqadan keyin qayta urinib ko'ring" }, ct);
+            context.HttpContext.Request.Error("rate_limited"), ct);
     };
 
     options.AddPolicy("auth", http => RateLimitPartition.GetFixedWindowLimiter(
@@ -115,6 +115,7 @@ app.MapSpeakingWritingEndpoints(uploadsPath);
 app.MapComprehensionEndpoints();
 app.MapReviewEndpoints();
 app.MapProfileEndpoints();
+app.MapVocabEndpoints();
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 app.Run($"http://0.0.0.0:{port}");

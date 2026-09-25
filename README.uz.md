@@ -28,13 +28,21 @@ qolishga** yordam beradigan takrorlash tizimi:
   oddiy ilova kabi ochiladi, sekin internetda ham tez yuklanadi.
 - **👆 So'zni bosish** — O'qish matnidagi notanish so'zni bosing: Gemini uni
   *aynan shu gap ichidagi* ma'nosida o'zbekcha tushuntiradi (so'z turkumi,
-  ma'no, inglizcha izoh, misol), bitta tugma bilan kartaga qo'shiladi.
+  ma'no, inglizcha izoh, misol), bitta tugma bilan Lug'atga qo'shiladi.
+- **📚 Lug'at** — shaxsiy so'zlar ro'yxati: inglizcha so'z yoki o'zbekcha
+  ma'no bo'yicha qidirish, *Yangi / O'rganilmoqda / Yodlangan* filtri
+  (takrorlash jadvalidan kelib chiqadi), so'zni yozib ma'nosini topish va
+  faqat lug'at so'zlarini takrorlash. Har bir so'z — takrorlash kartasi,
+  alohida jadval yo'q.
 - **🎚 Daraja (A2–C1)** — matn uzunligi, lug'at va izohlar tanlangan
   darajaga moslashadi; ballar esa mutlaq rubrikada qoladi.
 - **📈 Natijalar** — XP, darajalar va 10 ta nishon; 84 kunlik faollik
   kalendari; mezonlar bo'yicha ballar grafigi; eng qiyin kartalar.
 - **🏆 Haftalik musobaqa** — ixtiyoriy: taxallus bilan haftalik XP reytingi.
   Email va mashqlar hech kimga ko'rinmaydi.
+- **🌐 Uch til** — butun interfeys, server xabarlari va soʻz tarjimasi
+  oʻzbek (rasmiy lotin imlosi: oʻ, gʻ, maʼno), rus yoki ingliz tilida.
+  Til brauzerdan aniqlanadi, tepadagi panelda va Profilda almashtiriladi.
 - **🛠 Admin panel** — faqat `Admin:Emails` ro'yxatidagi egasi uchun:
   ro'yxatdan o'tishlar, kunlik/haftalik/oylik faol foydalanuvchilar, mashq
   turlari — faqat umumiy sonlar va niqoblangan emaillar.
@@ -54,7 +62,7 @@ birinchi so'rov ~30-60 soniya uyg'onish vaqtini olishi mumkin.)
   "N ta karta kutyapti" tugmasi.
 - **Pastki menyu** (telefonda ekran pastida, kompyuterda tepada): Bosh
   sahifa · Takrorlash (navbatdagi kartalar soni bilan) · Mashqlar ·
-  Natijalar · Profil.
+  Lug'at · Natijalar. Profil — tepadagi doira (avatar) tugmasida.
 - **Manzillar** `#/review`, `#/practice/writing` kabi — telefondagi
   "Orqaga" tugmasi to'g'ri ishlaydi.
 - **Natijalar rangli shkalada**: 85+ a'lo, 70+ yaxshi, 50+ o'rtacha, 50
@@ -66,9 +74,9 @@ birinchi so'rov ~30-60 soniya uyg'onish vaqtini olishi mumkin.)
 |---|---|---|---|
 | ![](docs/screenshots/home-user.png) | ![](docs/screenshots/review.png) | ![](docs/screenshots/writing-result.png) | ![](docs/screenshots/review-dark.png) |
 
-| Natijalar | So'zni bosish | Admin panel |
-|---|---|---|
-| ![](docs/screenshots/progress.png) | ![](docs/screenshots/word-tap.png) | ![](docs/screenshots/admin.png) |
+| Natijalar | Lug'at | So'zni bosish | Admin panel |
+|---|---|---|---|
+| ![](docs/screenshots/progress.png) | ![](docs/screenshots/vocab.png) | ![](docs/screenshots/word-tap.png) | ![](docs/screenshots/admin.png) |
 
 ## Arxitektura
 
@@ -178,8 +186,8 @@ npm run dev
 ### 7. Avtomatik testlar
 
 ```bash
-dotnet test backend/SpeakingCoach.Api.Tests   # backend: 60 ta unit test
-cd frontend/speaking-coach-web && npm test     # frontend: 16 ta vitest testi
+dotnet test backend/SpeakingCoach.Api.Tests   # backend: 94 ta unit test
+cd frontend/speaking-coach-web && npm test     # frontend: 29 ta vitest testi
 ```
 
 Xuddi shu testlar har bir push'da GitHub Actions'da ham ishlaydi
@@ -289,7 +297,8 @@ unutilsa — boshidan boshlanadi. Bu Anki va Duolingo ishlatadigan g'oya.
 - **Testlar**: `backend/SpeakingCoach.Api.Tests` (xUnit) — takrorlash
   algoritmi, streak (vaqt zonalari bilan), karta yaratish, test
   savollarini tekshirish, Gemini javobini qat'iy o'qish, token xeshi,
-  XP/daraja/nishonlar, reyting (teng ballar), darajaga mos promptlar.
+  XP/daraja/nishonlar, reyting (teng ballar), darajaga mos promptlar,
+  lug'at holati (Yangi/O'rganilmoqda/Yodlangan).
   Frontend: `vitest` — gap bo'lish, statistika, karta matnlari, grafik
   yordamchilari, so'zni ajratish.
 - **CI**: GitHub Actions har bir push'da backend'ni build qilib testlarni,
@@ -301,6 +310,21 @@ unutilsa — boshidan boshlanadi. Bu Anki va Duolingo ishlatadigan g'oya.
   proxy ortida bo'lgani uchun haqiqiy IP `X-Forwarded-For`dan olinadi.
 - **`/health`**: server tirikmi va bazaga ulana oladimi — monitoring
   (masalan UptimeRobot) uchun. Baza ishlamasa 503.
+
+## Tillar (uz / ru / en)
+
+Tashqi kutubxonasiz, lekin tip-xavfsiz: har bir ekran matnlarini
+`src/locales/<ekran>.ts` faylida bir marta oʻzbekcha eʼlon qiladi —
+`defineMessages(uz, { ru, en })`. Rus va ingliz nusxalari oʻzbekcha bilan
+bir xil shaklda boʻlishi shart, aks holda TypeScript build'ni toʻxtatadi —
+tarjima "unutilib" qolmaydi. Sonlarga bogʻliq matnlar oddiy funksiya:
+rus tilidagi "1 слово / 2 слова / 5 слов" qoidasi `ruPlural`da.
+
+Server xabarlari (`Services/Texts.cs`) HTTP standarti — `Accept-Language`
+sarlavhasi boʻyicha tanlanadi. Servislar matn emas, kalit qaytaradi
+(masalan `vocab.exists`), shuning uchun ular HTTP'ga bogʻliq emas. Test
+har bir kalit uch tilda borligini va `{0}` belgilari mosligini tekshiradi.
+Soʻz tarjimasi ham shu tilda: ruscha interfeysda — ruscha tarjima.
 
 ## XP, darajalar va musobaqa
 
@@ -400,11 +424,12 @@ ko'rsatadi.
 9. ✅ ~~Takrorlash kartalari, Yo'lda rejimi, PWA~~
 10. ✅ ~~Dizayn tizimi, tungi rejim, bosh sahifa, pastki menyu~~
 11. ✅ ~~Natijalar sahifasi, XP/nishonlar, haftalik musobaqa, admin panel~~
-12. ✅ ~~Daraja tanlash (A2–C1), matndagi so'zni bosib kartaga qo'shish~~
-13. Kunlik eslatma (Web Push) — "Bugun 12 ta karta kutyapti"
-14. Integration testlar: `WebApplicationFactory` + Testcontainers'dagi
+12. ✅ ~~Daraja tanlash (A2–C1), matndagi so'zni bosish, Lug'at bo'limi~~
+13. ✅ ~~Interfeys uch tilda: oʻzbek (adabiy), rus, ingliz~~
+14. Kunlik eslatma (Telegram bot yoki Web Push) — "Bugun 12 ta karta kutyapti"
+15. Integration testlar: `WebApplicationFactory` + Testcontainers'dagi
     haqiqiy Postgres
-15. Parolni tiklash (email yuborish xizmati kerak)
+16. Parolni tiklash (email yuborish xizmati kerak)
 
 ## Ishlatishdan oldin tushunishingiz kerak bo'lgan savollar
 

@@ -6,10 +6,13 @@ using SpeakingCoach.Api.Data;
 
 namespace SpeakingCoach.Api.Services;
 
-/// <summary>Ro'yxatdan o'tish/kirish natijasi: yoki token, yoki xato matni.</summary>
-public record AuthResult(string? Token, string? Email, string? Error)
+/// <summary>
+/// Ro'yxatdan o'tish/kirish natijasi: yoki token, yoki xato KALITI (Texts)
+/// va uning parametrlari — matn so'rov tilida endpoint'da tuziladi.
+/// </summary>
+public record AuthResult(string? Token, string? Email, string? Error, object?[]? ErrorArgs = null)
 {
-    public static AuthResult Fail(string error) => new(null, null, error);
+    public static AuthResult Fail(string errorKey, params object?[] args) => new(null, null, errorKey, args);
 }
 
 /// <summary>
@@ -51,19 +54,19 @@ public class AuthService
         var normalized = NormalizeEmail(email ?? "");
         if (normalized.Length > 256 || !System.Net.Mail.MailAddress.TryCreate(normalized, out _) || !normalized.Contains('.'))
         {
-            return AuthResult.Fail("Email manzili noto'g'ri");
+            return AuthResult.Fail("auth.invalid_email");
         }
         if (password is null || password.Length < MinPasswordLength)
         {
-            return AuthResult.Fail($"Parol kamida {MinPasswordLength} belgidan iborat bo'lishi kerak");
+            return AuthResult.Fail("auth.password_short", MinPasswordLength);
         }
         if (password.Length > MaxPasswordLength)
         {
-            return AuthResult.Fail($"Parol {MaxPasswordLength} belgidan oshmasligi kerak");
+            return AuthResult.Fail("auth.password_long", MaxPasswordLength);
         }
         if (await _db.Users.AnyAsync(u => u.Email == normalized))
         {
-            return AuthResult.Fail("Bu email bilan allaqachon ro'yxatdan o'tilgan");
+            return AuthResult.Fail("auth.email_taken");
         }
 
         var user = new User { Id = Guid.NewGuid(), Email = normalized, CreatedAtUtc = DateTime.UtcNow };
@@ -85,7 +88,7 @@ public class AuthService
         // Email topilmasa ham, parol noto'g'ri bo'lsa ham — BIR XIL xabar.
         // Aks holda hujumchi "bu email ro'yxatdan o'tganmi?" degan savolga
         // javob olib, email'larni birma-bir tekshirib chiqishi mumkin edi.
-        const string wrongCredentials = "Email yoki parol noto'g'ri";
+        const string wrongCredentials = "auth.wrong_credentials";
         if (user is null || string.IsNullOrEmpty(password))
         {
             return AuthResult.Fail(wrongCredentials);

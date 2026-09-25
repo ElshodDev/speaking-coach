@@ -31,8 +31,8 @@ public class ComprehensionTests
     {
         var exercise = Parse(ExerciseJson(0, 1, 2, 3));
 
-        Assert.Throws<ArgumentException>(() => GeminiComprehensionService.Grade(exercise, new[] { 0, 1 }));
-        Assert.Throws<ArgumentException>(() => GeminiComprehensionService.Grade(exercise, new[] { 0, 1, 7, 0 }));
+        Assert.Throws<UserInputException>(() => GeminiComprehensionService.Grade(exercise, new[] { 0, 1 }));
+        Assert.Throws<UserInputException>(() => GeminiComprehensionService.Grade(exercise, new[] { 0, 1, 7, 0 }));
     }
 
     [Fact]

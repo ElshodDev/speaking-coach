@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getLevel, loadHistory as fetchHistory, postJson, type HistoryItem } from './api';
 import { cardsMessage } from './cards';
+import { useT } from './i18n';
+import { comprehensionMsg } from './locales/comprehension';
 import { isSpeechSupported, speakAsync, stopSpeaking } from './speech';
 import { GuestNote, HistoryList } from './ui';
 import { TappableText, WordSheet } from './WordSheet';
@@ -50,6 +52,7 @@ export function Comprehension({
   onCardsAdded?: () => void;
   onLogin?: () => void;
 }) {
+  const t = useT(comprehensionMsg);
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const [answers, setAnswers] = useState<(number | null)[]>([]);
   const [result, setResult] = useState<SubmitResponse | null>(null);
@@ -66,7 +69,7 @@ export function Comprehension({
   async function generate() {
     setBusy(true);
     setIsError(false);
-    setMessage('Siz uchun yangi mashq tayyorlanmoqda... (5-15 soniya)');
+    setMessage(t.preparing);
     setExercise(null);
     setResult(null);
     try {
@@ -76,7 +79,7 @@ export function Comprehension({
       setMessage('');
     } catch (err) {
       setIsError(true);
-      setMessage(err instanceof Error ? err.message : "Mashqni yaratib bo'lmadi");
+      setMessage(err instanceof Error ? err.message : t.generateFailed);
     } finally {
       setBusy(false);
     }
@@ -97,7 +100,7 @@ export function Comprehension({
       setHistory(await fetchHistory(mode));
     } catch (err) {
       setIsError(true);
-      setMessage(err instanceof Error ? err.message : "Javoblarni yuborib bo'lmadi");
+      setMessage(err instanceof Error ? err.message : t.submitFailed);
     } finally {
       setBusy(false);
     }
@@ -118,12 +121,10 @@ export function Comprehension({
       {!exercise && (
         <div className="card">
           <p>
-            {mode === 'reading'
-              ? "Sun'iy intellekt siz uchun yangi matn va 4 ta savol tayyorlaydi. Matnni o'qing va javob bering."
-              : "Qisqa nutq tayyorlanadi va ovoz chiqarib o'qiladi. Tinglang, 4 ta savolga javob bering — matn javobdan keyin ko'rinadi."}
+            {mode === 'reading' ? t.introReading : t.introListening}
           </p>
           <button className="btn btn-primary block" onClick={generate} disabled={busy}>
-            {mode === 'reading' ? '📖 Mashqni boshlash' : '🎧 Mashqni boshlash'}
+            {mode === 'reading' ? t.startReading : t.startListening}
           </button>
         </div>
       )}
@@ -134,7 +135,7 @@ export function Comprehension({
         <div className="card">
           <div className="spread">
             <h2 style={{ margin: 0 }}>{exercise.title}</h2>
-            <span className="badge">{mode === 'reading' ? "O'qish" : 'Tinglash'}</span>
+            <span className="badge">{mode === 'reading' ? t.badgeReading : t.badgeListening}</span>
           </div>
 
           {mode === 'listening' && <Speaker text={exercise.passage} />}
@@ -142,14 +143,14 @@ export function Comprehension({
           {showPassage && (
             <div style={{ marginTop: 12 }}>
               <p className="muted tiny" style={{ marginBottom: 6 }}>
-                💡 Notanish so'zni bosing — o'zbekcha ma'nosi chiqadi va uni kartaga qo'shish mumkin.
+                {t.tapTip}
               </p>
               <TappableText text={exercise.passage} onWord={(word, sentence) => setPicked({ word, sentence })} />
             </div>
           )}
 
           <div className="spread" style={{ margin: '18px 0 10px' }}>
-            <h3 style={{ margin: 0 }}>Savollar</h3>
+            <h3 style={{ margin: 0 }}>{t.questions}</h3>
             {!result && (
               <span className="muted small">
                 {answeredCount}/{answers.length}
@@ -183,7 +184,7 @@ export function Comprehension({
                 })}
                 {r && (
                   <p className={`small ${r.isCorrect ? 'success' : 'error'}`} style={{ margin: '4px 0 0' }}>
-                    {r.isCorrect ? "✓ To'g'ri." : `✗ To'g'ri javob: ${LETTERS[r.correctIndex]}.`} {r.explanation}
+                    {r.isCorrect ? t.correct : t.correctAnswer(LETTERS[r.correctIndex])} {r.explanation}
                   </p>
                 )}
               </fieldset>
@@ -193,19 +194,19 @@ export function Comprehension({
           {!result ? (
             <>
               <button className="btn btn-primary block" onClick={submit} disabled={busy || !allAnswered}>
-                ✅ Javoblarni tekshirish
+                {t.check}
               </button>
-              {!allAnswered && <p className="muted tiny" style={{ marginTop: 6 }}>Barcha savollarga javob bering.</p>}
+              {!allAnswered && <p className="muted tiny" style={{ marginTop: 6 }}>{t.answerAll}</p>}
             </>
           ) : (
             <div className="card soft center" style={{ marginTop: 8 }}>
-              <div className="muted small">Natija</div>
+              <div className="muted small">{t.result}</div>
               <div style={{ fontSize: '2rem', fontWeight: 800 }}>
                 {result.score}/{result.total}
                 {result.score === result.total ? ' 🎉' : ''}
               </div>
               <button className="btn btn-primary" onClick={generate} disabled={busy} style={{ marginTop: 8 }}>
-                🔄 Keyingi mashq
+                {t.next}
               </button>
             </div>
           )}
@@ -216,6 +217,7 @@ export function Comprehension({
         <WordSheet
           word={picked.word}
           sentence={picked.sentence}
+          source={mode === 'reading' ? 'Reading' : 'Listening'}
           loggedIn={loggedIn}
           onClose={closePicked}
           onLogin={onLogin}
@@ -249,6 +251,7 @@ export function Comprehension({
  * operatsion tizimga bog'liq (Chrome'da odatda eng yaxshi).
  */
 function Speaker({ text }: { text: string }) {
+  const t = useT(comprehensionMsg);
   const supported = isSpeechSupported();
   const [speaking, setSpeaking] = useState(false);
   const [plays, setPlays] = useState(0);
@@ -264,7 +267,7 @@ function Speaker({ text }: { text: string }) {
   }, [supported, text]);
 
   if (!supported) {
-    return <p className="error small">Brauzeringiz ovoz chiqarib o'qishni qo'llab-quvvatlamaydi. Chrome yoki Edge'da oching.</p>;
+    return <p className="error small">{t.noSpeech}</p>;
   }
 
   async function play() {
@@ -287,17 +290,17 @@ function Speaker({ text }: { text: string }) {
   return (
     <div className="card soft row" style={{ marginTop: 12 }}>
       <button className={`btn ${speaking ? 'btn-danger' : 'btn-primary'}`} onClick={speaking ? stop : play}>
-        {speaking ? "⏹ To'xtatish" : plays === 0 ? '▶️ Tinglash' : '🔁 Qayta tinglash'}
+        {speaking ? t.stop : plays === 0 ? t.play : t.replay}
       </button>
       <label className="small">
-        Tezlik{' '}
+        {t.speed}{' '}
         <select className="input" value={rate} onChange={(e) => setRate(Number(e.target.value))} disabled={speaking}>
-          <option value={0.75}>Sekin</option>
-          <option value={0.9}>O'rtacha</option>
-          <option value={1}>Oddiy</option>
+          <option value={0.75}>{t.slow}</option>
+          <option value={0.9}>{t.medium}</option>
+          <option value={1}>{t.normal}</option>
         </select>
       </label>
-      {plays > 0 && <span className="muted tiny">{plays} marta tinglandi</span>}
+      {plays > 0 && <span className="muted tiny">{t.plays(plays)}</span>}
     </div>
   );
 }

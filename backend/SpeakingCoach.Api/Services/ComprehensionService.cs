@@ -183,7 +183,7 @@ public class GeminiComprehensionService : IComprehensionService
     {
         if (answers.Count != exercise.Questions.Count)
         {
-            throw new ArgumentException($"{exercise.Questions.Count} ta javob kutilgan edi, {answers.Count} ta keldi");
+            throw new UserInputException("exercise.answers_count", exercise.Questions.Count, answers.Count);
         }
 
         var results = new List<QuestionResult>();
@@ -193,7 +193,7 @@ public class GeminiComprehensionService : IComprehensionService
             var chosen = answers[i];
             if (chosen < 0 || chosen >= q.Options.Count)
             {
-                throw new ArgumentException($"{i + 1}-savol uchun javob noto'g'ri: {chosen}");
+                throw new UserInputException("exercise.bad_answer", i + 1);
             }
             results.Add(new QuestionResult(chosen, q.CorrectIndex, chosen == q.CorrectIndex, q.Explanation));
         }

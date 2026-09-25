@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/ElshodDev/speaking-coach/actions/workflows/ci.yml/badge.svg)](https://github.com/ElshodDev/speaking-coach/actions/workflows/ci.yml)
 
-An English-practice app for Uzbek-speaking learners (A2–C1). You **speak, write, read and listen**; an LLM (Google Gemini) grades your work against a rubric and points out concrete mistakes — and every mistake becomes a **spaced-repetition flashcard** that comes back right before you would forget it, including in a hands-free **commute mode** for earphones.
+An English-practice app for Uzbek- and Russian-speaking learners (A2–C1), with the interface in **Uzbek, Russian or English**. You **speak, write, read and listen**; an LLM (Google Gemini) grades your work against a rubric and points out concrete mistakes — and every mistake becomes a **spaced-repetition flashcard** that comes back right before you would forget it, including in a hands-free **commute mode** for earphones.
 
 **Live demo:** https://speaking-coach-theta.vercel.app
 (The backend runs on a free tier and sleeps after 15 minutes of inactivity — the first request may take 30–60 s.)
@@ -13,9 +13,9 @@ An English-practice app for Uzbek-speaking learners (A2–C1). You **speak, writ
 |---|---|---|---|
 | ![Home](docs/screenshots/home-user.png) | ![Review](docs/screenshots/review.png) | ![Writing](docs/screenshots/writing-result.png) | ![Dark mode](docs/screenshots/review-dark.png) |
 
-| Progress & levels | Tap a word | Admin panel |
-|---|---|---|
-| ![Progress](docs/screenshots/progress.png) | ![Word tap](docs/screenshots/word-tap.png) | ![Admin](docs/screenshots/admin.png) |
+| Progress & levels | Vocabulary | Tap a word | Admin panel |
+|---|---|---|---|
+| ![Progress](docs/screenshots/progress.png) | ![Vocabulary](docs/screenshots/vocab.png) | ![Word tap](docs/screenshots/word-tap.png) | ![Admin](docs/screenshots/admin.png) |
 
 ## Features
 
@@ -28,11 +28,13 @@ An English-practice app for Uzbek-speaking learners (A2–C1). You **speak, writ
 | 🔁 **Spaced repetition** | Corrections and wrong answers automatically become flashcards scheduled with SM-2 (1 day → 3 days → ~1 week …). Daily goal and 🔥 streak. |
 | 🚌 **Commute mode** | Hands-free review with earphones: question → thinking pause → answer. Keeps the screen awake with the Wake Lock API. |
 | 📱 **Installable (PWA)** | Add to home screen; opens like a native app and loads offline. Bottom navigation on phones, dark mode follows the system. |
-| 👆 **Tap a word** | In Reading passages, tap any unknown word: Gemini explains it in Uzbek *in the context of that sentence* (part of speech, meaning, English definition, example), and one tap turns it into a flashcard. |
+| 👆 **Tap a word** | In Reading passages, tap any unknown word: Gemini explains it in Uzbek *in the context of that sentence* (part of speech, meaning, English definition, example), and one tap saves it to your vocabulary. |
+| 📚 **Vocabulary** | Your personal word list: search by English word or Uzbek meaning, filter by *New / Learning / Known* (derived from the review schedule), look up any word by typing it, and review only your words. Every word is also a spaced-repetition card — no separate table. |
 | 🎚 **Learner level (A2–C1)** | Passage length, vocabulary and feedback adapt to the chosen level; grades stay on an absolute rubric so progress is comparable. |
 | 📈 **Progress** | XP, levels and 10 badges; an 84-day activity calendar; score trends per criterion (with a table view); your hardest cards. |
 | 🏆 **Weekly competition** | Opt-in leaderboard by weekly XP under a nickname — email and exercises are never shown. |
 | 🛠 **Admin panel** | For the owner only (`Admin:Emails`): signups, daily/weekly/monthly active users, exercises by type, reviews — aggregates and masked emails only. |
+| 🌐 **Three languages** | The whole interface, server error messages and word translations switch between Uzbek (official Latin orthography), Russian and English. Detected from the browser, switchable in the header and in Profile. |
 | 🔐 **Accounts** | Register / log in; your history and cards are private. Everything also works as a guest (nothing is saved). |
 
 ## Architecture
@@ -43,7 +45,7 @@ Browser (React + TypeScript, Vite, PWA — Vercel)
    ▼
 ASP.NET Core 10 Minimal API (Docker — Render)
    │  Endpoints/  auth · speaking/writing · reading/listening · review
-   │              profile · progress · leaderboard · admin · words
+   │              profile · progress · leaderboard · admin · words · vocab
    │  Services/   GeminiClient (model fallback, retry, strict JSON parsing)
    │              evaluation & generation services, AuthService,
    │              ReviewScheduler (SM-2), ReviewCardFactory,
@@ -67,6 +69,7 @@ Each of these is explained in more depth (in Uzbek) in [README.uz.md](README.uz.
 - **Opaque session tokens instead of JWT.** 32 random bytes, stored only as a SHA-256 hash. Logging out revokes the token immediately — impossible with a plain JWT. Passwords use ASP.NET Core's `PasswordHasher` (PBKDF2).
 - **Pure core logic.** `ReviewScheduler`, `ReviewCardFactory`, grading and parsing don't touch the database or HTTP, which is what makes them unit-testable.
 - **Streaks use the user's local day**, not UTC — a review at 01:00 in Tashkent must not count as "yesterday".
+- **Type-safe i18n without a library.** Each screen declares its texts once in Uzbek (`defineMessages(uz, { ru, en })`); the Russian and English objects must have the same shape, so a missing translation fails the TypeScript build. Plurals are plain functions (`ruPlural(n, 'слово', 'слова', 'слов')`). The server localizes its messages from the standard `Accept-Language` header; services return message keys, not text.
 - **XP is derived, not stored.** Levels, badges and the weekly leaderboard are computed from `Activities` and `ReviewLogs` by a pure `ProgressCalculator`. There is no XP counter to drift out of sync, and changing the rules re-scores history automatically.
 - **Privacy by default.** The leaderboard is opt-in and shows only a nickname; the admin panel shows aggregates and masked emails (`az***@mail.com`), never anyone's essays or cards.
 - **Charts without a chart library.** Small hand-built SVG charts with a colour-blind-checked palette, tooltips, keyboard navigation and a table view for accessibility.
@@ -75,7 +78,7 @@ Each of these is explained in more depth (in Uzbek) in [README.uz.md](README.uz.
 
 ## Quality
 
-- **Tests:** 60 backend unit tests (xUnit) — scheduler, streak across time zones, card creation, grading, strict parsing, token hashing, XP/levels/badges, leaderboard ranking, level-aware prompts — and 16 frontend tests with Vitest (charts, word tapping, API helpers).
+- **Tests:** 94 backend unit tests (xUnit) — scheduler, streak across time zones, card creation, grading, strict parsing, token hashing, XP/levels/badges, leaderboard ranking, level-aware prompts, vocabulary status, localized messages (every key in all three languages with matching placeholders) — and 29 frontend tests with Vitest (charts, word tapping, vocabulary search, plurals).
 - **CI:** GitHub Actions builds and tests the backend and type-checks, tests and builds the frontend on every push.
 - **Rate limiting:** 10 req/min per IP on login/register, 30 req/min on Gemini-backed endpoints; the real client IP is read from `X-Forwarded-For` behind Render's proxy (last hop only).
 - **Health check:** `GET /health` reports API and database status (503 if the DB is unreachable).
@@ -138,5 +141,6 @@ cd frontend/speaking-coach-web && npm test
 - [ ] Daily reminder via Web Push ("12 cards are waiting")
 - [ ] Integration tests with `WebApplicationFactory` + Testcontainers Postgres
 - [x] Progress page, XP/levels/badges, weekly leaderboard, admin panel
-- [x] Learner level (A2–C1) and tap-a-word flashcards
+- [x] Learner level (A2–C1), tap-a-word and a personal vocabulary
+- [x] Interface in Uzbek, Russian and English
 - [ ] Password reset

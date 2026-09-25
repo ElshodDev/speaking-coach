@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { LEVELS, apiJson, getLevel, setLevel, type Profile } from './api';
+import { LangSelect, common, useT } from './i18n';
+import { settingsMsg } from './locales/settings';
 
 /**
  * Daraja tanlash — mehmon uchun ham (brauzerda saqlanadi). Kirgan
@@ -13,13 +15,16 @@ export function Settings({ profile, onSaved }: { profile: Profile | null; onSave
   const [msg, setMsg] = useState('');
   const [isError, setIsError] = useState(false);
   const [busy, setBusy] = useState(false);
+  const t = useT(settingsMsg);
+  const cm = useT(common);
+  const levelHint = (id: string) => t.levelHints[id as keyof typeof t.levelHints];
 
   function pickLevel(id: string) {
     setLevelState(id);
     setLevel(id); // darhol keyingi mashqqa ta'sir qiladi
     if (!profile) {
       setIsError(false);
-      setMsg(`Daraja: ${id} ✅`);
+      setMsg(t.levelPicked(id));
     }
   }
 
@@ -35,11 +40,11 @@ export function Settings({ profile, onSaved }: { profile: Profile | null; onSave
         body: JSON.stringify({ displayName: name.trim() || null, level, showOnLeaderboard: optIn }),
       });
       setIsError(false);
-      setMsg('Saqlandi ✅');
+      setMsg(t.saved);
       onSaved({ ...profile, ...saved });
     } catch (err) {
       setIsError(true);
-      setMsg(err instanceof Error ? err.message : 'Xato yuz berdi');
+      setMsg(err instanceof Error ? err.message : cm.error);
     } finally {
       setBusy(false);
     }
@@ -47,21 +52,28 @@ export function Settings({ profile, onSaved }: { profile: Profile | null; onSave
 
   return (
     <form className="card stack" onSubmit={save}>
-      <h3>Sozlamalar</h3>
+      <h3>{t.title}</h3>
+
+      <label style={{ display: 'block' }}>
+        <span className="small" style={{ display: 'block', fontWeight: 600, marginBottom: 6 }}>
+          {t.interfaceLanguage}
+        </span>
+        <LangSelect full />
+      </label>
 
       <div>
         <div className="small" style={{ fontWeight: 600, marginBottom: 6 }}>
-          Ingliz tili darajangiz
+          {t.levelLabel}
         </div>
-        <div className="segmented" role="group" aria-label="Daraja">
+        <div className="segmented" role="group" aria-label={t.levelGroup}>
           {LEVELS.map((l) => (
-            <button key={l.id} type="button" aria-pressed={level === l.id} onClick={() => pickLevel(l.id)} title={l.hint}>
+            <button key={l.id} type="button" aria-pressed={level === l.id} onClick={() => pickLevel(l.id)} title={levelHint(l.id)}>
               {l.label}
             </button>
           ))}
         </div>
         <p className="muted tiny" style={{ marginTop: 6, marginBottom: 0 }}>
-          {LEVELS.find((l) => l.id === level)?.hint}. Matnlar uzunligi, savollar va izohlar shunga moslashadi.
+          {levelHint(level)}. {t.levelNote}
         </p>
       </div>
 
@@ -69,14 +81,14 @@ export function Settings({ profile, onSaved }: { profile: Profile | null; onSave
         <>
           <div>
             <label className="small" style={{ fontWeight: 600 }} htmlFor="nick">
-              Taxallus (musobaqada ko'rinadi)
+              {t.nickname}
             </label>
             <input
               id="nick"
               className="input"
               style={{ marginTop: 6 }}
               maxLength={30}
-              placeholder="masalan: Aziza_B2"
+              placeholder={t.nicknamePlaceholder}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -84,14 +96,14 @@ export function Settings({ profile, onSaved }: { profile: Profile | null; onSave
 
           <label className="switch small">
             <input type="checkbox" checked={optIn} onChange={(e) => setOptIn(e.target.checked)} />
-            Haftalik musobaqada qatnashaman
+            {t.leagueOptIn}
           </label>
           <p className="muted tiny" style={{ margin: 0 }}>
-            Reytingda faqat taxallus va haftalik XP ko'rinadi — email va mashqlaringiz hech kimga ko'rsatilmaydi.
+            {t.privacy}
           </p>
 
           <button type="submit" className="btn btn-primary" disabled={busy}>
-            Saqlash
+            {cm.save}
           </button>
         </>
       )}

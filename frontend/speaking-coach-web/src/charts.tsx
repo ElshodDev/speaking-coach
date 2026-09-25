@@ -3,6 +3,8 @@
 // Qoidalar: bitta o'q (hech qachon ikki xil shkala), 2px chiziqlar,
 // ≥2 seriyada doim legend, hover/klaviatura bilan tooltip, jadval ko'rinishi.
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from 'react';
+import { localeOf, useLang, useT } from './i18n';
+import { chartsMsg } from './locales/charts';
 
 function useWidth<T extends HTMLElement>(): [RefObject<T>, number] {
   const ref = useRef<T>(null);
@@ -73,6 +75,8 @@ export function LineChart({ series, points, title }: { series: LineSeries[]; poi
   const [ref, width] = useWidth<HTMLDivElement>();
   const [active, setActive] = useState<number | null>(null);
   const [showTable, setShowTable] = useState(false);
+  const t = useT(chartsMsg);
+  const locale = localeOf(useLang().lang);
 
   const height = 200;
   const m = { top: 12, right: 14, bottom: 24, left: 30 };
@@ -110,18 +114,18 @@ export function LineChart({ series, points, title }: { series: LineSeries[]; poi
         <svg
           height={height}
           role="img"
-          aria-label={`${title}: ${points.length} ta urinish. Chap/o'ng tugmalari bilan qiymatlarni ko'ring.`}
+          aria-label={t.lineAria(title, points.length)}
           tabIndex={0}
           onKeyDown={onKey}
           onBlur={() => setActive(null)}
           onPointerMove={(e) => onMove(e.clientX, e.currentTarget.getBoundingClientRect())}
           onPointerLeave={() => setActive(null)}
         >
-          {[0, 50, 100].map((t) => (
-            <g key={t}>
-              <line x1={m.left} x2={m.left + w} y1={y(t)} y2={y(t)} stroke={t === 0 ? 'var(--axis)' : 'var(--grid)'} strokeWidth={1} />
-              <text className="tick" x={m.left - 6} y={y(t) + 4} textAnchor="end">
-                {t}
+          {[0, 50, 100].map((v) => (
+            <g key={v}>
+              <line x1={m.left} x2={m.left + w} y1={y(v)} y2={y(v)} stroke={v === 0 ? 'var(--axis)' : 'var(--grid)'} strokeWidth={1} />
+              <text className="tick" x={m.left - 6} y={y(v) + 4} textAnchor="end">
+                {v}
               </text>
             </g>
           ))}
@@ -155,7 +159,7 @@ export function LineChart({ series, points, title }: { series: LineSeries[]; poi
         </svg>
         {active !== null && (
           <Tooltip x={x(active)} y={m.top} side={x(active) > width / 2 ? 'left' : 'right'}>
-            <div className="tt-title">{new Date(points[active].at).toLocaleDateString()}</div>
+            <div className="tt-title">{new Date(points[active].at).toLocaleDateString(locale)}</div>
             {series.map((s) => (
               <div className="tt-row" key={s.key}>
                 <i className="line-key" style={{ background: s.color }} />
@@ -167,14 +171,14 @@ export function LineChart({ series, points, title }: { series: LineSeries[]; poi
         )}
       </div>
       <button className="btn-link tiny" style={{ marginTop: 6 }} onClick={() => setShowTable((v) => !v)}>
-        {showTable ? 'Jadvalni yopish' : "Jadval ko'rinishi"}
+        {showTable ? t.hideTable : t.showTable}
       </button>
       {showTable && (
         <div className="table-wrap" style={{ marginTop: 6 }}>
           <table className="data">
             <thead>
               <tr>
-                <th>Sana</th>
+                <th>{t.date}</th>
                 {series.map((s) => (
                   <th key={s.key}>{s.label}</th>
                 ))}
@@ -183,7 +187,7 @@ export function LineChart({ series, points, title }: { series: LineSeries[]; poi
             <tbody>
               {points.map((p, i) => (
                 <tr key={i}>
-                  <td>{new Date(p.at).toLocaleDateString()}</td>
+                  <td>{new Date(p.at).toLocaleDateString(locale)}</td>
                   {series.map((s) => (
                     <td key={s.key}>{p.values[s.key]}</td>
                   ))}
@@ -228,7 +232,8 @@ export function toWeeks(days: CalendarDay[]): (CalendarDay | null)[][] {
   return weeks;
 }
 
-const WEEKDAYS = ['Du', '', 'Ch', '', 'Ju', '', 'Ya'];
+/** Kalendar chetidagi yorliqlar: joy tor, shuning uchun faqat Du, Ch, Ju, Ya. */
+export const calendarWeekdayLabels = (weekdays: readonly string[]) => weekdays.map((d, i) => (i % 2 === 0 ? d : ''));
 
 export function ActivityCalendar({ days }: { days: CalendarDay[] }) {
   const [ref, width] = useWidth<HTMLDivElement>();
@@ -240,6 +245,8 @@ export function ActivityCalendar({ days }: { days: CalendarDay[] }) {
   const svgW = labelW + weeks.length * (cell + gap);
   const svgH = 7 * (cell + gap);
   const activeDays = days.filter((d) => d.count > 0).length;
+  const t = useT(chartsMsg);
+  const locale = localeOf(useLang().lang);
 
   return (
     <div>
@@ -249,10 +256,10 @@ export function ActivityCalendar({ days }: { days: CalendarDay[] }) {
           height={svgH}
           style={{ width: svgW }}
           role="img"
-          aria-label={`Oxirgi ${days.length} kunda ${activeDays} kun faol bo'lgansiz`}
+          aria-label={t.calendarAria(days.length, activeDays)}
           onPointerLeave={() => setHover(null)}
         >
-          {WEEKDAYS.map((l, r) =>
+          {calendarWeekdayLabels(t.weekdays).map((l, r) =>
             l ? (
               <text key={r} className="tick" x={0} y={r * (cell + gap) + cell - 1}>
                 {l}
@@ -280,21 +287,21 @@ export function ActivityCalendar({ days }: { days: CalendarDay[] }) {
           <Tooltip x={Math.min(Math.max(hover.x, 70), width - 70)} y={hover.y}>
             <div className="tt-row">
               <strong>{hover.day.count}</strong>
-              <span className="name">harakat · {parseDay(hover.day.date).toLocaleDateString()}</span>
+              <span className="name">
+                {t.actions(hover.day.count)} · {parseDay(hover.day.date).toLocaleDateString(locale)}
+              </span>
             </div>
           </Tooltip>
         )}
       </div>
       <div className="spread tiny muted" style={{ marginTop: 8 }}>
-        <span>
-          {days.length} kunda {activeDays} kun faol
-        </span>
+        <span>{t.calendarSummary(days.length, activeDays)}</span>
         <span className="legend" style={{ margin: 0, flexWrap: 'nowrap', gap: 4, whiteSpace: 'nowrap' }}>
-          Kam
+          {t.less}
           {[0, 1, 2, 3, 4].map((l) => (
             <i key={l} className={`swatch heat-${l}`} />
           ))}
-          Ko'p
+          {t.more}
         </span>
       </div>
     </div>
@@ -307,6 +314,8 @@ export function ActivityCalendar({ days }: { days: CalendarDay[] }) {
 export function BarChart({ data, label }: { data: { date: string; value: number }[]; label: string }) {
   const [ref, width] = useWidth<HTMLDivElement>();
   const [active, setActive] = useState<number | null>(null);
+  const t = useT(chartsMsg);
+  const locale = localeOf(useLang().lang);
   const height = 160;
   const m = { top: 10, right: 6, bottom: 22, left: 28 };
   const w = Math.max(120, width - m.left - m.right);
@@ -326,12 +335,12 @@ export function BarChart({ data, label }: { data: { date: string; value: number 
 
   return (
     <div className="chart" ref={ref}>
-      <svg height={height} role="img" aria-label={`${label}, oxirgi ${data.length} kun`} onPointerLeave={() => setActive(null)}>
-        {[0, max / 2, max].map((t) => (
-          <g key={t}>
-            <line x1={m.left} x2={m.left + w} y1={y(t)} y2={y(t)} stroke={t === 0 ? 'var(--axis)' : 'var(--grid)'} strokeWidth={1} />
-            <text className="tick" x={m.left - 6} y={y(t) + 4} textAnchor="end">
-              {Number.isInteger(t) ? t : t.toFixed(1)}
+      <svg height={height} role="img" aria-label={t.barAria(label, data.length)} onPointerLeave={() => setActive(null)}>
+        {[0, max / 2, max].map((v) => (
+          <g key={v}>
+            <line x1={m.left} x2={m.left + w} y1={y(v)} y2={y(v)} stroke={v === 0 ? 'var(--axis)' : 'var(--grid)'} strokeWidth={1} />
+            <text className="tick" x={m.left - 6} y={y(v) + 4} textAnchor="end">
+              {Number.isInteger(v) ? v : v.toFixed(1)}
             </text>
           </g>
         ))}
@@ -358,7 +367,7 @@ export function BarChart({ data, label }: { data: { date: string; value: number 
           y={m.top}
           side={m.left + active * band + band / 2 > width / 2 ? 'left' : 'right'}
         >
-          <div className="tt-title">{parseDay(data[active].date).toLocaleDateString()}</div>
+          <div className="tt-title">{parseDay(data[active].date).toLocaleDateString(locale)}</div>
           <div className="tt-row">
             <strong>{data[active].value}</strong>
             <span className="name">{label}</span>

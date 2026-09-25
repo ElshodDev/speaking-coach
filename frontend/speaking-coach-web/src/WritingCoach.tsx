@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { STABILITY_RUNS, StabilityTable, computeStats, runSequentially, type DimensionStats } from './Stability';
 import { getLevel, loadHistory as fetchHistory, postJson, type HistoryItem } from './api';
 import { cardsMessage } from './cards';
+import { useT } from './i18n';
+import { stabilityMsg } from './locales/stability';
+import { writingMsg } from './locales/writing';
 import { Corrections, Feedback, GuestNote, HistoryList, ScoreBar, type CorrectionItem, type ScoreWithReasoning } from './ui';
 
 export const WRITING_TOPICS = [
@@ -48,6 +51,8 @@ export function WritingCoach({
   onCardsAdded?: () => void;
   onLogin?: () => void;
 }) {
+  const t = useT(writingMsg);
+  const ts = useT(stabilityMsg);
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
   const [topicIndex, setTopicIndex] = useState(0);
@@ -83,28 +88,29 @@ export function WritingCoach({
     const essay = lastSubmittedText;
     setIsTesting(true);
     setStability(null);
-    setTestProgress(`0/${STABILITY_RUNS} bajarildi...`);
+    setTestProgress(ts.progress(0, STABILITY_RUNS, 0));
 
     const { results, failed } = await runSequentially(
       STABILITY_RUNS,
       () => postEssay(essay, false),
       (done, failedSoFar) =>
-        setTestProgress(`${done}/${STABILITY_RUNS} bajarildi${failedSoFar ? ` (${failedSoFar} ta xato)` : ''}...`),
+        setTestProgress(ts.progress(done, STABILITY_RUNS, failedSoFar)),
     );
 
     setIsTesting(false);
     if (results.length === 0) {
-      setTestProgress("Birorta ham urinish muvaffaqiyatli bo'lmadi — keyinroq qayta urinib ko'ring.");
+      setTestProgress(ts.allFailed);
       return;
     }
 
     const evals = results.map((r) => r.evaluation);
     setStability({
       stats: [
-        computeStats('Vazifa', evals.map((e) => e.taskAchievement.score)),
-        computeStats("Bog'lanish", evals.map((e) => e.coherenceCohesion.score)),
-        computeStats('Grammatika', evals.map((e) => e.grammar.score)),
-        computeStats("Lug'at", evals.map((e) => e.vocabulary.score)),
+        // Yorliq sifatida kalit saqlanadi — matn chizishda joriy tilda olinadi.
+        computeStats('taskAchievement', evals.map((e) => e.taskAchievement.score)),
+        computeStats('coherence', evals.map((e) => e.coherenceCohesion.score)),
+        computeStats('grammar', evals.map((e) => e.grammar.score)),
+        computeStats('vocabulary', evals.map((e) => e.vocabulary.score)),
       ],
       failed,
     });
@@ -114,12 +120,12 @@ export function WritingCoach({
   async function submitEssay() {
     if (text.trim().length < MIN_CHARS) {
       setStatus('error');
-      setMessage(`Matn juda qisqa (kamida ${MIN_CHARS} belgi kerak)`);
+      setMessage(t.tooShort(MIN_CHARS));
       return;
     }
 
     setStatus('uploading');
-    setMessage("O'qilmoqda va baholanmoqda... (5-15 soniya)");
+    setMessage(t.evaluating);
     setResult(null);
     setStability(null);
     setTestProgress('');
@@ -134,7 +140,7 @@ export function WritingCoach({
       loadHistory(); // yangi urinish ro'yxatga qo'shilishi uchun tarixni qayta yuklaymiz
     } catch (err) {
       setStatus('error');
-      setMessage(err instanceof Error ? err.message : "Yuborib bo'lmadi");
+      setMessage(err instanceof Error ? err.message : t.sendFailed);
     }
   }
 
@@ -145,9 +151,9 @@ export function WritingCoach({
     <>
       <div className="card">
         <div className="spread">
-          <span className="muted small">Mavzu</span>
+          <span className="muted small">{t.topic}</span>
           <button className="btn-link small" disabled={isBusy} onClick={() => setTopicIndex((i) => (i + 1) % WRITING_TOPICS.length)}>
-            🔀 Boshqa mavzu
+            {t.otherTopic}
           </button>
         </div>
         <p style={{ fontSize: '1.1rem', fontWeight: 600, margin: '6px 0 14px' }}>{topic}</p>
@@ -159,18 +165,16 @@ export function WritingCoach({
           disabled={isBusy}
           maxLength={MAX_CHARS}
           rows={8}
-          placeholder="Shu mavzuda inglizcha yozing... (tavsiya: 80-200 so'z)"
-          aria-label="Insho matni"
+          placeholder={t.placeholder}
+          aria-label={t.essayAria}
         />
         <div className="spread muted tiny" style={{ margin: '6px 0 12px' }}>
-          <span>{words} so'z</span>
-          <span>
-            {text.length}/{MAX_CHARS} belgi
-          </span>
+          <span>{t.words(words)}</span>
+          <span>{t.chars(text.length, MAX_CHARS)}</span>
         </div>
 
         <button className="btn btn-primary block" onClick={submitEssay} disabled={isBusy}>
-          ✍️ Yuborish
+          {t.submit}
         </button>
         {message && (
           <p className={status === 'error' ? 'error small' : 'small'} style={{ marginTop: 10, marginBottom: 0 }}>
@@ -181,28 +185,31 @@ export function WritingCoach({
 
       {result && (
         <div className="card">
-          <h3>Baholash</h3>
-          <ScoreBar label="Vazifani bajarish" data={result.evaluation.taskAchievement} />
-          <ScoreBar label="Mantiqiy bog'lanish" data={result.evaluation.coherenceCohesion} />
-          <ScoreBar label="Grammatika" data={result.evaluation.grammar} />
-          <ScoreBar label="Lug'at boyligi" data={result.evaluation.vocabulary} />
+          <h3>{t.evaluation}</h3>
+          <ScoreBar label={t.criteria.taskAchievement} data={result.evaluation.taskAchievement} />
+          <ScoreBar label={t.criteria.coherence} data={result.evaluation.coherenceCohesion} />
+          <ScoreBar label={t.criteria.grammar} data={result.evaluation.grammar} />
+          <ScoreBar label={t.criteria.vocabulary} data={result.evaluation.vocabulary} />
 
           <Corrections items={result.evaluation.topCorrections} />
           <Feedback encouragement={result.evaluation.encouragement} nextFocus={result.evaluation.nextFocus} />
 
           <div style={{ borderTop: '1px solid var(--border)', marginTop: 14, paddingTop: 12 }}>
             <button className="btn btn-outline" onClick={runStabilityTest} disabled={isBusy || !lastSubmittedText}>
-              🔁 Barqarorlikni tekshirish ({STABILITY_RUNS}x)
+              {ts.checkButton(STABILITY_RUNS)}
             </button>
             <p className="muted tiny" style={{ marginTop: 6, marginBottom: 0 }}>
-              Aynan shu matnni yana {STABILITY_RUNS} marta baholatib, AI bahosi qanchalik o'zgarishini ko'rsatadi.
+              {t.stabilityHint(STABILITY_RUNS)}
             </p>
             {testProgress && <p className="small">{testProgress}</p>}
           </div>
         </div>
       )}
 
-      {stability && <StabilityTable stats={stability.stats} failed={stability.failed} />}
+      {stability && <StabilityTable
+          stats={stability.stats.map((s) => ({ ...s, label: t.short[s.label as keyof typeof t.short] ?? s.label }))}
+          failed={stability.failed}
+        />}
 
       <GuestNote loggedIn={loggedIn} onLogin={onLogin} />
       <HistoryList
@@ -214,8 +221,8 @@ export function WritingCoach({
             <>
               <div className="small">{prompt.topic}</div>
               <div className="small muted">
-                Vazifa {r.taskAchievement.score} · Bog'lanish {r.coherenceCohesion.score} · Grammatika {r.grammar.score} ·
-                Lug'at {r.vocabulary.score}
+                {t.short.taskAchievement} {r.taskAchievement.score} · {t.short.coherence} {r.coherenceCohesion.score} ·{' '}
+                {t.short.grammar} {r.grammar.score} · {t.short.vocabulary} {r.vocabulary.score}
               </div>
             </>
           );

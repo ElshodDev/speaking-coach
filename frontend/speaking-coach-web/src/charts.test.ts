@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { heatLevel, niceMax, parseDay, shortDate, toWeeks } from './charts';
+import { calendarWeekdayLabels, heatLevel, niceMax, parseDay, shortDate, toWeeks } from './charts';
+import { chartsMsg } from './locales/charts';
 
 describe('heatLevel', () => {
   it("harakatlar sonini 0–4 bosqichga bo'ladi", () => {
@@ -30,5 +31,22 @@ describe('parseDay', () => {
     const d = parseDay('2026-09-25');
     expect([d.getFullYear(), d.getMonth(), d.getDate()]).toEqual([2026, 8, 25]);
     expect(shortDate('2026-09-05')).toBe('5.09');
+  });
+});
+
+describe('calendarWeekdayLabels', () => {
+  it('faqat dushanba, chorshanba, juma va yakshanbani yozadi', () => {
+    expect(calendarWeekdayLabels(chartsMsg.uz.weekdays)).toEqual(['Du', '', 'Ch', '', 'Ju', '', 'Ya']);
+    expect(calendarWeekdayLabels(chartsMsg.ru.weekdays)).toEqual(['Пн', '', 'Ср', '', 'Пт', '', 'Вс']);
+  });
+});
+
+describe('chartsMsg', () => {
+  it('kalendar xulosasi uch tilda, rus koʻplik shakllari bilan', () => {
+    expect(chartsMsg.uz.calendarSummary(84, 12)).toBe('84 kunda 12 kun faol');
+    expect(chartsMsg.ru.calendarSummary(84, 21)).toBe('Активны 21 день из 84');
+    expect(chartsMsg.ru.calendarAria(84, 3)).toBe('За последние 84 дня вы были активны 3 дня');
+    expect(chartsMsg.en.calendarSummary(84, 1)).toBe('1 active day out of 84');
+    expect(chartsMsg.ru.actions(5)).toBe('действий');
   });
 });

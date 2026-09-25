@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { apiFetch, postJson, setToken } from './api';
+import { common, useT } from './i18n';
+import { authMsg } from './locales/auth';
 
 interface AuthResponse {
   token: string;
@@ -16,6 +18,8 @@ export function AuthPanel({ email, onChange }: { email: string | null; onChange:
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const t = useT(authMsg);
+  const cm = useT(common);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -27,7 +31,7 @@ export function AuthPanel({ email, onChange }: { email: string | null; onChange:
       setPassword('');
       onChange(data.email);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Xato yuz berdi');
+      setError(err instanceof Error ? err.message : cm.error);
     } finally {
       setBusy(false);
     }
@@ -46,11 +50,11 @@ export function AuthPanel({ email, onChange }: { email: string | null; onChange:
     return (
       <div className="card spread">
         <div className="break">
-          <div className="muted tiny">Hisob</div>
+          <div className="muted tiny">{t.account}</div>
           <strong>{email}</strong>
         </div>
         <button className="btn btn-outline" onClick={logout}>
-          Chiqish
+          {t.logout}
         </button>
       </div>
     );
@@ -58,23 +62,23 @@ export function AuthPanel({ email, onChange }: { email: string | null; onChange:
 
   return (
     <form className="card stack" onSubmit={submit}>
-      <div className="segmented" role="group" aria-label="Kirish turi">
+      <div className="segmented" role="group" aria-label={t.modeGroup}>
         <button type="button" aria-pressed={mode === 'register'} onClick={() => setMode('register')}>
-          Ro'yxatdan o'tish
+          {t.register}
         </button>
         <button type="button" aria-pressed={mode === 'login'} onClick={() => setMode('login')}>
-          Kirish
+          {t.login}
         </button>
       </div>
       <p className="muted small">
         {mode === 'register'
-          ? 'Hisob ochsangiz, natijalaringiz saqlanadi va xatolaringiz takrorlash kartalariga aylanadi.'
-          : 'Email va parolingiz bilan kiring.'}
+          ? t.registerHint
+          : t.loginHint}
       </p>
       <input
         className="input"
         type="email"
-        placeholder="Email"
+        placeholder={t.email}
         autoComplete="email"
         required
         value={formEmail}
@@ -83,7 +87,7 @@ export function AuthPanel({ email, onChange }: { email: string | null; onChange:
       <input
         className="input"
         type="password"
-        placeholder={mode === 'register' ? 'Parol (kamida 8 belgi)' : 'Parol'}
+        placeholder={mode === 'register' ? t.newPassword : t.password}
         autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
         required
         minLength={mode === 'register' ? 8 : undefined}
@@ -92,7 +96,7 @@ export function AuthPanel({ email, onChange }: { email: string | null; onChange:
       />
       {error && <p className="error small">{error}</p>}
       <button type="submit" className="btn btn-primary block" disabled={busy}>
-        {busy ? 'Kuting...' : mode === 'login' ? 'Kirish' : "Hisob ochish"}
+        {busy ? t.wait : mode === 'login' ? t.login : t.createAccount}
       </button>
     </form>
   );

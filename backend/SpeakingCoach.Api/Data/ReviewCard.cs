@@ -11,6 +11,13 @@ public enum ReviewCardKind
 
     /// <summary>Foydalanuvchi o'zi qo'shgan so'z yoki ibora.</summary>
     Manual = 2,
+
+    /// <summary>
+    /// Lug'at so'zi: matnda bosilgan yoki Lug'at bo'limida qidirilgan so'z,
+    /// ma'nosi AI tomonidan izohlangan. Bazada matn ("Word") sifatida
+    /// saqlanadi — yangi qiymat migratsiya talab qilmaydi.
+    /// </summary>
+    Word = 3,
 }
 
 /// <summary>

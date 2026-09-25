@@ -1,5 +1,6 @@
 // Backend bilan barcha muloqot shu fayl orqali o'tadi: manzil (API_BASE),
 // kirish tokeni va xato xabarlarini o'qish bir joyda.
+import { common, getLang, msg } from './i18n';
 
 // Lokalda .env fayl bo'lmasa, localhost:5000'ga tushadi. Vercel'da
 // VITE_API_URL environment variable orqali Render manziliga yo'naltiriladi.
@@ -36,6 +37,8 @@ export function apiFetch(path: string, init: RequestInit = {}): Promise<Response
   const headers = new Headers(init.headers);
   const token = getToken();
   if (token) headers.set('Authorization', `Bearer ${token}`);
+  // Server xato xabarlarini va so'z tarjimasini shu tilda qaytaradi.
+  headers.set('Accept-Language', getLang());
   return fetch(`${API_BASE}${path}`, { ...init, headers });
 }
 
@@ -44,7 +47,7 @@ export async function apiJson<T>(path: string, init: RequestInit = {}): Promise<
   const response = await apiFetch(path, init);
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new Error(body.error ?? body.detail ?? `Server xatosi: ${response.status}`);
+    throw new Error(body.error ?? body.detail ?? msg(common).serverError(response.status));
   }
   return response.json();
 }
@@ -78,10 +81,10 @@ export async function loadHistory(kind: string): Promise<HistoryItem[]> {
 // Mehmon uchun ham ishlashi kerak, shuning uchun brauzerda saqlanadi;
 // kirgan foydalanuvchida esa serverdagi profil bilan sinxronlanadi.
 export const LEVELS = [
-  { id: 'A2', label: 'A2', hint: "Boshlang'ich" },
-  { id: 'B1', label: 'B1', hint: "O'rta" },
-  { id: 'B2', label: 'B2', hint: "O'rtadan yuqori" },
-  { id: 'C1', label: 'C1', hint: 'Yuqori' },
+  { id: 'A2', label: 'A2' },
+  { id: 'B1', label: 'B1' },
+  { id: 'B2', label: 'B2' },
+  { id: 'C1', label: 'C1' },
 ] as const;
 
 const LEVEL_KEY = 'speakingCoach.level';

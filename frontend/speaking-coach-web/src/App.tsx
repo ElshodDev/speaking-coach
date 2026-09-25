@@ -9,7 +9,11 @@ import { PageHeader } from './ui';
 import { Progress } from './Progress';
 import { Admin } from './Admin';
 import { Settings } from './Settings';
+import { Vocab } from './Vocab';
 import { apiJson, getToken, setLevel, setToken, type Profile as ProfileData } from './api';
+import { common, LangSelect, useT } from './i18n';
+import { appMsg } from './locales/app';
+import { homeMsg } from './locales/home';
 
 /**
  * Oddiy "hash" marshrutlash: manzil #/review, #/practice/writing kabi.
@@ -36,15 +40,20 @@ function useRoute(): [string, (route: string) => void] {
   return [route, go];
 }
 
+// Pastki menyuda 5 ta bo'lim — telefonda undan ko'pi siqilib qoladi.
+// Profil tepadagi avatar tugmasida (ko'p ilovalardagi odatiy joy).
 const NAV = [
-  { id: 'home', icon: '🏠', label: 'Asosiy' },
-  { id: 'review', icon: '🔁', label: 'Takrorlash' },
-  { id: 'practice', icon: '🎯', label: 'Mashqlar' },
-  { id: 'progress', icon: '📈', label: 'Natijalar' },
-  { id: 'profile', icon: '👤', label: 'Profil' },
+  { id: 'home', icon: '🏠' },
+  { id: 'review', icon: '🔁' },
+  { id: 'vocab', icon: '📚' },
+  { id: 'practice', icon: '🎯' },
+  { id: 'progress', icon: '📈' },
 ] as const;
 
 function App() {
+  const t = useT(appMsg);
+  const tHome = useT(homeMsg);
+  const c = useT(common);
   const [route, go] = useRoute();
   const [email, setEmail] = useState<string | null>(null);
   const [stats, setStats] = useState<ReviewStats | null>(null);
@@ -110,14 +119,31 @@ function App() {
   const toLogin = () => go('profile');
 
   let page;
-  if (section === 'review') {
+  if (section === 'review' && sub === 'vocab') {
+    page = (
+      <Review
+        key={`vocab-${userKey}`}
+        scope="vocab"
+        loggedIn={loggedIn}
+        onChanged={refreshStats}
+        onLogin={toLogin}
+        onBack={() => go('vocab')}
+      />
+    );
+  } else if (section === 'review') {
     page = <Review key={userKey} loggedIn={loggedIn} onChanged={refreshStats} onLogin={toLogin} />;
+  } else if (section === 'vocab') {
+    page = <Vocab key={userKey} loggedIn={loggedIn} onLogin={toLogin} onChanged={refreshStats} go={go} />;
   } else if (section === 'practice' && exercise) {
     const common = { loggedIn, onCardsAdded: refreshStats, onLogin: toLogin };
     const k = `${sub}-${userKey}`;
     page = (
       <>
-        <PageHeader title={`${exercise.emoji} ${exercise.title}`} subtitle={exercise.blurb} onBack={() => go('practice')} />
+        <PageHeader
+          title={`${exercise.emoji} ${tHome.exercises[exercise.kind].title}`}
+          subtitle={tHome.exercises[exercise.kind].blurb}
+          onBack={() => go('practice')}
+        />
         {exercise.kind === 'speaking' && <Recorder key={k} {...common} />}
         {exercise.kind === 'writing' && <WritingCoach key={k} {...common} />}
         {(exercise.kind === 'reading' || exercise.kind === 'listening') && (
@@ -128,7 +154,7 @@ function App() {
   } else if (section === 'practice') {
     page = (
       <>
-        <PageHeader title="Mashqlar" subtitle="Bittasini tanlang — har biri 3-5 daqiqa oladi." />
+        <PageHeader title={t.practiceTitle} subtitle={t.practiceSubtitle} />
         <ExerciseTiles onOpen={(kind: ExerciseKind) => go(`practice/${kind}`)} />
       </>
     );
@@ -151,8 +177,16 @@ function App() {
     page = <Home email={email} stats={stats} go={go} />;
   }
 
-  // Admin sahifasiga Profil orqali kiriladi — menyuda ham Profil belgilanadi.
-  const activeNav = section === 'admin' ? 'profile' : NAV.some((n) => n.id === section) ? section : 'home';
+  // Profil va Admin menyuda yo'q — ularda menyuning hech biri belgilanmaydi.
+  const onProfile = section === 'profile' || section === 'admin';
+  const activeNav = onProfile
+    ? null
+    : section === 'review' && sub === 'vocab'
+      ? 'vocab'
+      : NAV.some((n) => n.id === section)
+        ? section
+        : 'home';
+  const initial = (profile?.displayName || email || '?').charAt(0).toUpperCase();
 
   return (
     <>
@@ -160,27 +194,38 @@ function App() {
         <header className="topbar">
           <a className="brand" href="#/">
             <img src="/icons/icon-192.png" alt="" />
-            Speaking Coach
+            <span className="brand-name">Speaking Coach</span>
           </a>
-          {loggedIn ? (
-            stats && <span className="badge">🔥 {stats.streakDays} kun</span>
-          ) : (
-            <button className="btn-link" onClick={toLogin}>
-              Kirish
-            </button>
-          )}
+          <div className="topbar-right">
+            <LangSelect />
+            {loggedIn && stats && <span className="badge streak">{t.streak(stats.streakDays)}</span>}
+            {loggedIn ? (
+              <button
+                className="avatar"
+                aria-label={t.profile}
+                aria-current={onProfile ? 'page' : undefined}
+                onClick={() => go('profile')}
+              >
+                {initial}
+              </button>
+            ) : (
+              <button className="btn-link" onClick={toLogin}>
+                {c.login}
+              </button>
+            )}
+          </div>
         </header>
 
-        <nav className="nav" aria-label="Asosiy menyu">
+        <nav className="nav" aria-label={t.navLabel}>
           <div className="nav-inner">
             {NAV.map((n) => (
               <button key={n.id} aria-current={activeNav === n.id ? 'page' : undefined} onClick={() => go(n.id)}>
                 <span className="icon" aria-hidden>
                   {n.icon}
                 </span>
-                {n.label}
+                {t.nav[n.id]}
                 {n.id === 'review' && stats && stats.due > 0 && (
-                  <span className="dot" aria-label={`${stats.due} ta karta kutyapti`}>
+                  <span className="dot" aria-label={t.dueDot(stats.due)}>
                     {stats.due}
                   </span>
                 )}
@@ -208,9 +253,10 @@ function Profile({
   onProfileSaved: (p: ProfileData) => void;
   go: (route: string) => void;
 }) {
+  const t = useT(appMsg);
   return (
     <>
-      <PageHeader title="Profil" />
+      <PageHeader title={t.profile} />
       <AuthPanel email={email} onChange={onAuthChange} />
       {/* key: profil serverdan kelganda forma qiymatlari yangilansin */}
       {(!email || profile) && <Settings key={profile ? 'user' : 'guest'} profile={profile} onSaved={onProfileSaved} />}
@@ -218,33 +264,29 @@ function Profile({
       {profile?.isAdmin && (
         <div className="card cta">
           <div>
-            <strong>🛠 Admin panel</strong>
-            <div className="muted small">Foydalanuvchilar, faollik va grafiklar</div>
+            <strong>{t.adminTitle}</strong>
+            <div className="muted small">{t.adminText}</div>
           </div>
           <button className="btn btn-primary" onClick={() => go('admin')}>
-            Ochish
+            {t.open}
           </button>
         </div>
       )}
 
       <div className="card">
-        <h3>📱 Telefonga o'rnatish</h3>
-        <p className="muted small">
-          Ilovani bosh ekranga qo'shsangiz, alohida ilova kabi ochiladi va sekin internetda ham tez yuklanadi.
-        </p>
+        <h3>{t.installTitle}</h3>
+        <p className="muted small">{t.installText}</p>
         <ul className="small" style={{ paddingLeft: 18, margin: 0 }}>
           <li>
-            <strong>Android (Chrome):</strong> ⋮ menyu → "Ilovani o'rnatish" yoki "Bosh ekranga qo'shish"
+            <strong>{t.installAndroid}</strong> {t.installAndroidSteps}
           </li>
           <li>
-            <strong>iPhone (Safari):</strong> "Ulashish" tugmasi → "Bosh ekranga"
+            <strong>{t.installIphone}</strong> {t.installIphoneSteps}
           </li>
         </ul>
       </div>
 
-      <div className="card soft small muted">
-        Ranglar telefoningiz sozlamasiga moslashadi: tungi rejim yoqilgan bo'lsa, ilova ham qorong'i bo'ladi.
-      </div>
+      <div className="card soft small muted">{t.themeNote}</div>
     </>
   );
 }

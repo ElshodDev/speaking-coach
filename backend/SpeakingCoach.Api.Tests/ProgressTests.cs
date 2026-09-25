@@ -73,7 +73,7 @@ public class BadgeAndStreakTests
     {
         var badges = ProgressCalculator.Badges(Array.Empty<ActivityFact>(), 0, 0);
 
-        Assert.False(badges.Any(b => b.Earned));
+        Assert.DoesNotContain(badges, b => b.Earned);
         Assert.Equal(10, badges.Count);
     }
 

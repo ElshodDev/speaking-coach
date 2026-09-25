@@ -21,7 +21,7 @@ public static class SpeakingWritingEndpoints
         {
             if (!request.HasFormContentType)
             {
-                return Results.BadRequest(new { error = "multipart/form-data kutilgan edi" });
+                return Results.BadRequest(request.Error("speaking.multipart"));
             }
 
             var form = await request.ReadFormAsync();
@@ -31,18 +31,18 @@ public static class SpeakingWritingEndpoints
 
             if (audioFile is null || audioFile.Length == 0)
             {
-                return Results.BadRequest(new { error = "audio fayl topilmadi yoki bo'sh" });
+                return Results.BadRequest(request.Error("speaking.no_audio"));
             }
 
             if (string.IsNullOrWhiteSpace(topic))
             {
-                return Results.BadRequest(new { error = "topic maydoni bo'sh bo'lishi mumkin emas" });
+                return Results.BadRequest(request.Error("topic.empty"));
             }
 
             const long maxBytes = 10 * 1024 * 1024; // 10 MB
             if (audioFile.Length > maxBytes)
             {
-                return Results.BadRequest(new { error = "Fayl hajmi 10MB dan katta" });
+                return Results.BadRequest(request.Error("speaking.too_big"));
             }
 
             var submissionId = Guid.NewGuid();
@@ -100,12 +100,10 @@ public static class SpeakingWritingEndpoints
             }
             catch (Exception ex)
             {
-                // Setup bosqichida tuzatish tezroq bo'lishi uchun xato sababini
-                // ochiq qoldiryapmiz (masalan noto'g'ri API kalit). Real
-                // foydalanuvchilar bilan ishga tushirganda buni generic xabarga
-                // almashtiring.
+                // Texnik sabab (masalan, Gemini band) faqat logga yoziladi;
+                // foydalanuvchiga — uning tilidagi tushunarli xabar.
                 logger.LogError(ex, "Submission {Id}: xato", submissionId);
-                return Results.Problem(detail: ex.Message, statusCode: 502);
+                return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);
             }
         }).RequireRateLimiting("ai");
 
@@ -124,12 +122,12 @@ public static class SpeakingWritingEndpoints
         {
             if (string.IsNullOrWhiteSpace(body.Topic))
             {
-                return Results.BadRequest(new { error = "topic maydoni bo'sh bo'lishi mumkin emas" });
+                return Results.BadRequest(request.Error("topic.empty"));
             }
 
             if (string.IsNullOrWhiteSpace(body.Text))
             {
-                return Results.BadRequest(new { error = "text maydoni bo'sh bo'lishi mumkin emas" });
+                return Results.BadRequest(request.Error("text.empty"));
             }
 
             // Juda qisqa matn Gemini'dan mazmunli baholash olishga yetarli emas;
@@ -138,11 +136,11 @@ public static class SpeakingWritingEndpoints
             const int maxChars = 5000;
             if (body.Text.Length < minChars)
             {
-                return Results.BadRequest(new { error = $"Matn juda qisqa (kamida {minChars} belgi kerak)" });
+                return Results.BadRequest(request.Error("text.too_short", minChars));
             }
             if (body.Text.Length > maxChars)
             {
-                return Results.BadRequest(new { error = $"Matn juda uzun (ko'pi bilan {maxChars} belgi)" });
+                return Results.BadRequest(request.Error("text.too_long", maxChars));
             }
 
             var submissionId = Guid.NewGuid();
@@ -178,7 +176,7 @@ public static class SpeakingWritingEndpoints
             catch (Exception ex)
             {
                 logger.LogError(ex, "Writing submission {Id}: xato", submissionId);
-                return Results.Problem(detail: ex.Message, statusCode: 502);
+                return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);
             }
         }).RequireRateLimiting("ai");
 

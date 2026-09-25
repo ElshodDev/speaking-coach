@@ -2,10 +2,13 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { apiFetch, apiJson, postJson } from './api';
 import { isSpeechSupported, sleep, speakAsync, stopSpeaking } from './speech';
 import { PageHeader } from './ui';
+import { common, msg, useT } from './i18n';
+import { reviewMsg } from './locales/review';
+import { parseNote } from './Vocab';
 
 export interface ReviewCard {
   id: string;
-  kind: 'Correction' | 'Question' | 'Manual';
+  kind: 'Correction' | 'Question' | 'Manual' | 'Word';
   source: string | null;
   front: string;
   back: string;
@@ -24,30 +27,19 @@ export interface ReviewStats {
 // server "bugun" va "ketma-ket kunlar"ni mahalliy vaqt bo'yicha hisoblaydi.
 export const statsPath = () => `/api/review/stats?tzOffsetMinutes=${new Date().getTimezoneOffset()}`;
 
+// Baho tugmalari: matnlari (label/hint) reviewMsg.grades'da, shu tartibda.
 const GRADES = [
-  { value: 0, label: 'Yana', hint: '10 daqiqadan keyin', cls: 'g-again' },
-  { value: 1, label: 'Qiyin', hint: 'tezroq qaytadi', cls: 'g-hard' },
-  { value: 2, label: 'Yaxshi', hint: 'oraliq uzayadi', cls: 'g-good' },
-  { value: 3, label: 'Oson', hint: 'ancha keyin', cls: 'g-easy' },
+  { value: 0, cls: 'g-again' },
+  { value: 1, cls: 'g-hard' },
+  { value: 2, cls: 'g-good' },
+  { value: 3, cls: 'g-easy' },
 ];
 
-const SOURCE_LABEL: Record<string, string> = {
-  Speaking: 'Gapirish',
-  Writing: 'Yozish',
-  Reading: "O'qish",
-  Listening: 'Tinglash',
-};
+type ReviewText = (typeof reviewMsg)['uz'];
 
-/** Kartaning savol qismi uchun sarlavha — karta turiga qarab. */
-export function promptFor(kind: ReviewCard['kind']): string {
-  switch (kind) {
-    case 'Correction':
-      return "Bu iborani qanday to'g'ri aytasiz?";
-    case 'Question':
-      return 'Savolga javob bering:';
-    default:
-      return "Ma'nosini eslang:";
-  }
+/** Kartaning savol qismi uchun sarlavha — karta turiga qarab (joriy tilda). */
+export function promptFor(kind: ReviewCard['kind'], t: ReviewText = msg(reviewMsg)): string {
+  return t.prompt[kind] ?? t.prompt.Manual;
 }
 
 /** "Yo'lda" rejimida ovoz chiqarib o'qiladigan matnlar (inglizcha, chunki ovoz inglizcha). */
@@ -57,6 +49,11 @@ export function spokenParts(card: ReviewCard): { question: string; answer: strin
       return { question: `How would you correct this? ${card.front}`, answer: `Better: ${card.back}. ${card.note}` };
     case 'Question':
       return { question: card.front, answer: `Answer: ${card.back}. ${card.note}` };
+    case 'Word': {
+      // Ovoz inglizcha — o'zbekcha tarjima o'rniga inglizcha ta'rif va misol o'qiladi.
+      const { rest } = parseNote(card.note);
+      return { question: card.front, answer: rest || card.back };
+    }
     default:
       return { question: card.front, answer: `${card.back}. ${card.note}` };
   }
@@ -66,11 +63,19 @@ export function Review({
   loggedIn,
   onChanged,
   onLogin,
+  scope,
+  onBack,
 }: {
   loggedIn: boolean;
   onChanged: () => void;
   onLogin?: () => void;
+  /** 'vocab' — faqat Lug'at so'zlari (Lug'at bo'limidan ochilganda). */
+  scope?: 'vocab';
+  onBack?: () => void;
 }) {
+  const t = useT(reviewMsg);
+  const c = useT(common);
+  const scopeQuery = scope ? `&scope=${scope}` : '';
   const [cards, setCards] = useState<ReviewCard[]>([]);
   const [stats, setStats] = useState<ReviewStats | null>(null);
   const [revealed, setRevealed] = useState(false);
@@ -81,16 +86,16 @@ export function Review({
     if (!loggedIn) return;
     try {
       const [due, s] = await Promise.all([
-        apiJson<ReviewCard[]>('/api/review/due?limit=50'),
+        apiJson<ReviewCard[]>(`/api/review/due?limit=50${scopeQuery}`),
         apiJson<ReviewStats>(statsPath()),
       ]);
       setCards(due);
       setStats(s);
       setError('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Kartalarni yuklab bo'lmadi");
+      setError(err instanceof Error ? err.message : msg(reviewMsg).loadError);
     }
-  }, [loggedIn]);
+  }, [loggedIn, scopeQuery]);
 
   useEffect(() => {
     load();
@@ -99,30 +104,36 @@ export function Review({
   if (!loggedIn) {
     return (
       <>
-        <PageHeader title="Takrorlash" subtitle="Xatolaringizni esda qolguncha takrorlang." />
+        <PageHeader title={t.title} subtitle={t.guestSubtitle} />
         <div className="card">
           <div className="steps">
             <div className="step">
-              <div>Mashqlardagi xatolaringiz <strong>avtomatik ravishda kartalarga</strong> aylanadi.</div>
-            </div>
-            <div className="step">
               <div>
-                Har bir karta <strong>unutish arafasida</strong> qaytadi: 1 kun → 3 kun → 1 hafta... (oraliqli
-                takrorlash).
+                {t.guestStep1Before}
+                <strong>{t.guestStep1Strong}</strong>
+                {t.guestStep1After}
               </div>
             </div>
             <div className="step">
               <div>
-                <strong>Yo'lda rejimi</strong> — avtobusda quloqchin bilan, qo'l tegizmasdan takrorlang.
+                {t.guestStep2Before}
+                <strong>{t.guestStep2Strong}</strong>
+                {t.guestStep2After}
+              </div>
+            </div>
+            <div className="step">
+              <div>
+                <strong>{t.guestStep3Strong}</strong>
+                {t.guestStep3After}
               </div>
             </div>
           </div>
           <p className="muted small" style={{ marginTop: 14 }}>
-            Kartalar hisobingizda saqlanadi — foydalanish uchun yuqorida tizimga kiring.
+            {t.guestNote}
           </p>
           {onLogin && (
             <button className="btn btn-primary block" onClick={onLogin}>
-              Kirish yoki hisob ochish
+              {t.loginOrSignup}
             </button>
           )}
         </div>
@@ -142,14 +153,14 @@ export function Review({
       setStats(await apiJson<ReviewStats>(statsPath()));
       onChanged();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Xato yuz berdi');
+      setError(err instanceof Error ? err.message : c.error);
     } finally {
       setBusy(false);
     }
   }
 
   async function remove() {
-    if (!current || !confirm("Bu kartani butunlay o'chirasizmi?")) return;
+    if (!current || !confirm(t.confirmDelete)) return;
     await apiFetch(`/api/review/cards/${current.id}`, { method: 'DELETE' });
     setRevealed(false);
     setCards((prev) => prev.slice(1));
@@ -157,37 +168,43 @@ export function Review({
     onChanged();
   }
 
+  const vocab = scope === 'vocab';
+
   return (
     <>
-      <PageHeader title="Takrorlash" />
-      {stats && <StatsBar stats={stats} />}
+      {vocab ? (
+        <PageHeader title={t.vocabTitle} subtitle={t.vocabSubtitle} onBack={onBack} backLabel={t.vocabBack} />
+      ) : (
+        <PageHeader title={t.title} />
+      )}
+      {stats && !vocab && <StatsBar stats={stats} />}
       {error && <p className="error small">{error}</p>}
 
       {current ? (
         <div className="card">
           <div className="spread muted tiny">
             <span>
-              {promptFor(current.kind)}
-              {current.source && SOURCE_LABEL[current.source] && (
+              {promptFor(current.kind, t)}
+              {current.source && t.source[current.source] && (
                 <span className="badge" style={{ marginLeft: 6 }}>
-                  {SOURCE_LABEL[current.source]}
+                  {t.source[current.source]}
                 </span>
               )}
             </span>
-            <span>{cards.length} ta qoldi</span>
+            <span>{t.left(cards.length)}</span>
           </div>
           <p className="flash-front">
             {current.kind === 'Correction' ? <s style={{ textDecorationColor: 'var(--danger)' }}>{current.front}</s> : current.front}
           </p>
           {isSpeechSupported() && (
             <button className="btn-link small" onClick={() => { stopSpeaking(); speakAsync(spokenParts(current).question); }}>
-              🔊 Eshitish
+              {c.listen}
             </button>
           )}
 
           {!revealed ? (
             <button className="btn btn-primary block" style={{ marginTop: 16 }} onClick={() => setRevealed(true)}>
-              Javobni ko'rsatish
+              {t.showAnswer}
             </button>
           ) : (
             <>
@@ -196,71 +213,85 @@ export function Review({
                 {current.note && <p className="muted small">{current.note}</p>}
                 {isSpeechSupported() && (
                   <button className="btn-link small" onClick={() => { stopSpeaking(); speakAsync(spokenParts(current).answer); }}>
-                    🔊 Eshitish
+                    {c.listen}
                   </button>
                 )}
               </div>
               <p className="muted tiny" style={{ margin: '12px 0 6px' }}>
-                Qanchalik esladingiz?
+                {t.howWell}
               </p>
               <div className="grades">
                 {GRADES.map((g) => (
                   <button key={g.value} className={`btn ${g.cls}`} onClick={() => grade(g.value)} disabled={busy}>
-                    {g.label}
-                    <small>{g.hint}</small>
+                    {t.grades[g.value].label}
+                    <small>{t.grades[g.value].hint}</small>
                   </button>
                 ))}
               </div>
             </>
           )}
           <button className="btn-link quiet tiny" style={{ marginTop: 14 }} onClick={remove}>
-            Kartani o'chirish
+            {t.deleteCard}
           </button>
         </div>
+      ) : vocab ? (
+        stats && (
+          <div className="card center">
+            <div style={{ fontSize: '2.2rem' }}>✅</div>
+            <p style={{ fontSize: '1.1rem', fontWeight: 600, margin: '4px 0' }}>{t.vocabDoneTitle}</p>
+            <p className="muted small" style={{ margin: '0 0 12px' }}>
+              {t.vocabDoneText}
+            </p>
+            {onBack && (
+              <button className="btn btn-outline" onClick={onBack}>
+                {t.backToVocab}
+              </button>
+            )}
+          </div>
+        )
       ) : (
         stats && (
           <div className="card center">
             <div style={{ fontSize: '2.2rem' }}>{stats.total === 0 ? '🗂' : '✅'}</div>
             <p style={{ fontSize: '1.1rem', fontWeight: 600, margin: '4px 0' }}>
-              {stats.total === 0 ? "Hali kartalar yo'q" : "Barakalla! Hozircha takrorlanadigan karta yo'q"}
+              {stats.total === 0 ? t.noCardsTitle : t.allDoneTitle}
             </p>
             <p className="muted small" style={{ margin: 0 }}>
-              {stats.total === 0
-                ? "Gapirish, Yozish, O'qish yoki Tinglash mashqini bajaring — xatolaringiz shu yerga tushadi. Yoki pastda o'zingiz qo'shing."
-                : "Kartalar eslash vaqti kelganda shu yerda paydo bo'ladi."}
+              {stats.total === 0 ? t.noCardsText : t.allDoneText}
             </p>
           </div>
         )
       )}
 
-      <CommuteMode dueCards={cards} />
-      <AddCardForm onAdded={() => { load(); onChanged(); }} />
+      <CommuteMode dueCards={cards} scopeQuery={scopeQuery} />
+      {!vocab && <AddCardForm onAdded={() => { load(); onChanged(); }} />}
     </>
   );
 }
 
 function StatsBar({ stats }: { stats: ReviewStats }) {
+  const t = useT(reviewMsg);
   const pct = Math.min(100, Math.round((stats.reviewedToday / stats.dailyGoal) * 100));
   return (
     <div className="card">
       <div className="stats">
         <div className="stat">
           <div className="value">🔥 {stats.streakDays}</div>
-          <div className="label">kun ketma-ket</div>
+          <div className="label">{t.streak}</div>
         </div>
         <div className="stat">
           <div className="value">{stats.due}</div>
-          <div className="label">navbatda</div>
+          <div className="label">{t.due}</div>
         </div>
         <div className="stat">
           <div className="value">{stats.total}</div>
-          <div className="label">jami karta</div>
+          <div className="label">{t.total}</div>
         </div>
       </div>
       <div className="spread tiny muted" style={{ marginTop: 12 }}>
         <span>
-          Bugungi maqsad: {Math.min(stats.reviewedToday, stats.dailyGoal)}/{stats.dailyGoal}
-          {stats.reviewedToday >= stats.dailyGoal ? ' — bajarildi 🎉' : ''}
+          {t.dailyGoal} {Math.min(stats.reviewedToday, stats.dailyGoal)}/{stats.dailyGoal}
+          {stats.reviewedToday >= stats.dailyGoal ? t.goalDone : ''}
         </span>
       </div>
       <div className="progress" style={{ marginTop: 6 }}>
@@ -278,7 +309,8 @@ function StatsBar({ stats }: { stats: ReviewStats }) {
  * Bu rejim kartalarni BAHOLAMAYDI: tinglash "eslay oldimmi?" degan savolga
  * javob bermaydi, shuning uchun jadvalni buzmaslik uchun faqat takrorlash.
  */
-function CommuteMode({ dueCards }: { dueCards: ReviewCard[] }) {
+function CommuteMode({ dueCards, scopeQuery }: { dueCards: ReviewCard[]; scopeQuery: string }) {
+  const t = useT(reviewMsg);
   const [running, setRunning] = useState(false);
   const [status, setStatus] = useState('');
   const [pauseSec, setPauseSec] = useState(4);
@@ -299,7 +331,7 @@ function CommuteMode({ dueCards }: { dueCards: ReviewCard[] }) {
   async function start() {
     const run = ++runRef.current;
     setRunning(true);
-    setStatus('Kartalar tayyorlanmoqda...');
+    setStatus(t.preparing);
 
     // Ekran o'chib qolsa, ko'p telefonlarda ovoz ham to'xtaydi — imkon
     // bo'lsa ekranni yoniq ushlab turamiz (Screen Wake Lock API).
@@ -315,13 +347,13 @@ function CommuteMode({ dueCards }: { dueCards: ReviewCard[] }) {
     let list = dueCards;
     if (list.length === 0) {
       try {
-        list = await apiJson<ReviewCard[]>('/api/review/cards?limit=30');
+        list = await apiJson<ReviewCard[]>(`/api/review/cards?limit=30${scopeQuery}`);
       } catch {
         list = [];
       }
     }
     if (list.length === 0) {
-      setStatus("Tinglash uchun hali kartalar yo'q.");
+      setStatus(t.noCardsToListen);
       finish(run);
       return;
     }
@@ -338,7 +370,7 @@ function CommuteMode({ dueCards }: { dueCards: ReviewCard[] }) {
       await sleep(1500);
     }
     if (runRef.current === run) {
-      setStatus(`Tugadi — ${list.length} ta karta tinglandi. 👏`);
+      setStatus(t.finished(list.length));
       finish(run);
     }
   }
@@ -354,28 +386,27 @@ function CommuteMode({ dueCards }: { dueCards: ReviewCard[] }) {
     runRef.current++;
     stopSpeaking();
     setRunning(false);
-    setStatus("To'xtatildi.");
+    setStatus(t.stopped);
     wakeLockRef.current?.release().catch(() => undefined);
     wakeLockRef.current = null;
   }
 
   return (
     <div className="card soft">
-      <h3>🎧 Yo'lda rejimi</h3>
-      <p className="muted small">
-        Quloqchinni taqing: savol o'qiladi, o'ylash uchun pauza, keyin javob. Qo'l tegizish shart emas. Telefon
-        ekrani yoniq tursin — ba'zi telefonlarda ekran o'chsa, ovoz ham to'xtaydi.
-      </p>
+      <h3>{t.commuteTitle}</h3>
+      <p className="muted small">{t.commuteText}</p>
       <div className="row">
         <button className={`btn ${running ? 'btn-danger' : 'btn-teal'}`} onClick={running ? stop : start}>
-          {running ? "⏹ To'xtatish" : '▶️ Boshlash'}
+          {running ? t.stop : t.start}
         </button>
         <label className="small">
-          O'ylash vaqti{' '}
+          {t.thinkTime}{' '}
           <select className="input" value={pauseSec} onChange={(e) => setPauseSec(Number(e.target.value))} disabled={running}>
-            <option value={2}>2 soniya</option>
-            <option value={4}>4 soniya</option>
-            <option value={7}>7 soniya</option>
+            {[2, 4, 7].map((n) => (
+              <option key={n} value={n}>
+                {t.seconds(n)}
+              </option>
+            ))}
           </select>
         </label>
       </div>
@@ -389,6 +420,8 @@ function CommuteMode({ dueCards }: { dueCards: ReviewCard[] }) {
 }
 
 function AddCardForm({ onAdded }: { onAdded: () => void }) {
+  const t = useT(reviewMsg);
+  const c = useT(common);
   const [open, setOpen] = useState(false);
   const [front, setFront] = useState('');
   const [back, setBack] = useState('');
@@ -402,33 +435,33 @@ function AddCardForm({ onAdded }: { onAdded: () => void }) {
       setFront('');
       setBack('');
       setNote('');
-      setMsg("Qo'shildi ✅");
+      setMsg(t.added);
       onAdded();
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : 'Xato yuz berdi');
+      setMsg(err instanceof Error ? err.message : c.error);
     }
   }
 
   if (!open) {
     return (
       <button className="btn-link" style={{ marginTop: 16 }} onClick={() => setOpen(true)}>
-        ➕ O'zim karta qo'shaman
+        {t.addOwn}
       </button>
     );
   }
 
   return (
     <form className="card stack" onSubmit={submit}>
-      <h3>Yangi karta</h3>
-      <input className="input" required maxLength={500} placeholder="So'z yoki ibora (masalan: take for granted)" value={front} onChange={(e) => setFront(e.target.value)} />
-      <input className="input" required maxLength={500} placeholder="Ma'nosi (masalan: qadriga yetmaslik)" value={back} onChange={(e) => setBack(e.target.value)} />
-      <input className="input" maxLength={1000} placeholder="Misol gap (ixtiyoriy)" value={note} onChange={(e) => setNote(e.target.value)} />
+      <h3>{t.newCard}</h3>
+      <input className="input" required maxLength={500} placeholder={t.frontPh} value={front} onChange={(e) => setFront(e.target.value)} />
+      <input className="input" required maxLength={500} placeholder={t.backPh} value={back} onChange={(e) => setBack(e.target.value)} />
+      <input className="input" maxLength={1000} placeholder={t.notePh} value={note} onChange={(e) => setNote(e.target.value)} />
       <div className="row">
         <button type="submit" className="btn btn-primary">
-          Qo'shish
+          {t.add}
         </button>
         <button type="button" className="btn-link" onClick={() => setOpen(false)}>
-          Yopish
+          {c.close}
         </button>
         {msg && <span className="small">{msg}</span>}
       </div>

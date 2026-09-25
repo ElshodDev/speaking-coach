@@ -1,15 +1,19 @@
 import type { ReviewStats } from './Review';
+import { useT } from './i18n';
+import { homeMsg } from './locales/home';
 
 export type ExerciseKind = 'speaking' | 'writing' | 'reading' | 'listening';
 
-export const EXERCISES: { kind: ExerciseKind; emoji: string; title: string; blurb: string }[] = [
-  { kind: 'speaking', emoji: '🎙', title: 'Gapirish', blurb: 'Mavzuda gapiring — ravonlik, grammatika, lug\'at bahosi' },
-  { kind: 'writing', emoji: '✍️', title: 'Yozish', blurb: 'Insho yozing — IELTS uslubidagi baho va tuzatishlar' },
-  { kind: 'reading', emoji: '📖', title: "O'qish", blurb: 'Har safar yangi matn va 4 ta savol' },
-  { kind: 'listening', emoji: '🎧', title: 'Tinglash', blurb: 'Nutqni tinglang va savollarga javob bering' },
+/** Mashq turlari; nomi va tavsifi tanlangan tilda homeMsg.exercises'dan olinadi. */
+export const EXERCISES: { kind: ExerciseKind; emoji: string }[] = [
+  { kind: 'speaking', emoji: '🎙' },
+  { kind: 'writing', emoji: '✍️' },
+  { kind: 'reading', emoji: '📖' },
+  { kind: 'listening', emoji: '🎧' },
 ];
 
 export function ExerciseTiles({ onOpen }: { onOpen: (kind: ExerciseKind) => void }) {
+  const t = useT(homeMsg);
   return (
     <div className="tiles">
       {EXERCISES.map((e) => (
@@ -17,8 +21,8 @@ export function ExerciseTiles({ onOpen }: { onOpen: (kind: ExerciseKind) => void
           <span className="emoji" aria-hidden>
             {e.emoji}
           </span>
-          <strong>{e.title}</strong>
-          <span className="muted">{e.blurb}</span>
+          <strong>{t.exercises[e.kind].title}</strong>
+          <span className="muted">{t.exercises[e.kind].blurb}</span>
         </button>
       ))}
     </div>
@@ -40,54 +44,43 @@ export function Home({
   stats: ReviewStats | null;
   go: (route: string) => void;
 }) {
+  const t = useT(homeMsg);
   const open = (kind: ExerciseKind) => go(`practice/${kind}`);
 
   if (!email) {
     return (
       <>
         <div className="card hero">
-          <h1>Ingliz tilini har kuni 10 daqiqada</h1>
-          <p>
-            Gapiring, yozing, o'qing va tinglang. Sun'iy intellekt xatolaringizni topadi, ilova esa ularni esda
-            qolguncha qaytarib turadi.
-          </p>
+          <h1>{t.heroTitle}</h1>
+          <p>{t.heroText}</p>
           <div className="row">
             <button className="btn btn-primary" onClick={() => open('speaking')}>
-              Sinab ko'rish
+              {t.tryIt}
             </button>
             <button className="btn-link" style={{ color: '#fff' }} onClick={() => go('profile')}>
-              Hisob ochish →
+              {t.createAccount}
             </button>
           </div>
         </div>
 
         <div className="card">
-          <h2>Qanday ishlaydi</h2>
+          <h2>{t.howItWorks}</h2>
           <div className="steps">
-            <div className="step">
-              <div>
-                <strong>Mashq qiling.</strong>{' '}
-                <span className="muted">Gapiring, insho yozing, matn o'qing yoki nutq tinglang.</span>
+            {[
+              [t.step1Title, t.step1],
+              [t.step2Title, t.step2],
+              [t.step3Title, t.step3],
+            ].map(([title, text]) => (
+              <div className="step" key={title}>
+                <div>
+                  <strong>{title}</strong> <span className="muted">{text}</span>
+                </div>
               </div>
-            </div>
-            <div className="step">
-              <div>
-                <strong>AI baholaydi.</strong>{' '}
-                <span className="muted">Ball, aniq tuzatishlar va keyingi qadam bo'yicha maslahat.</span>
-              </div>
-            </div>
-            <div className="step">
-              <div>
-                <strong>Takrorlab eslab qoling.</strong>{' '}
-                <span className="muted">
-                  Xatolaringiz kartalarga aylanadi va unutish arafasida qaytadi — yo'lda quloqchin bilan ham.
-                </span>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
-        <h2 style={{ marginTop: 24 }}>Mashqlar</h2>
+        <h2 style={{ marginTop: 24 }}>{t.practice}</h2>
         <ExerciseTiles onOpen={open} />
       </>
     );
@@ -99,8 +92,8 @@ export function Home({
   return (
     <>
       <div className="page-header">
-        <h1>Salom, {name}! 👋</h1>
-        <p>{stats && stats.reviewedToday >= stats.dailyGoal ? 'Bugungi maqsad bajarildi — zo\'r!' : 'Bugun ham ozgina mashq qilamiz.'}</p>
+        <h1>{t.hello(name)}</h1>
+        <p>{stats && stats.reviewedToday >= stats.dailyGoal ? t.goalDone : t.goalTodo}</p>
       </div>
 
       {stats && (
@@ -108,17 +101,17 @@ export function Home({
           <div className="stats">
             <div className="stat">
               <div className="value">🔥 {stats.streakDays}</div>
-              <div className="label">kun ketma-ket</div>
+              <div className="label">{t.streakLabel}</div>
             </div>
             <div className="stat">
               <div className="value">
                 {Math.min(stats.reviewedToday, stats.dailyGoal)}/{stats.dailyGoal}
               </div>
-              <div className="label">bugungi maqsad</div>
+              <div className="label">{t.goalLabel}</div>
             </div>
             <div className="stat">
               <div className="value">{stats.total}</div>
-              <div className="label">jami karta</div>
+              <div className="label">{t.totalLabel}</div>
             </div>
           </div>
           <div className="progress" style={{ marginTop: 14 }}>
@@ -130,30 +123,28 @@ export function Home({
       {stats && stats.due > 0 ? (
         <div className="card cta">
           <div>
-            <strong>{stats.due} ta karta kutyapti</strong>
-            <div className="muted small">Eslash vaqti keldi — 2-3 daqiqa yetadi.</div>
+            <strong>{t.dueTitle(stats.due)}</strong>
+            <div className="muted small">{t.dueText}</div>
           </div>
           <button className="btn btn-primary" onClick={() => go('review')}>
-            Takrorlash
+            {t.review}
           </button>
         </div>
       ) : (
         stats && (
-          <div className="card soft small">
-            ✅ Hozircha takrorlanadigan karta yo'q. Mashq qiling — xatolaringiz shu yerga tushadi.
-          </div>
+          <div className="card soft small">{t.nothingDue}</div>
         )
       )}
 
       <button className="card cta" style={{ width: '100%', font: 'inherit', color: 'inherit', textAlign: 'left', cursor: 'pointer' }} onClick={() => go('progress')}>
         <div>
-          <strong>🏆 Haftalik musobaqa va nishonlar</strong>
-          <div className="muted small">Darajangiz, XP va faollik kalendaringiz</div>
+          <strong>{t.leagueTitle}</strong>
+          <div className="muted small">{t.leagueText}</div>
         </div>
         <span aria-hidden>→</span>
       </button>
 
-      <h2 style={{ marginTop: 24 }}>Mashqlar</h2>
+      <h2 style={{ marginTop: 24 }}>{t.practice}</h2>
       <ExerciseTiles onOpen={open} />
     </>
   );

@@ -1,0 +1,67 @@
+import { defineMessages, enPlural, ruPlural } from '../i18n';
+
+/** App.tsx — menyu, tepadagi panel, Mashqlar va Profil sahifalari. */
+export const appMsg = defineMessages(
+  {
+    nav: { home: 'Asosiy', review: 'Takrorlash', vocab: 'Lugʻat', practice: 'Mashqlar', progress: 'Natijalar' },
+    navLabel: 'Asosiy menyu',
+    dueDot: (n: number) => `${n} ta karta kutmoqda`,
+    streak: (n: number) => `🔥 ${n} kun`,
+    profile: 'Profil',
+    practiceTitle: 'Mashqlar',
+    practiceSubtitle: 'Birini tanlang — har biri 3–5 daqiqa vaqt oladi.',
+    adminTitle: '🛠 Admin panel',
+    adminText: 'Foydalanuvchilar, faollik va grafiklar',
+    open: 'Ochish',
+    installTitle: '📱 Telefonga oʻrnatish',
+    installText:
+      'Ilovani bosh ekranga qoʻshsangiz, u alohida ilova kabi ochiladi va sekin internetda ham tez yuklanadi.',
+    installAndroid: 'Android (Chrome):',
+    installAndroidSteps: '⋮ menyu → “Ilovani oʻrnatish” yoki “Bosh ekranga qoʻshish”',
+    installIphone: 'iPhone (Safari):',
+    installIphoneSteps: '“Ulashish” tugmasi → “Bosh ekranga”',
+    themeNote: 'Ranglar telefoningiz sozlamasiga moslashadi: tungi rejim yoqilgan boʻlsa, ilova ham qorongʻi boʻladi.',
+  },
+  {
+    ru: {
+      nav: { home: 'Главная', review: 'Повтор', vocab: 'Словарь', practice: 'Практика', progress: 'Прогресс' },
+      navLabel: 'Главное меню',
+      dueDot: (n: number) => `${n} ${ruPlural(n, 'карточка ждёт', 'карточки ждут', 'карточек ждут')}`,
+      streak: (n: number) => `🔥 ${n} ${ruPlural(n, 'день', 'дня', 'дней')}`,
+      profile: 'Профиль',
+      practiceTitle: 'Упражнения',
+      practiceSubtitle: 'Выберите одно — каждое занимает 3–5 минут.',
+      adminTitle: '🛠 Панель администратора',
+      adminText: 'Пользователи, активность и графики',
+      open: 'Открыть',
+      installTitle: '📱 Установить на телефон',
+      installText:
+        'Добавьте приложение на главный экран — оно будет открываться как отдельное приложение и быстро загружаться даже при слабом интернете.',
+      installAndroid: 'Android (Chrome):',
+      installAndroidSteps: 'меню ⋮ → «Установить приложение» или «Добавить на главный экран»',
+      installIphone: 'iPhone (Safari):',
+      installIphoneSteps: 'кнопка «Поделиться» → «На экран „Домой“»',
+      themeNote: 'Цвета подстраиваются под настройки телефона: если включена тёмная тема, приложение тоже станет тёмным.',
+    },
+    en: {
+      nav: { home: 'Home', review: 'Review', vocab: 'Words', practice: 'Practice', progress: 'Progress' },
+      navLabel: 'Main menu',
+      dueDot: (n: number) => `${n} ${enPlural(n, 'card', 'cards')} waiting`,
+      streak: (n: number) => `🔥 ${n} ${enPlural(n, 'day', 'days')}`,
+      profile: 'Profile',
+      practiceTitle: 'Practice',
+      practiceSubtitle: 'Pick one — each takes 3–5 minutes.',
+      adminTitle: '🛠 Admin panel',
+      adminText: 'Users, activity and charts',
+      open: 'Open',
+      installTitle: '📱 Install on your phone',
+      installText:
+        'Add the app to your home screen: it opens like a separate app and loads quickly even on a slow connection.',
+      installAndroid: 'Android (Chrome):',
+      installAndroidSteps: '⋮ menu → “Install app” or “Add to Home screen”',
+      installIphone: 'iPhone (Safari):',
+      installIphoneSteps: '“Share” button → “Add to Home Screen”',
+      themeNote: 'Colours follow your phone settings: if dark mode is on, the app turns dark too.',
+    },
+  },
+);

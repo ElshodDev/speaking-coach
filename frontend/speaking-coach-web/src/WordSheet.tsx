@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { getLevel, postJson } from './api';
 import { splitSentences, isSpeechSupported, speakAsync, stopSpeaking } from './speech';
+import { common, msg, useT } from './i18n';
+import { wordSheetMsg } from './locales/wordSheet';
 
 interface WordExplanation {
   word: string;
   partOfSpeech: string;
-  meaningUz: string;
+  /** Interfeys tilidagi qisqa tarjima (uz/ru) yoki oddiy inglizcha sinonim (en). */
+  translation: string;
   definitionEn: string;
   example: string;
 }
@@ -69,10 +72,16 @@ export function TappableText({ text, onWord }: { text: string; onWord: (word: st
   );
 }
 
-/** Pastdan chiqadigan oyna: so'z ma'nosi va "kartaga qo'shish". */
+/**
+ * Pastdan chiqadigan oyna: so'z ma'nosi va "Lug'atga qo'shish". Lug'atga
+ * qo'shilgan so'z avtomatik ravishda takrorlash navbatiga ham tushadi.
+ * sentence bo'sh bo'lsa (Lug'at bo'limida qo'lda yozilgan so'z) — eng
+ * ko'p ishlatiladigan ma'nosi so'raladi.
+ */
 export function WordSheet({
   word,
   sentence,
+  source,
   loggedIn,
   onClose,
   onLogin,
@@ -80,20 +89,23 @@ export function WordSheet({
 }: {
   word: string;
   sentence: string;
+  source?: 'Reading' | 'Listening';
   loggedIn: boolean;
   onClose: () => void;
   onLogin?: () => void;
   onCardsAdded?: () => void;
 }) {
+  const t = useT(wordSheetMsg);
+  const c = useT(common);
   const [data, setData] = useState<WordExplanation | null>(null);
   const [error, setError] = useState('');
-  const [saved, setSaved] = useState('');
+  const [saved, setSaved] = useState<{ ok: boolean; text: string } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     postJson<WordExplanation>('/api/words/explain', { word, sentence, level: getLevel() })
       .then((d) => !cancelled && setData(d))
-      .catch((e) => !cancelled && setError(e instanceof Error ? e.message : "Ma'noni olib bo'lmadi"));
+      .catch((e) => !cancelled && setError(e instanceof Error ? e.message : msg(wordSheetMsg).loadError));
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
     return () => {
@@ -102,38 +114,41 @@ export function WordSheet({
     };
   }, [word, sentence, onClose]);
 
-  async function addCard() {
+  async function addToVocab() {
     if (!data) return;
     try {
-      await postJson('/api/review/cards', {
-        front: data.word,
-        back: data.meaningUz,
-        note: `${data.definitionEn} — ${data.example}`,
+      await postJson('/api/vocab', {
+        word: data.word,
+        translation: data.translation,
+        partOfSpeech: data.partOfSpeech,
+        definitionEn: data.definitionEn,
+        example: data.example,
+        source,
       });
-      setSaved("Kartaga qo'shildi ✅ — Takrorlash bo'limida chiqadi.");
+      setSaved({ ok: true, text: t.added });
       onCardsAdded?.();
     } catch (e) {
-      setSaved(e instanceof Error ? e.message : 'Xato yuz berdi');
+      setSaved({ ok: false, text: e instanceof Error ? e.message : c.error });
     }
   }
 
   return (
     <div className="sheet-backdrop" onClick={onClose}>
-      <div className="sheet" role="dialog" aria-modal="true" aria-label={`"${word}" so'zining ma'nosi`} onClick={(e) => e.stopPropagation()}>
+      <div className="sheet" role="dialog" aria-modal="true" aria-label={t.dialogLabel(word)} onClick={(e) => e.stopPropagation()}>
         <div className="spread">
           <h2 style={{ margin: 0 }}>{data?.word ?? word}</h2>
-          <button className="btn-link" onClick={onClose} aria-label="Yopish">
+          <button className="btn-link" onClick={onClose} aria-label={c.close}>
             ✕
           </button>
         </div>
-        {!data && !error && <p className="muted small">Ma'nosi qidirilmoqda...</p>}
+        {!data && !error && <p className="muted small">{t.loading}</p>}
         {error && <p className="error small">{error}</p>}
         {data && (
           <div className="stack" style={{ marginTop: 8 }}>
             <div>
               <span className="badge">{data.partOfSpeech}</span>
             </div>
-            <p style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>{data.meaningUz}</p>
+            <p style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>{data.translation}</p>
             <p className="muted small" style={{ margin: 0 }}>
               {data.definitionEn}
             </p>
@@ -143,22 +158,26 @@ export function WordSheet({
             <div className="row">
               {isSpeechSupported() && (
                 <button className="btn btn-outline" onClick={() => { stopSpeaking(); speakAsync(`${data.word}. ${data.example}`); }}>
-                  🔊 Eshitish
+                  {c.listen}
                 </button>
               )}
               {loggedIn ? (
-                <button className="btn btn-primary" onClick={addCard} disabled={!!saved && saved.includes('✅')}>
-                  ➕ Kartaga qo'shish
+                <button className="btn btn-primary" onClick={addToVocab} disabled={saved?.ok}>
+                  {t.add}
                 </button>
               ) : (
                 onLogin && (
                   <button className="btn btn-primary" onClick={onLogin}>
-                    Saqlash uchun kiring
+                    {t.loginToSave}
                   </button>
                 )
               )}
             </div>
-            {saved && <p className="small" style={{ margin: 0 }}>{saved}</p>}
+            {saved && (
+              <p className={`small ${saved.ok ? 'success' : 'error'}`} style={{ margin: 0 }}>
+                {saved.text}
+              </p>
+            )}
           </div>
         )}
       </div>

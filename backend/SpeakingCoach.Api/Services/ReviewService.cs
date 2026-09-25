@@ -61,22 +61,37 @@ public class ReviewService
         return added;
     }
 
-    public Task<List<ReviewCard>> GetDueAsync(Guid userId, int limit)
+    /// <summary>vocabOnly: faqat lug'at so'zlari ("So'zlarni takrorlash" tugmasi uchun).</summary>
+    public Task<List<ReviewCard>> GetDueAsync(Guid userId, int limit, bool vocabOnly = false)
     {
         var now = DateTime.UtcNow;
-        return _db.ReviewCards
-            .Where(c => c.UserId == userId && c.DueAtUtc <= now)
+        return Cards(userId, vocabOnly)
+            .Where(c => c.DueAtUtc <= now)
             .OrderBy(c => c.DueAtUtc)
             .Take(limit)
             .ToListAsync();
     }
 
-    public Task<List<ReviewCard>> GetRecentAsync(Guid userId, int limit) =>
-        _db.ReviewCards
-            .Where(c => c.UserId == userId)
+    public Task<List<ReviewCard>> GetRecentAsync(Guid userId, int limit, bool vocabOnly = false) =>
+        Cards(userId, vocabOnly)
             .OrderByDescending(c => c.CreatedAtUtc)
             .Take(limit)
             .ToListAsync();
+
+    /// <summary>Lug'at: foydalanuvchining barcha so'z kartalari, yangilari birinchi.</summary>
+    public Task<List<ReviewCard>> GetVocabAsync(Guid userId, int limit) =>
+        Cards(userId, vocabOnly: true)
+            .OrderByDescending(c => c.CreatedAtUtc)
+            .Take(limit)
+            .ToListAsync();
+
+    private IQueryable<ReviewCard> Cards(Guid userId, bool vocabOnly)
+    {
+        var query = _db.ReviewCards.Where(c => c.UserId == userId);
+        return vocabOnly
+            ? query.Where(c => c.Kind == ReviewCardKind.Word || c.Kind == ReviewCardKind.Manual)
+            : query;
+    }
 
     /// <summary>Kartani baholaydi va keyingi takrorlash vaqtini belgilaydi. Karta topilmasa — null.</summary>
     public async Task<ReviewCard?> GradeAsync(Guid userId, Guid cardId, ReviewGrade grade)
