@@ -1,381 +1,126 @@
 # AI Speaking Coach
 
+🇬🇧 English · 🇺🇿 [O'zbekcha](README.uz.md)
+
 [![CI](https://github.com/ElshodDev/speaking-coach/actions/workflows/ci.yml/badge.svg)](https://github.com/ElshodDev/speaking-coach/actions/workflows/ci.yml)
 
-Ingliz tili o'rganuvchilar uchun to'rtta mashq turi va ularni **eslab
-qolishga** yordam beradigan takrorlash tizimi:
+An English-practice app for Uzbek-speaking learners (B1–B2). You **speak, write, read and listen**; an LLM (Google Gemini) grades your work against a rubric and points out concrete mistakes — and every mistake becomes a **spaced-repetition flashcard** that comes back right before you would forget it, including in a hands-free **commute mode** for earphones.
 
-- **Gapirish** — mikrofondan yozib gapiring → Google Gemini bitta
-  chaqiruvda transkripsiya qiladi va rubrika bo'yicha (ravonlik,
-  grammatika, lug'at boyligi) baholaydi.
-- **Yozish** — mavzuda insho yozing → Gemini uni IELTS Writing'ga o'xshash
-  rubrika bo'yicha (vazifani bajarish, mantiqiy bog'lanish, grammatika,
-  lug'at boyligi) baholaydi.
-- **O'qish** — Gemini har safar yangi matn va 4 ta test savoli yaratadi;
-  javoblarni server tekshiradi va har bir savolga izoh beradi.
-- **Tinglash** — xuddi shunday, lekin matnni brauzer ovoz chiqarib o'qiydi
-  (Web Speech API), matnning o'zi javob berilgandan keyin ko'rinadi.
+**Live demo:** https://speaking-coach-theta.vercel.app
+(The backend runs on a free tier and sleeps after 15 minutes of inactivity — the first request may take 30–60 s.)
 
-- **Takrorlash** — mashqlardagi xatolaringiz (tuzatishlar, noto'g'ri
-  javoblar) avtomatik ravishda kartalarga aylanadi va **oraliqli takrorlash**
-  (spaced repetition) bilan "unutish arafasida" qayta ko'rsatiladi. Kunlik
-  maqsad va ketma-ket kunlar (🔥 streak). O'zingiz ham so'z qo'sha olasiz.
-- **🎧 Yo'lda rejimi** — avtobusda yoki yurganda, quloqchin bilan: karta
-  savoli o'qiladi → o'ylash uchun pauza → javob. Qo'l tegizish shart emas.
-- **Telefonga o'rnatish (PWA)** — brauzerda "Bosh ekranga qo'shish" bilan
-  oddiy ilova kabi ochiladi, sekin internetda ham tez yuklanadi.
+| Home | Review card | Writing feedback | Dark mode |
+|---|---|---|---|
+| ![Home](docs/screenshots/home-user.png) | ![Review](docs/screenshots/review.png) | ![Writing](docs/screenshots/writing-result.png) | ![Dark mode](docs/screenshots/review-dark.png) |
 
-Tizimga kirgan foydalanuvchining har bir urinishi va kartalari ma'lumotlar
-bazasida saqlanadi va faqat o'ziga ko'rinadi. Kirmasdan ham barcha mashqlar
-ishlaydi — faqat natija tarixga yozilmaydi.
+## Features
 
-**Live demo**: https://speaking-coach-theta.vercel.app
-(Backend bepul tarifda ishlaydi — 15 daqiqa foydalanilmasa "uxlaydi",
-birinchi so'rov ~30-60 soniya uyg'onish vaqtini olishi mumkin.)
+| | |
+|---|---|
+| 🎙 **Speaking** | Record yourself on a topic. Gemini transcribes the audio **and** grades fluency, grammar and vocabulary in a single multimodal call. |
+| ✍️ **Writing** | Write an essay; graded on an IELTS-style rubric (task achievement, coherence & cohesion, grammar, vocabulary) with exact corrections. |
+| 📖 **Reading** | Gemini generates a fresh passage and 4 multiple-choice questions every time. Answers are checked by the server, not the LLM. |
+| 🎧 **Listening** | Same, but the browser reads the script aloud (Web Speech API); the text is revealed only after you answer. |
+| 🔁 **Spaced repetition** | Corrections and wrong answers automatically become flashcards scheduled with SM-2 (1 day → 3 days → ~1 week …). Daily goal and 🔥 streak. |
+| 🚌 **Commute mode** | Hands-free review with earphones: question → thinking pause → answer. Keeps the screen awake with the Wake Lock API. |
+| 📱 **Installable (PWA)** | Add to home screen; opens like a native app and loads offline. Bottom navigation on phones, dark mode follows the system. |
+| 🔐 **Accounts** | Register / log in; your history and cards are private. Everything also works as a guest (nothing is saved). |
 
-## Arxitektura
+## Architecture
 
 ```
-Brauzer (React + TypeScript, Vercel)
-   │  Authorization: Bearer <token>  (kirgan bo'lsa)
+Browser (React + TypeScript, Vite, PWA — Vercel)
+   │  Authorization: Bearer <token>
    ▼
-Backend (ASP.NET Core Minimal API, Render, Docker)
-   │  Endpoints/   — auth, speaking/writing, reading/listening, review
-   │  Services/    — GeminiClient (fallback + retry + qat'iy JSON),
-   │                 baholash/yaratish servislari, AuthService,
-   │                 ReviewScheduler (SM-2), ReviewCardFactory
-   │  Rate limiting (IP bo'yicha), /health
+ASP.NET Core 10 Minimal API (Docker — Render)
+   │  Endpoints/  auth · speaking/writing · reading/listening · review
+   │  Services/   GeminiClient (model fallback, retry, strict JSON parsing)
+   │              evaluation & generation services, AuthService,
+   │              ReviewScheduler (SM-2), ReviewCardFactory
+   │  Rate limiting per IP · /health
    ▼
-Google Gemini
-   - Speaking: audio → transkripsiya + baholash (bitta so'rov)
-   - Writing:  matn → baholash
-   - Reading/Listening: matn + savollar + to'g'ri javoblarni YARATISH
-   │
-   ▼
-PostgreSQL (Neon)
-   Activities       — barcha urinishlar (Type + UserId bo'yicha)
-   Users, Sessions  — hisoblar va kirish sessiyalari
-   PendingExercises — javob kutayotgan Reading/Listening mashqlari
-   ReviewCards      — takrorlash kartalari (keyingi takrorlash vaqti bilan)
-   ReviewLogs       — har bir takrorlash (kunlik maqsad va streak uchun)
+Google Gemini                         PostgreSQL (Neon) via EF Core
+ - speaking: audio → transcript+grade  Activities, Users, Sessions,
+ - writing: text → grade               PendingExercises, ReviewCards,
+ - reading/listening: generate         ReviewLogs
 ```
 
-Nega bitta so'rov (Speaking uchun): Gemini audio faylni to'g'ridan-to'g'ri
-qabul qiladi, shuning uchun alohida Speech-to-Text (masalan Whisper)
-qatlami shart emas — bu arxitekturani soddalashtiradi va bepul tier so'rov
-limitini tejaydi.
+## Engineering decisions
 
-Nega `GeminiClient` alohida klass: barcha servislar Gemini API'ga bir xil
-tarzda murojaat qiladi (model band bo'lsa zaxira modelga o'tish, 503/429'da
-qayta urinish, javobni qat'iy tekshirib o'qish) — bu mantiq faqat bir joyda
-yozilgan.
+Each of these is explained in more depth (in Uzbek) in [README.uz.md](README.uz.md) and in code comments.
 
-## To'liq bepul stack
+- **One Gemini call for speaking.** Gemini accepts audio directly, so there is no separate speech-to-text step — a simpler architecture and one API call instead of two.
+- **LLM output is never trusted blindly.** Replies are parsed with `RespectRequiredConstructorParameters` and `RespectNullableAnnotations`, then range-checked. The default `System.Text.Json` behaviour silently turned a missing `"score"` into `0` and saved it — a real bug this project hit and fixed.
+- **The LLM generates, code grades.** For Reading/Listening the answer key is known, so grading is deterministic C#. The key is kept server-side (`PendingExercises`) and never sent to the browser.
+- **Measuring LLM grading stability.** A built-in "stability test" re-grades the same input 5× (`?save=false`, sequential to respect rate limits) and shows min/max/spread per criterion — the honest answer to "how reliable is an AI grader?".
+- **Opaque session tokens instead of JWT.** 32 random bytes, stored only as a SHA-256 hash. Logging out revokes the token immediately — impossible with a plain JWT. Passwords use ASP.NET Core's `PasswordHasher` (PBKDF2).
+- **Pure core logic.** `ReviewScheduler`, `ReviewCardFactory`, grading and parsing don't touch the database or HTTP, which is what makes them unit-testable.
+- **Streaks use the user's local day**, not UTC — a review at 01:00 in Tashkent must not count as "yesterday".
+- **One `Activities` table with `jsonb` payloads** for all exercise types, so adding a new type needs no new table.
+- **No UI framework.** A small design system of CSS variables (`src/styles.css`) gives consistent components and dark mode for free; routes are hash-based (`#/review`) so the phone's Back button works.
 
-| Qism | Xizmat | Nega bepul |
-|---|---|---|
-| LLM (transkripsiya, baholash, mashq yaratish) | Google Gemini | AI Studio API kaliti, kredit karta shart emas |
-| Ovoz chiqarib o'qish (Tinglash, Yo'lda rejimi) | Brauzerning Web Speech API'si | Brauzerga o'rnatilgan, API kaliti kerak emas |
-| CI (avtomatik testlar) | GitHub Actions | Ochiq (public) repolar uchun bepul |
-| Ma'lumotlar bazasi | Neon Postgres | 0.5GB bepul, kredit karta shart emas |
-| Backend hosting | Render | Web Service bepul tarifi, kredit karta shart emas (15 daq. faolsizlikdan keyin uxlaydi) |
-| Frontend hosting | Vercel | Bepul tarif, static/SPA loyihalar uchun yetarli |
+## Quality
 
-## Lokal ishga tushirish
+- **Tests:** 28 backend unit tests (xUnit) — scheduler, streak across time zones, card creation, grading, strict parsing, token hashing — and frontend tests with Vitest.
+- **CI:** GitHub Actions builds and tests the backend and type-checks, tests and builds the frontend on every push.
+- **Rate limiting:** 10 req/min per IP on login/register, 30 req/min on Gemini-backed endpoints; the real client IP is read from `X-Forwarded-For` behind Render's proxy (last hop only).
+- **Health check:** `GET /health` reports API and database status (503 if the DB is unreachable).
 
-### 1. Gemini API kaliti
+## Tech stack (all on free tiers)
 
-1. [aistudio.google.com/apikey](https://aistudio.google.com/apikey) ga Google
-   akkauntingiz bilan kiring, "Create API key" bosing.
+| Part | Technology |
+|---|---|
+| Frontend | React 18, TypeScript, Vite, CSS variables (no UI framework), PWA — Vercel |
+| Backend | ASP.NET Core 10 Minimal API, EF Core, Docker — Render |
+| Database | PostgreSQL — Neon |
+| AI | Google Gemini (AI Studio key, no credit card) |
+| Speech | Browser Web Speech API |
+| CI | GitHub Actions |
 
-### 2. Postgres bazasi (Neon)
+## Run locally
 
-1. [neon.tech](https://neon.tech) da bepul loyiha yarating
-2. "Connect" bo'limidan connection string oling (pooler**siz** versiyasini —
-   manzilida `-pooler` bo'lmagan), quyidagi ko'rinishga o'zgartiring:
-   ```
-   Host=<host>;Database=<baza>;Username=<user>;Password=<parol>;SSL Mode=Require;Channel Binding=Require;
-   ```
-
-### 3. Sirlarni (secrets) qo'shish
+Prerequisites: .NET 10 SDK, Node 22, a [Gemini API key](https://aistudio.google.com/apikey), a [Neon](https://neon.tech) Postgres database.
 
 ```bash
+# backend
 cd backend/SpeakingCoach.Api
 dotnet user-secrets init
-dotnet user-secrets set "Gemini:ApiKey" "sizning-gemini-kalitingiz"
-dotnet user-secrets set "ConnectionStrings:Default" "yuqoridagi Postgres qatori"
-```
-
-### 4. Baza sxemasini yaratish
-
-```bash
+dotnet user-secrets set "Gemini:ApiKey" "<your key>"
+dotnet user-secrets set "ConnectionStrings:Default" "Host=...;Database=...;Username=...;Password=...;SSL Mode=Require"
 dotnet tool update --global dotnet-ef
-dotnet restore
 dotnet ef database update
-```
+dotnet run                      # http://localhost:5000
 
-Bu `Migrations/` papkasidagi barcha migratsiyalarni (jadvallar, indekslar)
-bazaga qo'llaydi. Kod modelini o'zgartirganingizda (yangi jadval yoki
-ustun) avval `dotnet ef migrations add <Nom>` bilan yangi migratsiya
-yaratiladi, keyin yana `dotnet ef database update`.
-
-### 5. Backend
-
-```bash
-dotnet run
-```
-
-### 6. Frontend
-
-Yangi terminalda:
-
-```bash
+# frontend (second terminal)
 cd frontend/speaking-coach-web
-npm install
-npm run dev
+npm ci
+npm run dev                     # http://localhost:5173
 ```
 
-`http://localhost:5173` ni oching.
-
-### 7. Avtomatik testlar
+Tests:
 
 ```bash
-dotnet test backend/SpeakingCoach.Api.Tests   # backend: 28 ta unit test
-cd frontend/speaking-coach-web && npm test     # frontend: vitest
+dotnet test backend/SpeakingCoach.Api.Tests
+cd frontend/speaking-coach-web && npm test
 ```
 
-Xuddi shu testlar har bir push'da GitHub Actions'da ham ishlaydi
-(`.github/workflows/ci.yml`) — natija README tepasidagi belgida.
+## Deploy
 
-### 8. Qo'lda sinov
+- **Render** (backend): root directory `backend/SpeakingCoach.Api`, Docker; env vars `Gemini__ApiKey`, `ConnectionStrings__Default`, `FrontendOrigin` (the Vercel URL, for CORS).
+- **Vercel** (frontend): root directory `frontend/speaking-coach-web`; env var `VITE_API_URL` (the Render URL).
+- **Migrations** are applied with `dotnet ef database update` before pushing code that depends on them (Render does not run them).
 
-1. **Mehmon sifatida**: har bir tab'da "Siz mehmon sifatida
-   ishlayapsiz..." eslatmasi ko'rinadi; mashqlar ishlaydi, tarix bo'sh.
-2. **Ro'yxatdan o'ting** (yuqoridagi "Kirish" → "Ro'yxatdan o'tish").
-3. **Gapirish**: "Yozishni boshlash" → 15-20 soniya gapiring →
-   "To'xtatish" → transkript, ballar va tarixda 1 ta yozuv.
-4. **Yozish**: kamida 20 belgilik insho → "Yuborish".
-5. **O'qish**: "Mashqni boshlash" → matnni o'qing → 4 ta savolga javob →
-   "Javoblarni tekshirish" → har bir savolga yashil/qizil belgi va izoh.
-6. **Tinglash**: "Mashqni boshlash" → "Tinglash" → savollarga javob → matn
-   faqat tekshirilgandan keyin ko'rinadi.
-7. **Takrorlash**: xato qilingan mashqlardan keyin "N ta yangi takrorlash
-   kartasi qo'shildi" xabari chiqadi, tab'da raqam paydo bo'ladi. Kartani
-   oching → "Javobni ko'rsatish" → Yana / Qiyin / Yaxshi / Oson.
-8. **Yo'lda rejimi**: Takrorlash tab'ida "▶️ Boshlash" — kartalar ovoz
-   chiqarib o'qiladi.
-9. Sahifani yangilang — kirgan holat saqlanib qoladi. "Chiqish" — tarix
-   yana bo'sh ko'rinadi.
+## Known limitations
 
----
+- Free tiers: Gemini rate limits; the backend sleeps when idle.
+- No push reminders yet; commute mode needs the screen on (some phones stop audio when it turns off).
+- The token lives in `localStorage` (cross-site cookies between `vercel.app` and `onrender.com` are increasingly blocked); an XSS bug could expose it.
+- No password reset or email verification.
+- Automated tests cover pure logic; database/endpoint integration tests are next.
 
-## Deploy qilish — Vercel + Render + Neon
+## Roadmap
 
-1. **GitHub**: loyihani push qiling (`.gitignore` allaqachon `bin/`, `obj/`,
-   `node_modules/`, `uploads/` ni chetlab o'tadi — sirlar hech qachon
-   repoga tushmaydi, ular faqat `dotnet user-secrets` orqali lokalda yoki
-   hosting'ning environment variable'larida saqlanadi).
-2. **Render** (backend): "New Web Service" → repo'ni ulang → Root
-   Directory = `backend/SpeakingCoach.Api` → Docker avtomatik aniqlanadi →
-   Free tarif → Environment Variables: `Gemini__ApiKey`,
-   `ConnectionStrings__Default` (qo'sh pastki chiziq — .NET buni
-   `Gemini:ApiKey` bilan bir xil deb tushunadi).
-3. **Vercel** (frontend): "Add New Project" → repo'ni ulang → Root
-   Directory = `frontend/speaking-coach-web` → Environment Variable:
-   `VITE_API_URL` = Render manzilingiz.
-4. **CORS**: Vercel manzilini bilib olgach, Render'ga qaytib
-   `FrontendOrigin` environment variable qo'shing (Vercel manzilingiz,
-   `/` siz) — aks holda brauzer "Failed to fetch" xatosi beradi.
-5. **Migratsiyalar**: Render ularni o'zi qo'llamaydi. Lokal va production
-   bitta Neon bazasini ishlatgani uchun, yangi migratsiyani lokalda
-   `dotnet ef database update` bilan qo'llab, keyin push qiling — shunda
-   yangi kod deploy bo'lganda jadvallar allaqachon tayyor turadi.
-
-## Login qanday ishlaydi
-
-- **Parol**: ASP.NET Core'ning `PasswordHasher` (PBKDF2, tasodifiy tuz,
-  ko'p marta takrorlash). Parolning o'zi hech qayerda saqlanmaydi.
-- **Token**: kirganda 32 baytli kriptografik tasodifiy token yaratiladi.
-  Brauzer uni `Authorization: Bearer ...` sarlavhasida yuboradi. Bazada
-  tokenning o'zi emas, **SHA-256 xeshi** saqlanadi — baza sizib chiqsa
-  ham, undagi xeshlar bilan hech kimning nomidan kirib bo'lmaydi.
-- **Nega JWT emas**: sessiya bazada bo'lgani uchun "Chiqish" tokenni
-  **darhol** bekor qiladi (JWT'ni muddatidan oldin bekor qilib bo'lmaydi).
-  Tashqi paket yoki maxfiy kalit sozlash ham kerak emas. Narxi — har bir
-  so'rovda indekslangan bitta qo'shimcha DB so'rovi.
-- **Nega cookie emas**: frontend (`vercel.app`) va backend (`onrender.com`)
-  turli domenlarda — brauzerlar bunday "third-party" cookie'larni tobora
-  ko'proq bloklaydi. Token `localStorage`'da saqlanadi (kamchiligi pastda).
-- Noto'g'ri email va noto'g'ri parol uchun **bir xil** xabar qaytariladi —
-  aks holda qaysi email ro'yxatdan o'tganini aniqlab bo'lardi.
-- Email bazada **unique index** bilan himoyalangan — bir vaqtda kelgan ikki
-  so'rov ham bitta email'ni ikki marta ro'yxatdan o'tkaza olmaydi.
-
-## Eslab qolish: oraliqli takrorlash
-
-Yangi so'z yoki xato bir marta ko'rilsa, bir necha kunda unutiladi. Uni
-**unutish arafasida** takrorlash eng samarali: har muvaffaqiyatli
-eslashdan keyin oraliq uzayadi (1 kun → 3 kun → ~1 hafta → ~3 hafta ...),
-unutilsa — boshidan boshlanadi. Bu Anki va Duolingo ishlatadigan g'oya.
-
-- **Kartalar o'zi paydo bo'ladi**: Gapirish/Yozish tuzatishlari ("xato
-  ibora" → "to'g'risi") va O'qish/Tinglashdagi noto'g'ri javoblar. Mashq
-  natijasi bilan **bitta tranzaksiyada** saqlanadi; bir xil ibora ikki
-  marta qo'shilmaydi.
-- **Algoritm** — SM-2 ning soddalashtirilgan varianti
-  (`Services/ReviewScheduler.cs`). Toza funksiya: bazaga ham, HTTP'ga ham
-  bog'liq emas — shuning uchun to'liq unit test qilingan.
-- **Streak va kunlik maqsad** foydalanuvchining **mahalliy vaqti** bo'yicha
-  hisoblanadi (brauzer vaqt zonasini yuboradi): Toshkentda soat 01:00 da
-  qilingan mashq UTC bo'yicha "kechagi kun" bo'lib qolmaydi.
-- **Yo'lda rejimi kartalarni baholamaydi**: tinglash "eslay oldimmi?"
-  degan savolga javob bermaydi, shuning uchun u jadvalni o'zgartirmaydi —
-  faqat qo'shimcha takrorlash. Ekran o'chmasligi uchun Screen Wake Lock
-  API ishlatiladi (qo'llab-quvvatlaydigan brauzerlarda).
-
-## Telefonda (PWA)
-
-- `public/manifest.webmanifest` + ikonkalar — "Bosh ekranga qo'shish"
-  qilinganda alohida ilova kabi (brauzer panelisiz) ochiladi.
-- `public/sw.js` (service worker): sahifa va JS/CSS fayllar keshlanadi —
-  internet sekin yoki yo'q bo'lsa ham ilova ochiladi. **Backend so'rovlari
-  hech qachon keshlanmaydi** (baholash va kartalar har doim yangi).
-  Service worker faqat production build'da yoqiladi.
-- Tugmalar barmoq bilan bosishga mo'ljallangan o'lchamda (kamida 48px).
-
-## Sifat va ishonchlilik
-
-- **Testlar**: `backend/SpeakingCoach.Api.Tests` (xUnit) — takrorlash
-  algoritmi, streak (vaqt zonalari bilan), karta yaratish, test
-  savollarini tekshirish, Gemini javobini qat'iy o'qish, token xeshi.
-  Frontend: `vitest` — gap bo'lish, statistika, karta matnlari.
-- **CI**: GitHub Actions har bir push'da backend'ni build qilib testlarni,
-  frontend'da esa type check + testlar + build'ni ishga tushiradi.
-- **Rate limiting** (ASP.NET Core'ning o'rnatilgan `RateLimiter`'i, har
-  bir IP uchun): kirish/ro'yxatdan o'tish — daqiqasiga 10 ta (parolni
-  taxmin qilishni sekinlashtiradi), Gemini'ga boradigan endpoint'lar —
-  daqiqasiga 30 ta (bepul kvotani bitta odam tugatib qo'ymasin). Render
-  proxy ortida bo'lgani uchun haqiqiy IP `X-Forwarded-For`dan olinadi.
-- **`/health`**: server tirikmi va bazaga ulana oladimi — monitoring
-  (masalan UptimeRobot) uchun. Baza ishlamasa 503.
-
-## O'qish va Tinglash qanday ishlaydi
-
-- Gemini **yaratadi** (matn, 4 ta savol, to'g'ri javoblar, izohlar), lekin
-  **tekshirmaydi**. Test savolining to'g'ri javobi oldindan ma'lum —
-  uni LLM'dan qayta so'rash sekin, pullik va (barqarorlik testida
-  ko'rganimizdek) tasodifiy bo'lardi. Tekshirish — oddiy C# kodi
-  (`GeminiComprehensionService.Grade`).
-- To'g'ri javoblar **brauzerga yuborilmaydi**: to'liq mashq
-  `PendingExercises` jadvalida saqlanadi, brauzer faqat matn va
-  savollarni oladi. Javob kelganda server o'sha yozuvni o'qib tekshiradi
-  va o'chiradi. Tashlab ketilgan mashqlar 1 kundan keyin tozalanadi.
-- Gemini ba'zan talabni buzadi (3 ta savol, 5 ta variant, noto'g'ri
-  indeks) — bunday mashq foydalanuvchiga ko'rsatilmaydi, xato qaytadi.
-- Tinglashda matn gaplarga bo'lib o'qiladi: Chrome'da bitta uzun
-  "utterance" ~15 soniyadan keyin uzilib qolishi ma'lum muammo.
-
-## Gemini javobini qat'iy tekshirish
-
-Standart holatda `System.Text.Json` JSON'da yetishmayotgan maydonni
-**jimgina** standart qiymat bilan to'ldiradi: Gemini `"score"` o'rniga
-boshqa nom yozsa, ball **0** bo'lib bazaga saqlanardi va xato hech qayerda
-ko'rinmasdi. Endi `GeminiClient.StrictJson` sozlamasi
-(`RespectRequiredConstructorParameters`, `RespectNullableAnnotations`) va
-`ScoreGuard` (0-100 oralig'i, izoh bo'sh emas) bunday javobni rad etadi —
-foydalanuvchi xato ko'radi va qayta urinadi, bazaga noto'g'ri ma'lumot
-tushmaydi. Eslatma: 0 ballning o'zi xato emas — mavzuga aloqasiz matn uchun
-Gemini haqiqatan 0 berishi mumkin.
-
-## LLM baholash barqarorligi
-
-Muammo: LLM hakam sifatida 100% deterministik emas — `temperature=0.2`
-bo'lsa ham, bitta va aynan bir xil insho yoki audio ikki marta
-yuborilsa, ballar farq qilishi mumkin. Agar farq katta bo'lsa,
-foydalanuvchi "grammatikam 65 dan 80 ga ko'tarildi" deb o'ylashi mumkin,
-aslida esa hech narsa o'zgarmagan — shunchaki model tasodifiyligi.
-
-Yechim: Gapirish va Yozish natijalari ostida **"Barqarorlikni tekshirish
-(5x)"** tugmasi bor. U aynan o'sha kirishni Gemini'ga yana 5 marta
-**ketma-ket** yuboradi va har bir mezon bo'yicha ballar, o'rtacha, min–max
-farqi va baho (≤5 barqaror, 6–15 o'rtacha, >15 beqaror) jadvalini
-ko'rsatadi.
-
-- Test so'rovlari `?save=false` bilan yuboriladi — backend baholaydi,
-  lekin bazaga yozmaydi.
-- Ketma-ket, parallel emas: parallel 5 ta so'rov Gemini bepul tier'ining
-  daqiqalik limitiga (429) darhol urilardi.
-- Kod: `frontend/.../src/Stability.tsx`.
-
-## Bilib qo'yish kerak bo'lgan cheklovlar
-
-- **Bepul tier limitlari**: Gemini'da daqiqa/kunlik so'rov chegarasi bor;
-  Render'ning bepul backend'i 15 daqiqa harakatsizlikdan keyin uxlaydi.
-- **Token `localStorage`'da**: saytda XSS zaifligi bo'lsa, begona skript
-  tokenni o'qiy oladi. React matnni avtomatik "escape" qiladi va loyihada
-  `dangerouslySetInnerHTML` yo'q, lekin bu httpOnly cookie darajasidagi
-  himoya emas.
-- **Eslatmalar (push notification) yo'q**: ilova foydalanuvchini o'zi
-  chaqirmaydi — tab'dagi raqam va streak faqat ilova ochilganda ko'rinadi.
-- **Yo'lda rejimi ekran yoniq turishini talab qiladi**: ko'p telefonlarda
-  ekran o'chsa, brauzer ovozni ham to'xtatadi.
-- **Testlar faqat toza mantiqni qamraydi**: bazaga yozish/o'qish va
-  endpoint'lar hozircha avtomatik test qilinmagan (integration testlar
-  uchun test bazasi kerak).
-- **Parolni tiklash va email tasdiqlash yo'q**.
-- **Login'dan oldingi yozuvlar** (`UserId` bo'sh) hech kimning tarixida
-  ko'rinmaydi, lekin bazada qoladi.
-- **Audio fayllar doimiy saqlanmaydi**: Render'ning fayl tizimi
-  "ephemeral". Faqat baholash natijasi bazada saqlanadi.
-- **Tinglashdagi ovoz sifati** brauzer va operatsion tizimga bog'liq
-  (Chrome/Edge'da eng yaxshi).
-
-## Keyingi texnik qadamlar
-
-1. ✅ ~~PostgreSQL + EF Core~~
-2. ✅ ~~Deploy (Vercel + Render + Neon)~~
-3. ✅ ~~Writing oqimi~~ (+ umumiy `GeminiClient`)
-4. ✅ ~~LLM baholash barqarorligini o'lchash~~
-5. ✅ ~~Reading / Listening~~
-6. ✅ ~~Foydalanuvchi hisoblari (login)~~
-7. ✅ ~~Rate limiting, `/health`~~
-8. ✅ ~~Avtomatik testlar va GitHub Actions~~
-9. ✅ ~~Takrorlash kartalari, Yo'lda rejimi, PWA~~
-10. Kunlik eslatma (Web Push) — "Bugun 12 ta karta kutyapti"
-11. Integration testlar: `WebApplicationFactory` + Testcontainers'dagi
-    haqiqiy Postgres
-12. Progress sahifasi: mezonlar bo'yicha ballarning vaqt davomidagi grafigi
-13. Parolni tiklash (email yuborish xizmati kerak)
-
-## Ishlatishdan oldin tushunishingiz kerak bo'lgan savollar
-
-- Nega bitta `Activities` jadvali bor, Speaking/Writing/Reading uchun
-  alohida jadval emas? `PromptData`/`ResponseData` nega jsonb?
-- `GeminiClient.SendWithFallbackAsync` nima uchun ikkita model ishlatadi,
-  va nega faqat 503/429'da qayta uradi?
-- `FrontendOrigin` nima uchun kerak — bo'lmasa nima o'zgaradi (CORS)?
-- `ConnectionStrings__Default` va `ConnectionStrings:Default` — bular
-  nega bir xil narsa, lekin yozilishi farq qiladi?
-- Barqarorlik testida nega `?save=false` kerak, va nega so'rovlar
-  parallel emas, ketma-ket yuboriladi?
-- Nega bazada token emas, uning xeshi saqlanadi? Nega JWT emas?
-- Nega Reading/Listening javoblarini Gemini emas, oddiy C# kodi tekshiradi?
-  Nega to'g'ri javoblar brauzerga yuborilmaydi?
-- Nega `Activity.UserId` nullable? Uni majburiy (NOT NULL) qilsak,
-  migratsiya paytida nima bo'lardi?
-- `RespectRequiredConstructorParameters` bo'lmasa, Gemini javobida
-  `"score"` yo'q bo'lsa nima bo'lardi?
-- SM-2'da "Yana" bosilganda nima o'zgaradi va nega "osonlik" (ease)
-  koeffitsiyenti ham pasayadi?
-- Nega streak UTC bo'yicha emas, mahalliy vaqt bo'yicha hisoblanadi?
-- Nega "Yo'lda" rejimi kartalarni baholamaydi?
-- Nega service worker backend so'rovlarini keshlamaydi?
-- Rate limiting'da nega `X-Forwarded-For`ning faqat oxirgi qiymatiga
-  ishoniladi? Birinchisiga ishonsak nima bo'lardi?
-- Nega unit testlar aynan `ReviewScheduler`, `ReviewCardFactory` kabi
-  "toza" klasslarga yozilgan? Bu kodni qanday tuzishga ta'sir qildi?
-
-Javob berolmasangiz — tegishli fayllarni (`Program.cs`, `Endpoints/`,
-`Services/AuthService.cs`, `Services/GeminiClient.cs`,
-`Services/ComprehensionService.cs`, `Services/ReviewScheduler.cs`,
-`Data/AppDbContext.cs`, `frontend/.../public/sw.js`) oching, o'qing.
+- [ ] Daily reminder via Web Push ("12 cards are waiting")
+- [ ] Integration tests with `WebApplicationFactory` + Testcontainers Postgres
+- [ ] Progress page: scores per criterion over time
+- [ ] Password reset

@@ -7,19 +7,11 @@ interface AuthResponse {
 }
 
 /**
- * Sahifa tepasidagi kirish/ro'yxatdan o'tish paneli. Kirmagan bo'lsa ham
- * barcha mashqlar ishlaydi — faqat natijalar tarixga saqlanmaydi. Shu
- * sababli panel yig'ilgan holatda boshlanadi va foydalanuvchini to'smaydi.
+ * Kirish / ro'yxatdan o'tish formasi yoki (kirgan bo'lsa) hisob kartasi.
+ * Kirmasdan ham barcha mashqlar ishlaydi — faqat natijalar saqlanmaydi.
  */
-export function AuthPanel({
-  email,
-  onChange,
-}: {
-  email: string | null;
-  onChange: (email: string | null) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+export function AuthPanel({ email, onChange }: { email: string | null; onChange: (email: string | null) => void }) {
+  const [mode, setMode] = useState<'login' | 'register'>('register');
   const [formEmail, setFormEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -33,7 +25,6 @@ export function AuthPanel({
       const data = await postJson<AuthResponse>(`/api/auth/${mode}`, { email: formEmail, password });
       setToken(data.token);
       setPassword('');
-      setOpen(false);
       onChange(data.email);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Xato yuz berdi');
@@ -51,62 +42,46 @@ export function AuthPanel({
     onChange(null);
   }
 
-  const box = { padding: '0.75rem 1rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem', marginTop: '1rem' };
-
   if (email) {
     return (
-      <div style={{ ...box, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
-        <span style={{ fontSize: '0.9rem', overflowWrap: 'anywhere' }}>
-          👤 <strong>{email}</strong>
-        </span>
-        <button onClick={logout} style={linkButton}>
+      <div className="card spread">
+        <div className="break">
+          <div className="muted tiny">Hisob</div>
+          <strong>{email}</strong>
+        </div>
+        <button className="btn btn-outline" onClick={logout}>
           Chiqish
         </button>
       </div>
     );
   }
 
-  if (!open) {
-    return (
-      <div style={{ ...box, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
-        <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>Natijalaringiz saqlanishi uchun tizimga kiring.</span>
-        <button onClick={() => setOpen(true)} style={linkButton}>
-          Kirish
-        </button>
-      </div>
-    );
-  }
-
-  const input = {
-    width: '100%',
-    padding: '0.5rem',
-    fontSize: '0.95rem',
-    border: '1px solid #d1d5db',
-    borderRadius: '0.375rem',
-    boxSizing: 'border-box' as const,
-    marginBottom: '0.5rem',
-  };
-
   return (
-    <form onSubmit={submit} style={box}>
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.75rem' }}>
-        <button type="button" onClick={() => setMode('login')} style={{ ...linkButton, fontWeight: mode === 'login' ? 700 : 400 }}>
-          Kirish
-        </button>
-        <button type="button" onClick={() => setMode('register')} style={{ ...linkButton, fontWeight: mode === 'register' ? 700 : 400 }}>
+    <form className="card stack" onSubmit={submit}>
+      <div className="segmented" role="group" aria-label="Kirish turi">
+        <button type="button" aria-pressed={mode === 'register'} onClick={() => setMode('register')}>
           Ro'yxatdan o'tish
         </button>
+        <button type="button" aria-pressed={mode === 'login'} onClick={() => setMode('login')}>
+          Kirish
+        </button>
       </div>
+      <p className="muted small">
+        {mode === 'register'
+          ? 'Hisob ochsangiz, natijalaringiz saqlanadi va xatolaringiz takrorlash kartalariga aylanadi.'
+          : 'Email va parolingiz bilan kiring.'}
+      </p>
       <input
+        className="input"
         type="email"
         placeholder="Email"
         autoComplete="email"
         required
         value={formEmail}
         onChange={(e) => setFormEmail(e.target.value)}
-        style={input}
       />
       <input
+        className="input"
         type="password"
         placeholder={mode === 'register' ? 'Parol (kamida 8 belgi)' : 'Parol'}
         autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
@@ -114,48 +89,11 @@ export function AuthPanel({
         minLength={mode === 'register' ? 8 : undefined}
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        style={input}
       />
-      {error && <p style={{ color: '#dc2626', fontSize: '0.85rem', margin: '0 0 0.5rem' }}>{error}</p>}
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
-        <button
-          type="submit"
-          disabled={busy}
-          style={{
-            padding: '0.5rem 1rem',
-            backgroundColor: '#2563eb',
-            color: 'white',
-            border: 'none',
-            borderRadius: '0.375rem',
-            cursor: busy ? 'not-allowed' : 'pointer',
-          }}
-        >
-          {busy ? 'Kuting...' : mode === 'login' ? 'Kirish' : "Ro'yxatdan o'tish"}
-        </button>
-        <button type="button" onClick={() => setOpen(false)} style={linkButton}>
-          Bekor qilish
-        </button>
-      </div>
+      {error && <p className="error small">{error}</p>}
+      <button type="submit" className="btn btn-primary block" disabled={busy}>
+        {busy ? 'Kuting...' : mode === 'login' ? 'Kirish' : "Hisob ochish"}
+      </button>
     </form>
-  );
-}
-
-const linkButton = {
-  background: 'none',
-  border: 'none',
-  color: '#2563eb',
-  cursor: 'pointer',
-  fontSize: '0.9rem',
-  padding: 0,
-};
-
-/** Kirmagan foydalanuvchiga tarix nega bo'sh ekanini tushuntiradi. */
-export function HistoryHint({ loggedIn }: { loggedIn: boolean }) {
-  if (loggedIn) return null;
-  return (
-    <p style={{ marginTop: '2rem', color: '#6b7280', fontSize: '0.85rem' }}>
-      Siz mehmon sifatida ishlayapsiz — natijalar baholanadi, lekin tarixga saqlanmaydi. Saqlash uchun yuqorida
-      tizimga kiring.
-    </p>
   );
 }

@@ -1,30 +1,21 @@
 import { useEffect, useState } from 'react';
 import { STABILITY_RUNS, StabilityTable, computeStats, runSequentially, type DimensionStats } from './Stability';
 import { loadHistory as fetchHistory, postJson, type HistoryItem } from './api';
-import { HistoryHint } from './AuthPanel';
 import { cardsMessage } from './cards';
+import { Corrections, Feedback, GuestNote, HistoryList, ScoreBar, type CorrectionItem, type ScoreWithReasoning } from './ui';
 
-const TOPICS = [
+export const WRITING_TOPICS = [
   'Do you think social media has a positive or negative effect on society? Explain your view.',
   'Describe a piece of technology that has changed your daily life.',
   'Should university education be free for everyone? Give your opinion with reasons.',
+  'Is it better to live in a big city or in the countryside?',
+  'Describe a problem in your town and suggest a solution.',
 ];
 
 const MIN_CHARS = 20;
 const MAX_CHARS = 5000;
 
 type Status = 'idle' | 'uploading' | 'done' | 'error';
-
-interface ScoreWithReasoning {
-  score: number;
-  reasoning: string;
-}
-
-interface CorrectionItem {
-  original: string;
-  corrected: string;
-  explanation: string;
-}
 
 // Speaking'dan farqli rubrika: Fluency o'rniga Task Achievement va
 // Coherence & Cohesion — bular yozma matn uchun mazmunliroq mezonlar
@@ -46,10 +37,21 @@ interface SubmitResponse {
   newCards: number;
 }
 
-export function WritingCoach({ loggedIn, onCardsAdded }: { loggedIn: boolean; onCardsAdded?: () => void }) {
+const countWords = (t: string) => (t.trim() ? t.trim().split(/\s+/).length : 0);
+
+export function WritingCoach({
+  loggedIn,
+  onCardsAdded,
+  onLogin,
+}: {
+  loggedIn: boolean;
+  onCardsAdded?: () => void;
+  onLogin?: () => void;
+}) {
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
-  const [topic] = useState(TOPICS[0]);
+  const [topicIndex, setTopicIndex] = useState(0);
+  const topic = WRITING_TOPICS[topicIndex];
   const [text, setText] = useState('');
   const [result, setResult] = useState<SubmitResponse | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -117,7 +119,7 @@ export function WritingCoach({ loggedIn, onCardsAdded }: { loggedIn: boolean; on
     }
 
     setStatus('uploading');
-    setMessage('Yuborilmoqda va baholanmoqda... (bu 5-15 soniya davom etishi mumkin)');
+    setMessage("O'qilmoqda va baholanmoqda... (5-15 soniya)");
     setResult(null);
     setStability(null);
     setTestProgress('');
@@ -137,154 +139,88 @@ export function WritingCoach({ loggedIn, onCardsAdded }: { loggedIn: boolean; on
   }
 
   const isBusy = status === 'uploading' || isTesting;
-  const charsLeft = MAX_CHARS - text.length;
+  const words = countWords(text);
 
   return (
-    <div style={{ marginTop: '1.5rem' }}>
-      <p style={{ fontStyle: 'italic', marginBottom: '1rem' }}>Mavzu: {topic}</p>
+    <>
+      <div className="card">
+        <div className="spread">
+          <span className="muted small">Mavzu</span>
+          <button className="btn-link small" disabled={isBusy} onClick={() => setTopicIndex((i) => (i + 1) % WRITING_TOPICS.length)}>
+            🔀 Boshqa mavzu
+          </button>
+        </div>
+        <p style={{ fontSize: '1.1rem', fontWeight: 600, margin: '6px 0 14px' }}>{topic}</p>
 
-      <textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        disabled={isBusy}
-        maxLength={MAX_CHARS}
-        rows={8}
-        placeholder="Shu mavzuda inglizcha insho yozing..."
-        style={{
-          width: '100%',
-          padding: '0.75rem',
-          fontSize: '1rem',
-          fontFamily: 'inherit',
-          border: '1px solid #d1d5db',
-          borderRadius: '0.5rem',
-          boxSizing: 'border-box',
-          resize: 'vertical',
-        }}
-      />
-      <p style={{ fontSize: '0.8rem', color: charsLeft < 0 ? '#dc2626' : '#6b7280', marginTop: '0.25rem' }}>
-        {text.length}/{MAX_CHARS} belgi
-      </p>
+        <textarea
+          className="input"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          disabled={isBusy}
+          maxLength={MAX_CHARS}
+          rows={8}
+          placeholder="Shu mavzuda inglizcha yozing... (tavsiya: 80-200 so'z)"
+          aria-label="Insho matni"
+        />
+        <div className="spread muted tiny" style={{ margin: '6px 0 12px' }}>
+          <span>{words} so'z</span>
+          <span>
+            {text.length}/{MAX_CHARS} belgi
+          </span>
+        </div>
 
-      <button
-        onClick={submitEssay}
-        disabled={isBusy}
-        style={{
-          padding: '0.75rem 1.5rem',
-          fontSize: '1rem',
-          backgroundColor: '#2563eb',
-          color: 'white',
-          border: 'none',
-          borderRadius: '0.5rem',
-          cursor: isBusy ? 'not-allowed' : 'pointer',
-        }}
-      >
-        ✍️ Yuborish
-      </button>
-
-      <p style={{ marginTop: '1rem', color: status === 'error' ? '#dc2626' : '#374151' }}>
-        {message}
-      </p>
+        <button className="btn btn-primary block" onClick={submitEssay} disabled={isBusy}>
+          ✍️ Yuborish
+        </button>
+        {message && (
+          <p className={status === 'error' ? 'error small' : 'small'} style={{ marginTop: 10, marginBottom: 0 }}>
+            {message}
+          </p>
+        )}
+      </div>
 
       {result && (
-        <div style={{ marginTop: '1.5rem', padding: '1rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem' }}>
+        <div className="card">
           <h3>Baholash</h3>
-          <ScoreRow label="Vazifani bajarish (Task Achievement)" data={result.evaluation.taskAchievement} />
-          <ScoreRow label="Mantiqiy bog'lanish (Coherence & Cohesion)" data={result.evaluation.coherenceCohesion} />
-          <ScoreRow label="Grammatika" data={result.evaluation.grammar} />
-          <ScoreRow label="Lug'at boyligi" data={result.evaluation.vocabulary} />
+          <ScoreBar label="Vazifani bajarish" data={result.evaluation.taskAchievement} />
+          <ScoreBar label="Mantiqiy bog'lanish" data={result.evaluation.coherenceCohesion} />
+          <ScoreBar label="Grammatika" data={result.evaluation.grammar} />
+          <ScoreBar label="Lug'at boyligi" data={result.evaluation.vocabulary} />
 
-          {result.evaluation.topCorrections.length > 0 && (
-            <>
-              <h3>Tuzatishlar</h3>
-              <ul>
-                {result.evaluation.topCorrections.map((c, i) => (
-                  <li key={i} style={{ marginBottom: '0.5rem' }}>
-                    <s>{c.original}</s> → <strong>{c.corrected}</strong>
-                    <br />
-                    <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>{c.explanation}</span>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
+          <Corrections items={result.evaluation.topCorrections} />
+          <Feedback encouragement={result.evaluation.encouragement} nextFocus={result.evaluation.nextFocus} />
 
-          <p style={{ marginTop: '1rem' }}>
-            <strong>💬 {result.evaluation.encouragement}</strong>
-          </p>
-          <p style={{ color: '#2563eb' }}>Keyingi fokus: {result.evaluation.nextFocus}</p>
-
-          <button
-            onClick={runStabilityTest}
-            disabled={isBusy || !lastSubmittedText}
-            style={{
-              marginTop: '0.5rem',
-              padding: '0.5rem 1rem',
-              fontSize: '0.9rem',
-              backgroundColor: 'white',
-              color: '#2563eb',
-              border: '1px solid #2563eb',
-              borderRadius: '0.5rem',
-              cursor: isBusy ? 'not-allowed' : 'pointer',
-            }}
-          >
-            🔁 Barqarorlikni tekshirish ({STABILITY_RUNS}x)
-          </button>
-          <p style={{ color: '#6b7280', fontSize: '0.8rem', marginBottom: 0 }}>
-            Aynan shu matnni yana {STABILITY_RUNS} marta baholatib, ballar qanchalik o'zgarishini ko'rsatadi.
-          </p>
-          {testProgress && <p style={{ fontSize: '0.9rem' }}>{testProgress}</p>}
+          <div style={{ borderTop: '1px solid var(--border)', marginTop: 14, paddingTop: 12 }}>
+            <button className="btn btn-outline" onClick={runStabilityTest} disabled={isBusy || !lastSubmittedText}>
+              🔁 Barqarorlikni tekshirish ({STABILITY_RUNS}x)
+            </button>
+            <p className="muted tiny" style={{ marginTop: 6, marginBottom: 0 }}>
+              Aynan shu matnni yana {STABILITY_RUNS} marta baholatib, AI bahosi qanchalik o'zgarishini ko'rsatadi.
+            </p>
+            {testProgress && <p className="small">{testProgress}</p>}
+          </div>
         </div>
       )}
 
       {stability && <StabilityTable stats={stability.stats} failed={stability.failed} />}
 
-      <HistoryHint loggedIn={loggedIn} />
-      {history.length > 0 && (
-        <div style={{ marginTop: '2rem' }}>
-          <h3>Oldingi urinishlar ({history.length})</h3>
-          <p style={{ color: '#6b7280', fontSize: '0.85rem', marginTop: '-0.5rem' }}>
-            Bu ro'yxat ma'lumotlar bazasidan (Postgres) o'qilyapti — sahifani yangilasangiz ham yo'qolmaydi.
-          </p>
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            {history.map((item) => (
-              <HistoryRow key={item.id} item={item} />
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
+      <GuestNote loggedIn={loggedIn} onLogin={onLogin} />
+      <HistoryList
+        items={history}
+        renderRow={(item) => {
+          const prompt = JSON.parse(item.promptData) as { topic: string };
+          const r = JSON.parse(item.responseData) as WritingEvaluationResult;
+          return (
+            <>
+              <div className="small">{prompt.topic}</div>
+              <div className="small muted">
+                Vazifa {r.taskAchievement.score} · Bog'lanish {r.coherenceCohesion.score} · Grammatika {r.grammar.score} ·
+                Lug'at {r.vocabulary.score}
+              </div>
+            </>
+          );
+        }}
+      />
+    </>
   );
-}
-
-function ScoreRow({ label, data }: { label: string; data: ScoreWithReasoning }) {
-  return (
-    <div style={{ marginBottom: '0.75rem' }}>
-      <strong>{label}: {data.score}/100</strong>
-      <p style={{ margin: '0.25rem 0', color: '#6b7280', fontSize: '0.9rem' }}>{data.reasoning}</p>
-    </div>
-  );
-}
-
-function HistoryRow({ item }: { item: HistoryItem }) {
-  // promptData/responseData bazada jsonb (matn) sifatida saqlangan —
-  // shuning uchun bu yerda JSON.parse bilan ochamiz. Bitta yaroqsiz yozuv
-  // butun ro'yxatni buzmasin deb try/catch bilan o'raymiz.
-  try {
-    const prompt = JSON.parse(item.promptData) as { topic: string; text: string };
-    const response = JSON.parse(item.responseData) as WritingEvaluationResult;
-    const date = new Date(item.createdAtUtc).toLocaleString();
-
-    return (
-      <li style={{ padding: '0.75rem 0', borderBottom: '1px solid #e5e7eb' }}>
-        <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>{date}</div>
-        <div style={{ fontStyle: 'italic' }}>{prompt.topic}</div>
-        <div style={{ fontSize: '0.9rem' }}>
-          Vazifa: {response.taskAchievement.score} · Bog'lanish: {response.coherenceCohesion.score} · Grammatika:{' '}
-          {response.grammar.score} · Lug'at: {response.vocabulary.score}
-        </div>
-      </li>
-    );
-  } catch {
-    return null; // bitta yaroqsiz yozuv butun ro'yxatni yiqitmasin
-  }
 }

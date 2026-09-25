@@ -1,0 +1,692 @@
+/*
+ * Dizayn tizimi: barcha ranglar, o'lchamlar va soyalar shu yerdagi
+ * o'zgaruvchilar (CSS custom properties) orqali. Komponentlar rangni
+ * to'g'ridan-to'g'ri yozmaydi — shuning uchun tungi rejim (dark mode)
+ * faqat o'zgaruvchilarni almashtirish bilan ishlaydi.
+ */
+:root {
+  --bg: #f5f7fb;
+  --surface: #ffffff;
+  --surface-2: #f0f3f9;
+  --border: #e2e7f0;
+  --text: #0f172a;
+  --muted: #5b6474;
+  --primary: #2563eb;
+  --primary-strong: #1d4ed8;
+  --primary-soft: #e8efff;
+  --on-primary: #ffffff;
+  --success: #15803d;
+  --success-soft: #e6f6ec;
+  --warning: #b45309;
+  --warning-soft: #fdf3e1;
+  --danger: #dc2626;
+  --danger-soft: #fdecec;
+  --teal: #0f766e;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 20px rgba(16, 24, 40, 0.06);
+  --nav-h: 64px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b1120;
+    --surface: #131b2d;
+    --surface-2: #19233a;
+    --border: #26324b;
+    --text: #e7ecf5;
+    --muted: #9aa6ba;
+    --primary: #6b96ff;
+    --primary-strong: #86a9ff;
+    --primary-soft: #1a2a4d;
+    --on-primary: #0b1120;
+    --success: #4ade80;
+    --success-soft: #11301f;
+    --warning: #fbbf24;
+    --warning-soft: #33280e;
+    --danger: #f87171;
+    --danger-soft: #3a1717;
+    --teal: #2dd4bf;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.25);
+    color-scheme: dark;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+
+a {
+  color: var(--primary);
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.25;
+  margin: 0 0 0.5rem;
+}
+h1 {
+  font-size: 1.6rem;
+}
+h2 {
+  font-size: 1.25rem;
+}
+h3 {
+  font-size: 1.05rem;
+}
+p {
+  margin: 0 0 0.75rem;
+}
+
+/* ---------- Karkas ---------- */
+
+.app {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 16px calc(var(--nav-h) + 24px + env(safe-area-inset-bottom));
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 14px 0;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--text);
+  text-decoration: none;
+}
+.brand img {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+}
+
+/* Pastki menyu: telefonda ekran pastida (bosh barmoq yetadigan joyda),
+   katta ekranda — sahifa tepasida. */
+.nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-inner {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  width: 100%;
+  max-width: 640px;
+}
+.nav button {
+  position: relative;
+  height: var(--nav-h);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+.nav button .icon {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+.nav button[aria-current='page'] {
+  color: var(--primary);
+  font-weight: 600;
+}
+.nav .dot {
+  position: absolute;
+  top: 8px;
+  left: calc(50% + 6px);
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+@media (min-width: 760px) {
+  .app {
+    padding-bottom: 32px;
+  }
+  .nav {
+    position: sticky;
+    top: 0;
+    bottom: auto;
+    border-top: none;
+    border-bottom: 1px solid var(--border);
+    margin: 0 -16px 8px;
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    backdrop-filter: blur(8px);
+  }
+  .nav button {
+    flex-direction: row;
+    gap: 8px;
+    height: 52px;
+    font-size: 0.92rem;
+  }
+  .nav button .icon {
+    font-size: 1.1rem;
+  }
+  .nav .dot {
+    position: static;
+  }
+}
+
+/* ---------- Asosiy bloklar ---------- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow);
+  margin-top: 16px;
+}
+.card.soft {
+  background: var(--surface-2);
+  box-shadow: none;
+}
+.card.center {
+  text-align: center;
+}
+
+.page-header {
+  margin: 8px 0 4px;
+}
+.page-header .back {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+.page-header p {
+  color: var(--muted);
+}
+
+.muted {
+  color: var(--muted);
+}
+.small {
+  font-size: 0.85rem;
+}
+.tiny {
+  font-size: 0.75rem;
+}
+.error {
+  color: var(--danger);
+}
+.success {
+  color: var(--success);
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+.spread {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.stack > * + * {
+  margin-top: 0.75rem;
+}
+.break {
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Tugmalar va maydonlar ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 46px;
+  padding: 0.6rem 1.2rem;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.05s ease, background 0.15s ease;
+}
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.btn.block {
+  width: 100%;
+}
+.btn-primary {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-strong);
+}
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+.btn-teal {
+  background: var(--teal);
+  color: var(--on-primary);
+}
+.btn-outline {
+  background: transparent;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+.btn-link.quiet {
+  color: var(--muted);
+}
+
+.input,
+textarea.input,
+select.input {
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.input:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+select.input {
+  width: auto;
+  padding: 0.4rem 0.6rem;
+}
+textarea.input {
+  resize: vertical;
+  min-height: 160px;
+}
+
+.segmented {
+  display: inline-flex;
+  background: var(--surface-2);
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+}
+.segmented button {
+  border: none;
+  background: none;
+  font: inherit;
+  padding: 0.45rem 0.9rem;
+  border-radius: 9px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.segmented button[aria-pressed='true'] {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: var(--shadow);
+}
+
+/* ---------- Bosh sahifa ---------- */
+
+.hero {
+  background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+  color: #fff;
+  border: none;
+}
+.hero h1 {
+  font-size: 1.5rem;
+}
+.hero p {
+  opacity: 0.92;
+}
+.hero .btn-primary {
+  background: #fff;
+  color: #1e3a8a;
+}
+
+.steps {
+  display: grid;
+  gap: 12px;
+  counter-reset: step;
+}
+.step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.step::before {
+  counter-increment: step;
+  content: counter(step);
+  flex: 0 0 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 2px;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  font: inherit;
+  color: var(--text);
+  cursor: pointer;
+}
+.tile .emoji {
+  font-size: 1.7rem;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.tile strong {
+  display: block;
+}
+.tile span.muted {
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  text-align: center;
+}
+.stat .value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+.stat .label {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.progress {
+  height: 8px;
+  background: var(--surface-2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress > div {
+  height: 100%;
+  background: var(--success);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--primary-soft);
+  border: 1px solid transparent;
+}
+
+/* ---------- Natijalar ---------- */
+
+.score {
+  margin-bottom: 14px;
+}
+.score .top {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.score .bar {
+  height: 10px;
+  background: var(--surface-2);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.score .bar > div {
+  height: 100%;
+  border-radius: 5px;
+}
+.score .why {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.fill-great { background: var(--success); }
+.fill-good { background: var(--primary); }
+.fill-mid { background: var(--warning); }
+.fill-low { background: var(--danger); }
+.txt-great { color: var(--success); }
+.txt-good { color: var(--primary); }
+.txt-mid { color: var(--warning); }
+.txt-low { color: var(--danger); }
+
+.corrections {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.corrections li {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  margin-bottom: 8px;
+}
+.corrections s {
+  color: var(--danger);
+}
+.corrections strong {
+  color: var(--success);
+}
+
+.quote {
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  color: var(--muted);
+}
+
+.encourage {
+  background: var(--success-soft);
+  color: var(--success);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-weight: 600;
+}
+
+.option {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+  cursor: pointer;
+}
+.option.correct {
+  background: var(--success-soft);
+  border-color: var(--success);
+}
+.option.wrong {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+}
+.option input {
+  margin-top: 0.3rem;
+  accent-color: var(--primary);
+}
+fieldset {
+  border: none;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+legend {
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.history {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.history li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+table.data {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+table.data th,
+table.data td {
+  text-align: left;
+  padding: 0.45rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ---------- Takrorlash kartasi ---------- */
+
+.flash-front {
+  font-size: 1.35rem;
+  margin: 0.75rem 0;
+  line-height: 1.4;
+}
+.flash-back {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--success);
+}
+.grades {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.grades .btn {
+  flex-direction: column;
+  gap: 0;
+  padding: 0.5rem 0.25rem;
+  min-height: 58px;
+  color: #fff;
+}
+.grades .btn small {
+  font-weight: 400;
+  font-size: 0.66rem;
+  opacity: 0.9;
+}
+.g-again {
+  background: #dc2626;
+}
+.g-hard {
+  background: #d97706;
+}
+.g-good {
+  background: #16a34a;
+}
+.g-easy {
+  background: #2563eb;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.recording-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  animation: pulse 1s infinite;
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

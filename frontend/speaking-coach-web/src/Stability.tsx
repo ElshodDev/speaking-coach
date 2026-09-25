@@ -57,32 +57,30 @@ export async function runSequentially<T>(
 // Tarqalish (max - min) bo'yicha oddiy baho. Chegara qiymatlari ixtiyoriy
 // tanlangan — 100 ballik shkalada 5 ballgacha farq amalda sezilmaydi,
 // 15 dan ortig'i esa foydalanuvchi uchun sezilarli (masalan 65 va 82).
-function verdict(range: number): { text: string; color: string } {
-  if (range <= 5) return { text: 'Barqaror', color: '#16a34a' };
-  if (range <= 15) return { text: "O'rtacha", color: '#ca8a04' };
-  return { text: 'Beqaror', color: '#dc2626' };
+function verdict(range: number): { text: string; cls: string } {
+  if (range <= 5) return { text: 'Barqaror', cls: 'txt-great' };
+  if (range <= 15) return { text: "O'rtacha", cls: 'txt-mid' };
+  return { text: 'Beqaror', cls: 'txt-low' };
 }
 
 export function StabilityTable({ stats, failed }: { stats: DimensionStats[]; failed: number }) {
-  const cell = { padding: '0.4rem 0.5rem', borderBottom: '1px solid #e5e7eb', textAlign: 'left' as const };
-
   return (
-    <div style={{ marginTop: '1.5rem', padding: '1rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem' }}>
-      <h3 style={{ marginTop: 0 }}>Barqarorlik natijasi ({stats[0]?.scores.length ?? 0} ta urinish)</h3>
+    <div className="card">
+      <h3>Barqarorlik natijasi ({stats[0]?.scores.length ?? 0} ta urinish)</h3>
       {failed > 0 && (
-        <p style={{ color: '#dc2626', fontSize: '0.85rem' }}>
+        <p className="error small">
           {failed} ta urinish xato bilan tugadi (masalan Gemini band edi) — statistika faqat muvaffaqiyatlilar bo'yicha.
         </p>
       )}
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+      <div className="table-wrap">
+        <table className="data">
           <thead>
             <tr>
-              <th style={cell}>Mezon</th>
-              <th style={cell}>Ballar</th>
-              <th style={cell}>O'rtacha</th>
-              <th style={cell}>Farq</th>
-              <th style={cell}>Baho</th>
+              <th>Mezon</th>
+              <th>Ballar</th>
+              <th>O'rtacha</th>
+              <th>Farq</th>
+              <th>Baho</th>
             </tr>
           </thead>
           <tbody>
@@ -90,22 +88,23 @@ export function StabilityTable({ stats, failed }: { stats: DimensionStats[]; fai
               const v = verdict(s.range);
               return (
                 <tr key={s.label}>
-                  <td style={cell}>{s.label}</td>
-                  <td style={cell}>{s.scores.join(', ')}</td>
-                  <td style={cell}>{s.avg.toFixed(1)}</td>
-                  <td style={cell}>
+                  <td>{s.label}</td>
+                  <td>{s.scores.join(', ')}</td>
+                  <td>{s.avg.toFixed(1)}</td>
+                  <td>
                     {s.min}–{s.max} ({s.range})
                   </td>
-                  <td style={{ ...cell, color: v.color, fontWeight: 600 }}>{v.text}</td>
+                  <td className={v.cls} style={{ fontWeight: 600 }}>
+                    {v.text}
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
-      <p style={{ color: '#6b7280', fontSize: '0.8rem', marginBottom: 0 }}>
-        Bu urinishlar tarixga saqlanmadi (<code>?save=false</code>). Farq ≤5 — barqaror, 6–15 — o'rtacha, &gt;15 —
-        beqaror.
+      <p className="muted tiny" style={{ marginTop: 8, marginBottom: 0 }}>
+        Bu urinishlar tarixga saqlanmadi (<code>?save=false</code>). Farq ≤5 — barqaror, 6–15 — o'rtacha, &gt;15 — beqaror.
       </p>
     </div>
   );
