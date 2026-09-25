@@ -16,6 +16,7 @@ public static class SpeakingWritingEndpoints
             ISpeakingEvaluationService evaluationService,
             AppDbContext db,
             AuthService auth,
+            ReviewService reviews,
             ILogger<Program> logger) =>
         {
             if (!request.HasFormContentType)
@@ -67,6 +68,7 @@ public static class SpeakingWritingEndpoints
                 await File.WriteAllBytesAsync(Path.Combine(uploadsPath, $"{submissionId}.webm"), audioBytes);
             }
 
+            var newCards = 0;
             try
             {
                 logger.LogInformation("Submission {Id}: Gemini'ga yuborilmoqda ({Size} bayt)", submissionId, audioBytes.Length);
@@ -86,10 +88,14 @@ public static class SpeakingWritingEndpoints
                         PromptData = System.Text.Json.JsonSerializer.Serialize(new { topic }),
                         ResponseData = System.Text.Json.JsonSerializer.Serialize(evaluation),
                     });
+                    // Tuzatishlar avtomatik takrorlash kartalariga aylanadi —
+                    // urinish bilan bitta tranzaksiyada saqlanadi.
+                    newCards = await reviews.AddCardsAsync(
+                        userId!.Value, ActivityType.Speaking, ReviewCardFactory.FromCorrections(evaluation.TopCorrections));
                     await db.SaveChangesAsync();
                 }
 
-                return Results.Ok(new { submissionId, evaluation, saved = shouldSave });
+                return Results.Ok(new { submissionId, evaluation, saved = shouldSave, newCards });
             }
             catch (Exception ex)
             {
@@ -100,7 +106,7 @@ public static class SpeakingWritingEndpoints
                 logger.LogError(ex, "Submission {Id}: xato", submissionId);
                 return Results.Problem(detail: ex.Message, statusCode: 502);
             }
-        });
+        }).RequireRateLimiting("ai");
 
         app.MapGet("/api/speaking/history", (HttpRequest request, AppDbContext db, AuthService auth) =>
             HistoryQueries.GetHistoryAsync(ActivityType.Speaking, request, db, auth));
@@ -111,6 +117,7 @@ public static class SpeakingWritingEndpoints
             IWritingEvaluationService evaluationService,
             AppDbContext db,
             AuthService auth,
+            ReviewService reviews,
             ILogger<Program> logger,
             bool save = true) =>
         {
@@ -141,6 +148,7 @@ public static class SpeakingWritingEndpoints
             var userId = await auth.GetCurrentUserIdAsync(request);
             var shouldSave = save && userId is not null;
 
+            var newCards = 0;
             try
             {
                 logger.LogInformation("Writing submission {Id}: Gemini'ga yuborilmoqda ({Length} belgi)", submissionId, body.Text.Length);
@@ -157,17 +165,21 @@ public static class SpeakingWritingEndpoints
                         PromptData = System.Text.Json.JsonSerializer.Serialize(new { topic = body.Topic, text = body.Text }),
                         ResponseData = System.Text.Json.JsonSerializer.Serialize(evaluation),
                     });
+                    // Tuzatishlar avtomatik takrorlash kartalariga aylanadi —
+                    // urinish bilan bitta tranzaksiyada saqlanadi.
+                    newCards = await reviews.AddCardsAsync(
+                        userId!.Value, ActivityType.Writing, ReviewCardFactory.FromCorrections(evaluation.TopCorrections));
                     await db.SaveChangesAsync();
                 }
 
-                return Results.Ok(new { submissionId, evaluation, saved = shouldSave });
+                return Results.Ok(new { submissionId, evaluation, saved = shouldSave, newCards });
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Writing submission {Id}: xato", submissionId);
                 return Results.Problem(detail: ex.Message, statusCode: 502);
             }
-        });
+        }).RequireRateLimiting("ai");
 
         app.MapGet("/api/writing/history", (HttpRequest request, AppDbContext db, AuthService auth) =>
             HistoryQueries.GetHistoryAsync(ActivityType.Writing, request, db, auth));

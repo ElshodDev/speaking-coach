@@ -2,10 +2,18 @@
 <html lang="uz">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="Ingliz tili: gapirish, yozish, o'qish, tinglash va xatolarni takrorlash — sun'iy intellekt yordamida." />
+    <meta name="theme-color" content="#2563eb" />
+    <!-- PWA: telefonda "Bosh ekranga qo'shish" / "Ilovani o'rnatish" uchun -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Speaking Coach" />
     <title>Speaking Coach</title>
   </head>
-  <body>
+  <body style="margin: 0">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

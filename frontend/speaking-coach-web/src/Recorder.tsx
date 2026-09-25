@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { STABILITY_RUNS, StabilityTable, computeStats, runSequentially, type DimensionStats } from './Stability';
 import { apiJson, loadHistory as fetchHistory, type HistoryItem } from './api';
 import { HistoryHint } from './AuthPanel';
+import { cardsMessage } from './cards';
 
 const TOPICS = [
   'Describe your favorite city and why you like it.',
@@ -36,9 +37,10 @@ interface SubmitResponse {
   submissionId: string;
   evaluation: EvaluationResult;
   saved: boolean;
+  newCards: number;
 }
 
-export function Recorder({ loggedIn }: { loggedIn: boolean }) {
+export function Recorder({ loggedIn, onCardsAdded }: { loggedIn: boolean; onCardsAdded?: () => void }) {
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
   const [topic] = useState(TOPICS[0]);
@@ -145,7 +147,8 @@ export function Recorder({ loggedIn }: { loggedIn: boolean }) {
       const data = await postAudio(blob, true);
       setResult(data);
       setStatus('done');
-      setMessage('Tayyor');
+      setMessage(cardsMessage(data.newCards));
+      if (data.newCards > 0) onCardsAdded?.();
       loadHistory(); // yangi urinish ro'yxatga qo'shilishi uchun tarixni qayta yuklaymiz
     } catch (err) {
       setStatus('error');

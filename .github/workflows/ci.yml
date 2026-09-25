@@ -1,0 +1,40 @@
+# Har bir push va pull request'da avtomatik tekshiruv (Continuous Integration).
+# Natija GitHub'dagi "Actions" bo'limida va README'dagi belgida ko'rinadi.
+# Ikkala qism parallel ishlaydi; biri qizil bo'lsa — nimadir buzilgan.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend (build + unit tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      # Test loyihasi API loyihasiga bog'langan — build ikkalasini ham qiladi.
+      - run: dotnet test backend/SpeakingCoach.Api.Tests --configuration Release
+
+  frontend:
+    name: Frontend (type check + build + tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend/speaking-coach-web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/speaking-coach-web/package-lock.json
+      # npm ci — package-lock.json'dagi AYNAN o'sha versiyalarni o'rnatadi
+      # (npm install'dan farqli, lock faylni o'zgartirmaydi).
+      - run: npm ci
+      - run: npm test
+      - run: npm run build

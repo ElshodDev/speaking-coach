@@ -14,7 +14,7 @@ public static class AuthEndpoints
             return result.Error is null
                 ? Results.Ok(new { token = result.Token, email = result.Email })
                 : Results.BadRequest(new { error = result.Error });
-        });
+        }).RequireRateLimiting("auth");
 
         app.MapPost("/api/auth/login", async (AuthRequest body, AuthService auth) =>
         {
@@ -24,7 +24,7 @@ public static class AuthEndpoints
             return result.Error is null
                 ? Results.Ok(new { token = result.Token, email = result.Email })
                 : Results.Json(new { error = result.Error }, statusCode: StatusCodes.Status401Unauthorized);
-        });
+        }).RequireRateLimiting("auth");
 
         app.MapPost("/api/auth/logout", async (HttpRequest request, AuthService auth) =>
         {

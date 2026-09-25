@@ -1,6 +1,9 @@
 # AI Speaking Coach
 
-Ingliz tili o'rganuvchilar uchun to'rtta mashq turi:
+[![CI](https://github.com/ElshodDev/speaking-coach/actions/workflows/ci.yml/badge.svg)](https://github.com/ElshodDev/speaking-coach/actions/workflows/ci.yml)
+
+Ingliz tili o'rganuvchilar uchun to'rtta mashq turi va ularni **eslab
+qolishga** yordam beradigan takrorlash tizimi:
 
 - **Gapirish** — mikrofondan yozib gapiring → Google Gemini bitta
   chaqiruvda transkripsiya qiladi va rubrika bo'yicha (ravonlik,
@@ -13,9 +16,18 @@ Ingliz tili o'rganuvchilar uchun to'rtta mashq turi:
 - **Tinglash** — xuddi shunday, lekin matnni brauzer ovoz chiqarib o'qiydi
   (Web Speech API), matnning o'zi javob berilgandan keyin ko'rinadi.
 
-Tizimga kirgan foydalanuvchining har bir urinishi ma'lumotlar bazasida
-saqlanadi va faqat o'ziga ko'rinadi. Kirmasdan ham barcha mashqlar ishlaydi
-— faqat natija tarixga yozilmaydi.
+- **Takrorlash** — mashqlardagi xatolaringiz (tuzatishlar, noto'g'ri
+  javoblar) avtomatik ravishda kartalarga aylanadi va **oraliqli takrorlash**
+  (spaced repetition) bilan "unutish arafasida" qayta ko'rsatiladi. Kunlik
+  maqsad va ketma-ket kunlar (🔥 streak). O'zingiz ham so'z qo'sha olasiz.
+- **🎧 Yo'lda rejimi** — avtobusda yoki yurganda, quloqchin bilan: karta
+  savoli o'qiladi → o'ylash uchun pauza → javob. Qo'l tegizish shart emas.
+- **Telefonga o'rnatish (PWA)** — brauzerda "Bosh ekranga qo'shish" bilan
+  oddiy ilova kabi ochiladi, sekin internetda ham tez yuklanadi.
+
+Tizimga kirgan foydalanuvchining har bir urinishi va kartalari ma'lumotlar
+bazasida saqlanadi va faqat o'ziga ko'rinadi. Kirmasdan ham barcha mashqlar
+ishlaydi — faqat natija tarixga yozilmaydi.
 
 **Live demo**: https://speaking-coach-theta.vercel.app
 (Backend bepul tarifda ishlaydi — 15 daqiqa foydalanilmasa "uxlaydi",
@@ -28,9 +40,11 @@ Brauzer (React + TypeScript, Vercel)
    │  Authorization: Bearer <token>  (kirgan bo'lsa)
    ▼
 Backend (ASP.NET Core Minimal API, Render, Docker)
-   │  Endpoints/   — auth, speaking/writing, reading/listening
+   │  Endpoints/   — auth, speaking/writing, reading/listening, review
    │  Services/    — GeminiClient (fallback + retry + qat'iy JSON),
-   │                 baholash/yaratish servislari, AuthService
+   │                 baholash/yaratish servislari, AuthService,
+   │                 ReviewScheduler (SM-2), ReviewCardFactory
+   │  Rate limiting (IP bo'yicha), /health
    ▼
 Google Gemini
    - Speaking: audio → transkripsiya + baholash (bitta so'rov)
@@ -42,6 +56,8 @@ PostgreSQL (Neon)
    Activities       — barcha urinishlar (Type + UserId bo'yicha)
    Users, Sessions  — hisoblar va kirish sessiyalari
    PendingExercises — javob kutayotgan Reading/Listening mashqlari
+   ReviewCards      — takrorlash kartalari (keyingi takrorlash vaqti bilan)
+   ReviewLogs       — har bir takrorlash (kunlik maqsad va streak uchun)
 ```
 
 Nega bitta so'rov (Speaking uchun): Gemini audio faylni to'g'ridan-to'g'ri
@@ -59,7 +75,8 @@ yozilgan.
 | Qism | Xizmat | Nega bepul |
 |---|---|---|
 | LLM (transkripsiya, baholash, mashq yaratish) | Google Gemini | AI Studio API kaliti, kredit karta shart emas |
-| Ovoz chiqarib o'qish (Listening) | Brauzerning Web Speech API'si | Brauzerga o'rnatilgan, API kaliti kerak emas |
+| Ovoz chiqarib o'qish (Tinglash, Yo'lda rejimi) | Brauzerning Web Speech API'si | Brauzerga o'rnatilgan, API kaliti kerak emas |
+| CI (avtomatik testlar) | GitHub Actions | Ochiq (public) repolar uchun bepul |
 | Ma'lumotlar bazasi | Neon Postgres | 0.5GB bepul, kredit karta shart emas |
 | Backend hosting | Render | Web Service bepul tarifi, kredit karta shart emas (15 daq. faolsizlikdan keyin uxlaydi) |
 | Frontend hosting | Vercel | Bepul tarif, static/SPA loyihalar uchun yetarli |
@@ -120,7 +137,17 @@ npm run dev
 
 `http://localhost:5173` ni oching.
 
-### 7. Sinov
+### 7. Avtomatik testlar
+
+```bash
+dotnet test backend/SpeakingCoach.Api.Tests   # backend: 28 ta unit test
+cd frontend/speaking-coach-web && npm test     # frontend: vitest
+```
+
+Xuddi shu testlar har bir push'da GitHub Actions'da ham ishlaydi
+(`.github/workflows/ci.yml`) — natija README tepasidagi belgida.
+
+### 8. Qo'lda sinov
 
 1. **Mehmon sifatida**: har bir tab'da "Siz mehmon sifatida
    ishlayapsiz..." eslatmasi ko'rinadi; mashqlar ishlaydi, tarix bo'sh.
@@ -132,7 +159,12 @@ npm run dev
    "Javoblarni tekshirish" → har bir savolga yashil/qizil belgi va izoh.
 6. **Tinglash**: "Mashqni boshlash" → "Tinglash" → savollarga javob → matn
    faqat tekshirilgandan keyin ko'rinadi.
-7. Sahifani yangilang — kirgan holat saqlanib qoladi. "Chiqish" — tarix
+7. **Takrorlash**: xato qilingan mashqlardan keyin "N ta yangi takrorlash
+   kartasi qo'shildi" xabari chiqadi, tab'da raqam paydo bo'ladi. Kartani
+   oching → "Javobni ko'rsatish" → Yana / Qiyin / Yaxshi / Oson.
+8. **Yo'lda rejimi**: Takrorlash tab'ida "▶️ Boshlash" — kartalar ovoz
+   chiqarib o'qiladi.
+9. Sahifani yangilang — kirgan holat saqlanib qoladi. "Chiqish" — tarix
    yana bo'sh ko'rinadi.
 
 ---
@@ -178,6 +210,54 @@ npm run dev
   aks holda qaysi email ro'yxatdan o'tganini aniqlab bo'lardi.
 - Email bazada **unique index** bilan himoyalangan — bir vaqtda kelgan ikki
   so'rov ham bitta email'ni ikki marta ro'yxatdan o'tkaza olmaydi.
+
+## Eslab qolish: oraliqli takrorlash
+
+Yangi so'z yoki xato bir marta ko'rilsa, bir necha kunda unutiladi. Uni
+**unutish arafasida** takrorlash eng samarali: har muvaffaqiyatli
+eslashdan keyin oraliq uzayadi (1 kun → 3 kun → ~1 hafta → ~3 hafta ...),
+unutilsa — boshidan boshlanadi. Bu Anki va Duolingo ishlatadigan g'oya.
+
+- **Kartalar o'zi paydo bo'ladi**: Gapirish/Yozish tuzatishlari ("xato
+  ibora" → "to'g'risi") va O'qish/Tinglashdagi noto'g'ri javoblar. Mashq
+  natijasi bilan **bitta tranzaksiyada** saqlanadi; bir xil ibora ikki
+  marta qo'shilmaydi.
+- **Algoritm** — SM-2 ning soddalashtirilgan varianti
+  (`Services/ReviewScheduler.cs`). Toza funksiya: bazaga ham, HTTP'ga ham
+  bog'liq emas — shuning uchun to'liq unit test qilingan.
+- **Streak va kunlik maqsad** foydalanuvchining **mahalliy vaqti** bo'yicha
+  hisoblanadi (brauzer vaqt zonasini yuboradi): Toshkentda soat 01:00 da
+  qilingan mashq UTC bo'yicha "kechagi kun" bo'lib qolmaydi.
+- **Yo'lda rejimi kartalarni baholamaydi**: tinglash "eslay oldimmi?"
+  degan savolga javob bermaydi, shuning uchun u jadvalni o'zgartirmaydi —
+  faqat qo'shimcha takrorlash. Ekran o'chmasligi uchun Screen Wake Lock
+  API ishlatiladi (qo'llab-quvvatlaydigan brauzerlarda).
+
+## Telefonda (PWA)
+
+- `public/manifest.webmanifest` + ikonkalar — "Bosh ekranga qo'shish"
+  qilinganda alohida ilova kabi (brauzer panelisiz) ochiladi.
+- `public/sw.js` (service worker): sahifa va JS/CSS fayllar keshlanadi —
+  internet sekin yoki yo'q bo'lsa ham ilova ochiladi. **Backend so'rovlari
+  hech qachon keshlanmaydi** (baholash va kartalar har doim yangi).
+  Service worker faqat production build'da yoqiladi.
+- Tugmalar barmoq bilan bosishga mo'ljallangan o'lchamda (kamida 48px).
+
+## Sifat va ishonchlilik
+
+- **Testlar**: `backend/SpeakingCoach.Api.Tests` (xUnit) — takrorlash
+  algoritmi, streak (vaqt zonalari bilan), karta yaratish, test
+  savollarini tekshirish, Gemini javobini qat'iy o'qish, token xeshi.
+  Frontend: `vitest` — gap bo'lish, statistika, karta matnlari.
+- **CI**: GitHub Actions har bir push'da backend'ni build qilib testlarni,
+  frontend'da esa type check + testlar + build'ni ishga tushiradi.
+- **Rate limiting** (ASP.NET Core'ning o'rnatilgan `RateLimiter`'i, har
+  bir IP uchun): kirish/ro'yxatdan o'tish — daqiqasiga 10 ta (parolni
+  taxmin qilishni sekinlashtiradi), Gemini'ga boradigan endpoint'lar —
+  daqiqasiga 30 ta (bepul kvotani bitta odam tugatib qo'ymasin). Render
+  proxy ortida bo'lgani uchun haqiqiy IP `X-Forwarded-For`dan olinadi.
+- **`/health`**: server tirikmi va bazaga ulana oladimi — monitoring
+  (masalan UptimeRobot) uchun. Baza ishlamasa 503.
 
 ## O'qish va Tinglash qanday ishlaydi
 
@@ -235,9 +315,13 @@ ko'rsatadi.
   tokenni o'qiy oladi. React matnni avtomatik "escape" qiladi va loyihada
   `dangerouslySetInnerHTML` yo'q, lekin bu httpOnly cookie darajasidagi
   himoya emas.
-- **Kirishga urinishlar cheklanmagan (rate limiting yo'q)**: parolni
-  ketma-ket taxmin qilishga to'sqinlik qiladigan narsa hozircha faqat
-  PBKDF2'ning sekinligi.
+- **Eslatmalar (push notification) yo'q**: ilova foydalanuvchini o'zi
+  chaqirmaydi — tab'dagi raqam va streak faqat ilova ochilganda ko'rinadi.
+- **Yo'lda rejimi ekran yoniq turishini talab qiladi**: ko'p telefonlarda
+  ekran o'chsa, brauzer ovozni ham to'xtatadi.
+- **Testlar faqat toza mantiqni qamraydi**: bazaga yozish/o'qish va
+  endpoint'lar hozircha avtomatik test qilinmagan (integration testlar
+  uchun test bazasi kerak).
 - **Parolni tiklash va email tasdiqlash yo'q**.
 - **Login'dan oldingi yozuvlar** (`UserId` bo'sh) hech kimning tarixida
   ko'rinmaydi, lekin bazada qoladi.
@@ -254,11 +338,14 @@ ko'rsatadi.
 4. ✅ ~~LLM baholash barqarorligini o'lchash~~
 5. ✅ ~~Reading / Listening~~
 6. ✅ ~~Foydalanuvchi hisoblari (login)~~
-7. Kirish endpoint'lariga rate limiting (ASP.NET Core'ning o'rnatilgan
-   `RateLimiter`'i; Render proxy ortida bo'lgani uchun `X-Forwarded-For`ni
-   to'g'ri sozlash kerak)
-8. Parolni tiklash (email yuborish xizmati kerak)
-9. Avtomatik testlar (xUnit + `WebApplicationFactory`) va GitHub Actions
+7. ✅ ~~Rate limiting, `/health`~~
+8. ✅ ~~Avtomatik testlar va GitHub Actions~~
+9. ✅ ~~Takrorlash kartalari, Yo'lda rejimi, PWA~~
+10. Kunlik eslatma (Web Push) — "Bugun 12 ta karta kutyapti"
+11. Integration testlar: `WebApplicationFactory` + Testcontainers'dagi
+    haqiqiy Postgres
+12. Progress sahifasi: mezonlar bo'yicha ballarning vaqt davomidagi grafigi
+13. Parolni tiklash (email yuborish xizmati kerak)
 
 ## Ishlatishdan oldin tushunishingiz kerak bo'lgan savollar
 
@@ -278,7 +365,17 @@ ko'rsatadi.
   migratsiya paytida nima bo'lardi?
 - `RespectRequiredConstructorParameters` bo'lmasa, Gemini javobida
   `"score"` yo'q bo'lsa nima bo'lardi?
+- SM-2'da "Yana" bosilganda nima o'zgaradi va nega "osonlik" (ease)
+  koeffitsiyenti ham pasayadi?
+- Nega streak UTC bo'yicha emas, mahalliy vaqt bo'yicha hisoblanadi?
+- Nega "Yo'lda" rejimi kartalarni baholamaydi?
+- Nega service worker backend so'rovlarini keshlamaydi?
+- Rate limiting'da nega `X-Forwarded-For`ning faqat oxirgi qiymatiga
+  ishoniladi? Birinchisiga ishonsak nima bo'lardi?
+- Nega unit testlar aynan `ReviewScheduler`, `ReviewCardFactory` kabi
+  "toza" klasslarga yozilgan? Bu kodni qanday tuzishga ta'sir qildi?
 
 Javob berolmasangiz — tegishli fayllarni (`Program.cs`, `Endpoints/`,
 `Services/AuthService.cs`, `Services/GeminiClient.cs`,
-`Services/ComprehensionService.cs`, `Data/AppDbContext.cs`) oching, o'qing.
+`Services/ComprehensionService.cs`, `Services/ReviewScheduler.cs`,
+`Data/AppDbContext.cs`, `frontend/.../public/sw.js`) oching, o'qing.

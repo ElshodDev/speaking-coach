@@ -59,13 +59,14 @@ public static class ComprehensionEndpoints
                     logger.LogError(ex, "{Kind} mashqini yaratishda xato", path);
                     return Results.Problem(detail: ex.Message, statusCode: 502);
                 }
-            });
+            }).RequireRateLimiting("ai");
 
             app.MapPost($"/api/{path}/submit", async (
                 ComprehensionSubmitRequest body,
                 HttpRequest request,
                 AppDbContext db,
-                AuthService auth) =>
+                AuthService auth,
+                ReviewService reviews) =>
             {
                 var pending = await db.PendingExercises
                     .FirstOrDefaultAsync(p => p.Id == body.ExerciseId && p.Type == type);
@@ -90,8 +91,13 @@ public static class ComprehensionEndpoints
                 db.PendingExercises.Remove(pending);
 
                 var userId = await auth.GetCurrentUserIdAsync(request);
+                var newCards = 0;
                 if (userId is not null)
                 {
+                    // Xato javob berilgan savollar takrorlash kartalariga aylanadi.
+                    newCards = await reviews.AddCardsAsync(
+                        userId.Value, type, ReviewCardFactory.FromWrongAnswers(exercise, result));
+
                     db.Activities.Add(new Activity
                     {
                         Id = Guid.NewGuid(),
@@ -114,8 +120,9 @@ public static class ComprehensionEndpoints
                     // Listening'da matn javobdan keyingina ko'rsatiladi.
                     passage = exercise.Passage,
                     saved = userId is not null,
+                    newCards,
                 });
-            });
+            }).RequireRateLimiting("ai");
 
             app.MapGet($"/api/{path}/history", (HttpRequest request, AppDbContext db, AuthService auth) =>
                 HistoryQueries.GetHistoryAsync(type, request, db, auth));

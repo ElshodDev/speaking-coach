@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { loadHistory as fetchHistory, postJson, type HistoryItem } from './api';
 import { HistoryHint } from './AuthPanel';
+import { cardsMessage } from './cards';
+import { isSpeechSupported, speakAsync, stopSpeaking } from './speech';
 
 // Reading va Listening — bitta komponent, ikki rejim. Backend ham bitta
 // mantiq (ComprehensionEndpoints.cs), faqat yo'l farq qiladi.
@@ -31,11 +33,20 @@ interface SubmitResponse {
   results: QuestionResult[];
   passage: string;
   saved: boolean;
+  newCards: number;
 }
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
-export function Comprehension({ mode, loggedIn }: { mode: Mode; loggedIn: boolean }) {
+export function Comprehension({
+  mode,
+  loggedIn,
+  onCardsAdded,
+}: {
+  mode: Mode;
+  loggedIn: boolean;
+  onCardsAdded?: () => void;
+}) {
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const [answers, setAnswers] = useState<(number | null)[]>([]);
   const [result, setResult] = useState<SubmitResponse | null>(null);
@@ -77,7 +88,8 @@ export function Comprehension({ mode, loggedIn }: { mode: Mode; loggedIn: boolea
         answers,
       });
       setResult(data);
-      setMessage('');
+      setMessage(data.newCards > 0 ? cardsMessage(data.newCards) : '');
+      if (data.newCards > 0) onCardsAdded?.();
       setHistory(await fetchHistory(mode));
     } catch (err) {
       setIsError(true);
@@ -205,10 +217,11 @@ export function Comprehension({ mode, loggedIn }: { mode: Mode; loggedIn: boolea
  * operatsion tizimga bog'liq (Chrome'da odatda eng yaxshi).
  */
 function Speaker({ text }: { text: string }) {
-  const supported = typeof window !== 'undefined' && 'speechSynthesis' in window;
+  const supported = isSpeechSupported();
   const [speaking, setSpeaking] = useState(false);
   const [plays, setPlays] = useState(0);
   const [rate, setRate] = useState(0.9);
+  const runRef = useRef(0);
 
   useEffect(() => {
     if (!supported) return;
@@ -226,33 +239,20 @@ function Speaker({ text }: { text: string }) {
     );
   }
 
-  function play() {
-    const synth = window.speechSynthesis;
-    synth.cancel();
-    // Matnni gaplarga bo'lib navbatga qo'yamiz: Chrome'da bitta uzun
-    // "utterance" ~15 soniyadan keyin jimgina uzilib qolishi ma'lum xato.
-    const sentences = (text.match(/[^.!?]+[.!?]+["')\]]*|[^.!?]+$/g) ?? [text])
-      .map((s) => s.trim())
-      .filter(Boolean);
-    const voice = pickEnglishVoice(synth.getVoices());
-
-    sentences.forEach((sentence, i) => {
-      const u = new SpeechSynthesisUtterance(sentence);
-      u.lang = voice?.lang ?? 'en-US';
-      if (voice) u.voice = voice;
-      u.rate = rate;
-      if (i === sentences.length - 1) {
-        u.onend = () => setSpeaking(false);
-      }
-      u.onerror = () => setSpeaking(false);
-      synth.speak(u);
-    });
+  async function play() {
+    stopSpeaking();
+    // To'xtatilgan oldingi o'qish ham "tugadi" deb xabar beradi — u yangi
+    // o'qishning holatini buzmasligi uchun har bir o'qishga raqam beramiz.
+    const run = ++runRef.current;
     setSpeaking(true);
     setPlays((p) => p + 1);
+    await speakAsync(text, rate);
+    if (runRef.current === run) setSpeaking(false);
   }
 
   function stop() {
-    window.speechSynthesis.cancel();
+    runRef.current++;
+    stopSpeaking();
     setSpeaking(false);
   }
 
@@ -271,15 +271,6 @@ function Speaker({ text }: { text: string }) {
       </label>
       {plays > 0 && <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>{plays} marta tinglandi</span>}
     </div>
-  );
-}
-
-function pickEnglishVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | undefined {
-  const english = voices.filter((v) => v.lang.toLowerCase().startsWith('en'));
-  return (
-    english.find((v) => /google|natural|neural/i.test(v.name) && /en[-_](us|gb)/i.test(v.lang)) ??
-    english.find((v) => /en[-_](us|gb)/i.test(v.lang)) ??
-    english[0]
   );
 }
 

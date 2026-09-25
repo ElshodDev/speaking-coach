@@ -1,3 +1,5 @@
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SpeakingCoach.Api.Data;
@@ -19,6 +21,40 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader());
 });
 
+// Render ilovamizning oldida "proxy" bo'lib turadi: server ko'radigan IP —
+// proxy'niki, foydalanuvchiniki emas. Haqiqiy IP X-Forwarded-For
+// sarlavhasida keladi. ForwardLimit=1 (standart) — faqat eng oxirgi
+// (Render qo'shgan) qiymatga ishoniladi, foydalanuvchi o'zi yozib yuborgan
+// soxta qiymatlarga emas. Bu rate limiting uchun kerak (pastda).
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
+// So'rovlar sonini cheklash (rate limiting), har bir IP uchun alohida:
+// - "auth": daqiqasiga 10 ta — parolni ketma-ket taxmin qilishni sekinlashtiradi;
+// - "ai": daqiqasiga 30 ta — Gemini bepul kvotasini bitta odam tugatib
+//   qo'ymasligi uchun (barqarorlik testi 6 ta so'rov — bemalol sig'adi).
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, ct) =>
+    {
+        await context.HttpContext.Response.WriteAsJsonAsync(
+            new { error = "Juda ko'p so'rov yuborildi — bir daqiqadan keyin qayta urinib ko'ring" }, ct);
+    };
+
+    options.AddPolicy("auth", http => RateLimitPartition.GetFixedWindowLimiter(
+        http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
+
+    options.AddPolicy("ai", http => RateLimitPartition.GetFixedWindowLimiter(
+        http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromMinutes(1) }));
+});
+
 builder.Services.AddHttpClient();
 
 // GeminiClient — barcha servislar shu bitta klass orqali Gemini'ga so'rov
@@ -28,11 +64,12 @@ builder.Services.AddSingleton<ISpeakingEvaluationService, GeminiSpeakingService>
 builder.Services.AddSingleton<IWritingEvaluationService, GeminiWritingService>();
 builder.Services.AddSingleton<IComprehensionService, GeminiComprehensionService>();
 
-// Autentifikatsiya: PasswordHasher holatsiz (stateless) — singleton yetarli.
-// AuthService esa AppDbContext'ga bog'liq, DbContext har so'rov uchun
-// alohida (scoped) bo'lgani uchun u ham scoped.
+// PasswordHasher holatsiz (stateless) — singleton yetarli. AuthService va
+// ReviewService esa AppDbContext'ga bog'liq; DbContext har so'rov uchun
+// alohida (scoped) bo'lgani uchun ular ham scoped.
 builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<ReviewService>();
 
 // Ulanish satri (connection string) standart ASP.NET Core konvensiyasi
 // bo'yicha "ConnectionStrings:Default" nomi bilan o'qiladi. Lokalda:
@@ -46,18 +83,33 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connect
 
 var app = builder.Build();
 
+// Tartib muhim: avval haqiqiy IP aniqlanadi, keyin CORS, keyin cheklov.
+app.UseForwardedHeaders();
 app.UseCors("AllowFrontend");
+app.UseRateLimiter();
 
 var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "uploads");
 Directory.CreateDirectory(uploadsPath);
 
 app.MapGet("/", () => Results.Ok(new { status = "SpeakingCoach.Api ishlayapti" }));
 
+// Monitoring (masalan UptimeRobot) va Render uchun: server tirikmi VA
+// bazaga ulana oladimi. Baza ishlamasa 503 — "server bor, lekin xizmat
+// ko'rsata olmaydi".
+app.MapGet("/health", async (AppDbContext db) =>
+{
+    var dbOk = await db.Database.CanConnectAsync();
+    return dbOk
+        ? Results.Ok(new { status = "ok", database = "ok" })
+        : Results.Json(new { status = "degraded", database = "unreachable" }, statusCode: StatusCodes.Status503ServiceUnavailable);
+});
+
 // Endpoint'lar mavzu bo'yicha alohida fayllarda (Endpoints/ papkasi) —
 // Program.cs faqat sozlash va ulash bilan shug'ullanadi.
 app.MapAuthEndpoints();
 app.MapSpeakingWritingEndpoints(uploadsPath);
 app.MapComprehensionEndpoints();
+app.MapReviewEndpoints();
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 app.Run($"http://0.0.0.0:{port}");

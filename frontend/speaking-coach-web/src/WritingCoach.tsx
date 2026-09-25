@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { STABILITY_RUNS, StabilityTable, computeStats, runSequentially, type DimensionStats } from './Stability';
 import { loadHistory as fetchHistory, postJson, type HistoryItem } from './api';
 import { HistoryHint } from './AuthPanel';
+import { cardsMessage } from './cards';
 
 const TOPICS = [
   'Do you think social media has a positive or negative effect on society? Explain your view.',
@@ -42,9 +43,10 @@ interface SubmitResponse {
   submissionId: string;
   evaluation: WritingEvaluationResult;
   saved: boolean;
+  newCards: number;
 }
 
-export function WritingCoach({ loggedIn }: { loggedIn: boolean }) {
+export function WritingCoach({ loggedIn, onCardsAdded }: { loggedIn: boolean; onCardsAdded?: () => void }) {
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
   const [topic] = useState(TOPICS[0]);
@@ -125,7 +127,8 @@ export function WritingCoach({ loggedIn }: { loggedIn: boolean }) {
       setLastSubmittedText(text);
       setResult(data);
       setStatus('done');
-      setMessage('Tayyor');
+      setMessage(cardsMessage(data.newCards));
+      if (data.newCards > 0) onCardsAdded?.();
       loadHistory(); // yangi urinish ro'yxatga qo'shilishi uchun tarixni qayta yuklaymiz
     } catch (err) {
       setStatus('error');
