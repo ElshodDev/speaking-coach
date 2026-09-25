@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react';
 import { STABILITY_RUNS, StabilityTable, computeStats, runSequentially, type DimensionStats } from './Stability';
-
-// Recorder.tsx bilan bir xil manzil — backend bitta, faqat yo'l (path) farq
-// qiladi (/api/writing/... vs /api/speaking/...).
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-const API_URL = `${API_BASE}/api/writing/submit`;
+import { loadHistory as fetchHistory, postJson, type HistoryItem } from './api';
+import { HistoryHint } from './AuthPanel';
 
 const TOPICS = [
   'Do you think social media has a positive or negative effect on society? Explain your view.',
@@ -44,16 +41,10 @@ interface WritingEvaluationResult {
 interface SubmitResponse {
   submissionId: string;
   evaluation: WritingEvaluationResult;
+  saved: boolean;
 }
 
-interface HistoryItem {
-  id: string;
-  createdAtUtc: string;
-  promptData: string;
-  responseData: string;
-}
-
-export function WritingCoach() {
+export function WritingCoach({ loggedIn }: { loggedIn: boolean }) {
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
   const [topic] = useState(TOPICS[0]);
@@ -73,32 +64,14 @@ export function WritingCoach() {
   }, []);
 
   async function loadHistory() {
-    try {
-      const response = await fetch(`${API_BASE}/api/writing/history`);
-      if (!response.ok) return; // tarix ixtiyoriy — o'chib qolsa ham asosiy funksiya ishlayveradi
-      const data: HistoryItem[] = await response.json();
-      setHistory(data);
-    } catch {
-      // Tarmoq xatosi bo'lsa ham jim o'tkazamiz.
-    }
+    setHistory(await fetchHistory('writing'));
   }
 
   // Bitta yuborish — oddiy oqim (save=true) ham, barqarorlik testi
   // (save=false) ham shu funksiyani ishlatadi.
   async function postEssay(essay: string, save: boolean): Promise<SubmitResponse> {
-    const url = save ? API_URL : `${API_URL}?save=false`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ topic, text: essay }),
-    });
-
-    if (!response.ok) {
-      const errorBody = await response.json().catch(() => ({}));
-      throw new Error(errorBody.error ?? errorBody.detail ?? `Server xatosi: ${response.status}`);
-    }
-
-    return response.json();
+    const path = save ? '/api/writing/submit' : '/api/writing/submit?save=false';
+    return postJson<SubmitResponse>(path, { topic, text: essay });
   }
 
   async function runStabilityTest() {
@@ -262,6 +235,7 @@ export function WritingCoach() {
 
       {stability && <StabilityTable stats={stability.stats} failed={stability.failed} />}
 
+      <HistoryHint loggedIn={loggedIn} />
       {history.length > 0 && (
         <div style={{ marginTop: '2rem' }}>
           <h3>Oldingi urinishlar ({history.length})</h3>

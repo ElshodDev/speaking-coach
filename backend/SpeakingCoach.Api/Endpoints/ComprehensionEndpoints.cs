@@ -1,0 +1,124 @@
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using SpeakingCoach.Api.Data;
+using SpeakingCoach.Api.Services;
+
+namespace SpeakingCoach.Api.Endpoints;
+
+public record ComprehensionSubmitRequest(Guid ExerciseId, List<int> Answers);
+
+public static class ComprehensionEndpoints
+{
+    /// <summary>
+    /// /api/reading/... va /api/listening/... — bir xil mantiq, faqat
+    /// ActivityType farq qiladi, shuning uchun ikkalasi bitta sikldan
+    /// ro'yxatga olinadi.
+    /// </summary>
+    public static void MapComprehensionEndpoints(this IEndpointRouteBuilder app)
+    {
+        var kinds = new[] { ("reading", ActivityType.Reading), ("listening", ActivityType.Listening) };
+
+        foreach (var (path, type) in kinds)
+        {
+            app.MapPost($"/api/{path}/generate", async (
+                IComprehensionService service,
+                AppDbContext db,
+                ILogger<Program> logger) =>
+            {
+                // Javob berilmay tashlab ketilgan eski mashqlarni tozalaymiz —
+                // alohida fon vazifasi (background job) o'rniga shu yerda,
+                // oddiy va yetarli.
+                var cutoff = DateTime.UtcNow.AddDays(-1);
+                await db.PendingExercises.Where(p => p.CreatedAtUtc < cutoff).ExecuteDeleteAsync();
+
+                try
+                {
+                    var exercise = await service.GenerateAsync(type);
+                    var pending = new PendingExercise
+                    {
+                        Id = Guid.NewGuid(),
+                        Type = type,
+                        Payload = JsonSerializer.Serialize(exercise),
+                        CreatedAtUtc = DateTime.UtcNow,
+                    };
+                    db.PendingExercises.Add(pending);
+                    await db.SaveChangesAsync();
+
+                    // Brauzerga to'g'ri javoblar (correctIndex) va izohlar
+                    // YUBORILMAYDI — faqat savol va variantlar.
+                    return Results.Ok(new
+                    {
+                        exerciseId = pending.Id,
+                        title = exercise.Title,
+                        passage = exercise.Passage,
+                        questions = exercise.Questions.Select(q => new { question = q.Question, options = q.Options }),
+                    });
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "{Kind} mashqini yaratishda xato", path);
+                    return Results.Problem(detail: ex.Message, statusCode: 502);
+                }
+            });
+
+            app.MapPost($"/api/{path}/submit", async (
+                ComprehensionSubmitRequest body,
+                HttpRequest request,
+                AppDbContext db,
+                AuthService auth) =>
+            {
+                var pending = await db.PendingExercises
+                    .FirstOrDefaultAsync(p => p.Id == body.ExerciseId && p.Type == type);
+                if (pending is null)
+                {
+                    return Results.NotFound(new { error = "Mashq topilmadi yoki muddati o'tgan — yangisini oling" });
+                }
+
+                var exercise = GeminiClient.DeserializeStrict<ComprehensionExercise>(pending.Payload);
+
+                ComprehensionResult result;
+                try
+                {
+                    result = GeminiComprehensionService.Grade(exercise, body.Answers ?? new List<int>());
+                }
+                catch (ArgumentException ex)
+                {
+                    return Results.BadRequest(new { error = ex.Message });
+                }
+
+                // Mashq bir marta ishlatiladi: javob berildi — o'chiramiz.
+                db.PendingExercises.Remove(pending);
+
+                var userId = await auth.GetCurrentUserIdAsync(request);
+                if (userId is not null)
+                {
+                    db.Activities.Add(new Activity
+                    {
+                        Id = Guid.NewGuid(),
+                        Type = type,
+                        UserId = userId,
+                        CreatedAtUtc = DateTime.UtcNow,
+                        PromptData = pending.Payload,
+                        ResponseData = JsonSerializer.Serialize(result),
+                    });
+                }
+
+                // O'chirish va (bo'lsa) tarixga yozish — bitta tranzaksiyada.
+                await db.SaveChangesAsync();
+
+                return Results.Ok(new
+                {
+                    result.Score,
+                    result.Total,
+                    result.Results,
+                    // Listening'da matn javobdan keyingina ko'rsatiladi.
+                    passage = exercise.Passage,
+                    saved = userId is not null,
+                });
+            });
+
+            app.MapGet($"/api/{path}/history", (HttpRequest request, AppDbContext db, AuthService auth) =>
+                HistoryQueries.GetHistoryAsync(type, request, db, auth));
+        }
+    }
+}

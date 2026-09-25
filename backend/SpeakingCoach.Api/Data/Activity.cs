@@ -31,6 +31,13 @@ public class Activity
     public ActivityType Type { get; set; }
     public DateTime CreatedAtUtc { get; set; }
 
+    /// <summary>
+    /// Qaysi foydalanuvchiga tegishli. Nullable — login qo'shilishidan
+    /// OLDIN saqlangan eski yozuvlar egasiz qoladi (ular hech kimning
+    /// tarixida ko'rinmaydi, lekin o'chirilmaydi ham).
+    /// </summary>
+    public Guid? UserId { get; set; }
+
     /// <summary>So'rov ma'lumotlari — masalan Speaking uchun {"topic": "..."}.</summary>
     public string PromptData { get; set; } = "{}";
 

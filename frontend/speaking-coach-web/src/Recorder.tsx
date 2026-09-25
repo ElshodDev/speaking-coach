@@ -1,11 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { STABILITY_RUNS, StabilityTable, computeStats, runSequentially, type DimensionStats } from './Stability';
-
-// Lokalda .env fayl bo'lmasa, localhost:5000'ga tushadi.
-// Vercel'ga deploy qilinganda VITE_API_URL environment variable orqali
-// haqiqiy backend manziliga (masalan Railway URL'iga) yo'naltiriladi.
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-const API_URL = `${API_BASE}/api/speaking/submit`;
+import { apiJson, loadHistory as fetchHistory, type HistoryItem } from './api';
+import { HistoryHint } from './AuthPanel';
 
 const TOPICS = [
   'Describe your favorite city and why you like it.',
@@ -39,19 +35,10 @@ interface EvaluationResult {
 interface SubmitResponse {
   submissionId: string;
   evaluation: EvaluationResult;
+  saved: boolean;
 }
 
-// Backend /api/speaking/history'dan shu ko'rinishda qaytadi — PromptData va
-// ResponseData bazada jsonb (matn) sifatida saqlangani uchun, bu yerda ham
-// oddiy string bo'lib keladi va JSON.parse bilan ochiladi.
-interface HistoryItem {
-  id: string;
-  createdAtUtc: string;
-  promptData: string;
-  responseData: string;
-}
-
-export function Recorder() {
+export function Recorder({ loggedIn }: { loggedIn: boolean }) {
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
   const [topic] = useState(TOPICS[0]);
@@ -72,15 +59,7 @@ export function Recorder() {
   }, []);
 
   async function loadHistory() {
-    try {
-      const response = await fetch(`${API_BASE}/api/speaking/history`);
-      if (!response.ok) return; // tarix ixtiyoriy — o'chib qolsa ham asosiy funksiya ishlayveradi
-      const data: HistoryItem[] = await response.json();
-      setHistory(data);
-    } catch {
-      // Tarmoq xatosi bo'lsa ham jim o'tkazamiz — bu asosiy yozib-baholash
-      // oqimini to'xtatishga arzimaydi.
-    }
+    setHistory(await fetchHistory('speaking'));
   }
 
   async function startRecording() {
@@ -126,15 +105,8 @@ export function Recorder() {
     formData.append('audio', blob, 'recording.webm');
     formData.append('topic', topic);
 
-    const url = save ? API_URL : `${API_URL}?save=false`;
-    const response = await fetch(url, { method: 'POST', body: formData });
-
-    if (!response.ok) {
-      const errorBody = await response.json().catch(() => ({}));
-      throw new Error(errorBody.error ?? errorBody.detail ?? `Server xatosi: ${response.status}`);
-    }
-
-    return response.json();
+    const path = save ? '/api/speaking/submit' : '/api/speaking/submit?save=false';
+    return apiJson<SubmitResponse>(path, { method: 'POST', body: formData });
   }
 
   async function runStabilityTest() {
@@ -263,6 +235,7 @@ export function Recorder() {
 
       {stability && <StabilityTable stats={stability.stats} failed={stability.failed} />}
 
+      <HistoryHint loggedIn={loggedIn} />
       {history.length > 0 && (
         <div style={{ marginTop: '2rem' }}>
           <h3>Oldingi urinishlar ({history.length})</h3>

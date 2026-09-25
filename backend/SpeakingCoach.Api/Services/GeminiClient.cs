@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace SpeakingCoach.Api.Services;
 
 /// <summary>
@@ -96,6 +98,46 @@ public class GeminiClient
     }
 
     /// <summary>
+    /// Gemini JSON'ini C# record'larga aylantirishning QAT'IY sozlamalari.
+    ///
+    /// Nega kerak: standart holatda System.Text.Json yetishmayotgan maydonni
+    /// jimgina standart qiymat bilan to'ldiradi — masalan Gemini "score"
+    /// o'rniga boshqa nom yozsa, ball 0 bo'lib qoladi va bazaga "0 ball"
+    /// deb saqlanadi (xato hech qayerda ko'rinmaydi). Bu sozlamalar bilan:
+    /// - RespectRequiredConstructorParameters: record'ning har bir parametri
+    ///   JSON'da bo'lishi SHART, aks holda JsonException;
+    /// - RespectNullableAnnotations: `string` (nullable emas) maydonga null
+    ///   kelsa ham JsonException.
+    /// Natijada noto'g'ri javob bazaga yozilmaydi, foydalanuvchi xato ko'radi
+    /// va qayta urinishi mumkin.
+    /// </summary>
+    public static readonly JsonSerializerOptions StrictJson = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        RespectRequiredConstructorParameters = true,
+        RespectNullableAnnotations = true,
+    };
+
+    /// <summary>
+    /// Gemini javob matnini T turiga qat'iy aylantiradi. Har qanday format
+    /// xatosi tushunarli InvalidOperationException'ga o'giriladi (endpoint
+    /// uni 502 sifatida qaytaradi).
+    /// </summary>
+    public static T DeserializeStrict<T>(string text)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<T>(text, StrictJson)
+                ?? throw new InvalidOperationException($"Gemini bo'sh JSON qaytardi: {text}");
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidOperationException(
+                $"Gemini javobi kutilgan shaklda emas ({ex.Message}). Javob: {text}", ex);
+        }
+    }
+
+    /// <summary>
     /// Gemini javobidagi ichki matnni (JSON string sifatida) qazib oladi.
     /// Bu ham ikkala servisda bir xil — natijani qanday JSON'ga aylantirish
     /// (deserialize) har biriga xos, lekin Gemini javobining tashqi
@@ -103,7 +145,7 @@ public class GeminiClient
     /// </summary>
     public static async Task<string> ExtractTextAsync(HttpResponseMessage response, CancellationToken ct = default)
     {
-        using var doc = System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStreamAsync(ct));
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStreamAsync(ct));
         return doc.RootElement
             .GetProperty("candidates")[0]
             .GetProperty("content")

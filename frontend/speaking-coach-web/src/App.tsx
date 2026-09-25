@@ -1,35 +1,64 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Recorder } from './Recorder';
 import { WritingCoach } from './WritingCoach';
+import { Comprehension } from './Comprehension';
+import { AuthPanel } from './AuthPanel';
+import { apiJson, getToken, setToken } from './api';
 
-type Tab = 'speaking' | 'writing';
+type Tab = 'speaking' | 'writing' | 'reading' | 'listening';
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'speaking', label: '🎙 Gapirish' },
+  { id: 'writing', label: '✍️ Yozish' },
+  { id: 'reading', label: "📖 O'qish" },
+  { id: 'listening', label: '🎧 Tinglash' },
+];
 
 function App() {
   const [tab, setTab] = useState<Tab>('speaking');
+  const [email, setEmail] = useState<string | null>(null);
+
+  // Sahifa ochilganda: brauzerda token saqlangan bo'lsa, u hali yaroqlimi
+  // deb serverdan so'raymiz. Yaroqsiz bo'lsa (muddati o'tgan / chiqilgan) —
+  // o'chirib tashlaymiz, foydalanuvchi mehmon sifatida davom etadi.
+  useEffect(() => {
+    if (!getToken()) return;
+    apiJson<{ email: string }>('/api/auth/me')
+      .then((me) => setEmail(me.email))
+      .catch(() => setToken(null));
+  }, []);
+
+  const loggedIn = email !== null;
+  // key: kirish/chiqishda mashq komponentlari qaytadan yaratiladi — tarix
+  // yangi foydalanuvchi uchun qayta yuklanadi, eski natijalar ko'rinmaydi.
+  const userKey = email ?? 'guest';
 
   return (
-    <main style={{ maxWidth: 480, margin: '4rem auto', fontFamily: 'sans-serif' }}>
-      <h1>AI Speaking Coach</h1>
-      <p>
-        Ingliz tilida gapiring yoki yozing — sun'iy intellekt baholab, aniq
-        tuzatishlar beradi.
+    <main style={{ maxWidth: 560, margin: '3rem auto', padding: '0 16px', fontFamily: 'sans-serif' }}>
+      <h1 style={{ marginBottom: '0.5rem' }}>AI Speaking Coach</h1>
+      <p style={{ marginTop: 0 }}>
+        Ingliz tilida gapiring, yozing, o'qing va tinglang — sun'iy intellekt baholab, aniq tuzatishlar beradi.
       </p>
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-        <TabButton active={tab === 'speaking'} onClick={() => setTab('speaking')}>
-          🎙 Gapirish
-        </TabButton>
-        <TabButton active={tab === 'writing'} onClick={() => setTab('writing')}>
-          ✍️ Yozish
-        </TabButton>
+      <AuthPanel email={email} onChange={setEmail} />
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem' }}>
+        {TABS.map((t) => (
+          <TabButton key={t.id} active={tab === t.id} onClick={() => setTab(t.id)}>
+            {t.label}
+          </TabButton>
+        ))}
       </div>
 
-      {tab === 'speaking' ? <Recorder /> : <WritingCoach />}
+      {tab === 'speaking' && <Recorder key={userKey} loggedIn={loggedIn} />}
+      {tab === 'writing' && <WritingCoach key={userKey} loggedIn={loggedIn} />}
+      {tab === 'reading' && <Comprehension key={`r-${userKey}`} mode="reading" loggedIn={loggedIn} />}
+      {tab === 'listening' && <Comprehension key={`l-${userKey}`} mode="listening" loggedIn={loggedIn} />}
     </main>
   );
 }
 
-// Ikkala tab ham bir xil ko'rinishda bo'lishi uchun kichik yordamchi
+// Barcha tablar bir xil ko'rinishda bo'lishi uchun kichik yordamchi
 // komponent — faol tab boshqasidan rang bilan ajralib turadi.
 function TabButton({
   active,

@@ -105,8 +105,10 @@ public class GeminiWritingService : IWritingEvaluationService
         var response = await _geminiClient.SendWithFallbackAsync(requestBody, ct);
         var text = await GeminiClient.ExtractTextAsync(response, ct);
 
-        return JsonSerializer.Deserialize<WritingEvaluationResult>(
-            text, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-            ?? throw new InvalidOperationException($"Gemini javobini o'qib bo'lmadi: {text}");
+        var result = GeminiClient.DeserializeStrict<WritingEvaluationResult>(text);
+        ScoreGuard.EnsureValid(
+            ("taskAchievement", result.TaskAchievement), ("coherenceCohesion", result.CoherenceCohesion),
+            ("grammar", result.Grammar), ("vocabulary", result.Vocabulary));
+        return result;
     }
 }

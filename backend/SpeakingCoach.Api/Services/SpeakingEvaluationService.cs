@@ -106,8 +106,9 @@ public class GeminiSpeakingService : ISpeakingEvaluationService
         var response = await _geminiClient.SendWithFallbackAsync(requestBody, ct);
         var text = await GeminiClient.ExtractTextAsync(response, ct);
 
-        return JsonSerializer.Deserialize<SpeakingEvaluationResult>(
-            text, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-            ?? throw new InvalidOperationException($"Gemini javobini o'qib bo'lmadi: {text}");
+        var result = GeminiClient.DeserializeStrict<SpeakingEvaluationResult>(text);
+        ScoreGuard.EnsureValid(
+            ("fluency", result.Fluency), ("grammar", result.Grammar), ("vocabulary", result.Vocabulary));
+        return result;
     }
 }
