@@ -12,7 +12,7 @@ using SpeakingCoach.Api.Data;
 namespace SpeakingCoach.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260925165356_AddProfileLevelLeaderboard")]
+    [Migration("20260925170856_AddProfileLevelLeaderboard")]
     partial class AddProfileLevelLeaderboard
     {
         /// <inheritdoc />
@@ -213,14 +213,28 @@ namespace SpeakingCoach.Api.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("DisplayName")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<string>("Level")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasDefaultValue("B1");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("ShowOnLeaderboard")
+                        .HasColumnType("boolean");
 
                     b.HasKey("Id");
 

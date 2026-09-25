@@ -32,7 +32,7 @@ public record ComprehensionResult(
 
 public interface IComprehensionService
 {
-    Task<ComprehensionExercise> GenerateAsync(ActivityType type, CancellationToken ct = default);
+    Task<ComprehensionExercise> GenerateAsync(ActivityType type, string level, CancellationToken ct = default);
 }
 
 public class GeminiComprehensionService : IComprehensionService
@@ -54,10 +54,11 @@ public class GeminiComprehensionService : IComprehensionService
     };
 
     private const string ReadingTemplate = """
-        You are creating an English READING comprehension exercise for Uzbek-speaking learners (B1-B2 level).
+        You are creating an English READING comprehension exercise for Uzbek-speaking learners at level {3}.
         Topic: {0}
 
-        1. Write an original passage of 180-250 words on this topic, in clear natural English,
+        1. Write an original passage of {4}-{5} words on this topic, in natural English whose vocabulary
+           and grammar suit a {3} learner,
            split into 2-4 paragraphs (separate paragraphs with a blank line).
         2. Write exactly {1} multiple-choice questions about the passage: one about the main idea,
            one about a specific detail, one about the meaning of a word or phrase in context,
@@ -78,11 +79,12 @@ public class GeminiComprehensionService : IComprehensionService
         """;
 
     private const string ListeningTemplate = """
-        You are creating an English LISTENING comprehension exercise for Uzbek-speaking learners (B1-B2 level).
+        You are creating an English LISTENING comprehension exercise for Uzbek-speaking learners at level {3}.
         The script will be read aloud by a text-to-speech voice, and the learner will NOT see it.
         Topic: {0}
 
-        1. Write a spoken-style script of 120-160 words: a short talk, story, announcement or voicemail.
+        1. Write a spoken-style script of {4}-{5} words, suited to a {3} learner: a short talk, story,
+           announcement or voicemail.
            Use short sentences. Do not use headings, lists, brackets, abbreviations, symbols or numbers
            written as digits (write "twenty", not "20"), so that the voice reads it naturally.
         2. Write exactly {1} multiple-choice questions that can be answered only by listening carefully:
@@ -101,21 +103,28 @@ public class GeminiComprehensionService : IComprehensionService
         }}
         """;
 
+    /// <summary>Prompt'ni yig'adi — alohida metod, chunki uni unit test bilan tekshirish mumkin.</summary>
+    public static string BuildPrompt(ActivityType type, string level, string topic)
+    {
+        var (template, words) = type switch
+        {
+            ActivityType.Reading => (ReadingTemplate, LearnerLevel.ReadingWords(level)),
+            ActivityType.Listening => (ListeningTemplate, LearnerLevel.ListeningWords(level)),
+            _ => throw new ArgumentOutOfRangeException(nameof(type), type, "Faqat Reading yoki Listening"),
+        };
+        return string.Format(
+            template, topic, QuestionCount, OptionCount, LearnerLevel.Describe(level), words.Min, words.Max);
+    }
+
     public GeminiComprehensionService(GeminiClient geminiClient)
     {
         _geminiClient = geminiClient;
     }
 
-    public async Task<ComprehensionExercise> GenerateAsync(ActivityType type, CancellationToken ct = default)
+    public async Task<ComprehensionExercise> GenerateAsync(ActivityType type, string level, CancellationToken ct = default)
     {
-        var template = type switch
-        {
-            ActivityType.Reading => ReadingTemplate,
-            ActivityType.Listening => ListeningTemplate,
-            _ => throw new ArgumentOutOfRangeException(nameof(type), type, "Faqat Reading yoki Listening"),
-        };
         var topic = Topics[Random.Shared.Next(Topics.Length)];
-        var prompt = string.Format(template, topic, QuestionCount, OptionCount);
+        var prompt = BuildPrompt(type, level, topic);
 
         var requestBody = new
         {

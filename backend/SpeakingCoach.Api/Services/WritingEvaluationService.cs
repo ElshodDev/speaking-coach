@@ -1,3 +1,4 @@
+using SpeakingCoach.Api.Data;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -20,7 +21,7 @@ public record WritingEvaluationResult(
 
 public interface IWritingEvaluationService
 {
-    Task<WritingEvaluationResult> EvaluateAsync(string topic, string essayText, CancellationToken ct = default);
+    Task<WritingEvaluationResult> EvaluateAsync(string topic, string essayText, string level, CancellationToken ct = default);
 }
 
 /// <summary>
@@ -34,7 +35,9 @@ public class GeminiWritingService : IWritingEvaluationService
     private readonly GeminiClient _geminiClient;
 
     private const string PromptTemplate = """
-        You are an English writing coach for Uzbek-speaking learners (B1-B2 level).
+        You are an English writing coach for Uzbek-speaking learners. This learner's level is {2}.
+        Keep the scores on the absolute rubric below (so progress stays comparable across levels),
+        but write explanations, corrections and the next focus in language a {2} learner understands.
         Read the essay below, written in response to the given topic, and evaluate it
         using ONLY what is written. Never invent information or assume intent beyond
         the text.
@@ -73,15 +76,19 @@ public class GeminiWritingService : IWritingEvaluationService
         }}
         """;
 
+    /// <summary>Prompt'ni yig'adi — alohida metod, chunki uni unit test bilan tekshirish mumkin.</summary>
+    public static string BuildPrompt(string topic, string essayText, string level) =>
+        string.Format(PromptTemplate, topic, essayText, LearnerLevel.Describe(level));
+
     public GeminiWritingService(GeminiClient geminiClient)
     {
         _geminiClient = geminiClient;
     }
 
     public async Task<WritingEvaluationResult> EvaluateAsync(
-        string topic, string essayText, CancellationToken ct = default)
+        string topic, string essayText, string level, CancellationToken ct = default)
     {
-        var prompt = string.Format(PromptTemplate, topic, essayText);
+        var prompt = BuildPrompt(topic, essayText, level);
 
         var requestBody = new
         {

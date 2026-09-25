@@ -145,6 +145,14 @@ export function Home({
         )
       )}
 
+      <button className="card cta" style={{ width: '100%', font: 'inherit', color: 'inherit', textAlign: 'left', cursor: 'pointer' }} onClick={() => go('progress')}>
+        <div>
+          <strong>🏆 Haftalik musobaqa va nishonlar</strong>
+          <div className="muted small">Darajangiz, XP va faollik kalendaringiz</div>
+        </div>
+        <span aria-hidden>→</span>
+      </button>
+
       <h2 style={{ marginTop: 24 }}>Mashqlar</h2>
       <ExerciseTiles onOpen={open} />
     </>

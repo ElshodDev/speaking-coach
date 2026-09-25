@@ -26,6 +26,18 @@ qolishga** yordam beradigan takrorlash tizimi:
   savoli o'qiladi → o'ylash uchun pauza → javob. Qo'l tegizish shart emas.
 - **Telefonga o'rnatish (PWA)** — brauzerda "Bosh ekranga qo'shish" bilan
   oddiy ilova kabi ochiladi, sekin internetda ham tez yuklanadi.
+- **👆 So'zni bosish** — O'qish matnidagi notanish so'zni bosing: Gemini uni
+  *aynan shu gap ichidagi* ma'nosida o'zbekcha tushuntiradi (so'z turkumi,
+  ma'no, inglizcha izoh, misol), bitta tugma bilan kartaga qo'shiladi.
+- **🎚 Daraja (A2–C1)** — matn uzunligi, lug'at va izohlar tanlangan
+  darajaga moslashadi; ballar esa mutlaq rubrikada qoladi.
+- **📈 Natijalar** — XP, darajalar va 10 ta nishon; 84 kunlik faollik
+  kalendari; mezonlar bo'yicha ballar grafigi; eng qiyin kartalar.
+- **🏆 Haftalik musobaqa** — ixtiyoriy: taxallus bilan haftalik XP reytingi.
+  Email va mashqlar hech kimga ko'rinmaydi.
+- **🛠 Admin panel** — faqat `Admin:Emails` ro'yxatidagi egasi uchun:
+  ro'yxatdan o'tishlar, kunlik/haftalik/oylik faol foydalanuvchilar, mashq
+  turlari — faqat umumiy sonlar va niqoblangan emaillar.
 
 Tizimga kirgan foydalanuvchining har bir urinishi va kartalari ma'lumotlar
 bazasida saqlanadi va faqat o'ziga ko'rinadi. Kirmasdan ham barcha mashqlar
@@ -41,7 +53,8 @@ birinchi so'rov ~30-60 soniya uyg'onish vaqtini olishi mumkin.)
   tushuntiradi; kirgan foydalanuvchiga — streak, kunlik maqsad va
   "N ta karta kutyapti" tugmasi.
 - **Pastki menyu** (telefonda ekran pastida, kompyuterda tepada): Bosh
-  sahifa · Takrorlash (navbatdagi kartalar soni bilan) · Mashqlar · Profil.
+  sahifa · Takrorlash (navbatdagi kartalar soni bilan) · Mashqlar ·
+  Natijalar · Profil.
 - **Manzillar** `#/review`, `#/practice/writing` kabi — telefondagi
   "Orqaga" tugmasi to'g'ri ishlaydi.
 - **Natijalar rangli shkalada**: 85+ a'lo, 70+ yaxshi, 50+ o'rtacha, 50
@@ -52,6 +65,10 @@ birinchi so'rov ~30-60 soniya uyg'onish vaqtini olishi mumkin.)
 | Bosh sahifa | Takrorlash | Yozish natijasi | Tungi rejim |
 |---|---|---|---|
 | ![](docs/screenshots/home-user.png) | ![](docs/screenshots/review.png) | ![](docs/screenshots/writing-result.png) | ![](docs/screenshots/review-dark.png) |
+
+| Natijalar | So'zni bosish | Admin panel |
+|---|---|---|
+| ![](docs/screenshots/progress.png) | ![](docs/screenshots/word-tap.png) | ![](docs/screenshots/admin.png) |
 
 ## Arxitektura
 
@@ -124,6 +141,7 @@ cd backend/SpeakingCoach.Api
 dotnet user-secrets init
 dotnet user-secrets set "Gemini:ApiKey" "sizning-gemini-kalitingiz"
 dotnet user-secrets set "ConnectionStrings:Default" "yuqoridagi Postgres qatori"
+dotnet user-secrets set "Admin:Emails" "sizning@email.com"   # ixtiyoriy: admin panelni kim ko'radi
 ```
 
 ### 4. Baza sxemasini yaratish
@@ -160,8 +178,8 @@ npm run dev
 ### 7. Avtomatik testlar
 
 ```bash
-dotnet test backend/SpeakingCoach.Api.Tests   # backend: 28 ta unit test
-cd frontend/speaking-coach-web && npm test     # frontend: vitest
+dotnet test backend/SpeakingCoach.Api.Tests   # backend: 60 ta unit test
+cd frontend/speaking-coach-web && npm test     # frontend: 16 ta vitest testi
 ```
 
 Xuddi shu testlar har bir push'da GitHub Actions'da ham ishlaydi
@@ -201,7 +219,8 @@ Xuddi shu testlar har bir push'da GitHub Actions'da ham ishlaydi
    Directory = `backend/SpeakingCoach.Api` → Docker avtomatik aniqlanadi →
    Free tarif → Environment Variables: `Gemini__ApiKey`,
    `ConnectionStrings__Default` (qo'sh pastki chiziq — .NET buni
-   `Gemini:ApiKey` bilan bir xil deb tushunadi).
+   `Gemini:ApiKey` bilan bir xil deb tushunadi), ixtiyoriy `Admin__Emails`
+   (vergul bilan ajratilgan emaillar — admin panelni ko'radiganlar).
 3. **Vercel** (frontend): "Add New Project" → repo'ni ulang → Root
    Directory = `frontend/speaking-coach-web` → Environment Variable:
    `VITE_API_URL` = Render manzilingiz.
@@ -269,8 +288,10 @@ unutilsa — boshidan boshlanadi. Bu Anki va Duolingo ishlatadigan g'oya.
 
 - **Testlar**: `backend/SpeakingCoach.Api.Tests` (xUnit) — takrorlash
   algoritmi, streak (vaqt zonalari bilan), karta yaratish, test
-  savollarini tekshirish, Gemini javobini qat'iy o'qish, token xeshi.
-  Frontend: `vitest` — gap bo'lish, statistika, karta matnlari.
+  savollarini tekshirish, Gemini javobini qat'iy o'qish, token xeshi,
+  XP/daraja/nishonlar, reyting (teng ballar), darajaga mos promptlar.
+  Frontend: `vitest` — gap bo'lish, statistika, karta matnlari, grafik
+  yordamchilari, so'zni ajratish.
 - **CI**: GitHub Actions har bir push'da backend'ni build qilib testlarni,
   frontend'da esa type check + testlar + build'ni ishga tushiradi.
 - **Rate limiting** (ASP.NET Core'ning o'rnatilgan `RateLimiter`'i, har
@@ -280,6 +301,20 @@ unutilsa — boshidan boshlanadi. Bu Anki va Duolingo ishlatadigan g'oya.
   proxy ortida bo'lgani uchun haqiqiy IP `X-Forwarded-For`dan olinadi.
 - **`/health`**: server tirikmi va bazaga ulana oladimi — monitoring
   (masalan UptimeRobot) uchun. Baza ishlamasa 503.
+
+## XP, darajalar va musobaqa
+
+XP bazada alohida saqlanmaydi — har safar `Activities` va `ReviewLogs`
+jadvallaridan sof `ProgressCalculator` orqali hisoblanadi. Shuning uchun
+hisoblagich "adashib" qolmaydi, qoidani o'zgartirsangiz butun tarix
+avtomatik qayta hisoblanadi.
+
+- Gapirish/Yozish — 20 XP; O'qish/Tinglash — 15 + har to'g'ri javobga 5;
+  har bir karta takrorlash — 2 XP.
+- N-daraja `50·N·(N−1)` XP dan boshlanadi (2-daraja 100, 3-daraja 300 ...).
+- Haftalik musobaqa dushanba 00:00 UTC dan hisoblanadi, faqat qatnashishni
+  yoqqan va taxallus qo'ygan foydalanuvchilar ko'rinadi. Teng XP — teng
+  o'rin (1, 2, 2, 4).
 
 ## O'qish va Tinglash qanday ishlaydi
 
@@ -364,11 +399,12 @@ ko'rsatadi.
 8. ✅ ~~Avtomatik testlar va GitHub Actions~~
 9. ✅ ~~Takrorlash kartalari, Yo'lda rejimi, PWA~~
 10. ✅ ~~Dizayn tizimi, tungi rejim, bosh sahifa, pastki menyu~~
-11. Kunlik eslatma (Web Push) — "Bugun 12 ta karta kutyapti"
-12. Integration testlar: `WebApplicationFactory` + Testcontainers'dagi
+11. ✅ ~~Natijalar sahifasi, XP/nishonlar, haftalik musobaqa, admin panel~~
+12. ✅ ~~Daraja tanlash (A2–C1), matndagi so'zni bosib kartaga qo'shish~~
+13. Kunlik eslatma (Web Push) — "Bugun 12 ta karta kutyapti"
+14. Integration testlar: `WebApplicationFactory` + Testcontainers'dagi
     haqiqiy Postgres
-13. Progress sahifasi: mezonlar bo'yicha ballarning vaqt davomidagi grafigi
-14. Parolni tiklash (email yuborish xizmati kerak)
+15. Parolni tiklash (email yuborish xizmati kerak)
 
 ## Ishlatishdan oldin tushunishingiz kerak bo'lgan savollar
 

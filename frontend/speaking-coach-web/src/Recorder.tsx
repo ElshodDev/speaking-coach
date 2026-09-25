@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { STABILITY_RUNS, StabilityTable, computeStats, runSequentially, type DimensionStats } from './Stability';
-import { apiJson, loadHistory as fetchHistory, type HistoryItem } from './api';
+import { apiJson, getLevel, loadHistory as fetchHistory, type HistoryItem } from './api';
 import { cardsMessage } from './cards';
 import { Corrections, Feedback, GuestNote, HistoryList, ScoreBar, type CorrectionItem, type ScoreWithReasoning } from './ui';
 
@@ -116,6 +116,7 @@ export function Recorder({
     const formData = new FormData();
     formData.append('audio', blob, 'recording.webm');
     formData.append('topic', topic);
+    formData.append('level', getLevel());
 
     const path = save ? '/api/speaking/submit' : '/api/speaking/submit?save=false';
     return apiJson<SubmitResponse>(path, { method: 'POST', body: formData });

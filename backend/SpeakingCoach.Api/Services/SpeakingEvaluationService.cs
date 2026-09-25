@@ -1,3 +1,4 @@
+using SpeakingCoach.Api.Data;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -18,7 +19,7 @@ public record SpeakingEvaluationResult(
 public interface ISpeakingEvaluationService
 {
     Task<SpeakingEvaluationResult> EvaluateAsync(
-        string topic, byte[] audioBytes, string audioMimeType, CancellationToken ct = default);
+        string topic, byte[] audioBytes, string audioMimeType, string level, CancellationToken ct = default);
 }
 
 /// <summary>
@@ -39,7 +40,9 @@ public class GeminiSpeakingService : ISpeakingEvaluationService
     private readonly GeminiClient _geminiClient;
 
     private const string PromptTemplate = """
-        You are an English speaking coach for Uzbek-speaking learners (B1-B2 level).
+        You are an English speaking coach for Uzbek-speaking learners. This learner's level is {1}.
+        Keep the scores on the absolute rubric below (so progress stays comparable across levels),
+        but write explanations, corrections and the next focus in language a {1} learner understands.
         Listen to the attached audio recording. First transcribe it exactly as spoken
         (including hesitations and repeated words), then evaluate it using ONLY what
         is in the audio. Never invent information.
@@ -69,19 +72,23 @@ public class GeminiSpeakingService : ISpeakingEvaluationService
         }}
         """;
 
+    /// <summary>Prompt'ni yig'adi — alohida metod, chunki uni unit test bilan tekshirish mumkin.</summary>
+    public static string BuildPrompt(string topic, string level) =>
+        string.Format(PromptTemplate, topic, LearnerLevel.Describe(level));
+
     public GeminiSpeakingService(GeminiClient geminiClient)
     {
         _geminiClient = geminiClient;
     }
 
     public async Task<SpeakingEvaluationResult> EvaluateAsync(
-        string topic, byte[] audioBytes, string audioMimeType, CancellationToken ct = default)
+        string topic, byte[] audioBytes, string audioMimeType, string level, CancellationToken ct = default)
     {
         // Brauzer ba'zan "audio/webm;codecs=opus" kabi qo'shimcha parametr bilan
         // yuboradi — Gemini toza MIME type kutadi.
         var cleanMimeType = audioMimeType.Split(';')[0];
         var audioBase64 = Convert.ToBase64String(audioBytes);
-        var prompt = string.Format(PromptTemplate, topic);
+        var prompt = BuildPrompt(topic, level);
 
         var requestBody = new
         {

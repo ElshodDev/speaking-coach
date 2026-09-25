@@ -43,6 +43,9 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<User>(entity =>
         {
             entity.Property(u => u.Email).HasMaxLength(256);
+            entity.Property(u => u.DisplayName).HasMaxLength(30);
+            // Mavjud foydalanuvchilar migratsiyada bo'sh satr emas, "B1" olsin.
+            entity.Property(u => u.Level).HasMaxLength(2).HasDefaultValue(LearnerLevel.Default);
             // Bitta email bilan ikki marta ro'yxatdan o'tib bo'lmasin — bu
             // cheklov bazaning o'zida (unique index), faqat C# kodida emas:
             // bir vaqtda kelgan ikki so'rov ham ikkinchi nusxani yarata olmaydi.

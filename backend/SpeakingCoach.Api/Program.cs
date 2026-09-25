@@ -63,6 +63,8 @@ builder.Services.AddSingleton<GeminiClient>();
 builder.Services.AddSingleton<ISpeakingEvaluationService, GeminiSpeakingService>();
 builder.Services.AddSingleton<IWritingEvaluationService, GeminiWritingService>();
 builder.Services.AddSingleton<IComprehensionService, GeminiComprehensionService>();
+builder.Services.AddSingleton<IWordService, GeminiWordService>();
+builder.Services.AddSingleton<AdminOptions>();
 
 // PasswordHasher holatsiz (stateless) — singleton yetarli. AuthService va
 // ReviewService esa AppDbContext'ga bog'liq; DbContext har so'rov uchun
@@ -70,6 +72,8 @@ builder.Services.AddSingleton<IComprehensionService, GeminiComprehensionService>
 builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ReviewService>();
+builder.Services.AddScoped<ProgressService>();
+builder.Services.AddScoped<AdminService>();
 
 // Ulanish satri (connection string) standart ASP.NET Core konvensiyasi
 // bo'yicha "ConnectionStrings:Default" nomi bilan o'qiladi. Lokalda:
@@ -110,6 +114,7 @@ app.MapAuthEndpoints();
 app.MapSpeakingWritingEndpoints(uploadsPath);
 app.MapComprehensionEndpoints();
 app.MapReviewEndpoints();
+app.MapProfileEndpoints();
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 app.Run($"http://0.0.0.0:{port}");

@@ -6,6 +6,7 @@ using SpeakingCoach.Api.Services;
 namespace SpeakingCoach.Api.Endpoints;
 
 public record ComprehensionSubmitRequest(Guid ExerciseId, List<int> Answers);
+public record ComprehensionGenerateRequest(string? Level);
 
 public static class ComprehensionEndpoints
 {
@@ -21,6 +22,7 @@ public static class ComprehensionEndpoints
         foreach (var (path, type) in kinds)
         {
             app.MapPost($"/api/{path}/generate", async (
+                ComprehensionGenerateRequest? body,
                 IComprehensionService service,
                 AppDbContext db,
                 ILogger<Program> logger) =>
@@ -33,7 +35,7 @@ public static class ComprehensionEndpoints
 
                 try
                 {
-                    var exercise = await service.GenerateAsync(type);
+                    var exercise = await service.GenerateAsync(type, LearnerLevel.Normalize(body?.Level));
                     var pending = new PendingExercise
                     {
                         Id = Guid.NewGuid(),

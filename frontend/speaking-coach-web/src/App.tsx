@@ -6,7 +6,10 @@ import { Review, statsPath, type ReviewStats } from './Review';
 import { AuthPanel } from './AuthPanel';
 import { EXERCISES, ExerciseTiles, Home, type ExerciseKind } from './Home';
 import { PageHeader } from './ui';
-import { apiJson, getToken, setToken } from './api';
+import { Progress } from './Progress';
+import { Admin } from './Admin';
+import { Settings } from './Settings';
+import { apiJson, getToken, setLevel, setToken, type Profile as ProfileData } from './api';
 
 /**
  * Oddiy "hash" marshrutlash: manzil #/review, #/practice/writing kabi.
@@ -34,9 +37,10 @@ function useRoute(): [string, (route: string) => void] {
 }
 
 const NAV = [
-  { id: 'home', icon: '🏠', label: 'Bosh sahifa' },
+  { id: 'home', icon: '🏠', label: 'Asosiy' },
   { id: 'review', icon: '🔁', label: 'Takrorlash' },
   { id: 'practice', icon: '🎯', label: 'Mashqlar' },
+  { id: 'progress', icon: '📈', label: 'Natijalar' },
   { id: 'profile', icon: '👤', label: 'Profil' },
 ] as const;
 
@@ -44,6 +48,7 @@ function App() {
   const [route, go] = useRoute();
   const [email, setEmail] = useState<string | null>(null);
   const [stats, setStats] = useState<ReviewStats | null>(null);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
 
   // Sahifa ochilganda: brauzerda token saqlangan bo'lsa, u hali yaroqlimi
   // deb serverdan so'raymiz. Yaroqsiz bo'lsa (muddati o'tgan / chiqilgan) —
@@ -56,6 +61,22 @@ function App() {
   }, []);
 
   const loggedIn = email !== null;
+
+  // Profil: taxallus, daraja, musobaqa, admin-mi. Serverdagi daraja
+  // brauzerdagisidan ustun — boshqa qurilmada tanlangan bo'lsa ham shu yerda
+  // qo'llanadi.
+  useEffect(() => {
+    if (!loggedIn) {
+      setProfile(null);
+      return;
+    }
+    apiJson<ProfileData>('/api/profile')
+      .then((p) => {
+        setProfile(p);
+        setLevel(p.level);
+      })
+      .catch(() => undefined);
+  }, [loggedIn, email]);
 
   // Streak, kunlik maqsad va navbatdagi kartalar soni — bosh sahifa va
   // menyudagi raqam uchun. Mashqdan keyin yangi kartalar qo'shilsa yoki
@@ -111,13 +132,27 @@ function App() {
         <ExerciseTiles onOpen={(kind: ExerciseKind) => go(`practice/${kind}`)} />
       </>
     );
-  } else if (section === 'profile') {
-    page = <Profile email={email} onAuthChange={onAuthChange} />;
+  } else if (section === 'progress') {
+    page = <Progress key={userKey} loggedIn={loggedIn} onLogin={toLogin} go={go} />;
+  } else if (section === 'admin' && profile?.isAdmin) {
+    page = <Admin />;
+  } else if (section === 'profile' || section === 'admin') {
+    page = (
+      <Profile
+        key={userKey}
+        email={email}
+        profile={profile}
+        onAuthChange={onAuthChange}
+        onProfileSaved={setProfile}
+        go={go}
+      />
+    );
   } else {
     page = <Home email={email} stats={stats} go={go} />;
   }
 
-  const activeNav = NAV.some((n) => n.id === section) ? section : 'home';
+  // Admin sahifasiga Profil orqali kiriladi — menyuda ham Profil belgilanadi.
+  const activeNav = section === 'admin' ? 'profile' : NAV.some((n) => n.id === section) ? section : 'home';
 
   return (
     <>
@@ -160,11 +195,37 @@ function App() {
   );
 }
 
-function Profile({ email, onAuthChange }: { email: string | null; onAuthChange: (email: string | null) => void }) {
+function Profile({
+  email,
+  profile,
+  onAuthChange,
+  onProfileSaved,
+  go,
+}: {
+  email: string | null;
+  profile: ProfileData | null;
+  onAuthChange: (email: string | null) => void;
+  onProfileSaved: (p: ProfileData) => void;
+  go: (route: string) => void;
+}) {
   return (
     <>
       <PageHeader title="Profil" />
       <AuthPanel email={email} onChange={onAuthChange} />
+      {/* key: profil serverdan kelganda forma qiymatlari yangilansin */}
+      {(!email || profile) && <Settings key={profile ? 'user' : 'guest'} profile={profile} onSaved={onProfileSaved} />}
+
+      {profile?.isAdmin && (
+        <div className="card cta">
+          <div>
+            <strong>🛠 Admin panel</strong>
+            <div className="muted small">Foydalanuvchilar, faollik va grafiklar</div>
+          </div>
+          <button className="btn btn-primary" onClick={() => go('admin')}>
+            Ochish
+          </button>
+        </div>
+      )}
 
       <div className="card">
         <h3>📱 Telefonga o'rnatish</h3>

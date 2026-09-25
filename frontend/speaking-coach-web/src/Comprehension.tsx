@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
-import { loadHistory as fetchHistory, postJson, type HistoryItem } from './api';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { getLevel, loadHistory as fetchHistory, postJson, type HistoryItem } from './api';
 import { cardsMessage } from './cards';
 import { isSpeechSupported, speakAsync, stopSpeaking } from './speech';
 import { GuestNote, HistoryList } from './ui';
+import { TappableText, WordSheet } from './WordSheet';
 
 // Reading va Listening — bitta komponent, ikki rejim. Backend ham bitta
 // mantiq (ComprehensionEndpoints.cs), faqat yo'l farq qiladi.
@@ -56,6 +57,7 @@ export function Comprehension({
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [picked, setPicked] = useState<{ word: string; sentence: string } | null>(null);
 
   useEffect(() => {
     fetchHistory(mode).then(setHistory);
@@ -68,7 +70,7 @@ export function Comprehension({
     setExercise(null);
     setResult(null);
     try {
-      const data = await postJson<Exercise>(`/api/${mode}/generate`, {});
+      const data = await postJson<Exercise>(`/api/${mode}/generate`, { level: getLevel() });
       setExercise(data);
       setAnswers(data.questions.map(() => null));
       setMessage('');
@@ -100,6 +102,10 @@ export function Comprehension({
       setBusy(false);
     }
   }
+
+  // useCallback: WordSheet effekti onClose'ga bog'liq — har renderda yangi
+  // funksiya bo'lsa, so'rov qayta-qayta yuborilardi.
+  const closePicked = useCallback(() => setPicked(null), []);
 
   const answeredCount = answers.filter((a) => a !== null).length;
   const allAnswered = answers.length > 0 && answeredCount === answers.length;
@@ -135,11 +141,10 @@ export function Comprehension({
 
           {showPassage && (
             <div style={{ marginTop: 12 }}>
-              {exercise.passage.split(/\n\s*\n/).map((para, i) => (
-                <p key={i} style={{ lineHeight: 1.7 }}>
-                  {para}
-                </p>
-              ))}
+              <p className="muted tiny" style={{ marginBottom: 6 }}>
+                💡 Notanish so'zni bosing — o'zbekcha ma'nosi chiqadi va uni kartaga qo'shish mumkin.
+              </p>
+              <TappableText text={exercise.passage} onWord={(word, sentence) => setPicked({ word, sentence })} />
             </div>
           )}
 
@@ -205,6 +210,17 @@ export function Comprehension({
             </div>
           )}
         </div>
+      )}
+
+      {picked && (
+        <WordSheet
+          word={picked.word}
+          sentence={picked.sentence}
+          loggedIn={loggedIn}
+          onClose={closePicked}
+          onLogin={onLogin}
+          onCardsAdded={onCardsAdded}
+        />
       )}
 
       <GuestNote loggedIn={loggedIn} onLogin={onLogin} />

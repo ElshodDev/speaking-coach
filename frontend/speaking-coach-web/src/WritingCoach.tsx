@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { STABILITY_RUNS, StabilityTable, computeStats, runSequentially, type DimensionStats } from './Stability';
-import { loadHistory as fetchHistory, postJson, type HistoryItem } from './api';
+import { getLevel, loadHistory as fetchHistory, postJson, type HistoryItem } from './api';
 import { cardsMessage } from './cards';
 import { Corrections, Feedback, GuestNote, HistoryList, ScoreBar, type CorrectionItem, type ScoreWithReasoning } from './ui';
 
@@ -75,7 +75,7 @@ export function WritingCoach({
   // (save=false) ham shu funksiyani ishlatadi.
   async function postEssay(essay: string, save: boolean): Promise<SubmitResponse> {
     const path = save ? '/api/writing/submit' : '/api/writing/submit?save=false';
-    return postJson<SubmitResponse>(path, { topic, text: essay });
+    return postJson<SubmitResponse>(path, { topic, text: essay, level: getLevel() });
   }
 
   async function runStabilityTest() {

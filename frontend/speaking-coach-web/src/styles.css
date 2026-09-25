@@ -26,6 +26,18 @@
   --radius-sm: 10px;
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 20px rgba(16, 24, 40, 0.06);
   --nav-h: 64px;
+  /* Grafiklar: kategorik ranglar (tartib CVD uchun tekshirilgan — dataviz
+     validatori bilan), issiqlik xaritasi uchun bitta rangli (ko'k) shkala. */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --heat-1: #cde2fb;
+  --heat-2: #86b6ef;
+  --heat-3: #3987e5;
+  --heat-4: #1c5cab;
+  --grid: #e8ebf1;
+  --axis: #c3c9d4;
   color-scheme: light;
 }
 
@@ -49,6 +61,17 @@
     --danger-soft: #3a1717;
     --teal: #2dd4bf;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.25);
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    /* Qorong'i fonda "kam" qiymat fonga yaqin (to'q), "ko'p" — yorqin. */
+    --heat-1: #104281;
+    --heat-2: #1c5cab;
+    --heat-3: #3987e5;
+    --heat-4: #86b6ef;
+    --grid: #222d44;
+    --axis: #34405a;
     color-scheme: dark;
   }
 }
@@ -136,7 +159,7 @@ p {
 }
 .nav-inner {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   width: 100%;
   max-width: 640px;
 }
@@ -689,4 +712,204 @@ table.data td {
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* ---------- Grafiklar ---------- */
+
+.chart {
+  position: relative;
+}
+.chart svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+.chart svg:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+.chart .tick {
+  fill: var(--muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.chart-tooltip {
+  position: absolute;
+  pointer-events: none;
+  z-index: 5;
+  min-width: 140px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  transform: translate(-50%, calc(-100% - 10px));
+  white-space: nowrap;
+}
+.chart-tooltip .tt-title {
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.chart-tooltip .tt-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.chart-tooltip .tt-row strong {
+  min-width: 26px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.chart-tooltip .tt-row span.name {
+  color: var(--muted);
+}
+.line-key {
+  display: inline-block;
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.swatch {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+}
+.heat-0 { fill: var(--surface-2); background: var(--surface-2); }
+.heat-1 { fill: var(--heat-1); background: var(--heat-1); }
+.heat-2 { fill: var(--heat-2); background: var(--heat-2); }
+.heat-3 { fill: var(--heat-3); background: var(--heat-3); }
+.heat-4 { fill: var(--heat-4); background: var(--heat-4); }
+
+/* ---------- Nishonlar, reyting, so'z oynasi ---------- */
+
+.badges {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
+}
+.badge-card {
+  text-align: center;
+  padding: 10px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.badge-card .emoji {
+  font-size: 1.6rem;
+  line-height: 1.2;
+}
+.badge-card .title {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.badge-card.locked {
+  opacity: 0.45;
+  filter: grayscale(1);
+}
+
+.level-ring {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.level-num {
+  flex: 0 0 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.5rem;
+}
+
+.leaderboard {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.leaderboard li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+}
+.leaderboard li.me {
+  background: var(--primary-soft);
+  font-weight: 600;
+}
+.leaderboard .rank {
+  width: 28px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.leaderboard .xp {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.word {
+  cursor: pointer;
+  border-radius: 3px;
+}
+.word:hover,
+.word:focus-visible {
+  background: var(--primary-soft);
+  outline: none;
+}
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.sheet {
+  width: 100%;
+  max-width: 640px;
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 18px 18px 0 0;
+  padding: 18px 18px calc(18px + env(safe-area-inset-bottom));
+  box-shadow: var(--shadow);
+}
+@media (min-width: 760px) {
+  .sheet-backdrop {
+    align-items: center;
+  }
+  .sheet {
+    border-radius: 18px;
+  }
+}
+
+.switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.switch input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--primary);
 }

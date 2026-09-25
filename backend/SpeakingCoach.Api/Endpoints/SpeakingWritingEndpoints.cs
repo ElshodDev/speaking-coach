@@ -5,7 +5,7 @@ namespace SpeakingCoach.Api.Endpoints;
 
 // Writing so'rov shakli — Speaking'dan farqli, JSON body sifatida keladi
 // (audio fayl yo'q, shuning uchun multipart/form-data shart emas).
-public record WritingSubmitRequest(string Topic, string Text);
+public record WritingSubmitRequest(string Topic, string Text, string? Level = null);
 
 public static class SpeakingWritingEndpoints
 {
@@ -27,6 +27,7 @@ public static class SpeakingWritingEndpoints
             var form = await request.ReadFormAsync();
             var audioFile = form.Files.GetFile("audio");
             var topic = form["topic"].ToString();
+            var level = LearnerLevel.Normalize(form["level"].ToString());
 
             if (audioFile is null || audioFile.Length == 0)
             {
@@ -72,7 +73,7 @@ public static class SpeakingWritingEndpoints
             try
             {
                 logger.LogInformation("Submission {Id}: Gemini'ga yuborilmoqda ({Size} bayt)", submissionId, audioBytes.Length);
-                var evaluation = await evaluationService.EvaluateAsync(topic, audioBytes, audioFile.ContentType);
+                var evaluation = await evaluationService.EvaluateAsync(topic, audioBytes, audioFile.ContentType, level);
 
                 // Natijani bazaga yozamiz. Bu Gemini so'rovidan KEYIN qilinadi —
                 // agar Gemini xato qaytarsa (masalan 503), hech narsa saqlanmaydi,
@@ -152,7 +153,7 @@ public static class SpeakingWritingEndpoints
             try
             {
                 logger.LogInformation("Writing submission {Id}: Gemini'ga yuborilmoqda ({Length} belgi)", submissionId, body.Text.Length);
-                var evaluation = await evaluationService.EvaluateAsync(body.Topic, body.Text);
+                var evaluation = await evaluationService.EvaluateAsync(body.Topic, body.Text, LearnerLevel.Normalize(body.Level));
 
                 if (shouldSave)
                 {

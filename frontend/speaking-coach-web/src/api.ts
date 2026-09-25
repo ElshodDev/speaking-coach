@@ -73,3 +73,40 @@ export async function loadHistory(kind: string): Promise<HistoryItem[]> {
     return [];
   }
 }
+
+// ---- Ingliz tili darajasi (A2–C1) ----
+// Mehmon uchun ham ishlashi kerak, shuning uchun brauzerda saqlanadi;
+// kirgan foydalanuvchida esa serverdagi profil bilan sinxronlanadi.
+export const LEVELS = [
+  { id: 'A2', label: 'A2', hint: "Boshlang'ich" },
+  { id: 'B1', label: 'B1', hint: "O'rta" },
+  { id: 'B2', label: 'B2', hint: "O'rtadan yuqori" },
+  { id: 'C1', label: 'C1', hint: 'Yuqori' },
+] as const;
+
+const LEVEL_KEY = 'speakingCoach.level';
+
+export function getLevel(): string {
+  try {
+    const v = localStorage.getItem(LEVEL_KEY);
+    return v && LEVELS.some((l) => l.id === v) ? v : 'B1';
+  } catch {
+    return 'B1';
+  }
+}
+
+export function setLevel(level: string) {
+  try {
+    localStorage.setItem(LEVEL_KEY, level);
+  } catch {
+    // saqlab bo'lmasa — shu sahifa ochiq turgancha ishlaydi
+  }
+}
+
+export interface Profile {
+  email: string;
+  displayName: string | null;
+  level: string;
+  showOnLeaderboard: boolean;
+  isAdmin: boolean;
+}
