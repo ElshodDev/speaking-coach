@@ -5,6 +5,7 @@ import { UsageNote } from './Usage';
 import { TelegramPromo } from './TelegramCard';
 import { GroupsShortcut, TasksCard } from './StudentTasks';
 import { TodayPlan } from './TodayPlan';
+import { QuizTile, WordOfDay } from './WordOfDay';
 
 export type ExerciseKind = 'speaking' | 'writing' | 'reading' | 'listening';
 
@@ -84,6 +85,9 @@ export function Home({
           </div>
         </div>
 
+        <WordOfDay loggedIn={false} onLogin={() => go('profile')} />
+        <QuizTile go={go} />
+
         <h2 style={{ marginTop: 24 }}>{t.practice}</h2>
         <UsageNote userKey="guest" />
         <ExerciseTiles onOpen={open} />
@@ -144,6 +148,9 @@ export function Home({
           <div className="card soft small">{t.nothingDue}</div>
         )
       )}
+
+      <WordOfDay loggedIn />
+      <QuizTile go={go} />
 
       <TelegramPromo go={go} />
 

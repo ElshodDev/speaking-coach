@@ -91,6 +91,13 @@ public static partial class BotLogic
         return rest.Trim();
     }
 
+    /// <summary>"/word" yoki "/word@BotName" (qo'shimcha matn bilan ham).</summary>
+    public static bool IsCommand(string? text, string command)
+    {
+        var t = (text ?? "").Trim();
+        return t.StartsWith('/') && t.Split(' ', '@')[0].Equals(command, StringComparison.OrdinalIgnoreCase);
+    }
+
     /// <summary>Menyu tugmasi (uch tilning istalganida) yoki buyruq.</summary>
     public static MenuAction ParseMenu(string? text)
     {

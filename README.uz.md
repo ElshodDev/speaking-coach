@@ -88,6 +88,15 @@ qolishga** yordam beradigan takrorlash tizimi:
   - Eʼlon qilinmagan narsalar natija sahifasida "taxmin" deb yozilgan:
     Speaking 0–21 ni 75 ga oʻtkazish (chiziqli), Listening/Reading oraliq
     ichidagi aniq ball va Writing vaqti (60 daqiqa).
+- **🌟 Kunlik soʻz va ⚡ tezkor viktorina** — IELTS va CEFR'da koʻp
+  uchraydigan 60 ta B1–C1 soʻz (oʻzbekcha va ruscha tarjima, inglizcha
+  taʼrif, misol) qoʻlda tanlangan: har kuni bittasi, hamma uchun bir xil,
+  AI sarflanmaydi; tinglash va bir bosishda lugʻatga qoʻshish (botda
+  `/word`). Viktorina — oʻz lugʻatingizdan 10 ta savol (soʻz → maʼno va
+  maʼno → soʻz navbat bilan, 4 variant, har javobdan keyin toʻgʻrisi);
+  lugʻat kichik boʻlsa kunlik soʻzlar qoʻshiladi. Eng yaxshi natija shu
+  qurilmada saqlanadi, natijani Telegram yoki telefonning "Ulashish"
+  oynasi orqali doʻstga yuborish mumkin.
 - **🧭 Tanishtiruv va "Bugungi reja"** — birinchi kirishda 4 ta qisqa savol:
   maqsad (IELTS, CEFR yoki umumiy ingliz tili), daraja ("bilmayman" → B1),
   maqsad ball va imtihon sanasi (umumiy ingliz tilida soʻralmaydi), kuniga
@@ -262,8 +271,8 @@ npm run dev
 ### 7. Avtomatik testlar
 
 ```bash
-dotnet test backend/SpeakingCoach.Api.Tests   # backend: 396 ta unit test
-cd frontend/speaking-coach-web && npm test     # frontend: 89 ta vitest testi
+dotnet test backend/SpeakingCoach.Api.Tests   # backend: 403 ta unit test
+cd frontend/speaking-coach-web && npm test     # frontend: 92 ta vitest testi
 ```
 
 Xuddi shu testlar har bir push'da GitHub Actions'da ham ishlaydi

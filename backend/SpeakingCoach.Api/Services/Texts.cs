@@ -130,6 +130,8 @@ public static class Texts
         ["bot.new_task_due"] = new("⏰ Muddat: {0}", "⏰ Срок: {0}", "⏰ Due: {0}"),
         ["bot.task_do"] = new("▶️ Bajarish", "▶️ Выполнить", "▶️ Do it"),
         ["bot.today_button"] = new("📋 Bugungi reja", "📋 План на сегодня", "📋 Today's plan"),
+        ["bot.cmd_word"] = new("Kunlik soʻz", "Слово дня", "Word of the day"),
+        ["bot.word_of_day"] = new("🌟 <b>Kunlik soʻz</b>", "🌟 <b>Слово дня</b>", "🌟 <b>Word of the day</b>"),
         ["bot.menu_review"] = new("🔁 Takrorlash", "🔁 Повторение", "🔁 Review"),
         ["bot.menu_stats"] = new("📊 Natijalar", "📊 Прогресс", "📊 Progress"),
         ["bot.menu_settings"] = new("⚙️ Sozlamalar", "⚙️ Настройки", "⚙️ Settings"),
@@ -156,9 +158,9 @@ public static class Texts
             "Для этого сначала подключите аккаунт на сайте.",
             "Please connect your website account first."),
         ["bot.help"] = new(
-            "<b>Bot nima qila oladi</b>\n\n📚 Inglizcha soʻz yuboring — maʼnosi, misol va “Lugʻatga qoʻshish” tugmasi.\n📋 <b>Bugun</b> — bugungi reja, imtihongacha kunlar va oʻqituvchi vazifalari.\n🔁 <b>Takrorlash</b> — navbatdagi kartalar: javobni koʻrasiz va qanchalik eslaganingizni belgilaysiz.\n📊 <b>Natijalar</b> — seriya, bugungi maqsad va kartalar.\n⚙️ <b>Sozlamalar</b> — eslatma vaqti, til, hisobni uzish.\n\nHammasi saytdagi hisobingiz bilan bir xil: bu yerda takrorlagan kartangiz saytda ham takrorlangan boʻladi.",
-            "<b>Что умеет бот</b>\n\n📚 Пришлите английское слово — значение, пример и кнопка «Добавить в словарь».\n📋 <b>Сегодня</b> — план на день, дни до экзамена и задания учителя.\n🔁 <b>Повторение</b> — карточки на сегодня: смотрите ответ и отмечаете, насколько хорошо вспомнили.\n📊 <b>Прогресс</b> — серия, цель на сегодня и карточки.\n⚙️ <b>Настройки</b> — время напоминания, язык, отключение аккаунта.\n\nВсё синхронизировано с сайтом: карточка, повторённая здесь, повторена и на сайте.",
-            "<b>What the bot can do</b>\n\n📚 Send an English word — meaning, an example and an “Add to vocabulary” button.\n📋 <b>Today</b> — today's plan, days to your exam and teacher assignments.\n🔁 <b>Review</b> — your due cards: see the answer and rate how well you remembered.\n📊 <b>Progress</b> — streak, today's goal and cards.\n⚙️ <b>Settings</b> — reminder time, language, disconnect.\n\nEverything is synced with the website: a card reviewed here is reviewed there too."),
+            "<b>Bot nima qila oladi</b>\n\n📚 Inglizcha soʻz yuboring — maʼnosi, misol va “Lugʻatga qoʻshish” tugmasi.\n🌟 /word — kunlik soʻz.\n📋 <b>Bugun</b> — bugungi reja, imtihongacha kunlar va oʻqituvchi vazifalari.\n🔁 <b>Takrorlash</b> — navbatdagi kartalar: javobni koʻrasiz va qanchalik eslaganingizni belgilaysiz.\n📊 <b>Natijalar</b> — seriya, bugungi maqsad va kartalar.\n⚙️ <b>Sozlamalar</b> — eslatma vaqti, til, hisobni uzish.\n\nHammasi saytdagi hisobingiz bilan bir xil: bu yerda takrorlagan kartangiz saytda ham takrorlangan boʻladi.",
+            "<b>Что умеет бот</b>\n\n📚 Пришлите английское слово — значение, пример и кнопка «Добавить в словарь».\n🌟 /word — слово дня.\n📋 <b>Сегодня</b> — план на день, дни до экзамена и задания учителя.\n🔁 <b>Повторение</b> — карточки на сегодня: смотрите ответ и отмечаете, насколько хорошо вспомнили.\n📊 <b>Прогресс</b> — серия, цель на сегодня и карточки.\n⚙️ <b>Настройки</b> — время напоминания, язык, отключение аккаунта.\n\nВсё синхронизировано с сайтом: карточка, повторённая здесь, повторена и на сайте.",
+            "<b>What the bot can do</b>\n\n📚 Send an English word — meaning, an example and an “Add to vocabulary” button.\n🌟 /word — word of the day.\n📋 <b>Today</b> — today's plan, days to your exam and teacher assignments.\n🔁 <b>Review</b> — your due cards: see the answer and rate how well you remembered.\n📊 <b>Progress</b> — streak, today's goal and cards.\n⚙️ <b>Settings</b> — reminder time, language, disconnect.\n\nEverything is synced with the website: a card reviewed here is reviewed there too."),
         ["bot.no_cards"] = new(
             "🗂 Hali kartalar yoʻq. Saytda mashq qiling yoki menga inglizcha soʻz yuboring — ular shu yerga tushadi.",
             "🗂 Карточек пока нет. Позанимайтесь на сайте или пришлите мне английское слово — они появятся здесь.",

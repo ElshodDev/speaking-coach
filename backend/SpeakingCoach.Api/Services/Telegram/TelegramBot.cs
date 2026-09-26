@@ -95,6 +95,12 @@ public class TelegramBot
                 return;
             }
 
+            if (BotLogic.IsCommand(text, "/word"))
+            {
+                await SendDailyWordAsync(c, ct);
+                return;
+            }
+
             switch (BotLogic.ParseMenu(text))
             {
                 case MenuAction.Today:
@@ -242,10 +248,24 @@ public class TelegramBot
 
         var e = await _words.ExplainAsync(word, "", c.User?.Level ?? LearnerLevel.Default, c.Lang, ct);
         await _quotas.RecordAsync(c.User, guestKey, AiKind.Word);
+        await SendWordAsync(c, e, "", ct);
+    }
+
+    /// <summary>/word — kunlik so'z (AI'siz, hamma uchun bir xil).</summary>
+    private async Task SendDailyWordAsync(Ctx c, CancellationToken ct)
+    {
+        var tz = c.Account?.TzOffsetMinutes ?? -300; // ulanmagan — Toshkent vaqti
+        var w = DailyWords.ForDate(BotLogic.LocalToday(DateTime.UtcNow, tz));
+        var e = new WordExplanation(w.Word, w.Pos, c.Lang == "en" ? w.DefinitionEn : w.Translation(c.Lang), w.DefinitionEn, w.Example);
+        await SendWordAsync(c, e, $"{c.T("bot.word_of_day")} · {w.Level}\n\n", ct);
+    }
+
+    private async Task SendWordAsync(Ctx c, WordExplanation e, string header, CancellationToken ct)
+    {
         RecentWords[(c.ChatId, e.Word.ToLowerInvariant())] = e;
         if (RecentWords.Count > 5000) RecentWords.Clear();
 
-        var html =
+        var html = header +
             $"<b>{BotLogic.Html(e.Word)}</b> <i>({BotLogic.Html(e.PartOfSpeech)})</i>\n" +
             $"🔤 <b>{BotLogic.Html(e.Translation)}</b>\n\n" +
             $"📖 {BotLogic.Html(e.DefinitionEn)}\n" +

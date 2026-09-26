@@ -1128,3 +1128,15 @@ table.data td {
   text-decoration: line-through;
   color: var(--muted);
 }
+.choice.correct {
+  border-color: var(--success);
+  background: color-mix(in srgb, var(--success) 12%, var(--surface));
+}
+.choice.wrong {
+  border-color: var(--danger, #c0392b);
+  background: color-mix(in srgb, var(--danger, #c0392b) 10%, var(--surface));
+}
+.choice:disabled {
+  opacity: 0.55;
+  cursor: default;
+}

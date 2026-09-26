@@ -31,6 +31,7 @@ import { appMsg } from './locales/app';
 import { homeMsg } from './locales/home';
 import { planMsg } from './locales/plan';
 import { Onboarding } from './Onboarding';
+import { Quiz } from './Quiz';
 import { shouldOnboard } from './planLogic';
 
 /**
@@ -202,6 +203,8 @@ function App() {
     page = <TeacherHome key={userKey} go={go} />;
   } else if (section === 'join' && sub) {
     page = <JoinGroup key={`${sub}-${userKey}`} code={sub} loggedIn={loggedIn} go={go} onLogin={() => { savePendingJoin(sub); toLogin(); }} />;
+  } else if (section === 'quiz') {
+    page = <Quiz go={go} loggedIn={loggedIn} />;
   } else if (section === 'welcome' && loggedIn) {
     page = <Onboarding key={userKey} profile={profile} go={go} onSaved={setProfile} />;
   } else if (section === 'tasks' && loggedIn) {
