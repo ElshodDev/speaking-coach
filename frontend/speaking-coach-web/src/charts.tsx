@@ -2,11 +2,13 @@
 // --series-* va --heat-* o'zgaruvchilaridan — tungi rejimda o'zi almashadi.
 // Qoidalar: bitta o'q (hech qachon ikki xil shkala), 2px chiziqlar,
 // ≥2 seriyada doim legend, hover/klaviatura bilan tooltip, jadval ko'rinishi.
-import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { localeOf, useLang, useT } from './i18n';
 import { chartsMsg } from './locales/charts';
 
-function useWidth<T extends HTMLElement>(): [RefObject<T>, number] {
+// Qaytish turi yozilmaydi (TypeScript o'zi chiqaradi): React 18 da useRef
+// RefObject<T>, React 19 da RefObject<T | null> qaytaradi — ikkalasida ishlaydi.
+function useWidth<T extends HTMLElement>() {
   const ref = useRef<T>(null);
   const [width, setWidth] = useState(320);
   useEffect(() => {
@@ -17,7 +19,7 @@ function useWidth<T extends HTMLElement>(): [RefObject<T>, number] {
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
-  return [ref, width];
+  return [ref, width] as const;
 }
 
 /** Y o'qi uchun "chiroyli" yuqori chegara: 1, 2, 5 × 10ⁿ. */
