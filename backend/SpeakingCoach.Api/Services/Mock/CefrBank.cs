@@ -1,0 +1,193 @@
+namespace SpeakingCoach.Api.Services.Mock;
+
+// CEFR (Multilevel, O'zbekiston) formatidagi mock savollar. Matnlar ORIGINAL.
+//
+// Manbalar va ishonch darajasi (README'da ham yozilgan):
+// - RASMIY (uzbmb.uz, "Multilevel-bm.pdf"): har ko'nikma 0–75 ball;
+//   C1 65–75, B2 51–64, B1 38–50, B1 dan past 0–37. Writing va Speaking
+//   mezonlar bilan baholanadi.
+// - TAYYORLOV MATERIALLARI (2024-yil 2-yarmidan "yangi format"; bir necha
+//   mustaqil manba mos keladi):
+//   Writing — umumiy vaziyat (email); 1.1: do'stga xat 50–70 so'z;
+//   1.2: rasmiy xat 120–150 so'z; 2-qism: onlayn muhokama posti 180–200 so'z;
+//   jami 60 daqiqa.
+//   Speaking — 1.1: 3 savol (tayyorgarliksiz, 30 s); 1.2: ikki rasm, 3 savol
+//   (30 s); 2: mavzu + 3 yo'naltiruvchi savol (1 daqiqa tayyorgarlik,
+//   2 daqiqa); 3: bahsli fikr + "for/against" jadvali (1 daqiqa + 2 daqiqa).
+//   Ball: 1.1, 1.2, 2 — 0–5 dan, 3 — 0–6 (jami 21) → 75 ballik shkalaga.
+
+public record CefrPicture(string Emoji, string Caption);
+
+public record CefrSpeakingSet(
+    string Id,
+    string[] Part11,
+    CefrPicture[] Pictures,
+    string[] Part12,
+    string Part2Topic,
+    string[] Part2Questions,
+    string Part3Statement,
+    string[] For,
+    string[] Against)
+{
+    /// <summary>Javoblar imtihon tartibida: 1.1 (3) → 1.2 (3) → 2 (1) → 3 (1).</summary>
+    public IReadOnlyList<(string Part, string Text)> Questions() =>
+        Part11.Select(q => ("1.1", q))
+            .Concat(Part12.Select(q => ("1.2", q)))
+            .Append(("2", Part2Topic))
+            .Append(("3", Part3Statement))
+            .ToList();
+}
+
+public record CefrWritingSet(
+    string Id,
+    string Role,
+    string EmailFrom,
+    string Email,
+    string Task11,
+    string Task12,
+    string Task2);
+
+public static class CefrBank
+{
+    public const int Part11Seconds = 30;
+    public const int Part12Seconds = 30;
+    public const int Part2PrepSeconds = 60;
+    public const int Part2SpeakSeconds = 120;
+    public const int Part3PrepSeconds = 60;
+    public const int Part3SpeakSeconds = 120;
+
+    public const int WritingMinutes = 60;
+    public static readonly (int Min, int Max) Words11 = (50, 70);
+    public static readonly (int Min, int Max) Words12 = (120, 150);
+    public static readonly (int Min, int Max) Words2 = (180, 200);
+
+    public static readonly CefrSpeakingSet[] Speaking =
+    [
+        new("c1",
+            ["What do you usually do in the evenings?", "Do you prefer mornings or evenings? Why?", "What is your favourite season of the year?"],
+            [new("🚌", "Picture A: people travelling to work by crowded bus"), new("🚲", "Picture B: a person cycling to work along a quiet road")],
+            ["Describe what you can see in the two pictures.", "Which way of travelling to work do you prefer and why?", "How could cities make travelling to work easier?"],
+            "Talk about a journey that you remember well.",
+            ["Where did you go and who were you with?", "What happened during the journey?", "Why do you still remember it?"],
+            "Public transport should be free for everyone.",
+            ["Fewer cars and less pollution", "Helps people with low incomes", "Less traffic in city centres"],
+            ["Very expensive for the government", "Buses may become overcrowded", "Less money to improve the service"]),
+        new("c2",
+            ["Where do you usually study or work?", "How often do you use the internet in a day?", "Do you like reading books? Why?"],
+            [new("📚", "Picture A: students studying together in a library"), new("💻", "Picture B: a student studying alone online at home")],
+            ["Describe what you can see in the two pictures.", "Which way of studying suits you better and why?", "Will students study more online in the future?"],
+            "Talk about a teacher who helped you a lot.",
+            ["Who was this teacher and what did they teach?", "How did they help you?", "What did you learn from them apart from the subject?"],
+            "Online learning is better than learning in a classroom.",
+            ["Students can learn at their own pace", "It saves travel time and money", "Lessons can be watched again"],
+            ["Less contact with teachers and classmates", "Harder to stay motivated", "Not everyone has a good internet connection"]),
+        new("c3",
+            ["What kind of food do you like?", "Who usually cooks in your family?", "Do you often eat outside the home?"],
+            [new("🍲", "Picture A: a family eating a home-cooked meal together"), new("🍔", "Picture B: young people eating fast food in a busy café")],
+            ["Describe what you can see in the two pictures.", "Which kind of meal do you enjoy more and why?", "Why do many young people choose fast food?"],
+            "Talk about a special celebration you attended.",
+            ["What was the celebration and where was it?", "What did people do there?", "Why was it special for you?"],
+            "Schools should ban unhealthy food and drinks.",
+            ["Children develop healthier habits", "It can reduce health problems later in life", "Students may concentrate better in class"],
+            ["Students will buy the same food outside school", "It limits personal choice", "Healthy food can be more expensive"]),
+        new("c4",
+            ["What do you like doing at the weekend?", "Do you prefer spending time indoors or outdoors?", "What sport do you enjoy watching?"],
+            [new("🏃", "Picture A: a group of people jogging in a park"), new("🏋️", "Picture B: a person exercising alone in a modern gym")],
+            ["Describe what you can see in the two pictures.", "Which way of keeping fit would you choose and why?", "Why do some people find it hard to exercise regularly?"],
+            "Talk about a skill you would like to learn.",
+            ["What is the skill?", "How would you learn it?", "How would it be useful in your life?"],
+            "Young people spend too much time on their phones.",
+            ["Less time for sport and hobbies", "It can harm sleep and eyesight", "Less face-to-face communication"],
+            ["Phones help them study and find information", "They keep in touch with family and friends", "Many jobs now need digital skills"]),
+        new("c5",
+            ["Where are you from?", "What do you like most about your neighbourhood?", "Would you like to live in another country? Why?"],
+            [new("🏙️", "Picture A: a busy modern city centre with tall buildings"), new("🏡", "Picture B: a quiet village surrounded by fields")],
+            ["Describe what you can see in the two pictures.", "Where would you prefer to live and why?", "Why do many young people move from villages to cities?"],
+            "Talk about a place you would like to visit in the future.",
+            ["Where is this place?", "What would you do there?", "Why do you want to visit it?"],
+            "Tourism does more harm than good to local communities.",
+            ["Prices for local people go up", "Traffic, noise and rubbish increase", "Traditional culture can change"],
+            ["Tourism creates jobs", "Local businesses earn more money", "People learn about other cultures"]),
+        new("c6",
+            ["What job would you like to have in the future?", "What do you do to relax after a busy day?", "Do you prefer shopping in shops or online?"],
+            [new("🏢", "Picture A: people working together in a busy office"), new("🏠", "Picture B: a person working from home at a kitchen table")],
+            ["Describe what you can see in the two pictures.", "Which working environment would you prefer and why?", "How might offices change in the next ten years?"],
+            "Talk about an important decision you made.",
+            ["What was the decision?", "Who helped you to decide?", "How did it change your life?"],
+            "Everyone should learn at least two foreign languages at school.",
+            ["More job opportunities in the future", "Better understanding of other cultures", "It develops memory and thinking skills"],
+            ["There is less time for other subjects", "Not all students need foreign languages", "Schools may not have enough good teachers"]),
+    ];
+
+    public static readonly CefrWritingSet[] Writing =
+    [
+        new("w1", "You are a member of a local art club. You received an email from the club secretary.", "The Club Secretary",
+            "Dear Member,\n\nWe are planning to move our weekly meetings from Tuesday evenings to Sunday mornings because the hall is no longer available on weekdays. We are also thinking about increasing the monthly fee to pay for new painting materials.\n\nWe would like to hear your opinion and any suggestions.\n\nBest wishes,\nThe Club Secretary",
+            "Write a letter to your friend, who is also a club member, telling them about the changes, giving your opinion and suggesting what the club should do. Write 50-70 words.",
+            "Write a letter to the club secretary giving your opinion about the new meeting time and the higher fee, and suggesting how the club could solve these problems. Write 120-150 words.",
+            "You are taking part in an online discussion for young people. The question is: \"Should hobbies be taught at school as part of the timetable?\" Write a post giving your opinion with reasons and examples. Write 180-200 words."),
+        new("w2", "You live in a block of flats. You received an email from the building manager.", "The Building Manager",
+            "Dear Resident,\n\nNext month the lift in our building will be replaced. The work will take about four weeks, and during this time residents will have to use the stairs. We also plan to turn the empty room on the ground floor into a small gym.\n\nPlease let us know your views and suggestions.\n\nKind regards,\nThe Building Manager",
+            "Write a letter to your friend, who lives in the same building, telling them about the plans, giving your opinion and suggesting one idea. Write 50-70 words.",
+            "Write a letter to the building manager giving your opinion about the lift work and the new gym, explaining how residents may be affected, and suggesting what could be done to help them. Write 120-150 words.",
+            "You are taking part in an online discussion about modern life. The question is: \"Is it better to live in a flat or in a house?\" Write a post giving your opinion with reasons and examples. Write 180-200 words."),
+        new("w3", "You are a student at a language school. You received an email from the school director.", "The School Director",
+            "Dear Student,\n\nFrom next term, all homework will be submitted through a new mobile app instead of on paper. We also plan to reduce the number of lessons from four to three per week but make each lesson thirty minutes longer.\n\nWe would be happy to receive your comments and suggestions.\n\nYours sincerely,\nThe School Director",
+            "Write a letter to your friend, who studies at the same school, telling them about the news, giving your opinion and suggesting what the school should do. Write 50-70 words.",
+            "Write a letter to the director giving your opinion about the homework app and the new timetable, and suggesting how the changes could work better for students. Write 120-150 words.",
+            "You are taking part in an online discussion for students. The question is: \"Do students get too much homework nowadays?\" Write a post giving your opinion with reasons and examples. Write 180-200 words."),
+        new("w4", "You are a regular customer at a local supermarket. You received an email from the store manager.", "The Store Manager",
+            "Dear Customer,\n\nWe are planning to replace most of our cashiers with self-service checkout machines. We will also stop giving free plastic bags and start selling paper bags instead.\n\nBefore we make these changes, we would like to know what you think.\n\nKind regards,\nThe Store Manager",
+            "Write a letter to your friend, who also shops there, telling them about the plans, giving your opinion and suggesting one improvement. Write 50-70 words.",
+            "Write a letter to the store manager giving your opinion about the self-service machines and the bag policy, and suggesting how the changes could be made easier for customers. Write 120-150 words.",
+            "You are taking part in an online discussion about technology. The question is: \"Will machines replace most workers in shops and offices?\" Write a post giving your opinion with reasons and examples. Write 180-200 words."),
+        new("w5", "You are a volunteer at a local animal shelter. You received an email from the shelter coordinator.", "The Shelter Coordinator",
+            "Dear Volunteer,\n\nBecause more animals are arriving, we need more help at weekends. We are thinking about asking every volunteer to work at least one weekend a month. We also plan to hold an open day to find new families for our animals.\n\nWe would like to hear your views and ideas.\n\nBest regards,\nThe Shelter Coordinator",
+            "Write a letter to your friend, who also volunteers at the shelter, telling them about the plans, giving your opinion and suggesting one idea for the open day. Write 50-70 words.",
+            "Write a letter to the coordinator giving your opinion about the weekend rule, explaining how it may affect volunteers, and suggesting how the open day could be successful. Write 120-150 words.",
+            "You are taking part in an online discussion for young people. The question is: \"Should volunteering be compulsory for teenagers?\" Write a post giving your opinion with reasons and examples. Write 180-200 words."),
+        new("w6", "You recently took part in a city marathon. You received an email from the event organiser.", "The Event Organiser",
+            "Dear Participant,\n\nThank you for running in this year's city marathon. We would appreciate your feedback on the route, the water stations and the organisation. Next year we are thinking of starting the race two hours earlier and adding a shorter 5 km run for beginners.\n\nPlease share your opinion.\n\nKind regards,\nThe Event Organiser",
+            "Write a letter to your friend, who is thinking about joining next year, describing your experience, giving your opinion about the new ideas and suggesting one improvement. Write 50-70 words.",
+            "Write a letter to the organiser giving feedback on the event, commenting on the planned changes, and suggesting how next year's marathon could be improved. Write 120-150 words.",
+            "You are taking part in an online discussion about health. The question is: \"Should governments spend more money on sports facilities?\" Write a post giving your opinion with reasons and examples. Write 180-200 words."),
+    ];
+
+    public static CefrSpeakingSet? FindSpeaking(string? id) => Speaking.FirstOrDefault(s => s.Id == id);
+    public static CefrWritingSet? FindWriting(string? id) => Writing.FirstOrDefault(w => w.Id == id);
+}
+
+/// <summary>
+/// CEFR 0–75 shkala va daraja (rasmiy chegaralar — uzbmb.uz).
+/// </summary>
+public static class CefrScale
+{
+    public const int Max = 75;
+
+    public static string Level(int score) => score switch
+    {
+        >= 65 => "C1",
+        >= 51 => "B2",
+        >= 38 => "B1",
+        _ => "below B1",
+    };
+
+    /// <summary>Speaking: 1.1, 1.2, 2 — 0–5; 3 — 0–6 (jami 21) → 0–75.</summary>
+    public static readonly int[] SpeakingMax = [5, 5, 5, 6];
+
+    public static int SpeakingScore(IReadOnlyList<int> parts)
+    {
+        var raw = parts.Select((p, i) => Math.Clamp(p, 0, SpeakingMax[i])).Sum();
+        return (int)Math.Round(raw * (decimal)Max / SpeakingMax.Sum(), MidpointRounding.AwayFromZero);
+    }
+
+    /// <summary>
+    /// Writing vazifalarining ulushi — RASMIY E'LON QILINMAGAN. Biz so'z
+    /// hajmiga mutanosib 1 : 2 : 3 nisbatini ishlatamiz (1.1 — 12.5,
+    /// 1.2 — 25, 2 — 37.5 ball). Har vazifa 4 mezon × 0–5 = 0–20 bilan baholanadi.
+    /// </summary>
+    public static readonly decimal[] WritingWeights = [12.5m, 25m, 37.5m];
+
+    public static int WritingScore(IReadOnlyList<int> taskRaw20) =>
+        (int)Math.Round(taskRaw20.Select((r, i) => Math.Clamp(r, 0, 20) / 20m * WritingWeights[i]).Sum(), MidpointRounding.AwayFromZero);
+}

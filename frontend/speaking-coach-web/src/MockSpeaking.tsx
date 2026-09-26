@@ -1,8 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiJson } from './api';
 import { msg, useT } from './i18n';
+import { cefrMsg } from './locales/cefr';
 import { mockMsg } from './locales/mock';
-import { formatClock, speakingSteps, type SpeakingSet, type SpeakingStep, type SpeakingTiming } from './mockLogic';
+import {
+  cefrSpeakingSteps,
+  formatClock,
+  speakingSteps,
+  type CefrSpeakingSet,
+  type CefrSpeakingTiming,
+  type SpeakingSet,
+  type SpeakingStep,
+  type SpeakingTiming,
+  type StepCard,
+} from './mockLogic';
 import { isSpeechSupported, sleep, speakAsync, stopSpeaking } from './speech';
 import { PageHeader } from './ui';
 
@@ -19,19 +30,78 @@ type StepState = 'asking' | 'recording' | 'prep';
  * (vaqt chegarasi bilan) → keyingi savol. Orqaga qaytish yo'q, xuddi
  * haqiqiy imtihondagidek. Oxirida barcha javoblar bitta so'rovda baholanadi.
  */
+/** Kartochka: IELTS 2-qism mavzusi, CEFR rasmlari va bahs jadvali — bitta ko'rinishda. */
+export function SpeakingCard({ card }: { card: StepCard }) {
+  const t = useT(mockMsg);
+  const c = useT(cefrMsg);
+  return (
+    <div className="quote" style={{ margin: 0 }} data-testid="speaking-card">
+      {card.pictures && (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {card.pictures.map((p) => (
+              <figure key={p.caption} className="card" style={{ margin: 0, padding: 10, textAlign: 'center' }}>
+                <div style={{ fontSize: '2.4rem' }} aria-hidden>{p.emoji}</div>
+                <figcaption className="small">{p.caption}</figcaption>
+              </figure>
+            ))}
+          </div>
+          <div className="muted tiny" style={{ marginTop: 6 }}>{c.picturesNote}</div>
+        </>
+      )}
+      {card.title && <strong>{card.title}</strong>}
+      {card.bullets && (
+        <>
+          <div className="small" style={{ marginTop: 6 }}>{card.bulletsHeading === 'questions' ? c.questionsHeading : t.youShouldSay}</div>
+          <ul className="small" style={{ margin: '4px 0', paddingLeft: 20 }}>
+            {card.bullets.map((b) => <li key={b}>{b}</li>)}
+          </ul>
+        </>
+      )}
+      {card.footer && <div className="small">{card.footer}</div>}
+      {card.table && (
+        <>
+          <div className="table-wrap" style={{ marginTop: 8 }}>
+            <table className="data small">
+              <thead>
+                <tr>
+                  <th>{c.forLabel}</th>
+                  <th>{c.againstLabel}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {card.table.for.map((f, i) => (
+                  <tr key={f}>
+                    <td>{f}</td>
+                    <td>{card.table!.against[i] ?? ''}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="muted tiny" style={{ marginTop: 6 }}>{c.part3Hint}</div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function MockSpeaking({
   go,
   sessionId,
   onSubmitted,
+  exam = 'ielts',
 }: {
+  exam?: 'ielts' | 'cefr';
   go: (route: string) => void;
   sessionId?: string;
   onSubmitted?: (id: string) => void;
 }) {
   const t = useT(mockMsg);
+  const c = useT(cefrMsg);
   const [phase, setPhase] = useState<Phase>('loading');
   const [error, setError] = useState('');
-  const [set, setSet] = useState<SpeakingSet | null>(null);
+  const [set, setSet] = useState<{ id: string } | null>(null);
   const [steps, setSteps] = useState<SpeakingStep[]>([]);
   const [stepIndex, setStepIndex] = useState(0);
   const [stepState, setStepState] = useState<StepState>('asking');
@@ -45,10 +115,14 @@ export function MockSpeaking({
   const cancelledRef = useRef(false);
 
   useEffect(() => {
-    apiJson<{ set: SpeakingSet; timing: SpeakingTiming }>('/api/mock/ielts/speaking/new')
+    const load =
+      exam === 'cefr'
+        ? apiJson<{ set: CefrSpeakingSet; timing: CefrSpeakingTiming }>('/api/mock/cefr/speaking/new').then((d) => ({ set: d.set, steps: cefrSpeakingSteps(d.set, d.timing) }))
+        : apiJson<{ set: SpeakingSet; timing: SpeakingTiming }>('/api/mock/ielts/speaking/new').then((d) => ({ set: d.set, steps: speakingSteps(d.set, d.timing) }));
+    load
       .then((data) => {
         setSet(data.set);
-        setSteps(speakingSteps(data.set, data.timing));
+        setSteps(data.steps);
         setPhase('intro');
       })
       .catch((e) => {
@@ -61,7 +135,7 @@ export function MockSpeaking({
       if (recorderRef.current?.state === 'recording') recorderRef.current.stop();
       streamRef.current?.getTracks().forEach((tr) => tr.stop());
     };
-  }, []);
+  }, [exam]);
 
   // Imtihon davomida sahifani yopmoqchi bo'lsa — ogohlantiramiz.
   useEffect(() => {
@@ -100,14 +174,14 @@ export function MockSpeaking({
       form.append(`s${index}`, String(a.seconds));
     });
     try {
-      const res = await apiJson<{ id: string }>('/api/mock/ielts/speaking', { method: 'POST', body: form });
+      const res = await apiJson<{ id: string }>(`/api/mock/${exam}/speaking`, { method: 'POST', body: form });
       if (onSubmitted) onSubmitted(res.id);
       else go(`mock/result/${res.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setPhase('error');
     }
-  }, [set, go, sessionId, onSubmitted]);
+  }, [set, go, sessionId, onSubmitted, exam]);
 
   // Joriy qadam ref'da ham — MediaRecorder.onstop kabi eski closure'lar ham
   // to'g'ri qadamni ko'rishi uchun (setState updater ichida yon ta'sir qilmaymiz).
@@ -138,6 +212,7 @@ export function MockSpeaking({
 
     if (step.kind === 'prep') {
       setStepState('prep');
+      setNotes(''); // har bir tayyorgarlik — yangi eslatmalar bilan
       startedAtRef.current = Date.now();
       return () => {
         alive = false;
@@ -150,7 +225,7 @@ export function MockSpeaking({
       // 2-qismda imtihonchi kartochkani beradi va darhol gapirishni kutadi — qayta o'qimaymiz.
       // Ba'zi brauzerlarda ovoz sintezi "tugadi" hodisasini bermaydi — imtihon
       // qotib qolmasligi uchun savol uzunligiga qarab vaqt chegarasi qo'yamiz.
-      if (step.part !== 2 && isSpeechSupported()) {
+      if (step.speak && isSpeechSupported()) {
         const words = step.text.split(/\s+/).length;
         await Promise.race([speakAsync(step.text, 0.95), sleep(3000 + words * 450)]);
         stopSpeaking();
@@ -197,7 +272,7 @@ export function MockSpeaking({
   }, [phase, stepState, stepIndex, steps, advance, finishAnswer]);
 
   const step = steps[stepIndex];
-  const header = <PageHeader title={t.speakingTitle} onBack={sessionId || phase === 'running' || phase === 'submitting' ? undefined : () => go('mock')} backLabel={t.title} />;
+  const header = <PageHeader title={exam === 'cefr' ? c.speakingTitle : t.speakingTitle} onBack={sessionId || phase === 'running' || phase === 'submitting' ? undefined : () => go('mock')} backLabel={t.title} />;
 
   if (phase === 'loading') return <>{header}<p className="muted">…</p></>;
 
@@ -235,13 +310,13 @@ export function MockSpeaking({
           <h3 style={{ margin: 0 }}>{t.micCheckTitle}</h3>
           <p style={{ margin: 0 }}>{t.micCheckText}</p>
           <ul className="small" style={{ margin: 0, paddingLeft: 20 }}>
-            {t.rules.map((r) => <li key={r}>{r}</li>)}
+            {(exam === 'cefr' ? c.rules : t.rules).map((r) => <li key={r}>{r}</li>)}
           </ul>
           {error && <p className="error small" role="alert">{error}</p>}
           <button className="btn btn-primary block" onClick={begin} style={{ minHeight: 52 }}>
             🎙 {t.allowMic}
           </button>
-          <p className="muted tiny" style={{ margin: 0 }}>{t.disclaimer}</p>
+          <p className="muted tiny" style={{ margin: 0 }}>{exam === 'cefr' ? c.disclaimer : t.disclaimer}</p>
         </div>
       </>
     );
@@ -261,7 +336,6 @@ export function MockSpeaking({
   if (!step || !set) return null;
 
   // ---- Imtihon jarayoni ----
-  const part = step.kind === 'prep' ? 2 : step.part;
   const limit = step.kind === 'prep' ? step.seconds : step.maxSeconds;
   const left = limit - elapsed;
   const progress = Math.min(100, (elapsed / limit) * 100);
@@ -273,26 +347,17 @@ export function MockSpeaking({
       {header}
       <div className="card stack" data-testid="mock-speaking">
         <div className="spread small">
-          <strong>{t.part(part)}</strong>
+          <strong>{t.part(step.partLabel)}</strong>
           <span className="muted">
-            {[step.kind === 'answer' && step.part !== 2 ? t.questionOf(step.numberInPart, step.ofInPart) : null, `${answeredCount}/${totalAnswers}`]
+            {[step.kind === 'answer' && !step.longTurn ? t.questionOf(step.numberInPart, step.ofInPart) : null, `${answeredCount}/${totalAnswers}`]
               .filter(Boolean)
               .join(' · ')}
           </span>
         </div>
 
-        {(step.kind === 'prep' || step.part === 2) && (
-          <div className="quote" style={{ margin: 0 }}>
-            <strong>{set.part2.topic}</strong>
-            <div className="small" style={{ marginTop: 6 }}>{t.youShouldSay}</div>
-            <ul className="small" style={{ margin: '4px 0', paddingLeft: 20 }}>
-              {set.part2.points.map((p) => <li key={p}>{p}</li>)}
-            </ul>
-            <div className="small">{set.part2.explain}</div>
-          </div>
-        )}
+        {step.card && <SpeakingCard card={step.card} />}
 
-        {step.kind === 'answer' && step.part !== 2 && (
+        {step.kind === 'answer' && !step.longTurn && (
           <p style={{ fontSize: '1.15rem', fontWeight: 600, margin: 0 }}>{step.text}</p>
         )}
 
@@ -318,7 +383,7 @@ export function MockSpeaking({
           <p className="muted" role="status" style={{ margin: 0 }}>{t.listening}</p>
         ) : (
           <>
-            {step.part === 2 && notes && <p className="muted small" style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{notes}</p>}
+            {step.longTurn && notes && <p className="muted small" style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{notes}</p>}
             <div className="spread" role="timer" aria-live="off">
               <span><span className="recording-dot" /> {t.recording}</span>
               <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700 }}>
@@ -326,9 +391,9 @@ export function MockSpeaking({
               </span>
             </div>
             <div className="bar" aria-hidden><div className={left < 10 ? 'fill-low' : 'fill-good'} style={{ width: `${progress}%` }} /></div>
-            {step.part === 2 && <p className="muted small" style={{ margin: 0 }}>{t.speakTwoMinutes}</p>}
+            {step.longTurn && <p className="muted small" style={{ margin: 0 }}>{t.speakTwoMinutes}</p>}
             <button className="btn btn-primary block" onClick={finishAnswer} style={{ minHeight: 52 }}>
-              {step.part === 2 ? t.finishPart2 : t.next}
+              {step.longTurn ? t.finishPart2 : t.next}
             </button>
           </>
         )}

@@ -3,8 +3,9 @@ import { apiJson } from './api';
 import { localeOf, useLang, useT } from './i18n';
 import { mockMsg } from './locales/mock';
 import { mockObjMsg } from './locales/mockObjective';
+import { cefrMsg } from './locales/cefr';
 import type { ClientGroup } from './ObjectiveQuestions';
-import { bandKey, formatBand } from './mockLogic';
+import { bandKey, cefrLevel, formatBand } from './mockLogic';
 import { Corrections, PageHeader, type CorrectionItem } from './ui';
 
 interface MockStatus {
@@ -86,7 +87,142 @@ interface TestContent {
   parts?: { part: number; context: string; script: { speaker: string; text: string }[]; groups: ClientGroup[] }[];
 }
 
+interface PartScore {
+  score: number;
+  reasoning: string;
+}
+
+interface CefrSpeakingResult {
+  exam: 'cefr';
+  module: 'speaking';
+  overall: number;
+  level: string;
+  parts: { part: string; score: number; max: number; reasoning: string }[];
+  answers: { index: number; part: string; question: string; transcript: string; seconds: number }[];
+  topCorrections: CorrectionItem[];
+  strengths: string;
+  nextSteps: string[];
+}
+
+interface CefrWritingResult {
+  exam: 'cefr';
+  module: 'writing';
+  overall: number;
+  level: string;
+  secondsUsed: number;
+  tasks: {
+    task: string;
+    raw: number;
+    points: number;
+    maxPoints: number;
+    words: number;
+    minWords: number;
+    maxWords: number;
+    text: string;
+    criteria: { task: PartScore; organisation: PartScore; vocabulary: PartScore; grammar: PartScore };
+  }[];
+  topCorrections: CorrectionItem[];
+  strengths: string;
+  nextSteps: string[];
+}
+
+type CefrResult = CefrSpeakingResult | CefrWritingResult;
+
 type MockResult = SpeakingResult | WritingResult | ObjectiveResult;
+
+/** CEFR natijasi: 0–75 ball, daraja, qism/vazifa ballari va maslahatlar. */
+function CefrResultView({ r }: { r: CefrResult }) {
+  const t = useT(mockMsg);
+  const c = useT(cefrMsg);
+  return (
+    <>
+      <div className="card" style={{ textAlign: 'center' }}>
+        <div className="muted small">{c.score}</div>
+        <div style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1.1 }} data-testid="mock-overall">{c.of75(r.overall)}</div>
+        <div className="small"><strong>{c.level(r.level)}</strong></div>
+        <div className="muted small" style={{ marginTop: 6 }}>
+          CEFR {r.module === 'speaking' ? 'Speaking' : 'Writing'}
+          {r.module === 'writing' ? ` · ${t.timeUsed(Math.round(r.secondsUsed / 60))}` : ''}
+        </div>
+      </div>
+
+      {r.module === 'speaking' ? (
+        <>
+          <div className="card">
+            <h3 style={{ marginBottom: 0 }}>{c.parts}</h3>
+            {r.parts.map((p) => (
+              <div key={p.part} style={{ padding: '10px 0', borderTop: '1px solid var(--border)' }}>
+                <div className="spread">
+                  <strong className="small">{c.partScore(p.part)}</strong>
+                  <strong>{c.points(p.score, p.max)}</strong>
+                </div>
+                <div className="muted small" style={{ marginTop: 4 }}>{p.reasoning}</div>
+              </div>
+            ))}
+          </div>
+          <CefrAdvice r={r} />
+          <div className="card">
+            <h3>{t.yourAnswers}</h3>
+            {r.answers.map((a) => (
+              <details key={a.index} style={{ padding: '6px 0', borderTop: '1px solid var(--border)' }}>
+                <summary className="small">
+                  <strong>{t.part(a.part)}</strong> · {a.question} <span className="muted">({t.seconds(a.seconds)})</span>
+                </summary>
+                <p className="quote small">{a.transcript || t.noAnswer}</p>
+              </details>
+            ))}
+          </div>
+        </>
+      ) : (
+        <>
+          {r.tasks.map((task) => (
+            <div className="card" key={task.task}>
+              <div className="spread">
+                <h3 style={{ margin: 0 }}>{c.task(task.task)}</h3>
+                <strong>{c.points(task.points, task.maxPoints)}</strong>
+              </div>
+              <div className={task.words < task.minWords || task.words > task.maxWords ? 'txt-low small' : 'muted small'}>
+                {c.words(task.words, task.minWords, task.maxWords)}
+              </div>
+              {(['task', 'organisation', 'vocabulary', 'grammar'] as const).map((k) => (
+                <div key={k} style={{ padding: '8px 0', borderTop: '1px solid var(--border)' }}>
+                  <div className="spread">
+                    <strong className="small">{c.criteria[k]}</strong>
+                    <strong>{task.criteria[k].score}/5</strong>
+                  </div>
+                  <div className="muted small" style={{ marginTop: 4 }}>{task.criteria[k].reasoning}</div>
+                </div>
+              ))}
+              <details style={{ marginTop: 8 }}>
+                <summary className="small">{t.yourText}</summary>
+                <p className="quote small" style={{ whiteSpace: 'pre-wrap' }}>{task.text || t.noAnswer}</p>
+              </details>
+            </div>
+          ))}
+          <CefrAdvice r={r} />
+        </>
+      )}
+      <p className="muted tiny">{c.scaleNote}</p>
+      <p className="muted tiny">{c.disclaimer}</p>
+    </>
+  );
+}
+
+function CefrAdvice({ r }: { r: CefrResult }) {
+  const t = useT(mockMsg);
+  return (
+    <div className="card">
+      <h3>{t.strengths}</h3>
+      <p className="small">{r.strengths}</p>
+      <h3>{t.nextSteps}</h3>
+      <ol className="small" style={{ paddingLeft: 20 }}>
+        {r.nextSteps.map((s, i) => <li key={i}>{s}</li>)}
+      </ol>
+      <Corrections items={r.topCorrections} />
+      {r.topCorrections.length > 0 && <p className="muted tiny">{t.cardsNote}</p>}
+    </div>
+  );
+}
 
 /** Listening/Reading natijasi: ball, band, har savol tahlili va matn/skript. */
 function ObjectiveResultView({ r, test }: { r: ObjectiveResult; test: TestContent | null }) {
@@ -178,6 +314,7 @@ export function MockHub({ loggedIn, go, onLogin }: { loggedIn: boolean; go: (rou
   }, [loggedIn]);
 
   const to = useT(mockObjMsg);
+  const tc = useT(cefrMsg);
   const blocked = !loggedIn || status?.remaining === 0;
 
   return (
@@ -250,12 +387,20 @@ export function MockHub({ loggedIn, go, onLogin }: { loggedIn: boolean; go: (rou
         </div>
       </div>
 
-      <div className="card stack" aria-disabled="true" style={{ opacity: 0.75 }}>
-        <div className="spread">
-          <h3 style={{ margin: 0 }}>{t.cefrTitle}</h3>
-          <span className="muted small">{t.soon}</span>
+      <div className="card stack">
+        <h3 style={{ margin: 0 }}>{tc.title}</h3>
+        <p className="muted small" style={{ margin: 0 }}>{tc.text}</p>
+        <div className="stack">
+          <div>
+            <button className="btn btn-primary" disabled={blocked} onClick={() => go('mock/cefr-speaking')}>{tc.speaking}</button>
+            <div className="muted tiny" style={{ marginTop: 4 }}>{tc.speakingText}</div>
+          </div>
+          <div>
+            <button className="btn btn-primary" disabled={blocked} onClick={() => go('mock/cefr-writing')}>{tc.writing}</button>
+            <div className="muted tiny" style={{ marginTop: 4 }}>{tc.writingText}</div>
+          </div>
         </div>
-        <p className="muted small" style={{ margin: 0 }}>{t.cefrText}</p>
+        <p className="muted tiny" style={{ margin: 0 }}>{tc.lrSoon}</p>
       </div>
 
       {loggedIn && (
@@ -268,7 +413,7 @@ export function MockHub({ loggedIn, go, onLogin }: { loggedIn: boolean; go: (rou
               {history.map((h) => (
                 <li key={h.id} className="spread" style={{ padding: '8px 0', borderTop: '1px solid var(--border)' }}>
                   <span className="small">
-                    <strong>IELTS {t.moduleName[h.module] ?? h.module}</strong>
+                    <strong>{h.exam === 'cefr' ? 'CEFR' : 'IELTS'} {t.moduleName[h.module] ?? h.module}</strong>
                     {h.variant ? ` · ${h.variant === 'general' ? t.general : t.academic}` : ''}
                     {h.sessionId && (
                       <button className="btn-link tiny" style={{ marginLeft: 6 }} onClick={() => go(`mock/session/${h.sessionId}`)}>
@@ -278,7 +423,9 @@ export function MockHub({ loggedIn, go, onLogin }: { loggedIn: boolean; go: (rou
                     <div className="muted tiny">{new Date(h.createdAtUtc).toLocaleString(locale)}</div>
                   </span>
                   <span className="row" style={{ alignItems: 'center', gap: 10 }}>
-                    <strong style={{ fontSize: '1.2rem' }}>{formatBand(h.overall)}</strong>
+                    <strong style={{ fontSize: '1.2rem' }}>
+                      {h.exam === 'cefr' ? (h.overall === null ? '—' : `${h.overall}/75 · ${cefrLevel(h.overall)}`) : formatBand(h.overall)}
+                    </strong>
                     <button className="btn-link small" onClick={() => go(`mock/result/${h.id}`)}>{t.open}</button>
                   </span>
                 </li>
@@ -348,6 +495,20 @@ export function MockResultView({ id, go }: { id: string; go: (route: string) => 
   const header = <PageHeader title={t.resultTitle} subtitle={data ? new Date(data.createdAtUtc).toLocaleString(locale) : undefined} onBack={() => go('mock')} backLabel={t.title} />;
   if (error) return <>{header}<p className="error" role="alert">{error}</p></>;
   if (!data) return <>{header}<p className="muted">…</p></>;
+
+  if ((data.result as unknown as { exam?: string }).exam === 'cefr') {
+    const cr = data.result as unknown as CefrResult;
+    return (
+      <>
+        {header}
+        <CefrResultView r={cr} />
+        <div className="row">
+          <button className="btn btn-primary" onClick={() => go(cr.module === 'speaking' ? 'mock/cefr-speaking' : 'mock/cefr-writing')}>{t.again}</button>
+          <button className="btn btn-outline" onClick={() => go('mock')}>{t.backToMock}</button>
+        </div>
+      </>
+    );
+  }
 
   const r = data.result;
   const w = r as WritingResult;

@@ -7,6 +7,7 @@ using SpeakingCoach.Api.Services.Mock;
 namespace SpeakingCoach.Api.Endpoints;
 
 public record WritingMockRequest(string SetId, string? Task1, string? Task2, int SecondsUsed, string? SessionId = null);
+public record CefrWritingRequest(string SetId, string? Task11, string? Task12, string? Task2, int SecondsUsed, string? SessionId = null);
 public record ObjectiveMockRequest(Guid TestId, Dictionary<string, string>? Answers, int SecondsUsed, string? SessionId = null);
 
 /// <summary>
@@ -311,6 +312,103 @@ public static class MockEndpoints
             return Results.Ok(new { sessionId = sid, modules, overall });
         });
 
+        // ---- CEFR (Multilevel): Speaking va Writing ----
+        app.MapGet("/api/mock/cefr/speaking/new", async (HttpRequest request, AuthService auth, AppDbContext db) =>
+        {
+            var user = await auth.GetCurrentUserAsync(request);
+            if (user is null) return LoginFirst(request);
+            var recent = (await RecentAsync(db, user.Id)).Where(r => r.Module == "speaking").Select(r => r.SetId).ToList();
+            var set = IeltsBank.PickFresh(CefrBank.Speaking, s => s.Id, recent, Random.Shared);
+            return Results.Ok(new
+            {
+                set,
+                timing = new
+                {
+                    part11Seconds = CefrBank.Part11Seconds, part12Seconds = CefrBank.Part12Seconds,
+                    part2PrepSeconds = CefrBank.Part2PrepSeconds, part2SpeakSeconds = CefrBank.Part2SpeakSeconds,
+                    part3PrepSeconds = CefrBank.Part3PrepSeconds, part3SpeakSeconds = CefrBank.Part3SpeakSeconds,
+                },
+            });
+        });
+
+        app.MapGet("/api/mock/cefr/writing/new", async (HttpRequest request, AuthService auth, AppDbContext db, string? setId) =>
+        {
+            var user = await auth.GetCurrentUserAsync(request);
+            if (user is null) return LoginFirst(request);
+            var recent = (await RecentAsync(db, user.Id)).Where(r => r.Module == "writing").Select(r => r.SetId).ToList();
+            var set = CefrBank.FindWriting(setId) ?? IeltsBank.PickFresh(CefrBank.Writing, w => w.Id, recent, Random.Shared);
+            return Results.Ok(new
+            {
+                set,
+                timing = new
+                {
+                    minutes = CefrBank.WritingMinutes,
+                    words11 = new { min = CefrBank.Words11.Min, max = CefrBank.Words11.Max },
+                    words12 = new { min = CefrBank.Words12.Min, max = CefrBank.Words12.Max },
+                    words2 = new { min = CefrBank.Words2.Min, max = CefrBank.Words2.Max },
+                },
+            });
+        });
+
+        app.MapPost("/api/mock/cefr/speaking", async (
+            HttpRequest request, AuthService auth, AppDbContext db, AdminOptions admins, IConfiguration config,
+            ICefrEvaluator evaluator, ReviewService reviews, ILogger<Program> logger) =>
+        {
+            var user = await auth.GetCurrentUserAsync(request);
+            if (user is null) return LoginFirst(request);
+            if (!request.HasFormContentType) return Results.BadRequest(request.Error("speaking.multipart"));
+            var form = await request.ReadFormAsync();
+            var set = CefrBank.FindSpeaking(form["setId"].ToString());
+            if (set is null) return Results.BadRequest(request.Error("mock.bad_set"));
+            if (form.Files.Sum(f => f.Length) > MaxAudioMb * 1024L * 1024L)
+                return Results.BadRequest(request.Error("mock.too_big", MaxAudioMb));
+            var answers = await ReadAnswersAsync(form, set.Questions().Count);
+            if (answers.All(a => a.Audio is null)) return Results.BadRequest(request.Error("mock.no_answers"));
+            var limited = await LimitAsync(request, db, user, admins, config);
+            if (limited is not null) return limited;
+            try
+            {
+                var result = await evaluator.EvaluateSpeakingAsync(set, answers, Texts.LangOf(request), request.HttpContext.RequestAborted);
+                var id = await SaveAsync(db, reviews, "cefr", user.Id, "speaking", set.Id, null, MockLimit.CleanSession(form["sessionId"].ToString()),
+                    result, result.TopCorrections, ActivityType.Speaking);
+                return Results.Ok(new { id, result });
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogError(ex, "CEFR speaking mock baholanmadi");
+                return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);
+            }
+        }).RequireRateLimiting("ai");
+
+        app.MapPost("/api/mock/cefr/writing", async (
+            CefrWritingRequest body, HttpRequest request, AuthService auth, AppDbContext db, AdminOptions admins,
+            IConfiguration config, ICefrEvaluator evaluator, ReviewService reviews, ILogger<Program> logger) =>
+        {
+            var user = await auth.GetCurrentUserAsync(request);
+            if (user is null) return LoginFirst(request);
+            var set = CefrBank.FindWriting(body.SetId);
+            if (set is null) return Results.BadRequest(request.Error("mock.bad_set"));
+            string[] texts = [(body.Task11 ?? "").Trim(), (body.Task12 ?? "").Trim(), (body.Task2 ?? "").Trim()];
+            if (texts.All(t => t.Length == 0)) return Results.BadRequest(request.Error("mock.empty_text"));
+            const int maxChars = 8000;
+            if (texts.Any(t => t.Length > maxChars)) return Results.BadRequest(request.Error("text.too_long", maxChars));
+            var limited = await LimitAsync(request, db, user, admins, config);
+            if (limited is not null) return limited;
+            try
+            {
+                var seconds = Math.Clamp(body.SecondsUsed, 0, 3 * 60 * 60);
+                var result = await evaluator.EvaluateWritingAsync(set, texts[0], texts[1], texts[2], seconds, Texts.LangOf(request), request.HttpContext.RequestAborted);
+                var id = await SaveAsync(db, reviews, "cefr", user.Id, "writing", set.Id, null, MockLimit.CleanSession(body.SessionId),
+                    result, result.TopCorrections, ActivityType.Writing);
+                return Results.Ok(new { id, result });
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogError(ex, "CEFR writing mock baholanmadi");
+                return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);
+            }
+        }).RequireRateLimiting("ai");
+
         // Natijalar tarixi (ro'yxat) va bitta natija (to'liq).
         app.MapGet("/api/mock/history", async (HttpRequest request, AuthService auth, AppDbContext db) =>
         {
@@ -354,7 +452,11 @@ public static class MockEndpoints
 
     private static readonly JsonSerializerOptions Web = new(JsonSerializerDefaults.Web);
 
-    private static async Task<Guid> SaveAsync<T>(AppDbContext db, ReviewService reviews, Guid userId, string module, string setId,
+    private static Task<Guid> SaveAsync<T>(AppDbContext db, ReviewService reviews, Guid userId, string module, string setId,
+        string? variant, string? sessionId, T result, List<CorrectionItem> corrections, ActivityType? cardSource) =>
+        SaveAsync(db, reviews, "ielts", userId, module, setId, variant, sessionId, result, corrections, cardSource);
+
+    private static async Task<Guid> SaveAsync<T>(AppDbContext db, ReviewService reviews, string exam, Guid userId, string module, string setId,
         string? variant, string? sessionId, T result, List<CorrectionItem> corrections, ActivityType? cardSource)
     {
         var id = Guid.NewGuid();
@@ -364,13 +466,33 @@ public static class MockEndpoints
             Type = ActivityType.MockExam,
             UserId = userId,
             CreatedAtUtc = DateTime.UtcNow,
-            PromptData = JsonSerializer.Serialize(new { exam = "ielts", module, setId, variant, sessionId }, Web),
+            PromptData = JsonSerializer.Serialize(new { exam, module, setId, variant, sessionId }, Web),
             ResponseData = JsonSerializer.Serialize(result, Web),
         });
         // Tuzatishlar — oddiy mashqlardagidek takrorlash kartalariga.
         if (corrections.Count > 0) await reviews.AddCardsAsync(userId, cardSource, ReviewCardFactory.FromCorrections(corrections));
         await db.SaveChangesAsync();
         return id;
+    }
+
+    /// <summary>Speaking javoblari: "a{i}" audio fayllari va "s{i}" soniyalar (IELTS va CEFR uchun umumiy).</summary>
+    public static async Task<List<SpokenAnswer>> ReadAnswersAsync(IFormCollection form, int count)
+    {
+        var answers = new List<SpokenAnswer>();
+        for (var i = 0; i < count; i++)
+        {
+            var file = form.Files.GetFile($"a{i}");
+            int.TryParse(form[$"s{i}"].ToString(), out var seconds);
+            byte[]? bytes = null;
+            if (file is { Length: > 0 })
+            {
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms);
+                bytes = ms.ToArray();
+            }
+            answers.Add(new SpokenAnswer(i, bytes, file?.ContentType, Math.Clamp(seconds, 0, 600)));
+        }
+        return answers;
     }
 
     public static object ClientPayload(string module, Guid id, string payload) => module == "reading"

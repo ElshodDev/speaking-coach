@@ -9,6 +9,7 @@ import { MockHub, MockResultView } from './Mock';
 import { MockSpeaking } from './MockSpeaking';
 import { MockFullStart, MockFullStep, MockSessionView } from './MockFull';
 import { MockListening } from './MockListening';
+import { CefrWriting } from './CefrWriting';
 import { MockReading } from './MockReading';
 import { MockWriting } from './MockWriting';
 import { mockMsg } from './locales/mock';
@@ -191,6 +192,10 @@ function App() {
     page = <MockListening key={`ml-${userKey}`} go={go} />;
   } else if (section === 'mock' && (sub === 'reading-academic' || sub === 'reading-general') && loggedIn) {
     page = <MockReading key={`${sub}-${userKey}`} variant={sub === 'reading-general' ? 'general' : 'academic'} go={go} />;
+  } else if (section === 'mock' && sub === 'cefr-speaking' && loggedIn) {
+    page = <MockSpeaking key={`cs-${userKey}`} exam="cefr" go={go} />;
+  } else if (section === 'mock' && sub === 'cefr-writing' && loggedIn) {
+    page = <CefrWriting key={`cw-${userKey}`} go={go} />;
   } else if (section === 'mock' && sub === 'speaking' && loggedIn) {
     page = <MockSpeaking key={`ms-${userKey}`} go={go} />;
   } else if (section === 'mock' && (sub === 'writing-academic' || sub === 'writing-general') && loggedIn) {
