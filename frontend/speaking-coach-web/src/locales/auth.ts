@@ -1,6 +1,6 @@
 import { defineMessages } from '../i18n';
 
-/** AuthPanel.tsx — kirish / roʻyxatdan oʻtish formasi va hisob kartasi. */
+/** AuthPanel.tsx — kirish, roʻyxatdan oʻtish, email tasdiqlash, parolni tiklash. */
 export const authMsg = defineMessages(
   {
     account: 'Hisob',
@@ -15,6 +15,28 @@ export const authMsg = defineMessages(
     newPassword: 'Parol (kamida 8 ta belgi)',
     wait: 'Kuting...',
     createAccount: 'Hisob ochish',
+    forgot: 'Parolni unutdingizmi?',
+    verifyTitle: 'Emailingizni tasdiqlang',
+    verifyText: (email: string) =>
+      `${email} manziliga 6 xonali kod yubordik. Kod 15 daqiqa amal qiladi. Xat kelmasa, “Spam” papkasini ham tekshiring.`,
+    code: 'Tasdiqlash kodi',
+    confirm: 'Tasdiqlash',
+    resend: 'Kodni qayta yuborish',
+    resendIn: (s: number) => `Qayta yuborish: ${s} s`,
+    resent: 'Yangi kod yuborildi ✅',
+    back: '← Orqaga',
+    forgotTitle: 'Parolni tiklash',
+    forgotText: 'Emailingizni kiriting — parolni tiklash uchun kod yuboramiz.',
+    sendCode: 'Kod yuborish',
+    resetTitle: 'Yangi parol',
+    resetText: (email: string) =>
+      `Agar ${email} roʻyxatdan oʻtgan boʻlsa, unga kod yuborildi. Kodni va yangi parolni kiriting.`,
+    newPasswordLabel: 'Yangi parol (kamida 8 ta belgi)',
+    savePassword: 'Parolni saqlash',
+    or: 'yoki email orqali',
+    consent: 'Roʻyxatdan oʻtib, siz',
+    privacyLink: 'maxfiylik siyosatiga',
+    consentEnd: 'rozilik bildirasiz.',
   },
   {
     ru: {
@@ -30,6 +52,28 @@ export const authMsg = defineMessages(
       newPassword: 'Пароль (не менее 8 символов)',
       wait: 'Подождите...',
       createAccount: 'Создать аккаунт',
+      forgot: 'Забыли пароль?',
+      verifyTitle: 'Подтвердите email',
+      verifyText: (email: string) =>
+        `Мы отправили 6-значный код на ${email}. Код действует 15 минут. Если письма нет, проверьте папку «Спам».`,
+      code: 'Код подтверждения',
+      confirm: 'Подтвердить',
+      resend: 'Отправить код ещё раз',
+      resendIn: (s: number) => `Повторная отправка: ${s} с`,
+      resent: 'Новый код отправлен ✅',
+      back: '← Назад',
+      forgotTitle: 'Сброс пароля',
+      forgotText: 'Введите email — мы отправим код для сброса пароля.',
+      sendCode: 'Отправить код',
+      resetTitle: 'Новый пароль',
+      resetText: (email: string) =>
+        `Если ${email} зарегистрирован, мы отправили на него код. Введите код и новый пароль.`,
+      newPasswordLabel: 'Новый пароль (не менее 8 символов)',
+      savePassword: 'Сохранить пароль',
+      or: 'или по email',
+      consent: 'Регистрируясь, вы соглашаетесь с',
+      privacyLink: 'политикой конфиденциальности',
+      consentEnd: '.',
     },
     en: {
       account: 'Account',
@@ -44,6 +88,28 @@ export const authMsg = defineMessages(
       newPassword: 'Password (at least 8 characters)',
       wait: 'Please wait...',
       createAccount: 'Create account',
+      forgot: 'Forgot your password?',
+      verifyTitle: 'Confirm your email',
+      verifyText: (email: string) =>
+        `We sent a 6-digit code to ${email}. It is valid for 15 minutes. If it doesn't arrive, check your Spam folder.`,
+      code: 'Verification code',
+      confirm: 'Confirm',
+      resend: 'Send the code again',
+      resendIn: (s: number) => `Resend in ${s} s`,
+      resent: 'A new code has been sent ✅',
+      back: '← Back',
+      forgotTitle: 'Reset your password',
+      forgotText: "Enter your email and we'll send you a code to reset your password.",
+      sendCode: 'Send code',
+      resetTitle: 'New password',
+      resetText: (email: string) =>
+        `If ${email} is registered, we've sent a code to it. Enter the code and your new password.`,
+      newPasswordLabel: 'New password (at least 8 characters)',
+      savePassword: 'Save password',
+      or: 'or with email',
+      consent: 'By signing up you agree to the',
+      privacyLink: 'privacy policy',
+      consentEnd: '.',
     },
   },
 );

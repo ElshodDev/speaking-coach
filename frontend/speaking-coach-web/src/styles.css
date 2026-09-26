@@ -1038,3 +1038,31 @@ table.data td {
     display: none;
   }
 }
+
+/* Email tasdiqlash kodi: katta, oralig'i keng raqamlar */
+.code-input {
+  font-size: 1.5rem;
+  letter-spacing: 0.4em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Google bilan kirish tugmasi va "yoki" ajratgichi */
+.google-button {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--border);
+}

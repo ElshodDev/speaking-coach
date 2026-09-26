@@ -65,6 +65,8 @@ builder.Services.AddSingleton<IWritingEvaluationService, GeminiWritingService>()
 builder.Services.AddSingleton<IComprehensionService, GeminiComprehensionService>();
 builder.Services.AddSingleton<IWordService, GeminiWordService>();
 builder.Services.AddSingleton<AdminOptions>();
+builder.Services.AddSingleton<IEmailSender, BrevoEmailSender>();
+builder.Services.AddSingleton<IGoogleSignIn, GoogleSignInService>();
 
 // PasswordHasher holatsiz (stateless) — singleton yetarli. AuthService va
 // ReviewService esa AppDbContext'ga bog'liq; DbContext har so'rov uchun

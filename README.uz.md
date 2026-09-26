@@ -186,7 +186,7 @@ npm run dev
 ### 7. Avtomatik testlar
 
 ```bash
-dotnet test backend/SpeakingCoach.Api.Tests   # backend: 94 ta unit test
+dotnet test backend/SpeakingCoach.Api.Tests   # backend: 127 ta unit test
 cd frontend/speaking-coach-web && npm test     # frontend: 29 ta vitest testi
 ```
 
@@ -259,6 +259,62 @@ Xuddi shu testlar har bir push'da GitHub Actions'da ham ishlaydi
   aks holda qaysi email ro'yxatdan o'tganini aniqlab bo'lardi.
 - Email bazada **unique index** bilan himoyalangan — bir vaqtda kelgan ikki
   so'rov ham bitta email'ni ikki marta ro'yxatdan o'tkaza olmaydi.
+
+### Email tasdiqlash va parolni tiklash
+
+Email shaklini tekshirish (`@` bor-yo'qligi) email **mavjudligini** isbotlamaydi.
+Yagona ishonchli usul — emailga kod yuborib, uni qaytarib kiritishni so'rash:
+
+1. Ro'yxatdan o'tish → emailga **6 xonali kod** (15 daqiqa amal qiladi).
+2. Kod kiritilgach hisob ochiladi va darhol kiriladi.
+3. Tasdiqlanmagan hisob bilan kirib bo'lmaydi — kirishda kod qayta yuboriladi.
+   Bu funksiyadan oldin ochilgan hisoblar ham bir marta tasdiqlanadi.
+4. "Parolni unutdingizmi?" — xuddi shu kod bilan yangi parol; boshqa
+   qurilmalardagi barcha sessiyalar bekor qilinadi.
+
+Xavfsizlik: kodning o'zi emas, SHA-256 xeshi saqlanadi; 5 ta noto'g'ri
+urinishdan keyin kod yaroqsiz; xatlar orasida 60 soniya, soatiga ko'pi bilan
+5 ta xat; kod doimiy vaqtda taqqoslanadi. Kimdir begona emailni "band qilib"
+qo'ya olmaydi: tasdiqlanmagan email bilan qayta ro'yxatdan o'tilsa, kod
+yana egasiga boradi. "Parolni unutdim" email ro'yxatda bor-yo'qligini oshkor
+qilmaydi.
+
+**Xat yuborish — Brevo** (bepul: kuniga 300 ta xat). Nega Gmail SMTP emas:
+Render'ning bepul tarifi 2025-yil sentabridan beri SMTP portlarini (25, 465,
+587) yopgan, shuning uchun xat HTTPS API orqali yuboriladi.
+
+1. [brevo.com](https://www.brevo.com) da bepul hisob oching.
+2. **Senders, Domains & Dedicated IPs → Senders → Add a sender**: yuboruvchi
+   email (masalan, Gmail'ingiz) — Brevo unga tasdiqlash havolasini yuboradi.
+   O'z domeningiz bo'lsa, uni **Domains** bo'limida autentifikatsiya qiling
+   (DKIM/DMARC) — xatlar "Spam"ga tushmaydi.
+3. **SMTP & API → API Keys → Generate a new API key**.
+4. Render → Environment: `Email__BrevoApiKey`, `Email__FromAddress`
+   (2-qadamdagi email), ixtiyoriy `Email__FromName`.
+
+### Google bilan kirish
+
+Tugma bosilganda Google imzolagan **ID token** (JWT) keladi. Server unga
+ishonmaydi, o'zi tekshiradi: Google'ning ochiq kalitlari bilan RS256 imzo,
+`iss` (accounts.google.com), `aud` (aynan bizning Client ID), muddati va
+`email_verified`. Tashqi paket yo'q — .NET'ning o'z RSA'si. Google emailni
+o'zi tasdiqlagani uchun kod shart emas; shu email bilan hisob bo'lsa — unga
+kiriladi. Tasdiqlanmagan hisobga Google orqali kirilsa, avvalgi parol bekor
+qilinadi (uni begona odam qo'ygan bo'lishi mumkin).
+
+Sozlash: Google Cloud Console → **Google Auth Platform** (OAuth) → ilova
+nomi va email → **Clients → Create client → Web application** →
+*Authorized JavaScript origins*: `https://speaking-coach-theta.vercel.app`,
+`http://localhost:5173`, `http://localhost` → Client ID'ni Render'ga
+`Google__ClientId` sifatida qo'shing (lokalda: `dotnet user-secrets set
+"Google:ClientId" "..."`). **Audience** bo'limida ilovani *In production*
+holatiga o'tkazing, aks holda faqat test foydalanuvchilar kira oladi.
+Client ID sozlanmaguncha tugma ko'rinmaydi.
+
+Kalit qo'shilmaguncha email tasdiqlash **o'chiq** — ilova avvalgidek ishlaydi,
+hech kim tizimdan qulflanib qolmaydi. Lokalda Brevo'siz sinash uchun:
+`dotnet user-secrets set "Email:DevMode" "true"` — kod server konsoliga
+yoziladi (faqat Development muhitida ishlaydi).
 
 ## Eslab qolish: oraliqli takrorlash
 
@@ -429,7 +485,7 @@ ko'rsatadi.
 14. Kunlik eslatma (Telegram bot yoki Web Push) — "Bugun 12 ta karta kutyapti"
 15. Integration testlar: `WebApplicationFactory` + Testcontainers'dagi
     haqiqiy Postgres
-16. Parolni tiklash (email yuborish xizmati kerak)
+16. ✅ ~~Email tasdiqlash va parolni tiklash (Brevo)~~
 
 ## Ishlatishdan oldin tushunishingiz kerak bo'lgan savollar
 

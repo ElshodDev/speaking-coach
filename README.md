@@ -35,7 +35,7 @@ An English-practice app for Uzbek- and Russian-speaking learners (A2–C1), with
 | 🏆 **Weekly competition** | Opt-in leaderboard by weekly XP under a nickname — email and exercises are never shown. |
 | 🛠 **Admin panel** | For the owner only (`Admin:Emails`): signups, daily/weekly/monthly active users, exercises by type, reviews — aggregates and masked emails only. |
 | 🌐 **Three languages** | The whole interface, server error messages and word translations switch between Uzbek (official Latin orthography), Russian and English. Detected from the browser, switchable in the header and in Profile. |
-| 🔐 **Accounts** | Register / log in; your history and cards are private. Everything also works as a guest (nothing is saved). |
+| 🔐 **Accounts** | Register / log in; your history and cards are private. The email is **verified with a 6-digit code** (so only real, owned addresses get accounts), and a forgotten password is reset with the same code. **Sign in with Google** is available too. Everything also works as a guest (nothing is saved). |
 
 ## Architecture
 
@@ -66,6 +66,8 @@ Each of these is explained in more depth (in Uzbek) in [README.uz.md](README.uz.
 - **LLM output is never trusted blindly.** Replies are parsed with `RespectRequiredConstructorParameters` and `RespectNullableAnnotations`, then range-checked. The default `System.Text.Json` behaviour silently turned a missing `"score"` into `0` and saved it — a real bug this project hit and fixed.
 - **The LLM generates, code grades.** For Reading/Listening the answer key is known, so grading is deterministic C#. The key is kept server-side (`PendingExercises`) and never sent to the browser.
 - **Measuring LLM grading stability.** A built-in "stability test" re-grades the same input 5× (`?save=false`, sequential to respect rate limits) and shows min/max/spread per criterion — the honest answer to "how reliable is an AI grader?".
+- **Email ownership is proven, not assumed.** A format check can't tell whether an address exists, so sign-up sends a 6-digit code (stored as a SHA-256 hash, 15-minute lifetime, 5 attempts, 60 s cooldown, 5 emails/hour, constant-time comparison). Unverified accounts can't log in, and re-registering an unverified address re-sends the code to its real owner, so nobody can squat on someone else's email. Emails go through Brevo's HTTPS API because Render's free tier blocks outbound SMTP ports (25/465/587) since September 2025. Verification switches on only when a Brevo key is configured, so deploying the code never locks anyone out.
+- **Google sign-in without an auth library.** The browser gets a Google-signed ID token; the server verifies it itself (RS256 signature against Google's JWKS, `iss`, `aud` = our client ID, expiry, `email_verified`) using .NET's built-in RSA. Signing in with Google to an account whose email was never verified wipes the old password, since a stranger could have set it.
 - **Opaque session tokens instead of JWT.** 32 random bytes, stored only as a SHA-256 hash. Logging out revokes the token immediately — impossible with a plain JWT. Passwords use ASP.NET Core's `PasswordHasher` (PBKDF2).
 - **Pure core logic.** `ReviewScheduler`, `ReviewCardFactory`, grading and parsing don't touch the database or HTTP, which is what makes them unit-testable.
 - **Streaks use the user's local day**, not UTC — a review at 01:00 in Tashkent must not count as "yesterday".
@@ -78,7 +80,7 @@ Each of these is explained in more depth (in Uzbek) in [README.uz.md](README.uz.
 
 ## Quality
 
-- **Tests:** 94 backend unit tests (xUnit) — scheduler, streak across time zones, card creation, grading, strict parsing, token hashing, XP/levels/badges, leaderboard ranking, level-aware prompts, vocabulary status, localized messages (every key in all three languages with matching placeholders) — and 29 frontend tests with Vitest (charts, word tapping, vocabulary search, plurals).
+- **Tests:** 127 backend unit tests (xUnit) — scheduler, streak across time zones, card creation, grading, strict parsing, token hashing, XP/levels/badges, leaderboard ranking, level-aware prompts, vocabulary status, localized messages (every key in all three languages with matching placeholders), email-code rules (expiry, attempts, cooldown, hourly cap), email templates and Google ID-token validation (forged signature, wrong audience/issuer, expiry, `alg: none`) — and 29 frontend tests with Vitest (charts, word tapping, vocabulary search, plurals).
 - **CI:** GitHub Actions builds and tests the backend and type-checks, tests and builds the frontend on every push.
 - **Rate limiting:** 10 req/min per IP on login/register, 30 req/min on Gemini-backed endpoints; the real client IP is read from `X-Forwarded-For` behind Render's proxy (last hop only).
 - **Health check:** `GET /health` reports API and database status (503 if the DB is unreachable).
@@ -124,7 +126,7 @@ cd frontend/speaking-coach-web && npm test
 
 ## Deploy
 
-- **Render** (backend): root directory `backend/SpeakingCoach.Api`, Docker; env vars `Gemini__ApiKey`, `ConnectionStrings__Default`, `FrontendOrigin` (the Vercel URL, for CORS), optionally `Admin__Emails` (comma-separated).
+- **Render** (backend): root directory `backend/SpeakingCoach.Api`, Docker; env vars `Gemini__ApiKey`, `ConnectionStrings__Default`, `FrontendOrigin` (the Vercel URL, for CORS), optionally `Admin__Emails` (comma-separated) and, to turn on email verification, `Email__BrevoApiKey` + `Email__FromAddress` (a sender verified in [Brevo](https://www.brevo.com); free plan: 300 emails/day), and `Google__ClientId` for Google sign-in (a Web OAuth client with the Vercel URL as an authorized JavaScript origin).
 - **Vercel** (frontend): root directory `frontend/speaking-coach-web`; env var `VITE_API_URL` (the Render URL).
 - **Migrations** are applied with `dotnet ef database update` before pushing code that depends on them (Render does not run them).
 
@@ -133,7 +135,7 @@ cd frontend/speaking-coach-web && npm test
 - Free tiers: Gemini rate limits; the backend sleeps when idle.
 - No push reminders yet; commute mode needs the screen on (some phones stop audio when it turns off).
 - The token lives in `localStorage` (cross-site cookies between `vercel.app` and `onrender.com` are increasingly blocked); an XSS bug could expose it.
-- No password reset or email verification.
+- Verification emails from a free-mail sender address (e.g. Gmail) may land in Spam; authenticating your own domain in Brevo fixes that.
 - Automated tests cover pure logic; database/endpoint integration tests are next.
 
 ## Roadmap
@@ -143,4 +145,4 @@ cd frontend/speaking-coach-web && npm test
 - [x] Progress page, XP/levels/badges, weekly leaderboard, admin panel
 - [x] Learner level (A2–C1), tap-a-word and a personal vocabulary
 - [x] Interface in Uzbek, Russian and English
-- [ ] Password reset
+- [x] Email verification and password reset

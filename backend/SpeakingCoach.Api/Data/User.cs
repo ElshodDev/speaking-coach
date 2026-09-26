@@ -18,6 +18,14 @@ public class User
     public DateTime CreatedAtUtc { get; set; }
 
     /// <summary>
+    /// Email qachon tasdiqlangan (emailga yuborilgan kod kiritilgan). null —
+    /// tasdiqlanmagan: bunday hisob bilan kirib bo'lmaydi (xat yuborish
+    /// sozlangan bo'lsa). Shu tufayli bazadagi har bir faol hisob — haqiqiy,
+    /// egasi qo'lida bo'lgan email.
+    /// </summary>
+    public DateTime? EmailVerifiedAtUtc { get; set; }
+
+    /// <summary>
     /// Musobaqa jadvalida ko'rinadigan taxallus. Email hech qachon boshqalarga
     /// ko'rsatilmaydi — shuning uchun alohida maydon.
     /// </summary>

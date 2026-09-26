@@ -11,7 +11,7 @@ import { Admin } from './Admin';
 import { Settings } from './Settings';
 import { Vocab } from './Vocab';
 import { apiJson, getToken, setLevel, setToken, type Profile as ProfileData } from './api';
-import { common, LangSelect, useT } from './i18n';
+import { common, LangSelect, useLang, useT } from './i18n';
 import { appMsg } from './locales/app';
 import { homeMsg } from './locales/home';
 
@@ -254,6 +254,7 @@ function Profile({
   go: (route: string) => void;
 }) {
   const t = useT(appMsg);
+  const { lang } = useLang();
   return (
     <>
       <PageHeader title={t.profile} />
@@ -287,6 +288,10 @@ function Profile({
       </div>
 
       <div className="card soft small muted">{t.themeNote}</div>
+
+      <p className="center small" style={{ marginTop: 16 }}>
+        <a href={`/privacy.html#${lang}`}>{t.privacy}</a>
+      </p>
     </>
   );
 }

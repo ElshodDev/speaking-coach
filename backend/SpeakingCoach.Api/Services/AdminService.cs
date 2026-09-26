@@ -25,10 +25,11 @@ public class AdminOptions
 }
 
 public record DailyPoint(string Date, int Signups, int ActiveUsers, int Activities, int Reviews);
-public record RecentUser(string Email, DateTime CreatedAtUtc, DateTime? LastActiveAtUtc, int Activities, string Level);
+public record RecentUser(string Email, DateTime CreatedAtUtc, DateTime? LastActiveAtUtc, int Activities, string Level, bool Verified);
 
 public record AdminOverview(
     int TotalUsers,
+    int VerifiedUsers,
     int NewUsers7d,
     int ActiveToday,
     int Active7d,
@@ -63,7 +64,7 @@ public class AdminService
         DateOnly Local(DateTime t) => ReviewScheduler.ToLocalDate(t, tzOffsetMinutes);
         var today = Local(now);
 
-        var users = await _db.Users.Select(u => new { u.Id, u.Email, u.CreatedAtUtc, u.Level }).ToListAsync();
+        var users = await _db.Users.Select(u => new { u.Id, u.Email, u.CreatedAtUtc, u.Level, u.EmailVerifiedAtUtc }).ToListAsync();
 
         // Oxirgi 30 kundagi barcha "harakatlar" (mashq yoki takrorlash) —
         // kim, qachon. Faol foydalanuvchilar va kunlik grafik shundan.
@@ -116,11 +117,12 @@ public class AdminService
             var a = lastActivity.FirstOrDefault(x => x.UserId == u.Id);
             var r = lastReview.FirstOrDefault(x => x.UserId == u.Id);
             DateTime? last = new[] { a?.Last, r?.Last }.Where(x => x is not null).Max();
-            return new RecentUser(ProgressCalculator.MaskEmail(u.Email), u.CreatedAtUtc, last, a?.Count ?? 0, u.Level);
+            return new RecentUser(ProgressCalculator.MaskEmail(u.Email), u.CreatedAtUtc, last, a?.Count ?? 0, u.Level, u.EmailVerifiedAtUtc is not null);
         }).ToList();
 
         return new AdminOverview(
             users.Count,
+            users.Count(u => u.EmailVerifiedAtUtc is not null),
             users.Count(u => u.CreatedAtUtc >= since7),
             ActiveSince(t => Local(t) == today),
             ActiveSince(t => t >= since7),

@@ -20,6 +20,7 @@ export const appMsg = defineMessages(
     installAndroidSteps: '⋮ menyu → “Ilovani oʻrnatish” yoki “Bosh ekranga qoʻshish”',
     installIphone: 'iPhone (Safari):',
     installIphoneSteps: '“Ulashish” tugmasi → “Bosh ekranga”',
+    privacy: 'Maxfiylik siyosati',
     themeNote: 'Ranglar telefoningiz sozlamasiga moslashadi: tungi rejim yoqilgan boʻlsa, ilova ham qorongʻi boʻladi.',
   },
   {
@@ -41,6 +42,7 @@ export const appMsg = defineMessages(
       installAndroidSteps: 'меню ⋮ → «Установить приложение» или «Добавить на главный экран»',
       installIphone: 'iPhone (Safari):',
       installIphoneSteps: 'кнопка «Поделиться» → «На экран „Домой“»',
+      privacy: 'Политика конфиденциальности',
       themeNote: 'Цвета подстраиваются под настройки телефона: если включена тёмная тема, приложение тоже станет тёмным.',
     },
     en: {
@@ -61,6 +63,7 @@ export const appMsg = defineMessages(
       installAndroidSteps: '⋮ menu → “Install app” or “Add to Home screen”',
       installIphone: 'iPhone (Safari):',
       installIphoneSteps: '“Share” button → “Add to Home Screen”',
+      privacy: 'Privacy policy',
       themeNote: 'Colours follow your phone settings: if dark mode is on, the app turns dark too.',
     },
   },

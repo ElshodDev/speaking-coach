@@ -14,6 +14,7 @@ public class AppDbContext : DbContext
     public DbSet<PendingExercise> PendingExercises => Set<PendingExercise>();
     public DbSet<ReviewCard> ReviewCards => Set<ReviewCard>();
     public DbSet<ReviewLog> ReviewLogs => Set<ReviewLog>();
+    public DbSet<EmailCode> EmailCodes => Set<EmailCode>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -50,6 +51,14 @@ public class AppDbContext : DbContext
             // cheklov bazaning o'zida (unique index), faqat C# kodida emas:
             // bir vaqtda kelgan ikki so'rov ham ikkinchi nusxani yarata olmaydi.
             entity.HasIndex(u => u.Email).IsUnique();
+        });
+
+        modelBuilder.Entity<EmailCode>(entity =>
+        {
+            entity.Property(c => c.Purpose).HasConversion<string>().HasMaxLength(20);
+            entity.Property(c => c.CodeHash).HasMaxLength(64);
+            entity.HasIndex(c => new { c.UserId, c.Purpose, c.CreatedAtUtc });
+            entity.HasOne<User>().WithMany().HasForeignKey(c => c.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Session>(entity =>

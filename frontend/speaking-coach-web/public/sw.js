@@ -12,7 +12,7 @@
 //
 // Yangi versiyada keshlash strategiyasi o'zgarsa, CACHE nomini oshiring
 // (v2, v3...) — eski kesh "activate" paytida o'chiriladi.
-const CACHE = 'speaking-coach-v1';
+const CACHE = 'speaking-coach-v2';
 const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png'];
 
 self.addEventListener('install', (event) => {
@@ -37,7 +37,10 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return; // backend va boshqa domenlar — tegmaymiz
 
-  if (request.mode === 'navigate') {
+  // Faqat ilovaning o'zi (index.html). /privacy.html kabi alohida sahifalar
+  // oddiy tarmoq so'rovi bo'lib qoladi — aks holda ular "/" nomi bilan
+  // keshga tushib, oflaynda bosh sahifa o'rniga ochilib qolardi.
+  if (request.mode === 'navigate' && (url.pathname === '/' || url.pathname === '/index.html')) {
     event.respondWith(
       fetch(request)
         .then((response) => {

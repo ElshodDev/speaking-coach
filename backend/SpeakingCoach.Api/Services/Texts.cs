@@ -45,6 +45,43 @@ public static class Texts
             "Неверный email или пароль.",
             "Wrong email or password."),
         ["auth.not_logged_in"] = new("Tizimga kirilmagan.", "Вы не вошли в систему.", "You are not logged in."),
+        ["code.wrong"] = new("Kod notoʻgʻri.", "Неверный код.", "The code is incorrect."),
+        ["code.wrong_left"] = new(
+            "Kod notoʻgʻri. Yana {0} ta urinish qoldi.",
+            "Неверный код. Осталось попыток: {0}.",
+            "The code is incorrect. Attempts left: {0}."),
+        ["code.too_many"] = new(
+            "Urinishlar tugadi — yangi kod soʻrang.",
+            "Попытки закончились — запросите новый код.",
+            "Too many attempts — please request a new code."),
+        ["code.expired"] = new(
+            "Kodning muddati tugagan — yangi kod soʻrang.",
+            "Срок действия кода истёк — запросите новый.",
+            "The code has expired — please request a new one."),
+        ["code.not_found"] = new(
+            "Faol kod yoʻq — yangi kod soʻrang.",
+            "Активного кода нет — запросите новый.",
+            "There is no active code — please request a new one."),
+        ["code.wait"] = new(
+            "Yangi kodni {0} soniyadan soʻng soʻrash mumkin.",
+            "Новый код можно запросить через {0} с.",
+            "You can request a new code in {0} s."),
+        ["email.send_failed"] = new(
+            "Xatni yuborib boʻlmadi. Birozdan soʻng qayta urinib koʻring.",
+            "Не удалось отправить письмо. Попробуйте немного позже.",
+            "We couldn't send the email. Please try again shortly."),
+        ["email.unavailable"] = new(
+            "Email yuborish hozircha sozlanmagan.",
+            "Отправка писем пока не настроена.",
+            "Email sending is not set up yet."),
+        ["google.invalid"] = new(
+            "Google orqali kirib boʻlmadi. Qayta urinib koʻring.",
+            "Не удалось войти через Google. Попробуйте ещё раз.",
+            "Couldn't sign in with Google. Please try again."),
+        ["google.unavailable"] = new(
+            "Google orqali kirish hozircha sozlanmagan.",
+            "Вход через Google пока не настроен.",
+            "Google sign-in is not set up yet."),
         ["login.required"] = new("Tizimga kiring.", "Войдите в систему.", "Please log in."),
         ["login.review"] = new("Takrorlash uchun tizimga kiring.", "Войдите, чтобы повторять карточки.", "Log in to review your cards."),
         ["login.vocab"] = new("Lugʻatni saqlash uchun tizimga kiring.", "Войдите, чтобы сохранять словарь.", "Log in to save your vocabulary."),

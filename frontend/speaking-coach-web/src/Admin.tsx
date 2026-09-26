@@ -7,6 +7,7 @@ import { PageHeader } from './ui';
 
 interface AdminOverview {
   totalUsers: number;
+  verifiedUsers: number;
   newUsers7d: number;
   activeToday: number;
   active7d: number;
@@ -17,7 +18,7 @@ interface AdminOverview {
   reviews7d: number;
   totalCards: number;
   daily: { date: string; signups: number; activeUsers: number; activities: number; reviews: number }[];
-  recentUsers: { email: string; createdAtUtc: string; lastActiveAtUtc: string | null; activities: number; level: string }[];
+  recentUsers: { email: string; createdAtUtc: string; lastActiveAtUtc: string | null; activities: number; level: string; verified: boolean }[];
 }
 
 const TYPES = ['Speaking', 'Writing', 'Reading', 'Listening'] as const;
@@ -52,6 +53,7 @@ export function Admin() {
 
   const tiles = [
     { label: t.totalUsers, value: data.totalUsers, sub: t.newThisWeek(data.newUsers7d) },
+    { label: t.verifiedUsers, value: data.verifiedUsers, sub: t.verifiedShare(data.totalUsers ? Math.round((data.verifiedUsers / data.totalUsers) * 100) : 0) },
     { label: t.activeToday, value: data.activeToday },
     { label: t.active7d, value: data.active7d },
     { label: t.active30d, value: data.active30d },
@@ -128,7 +130,7 @@ export function Admin() {
               {data.recentUsers.map((u, i) => (
                 <tr key={i}>
                   <td>
-                    {u.email}
+                    {u.email} <span title={u.verified ? t.verified : t.unverified}>{u.verified ? '✅' : '⏳'}</span>
                     <div className="muted tiny">{new Date(u.createdAtUtc).toLocaleDateString(locale)}</div>
                   </td>
                   <td>{u.level}</td>
