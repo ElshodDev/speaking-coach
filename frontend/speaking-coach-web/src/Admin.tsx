@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { AdminSystem } from './AdminSystem';
 import { apiJson } from './api';
 import { BarChart } from './charts';
 import { common, localeOf, msg, useLang, useT } from './i18n';
@@ -46,6 +47,7 @@ export function Admin() {
       <>
         <PageHeader title={t.title} />
         <p className="error">{error}</p>
+        <AdminSystem />
       </>
     );
   }
@@ -64,6 +66,8 @@ export function Admin() {
   return (
     <>
       <PageHeader title={t.title} subtitle={t.subtitle} />
+
+      <AdminSystem />
 
       <div className="tiles" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))' }}>
         {tiles.map((tile) => (

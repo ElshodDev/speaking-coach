@@ -45,7 +45,11 @@ qolishga** yordam beradigan takrorlash tizimi:
   Til brauzerdan aniqlanadi, tepadagi panelda va Profilda almashtiriladi.
 - **🛠 Admin panel** — faqat `Admin:Emails` ro'yxatidagi egasi uchun:
   ro'yxatdan o'tishlar, kunlik/haftalik/oylik faol foydalanuvchilar, mashq
-  turlari — faqat umumiy sonlar va niqoblangan emaillar.
+  turlari — faqat umumiy sonlar va niqoblangan emaillar. **Tizim holati**
+  kartasi baza sxemasini kod bilan solishtiradi (qo'llanmagan migratsiyalar,
+  yetishmayotgan jadvallar), Telegram webhook holatini (manzil, kutilayotgan
+  xabarlar, oxirgi xato) va sozlamalarni ko'rsatadi — hech qanday sir
+  qaytarilmaydi. Server ishga tushganda ham shu tekshiruv logga yoziladi.
 
 Tizimga kirgan foydalanuvchining har bir urinishi va kartalari ma'lumotlar
 bazasida saqlanadi va faqat o'ziga ko'rinadi. Kirmasdan ham barcha mashqlar
@@ -186,8 +190,8 @@ npm run dev
 ### 7. Avtomatik testlar
 
 ```bash
-dotnet test backend/SpeakingCoach.Api.Tests   # backend: 190 ta unit test
-cd frontend/speaking-coach-web && npm test     # frontend: 34 ta vitest testi
+dotnet test backend/SpeakingCoach.Api.Tests   # backend: 202 ta unit test
+cd frontend/speaking-coach-web && npm test     # frontend: 37 ta vitest testi
 ```
 
 Xuddi shu testlar har bir push'da GitHub Actions'da ham ishlaydi

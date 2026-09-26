@@ -1,0 +1,123 @@
+import { defineMessages } from '../i18n';
+
+export type SystemIssue =
+  | 'tg_off'
+  | 'tg_unreachable'
+  | 'tg_username_mismatch'
+  | 'public_url_missing'
+  | 'webhook_missing'
+  | 'webhook_mismatch'
+  | 'webhook_error'
+  | 'webhook_backlog'
+  | 'cron_missing';
+
+/** AdminSystem.tsx — "Tizim holati" kartasi. */
+export const adminSystemMsg = defineMessages(
+  {
+    title: 'Tizim holati',
+    refresh: 'Yangilash',
+    checking: 'Tekshirilmoqda…',
+    loadFailed: 'Holatni olib boʻlmadi',
+    allGood: 'Hammasi joyida',
+    database: 'Maʼlumotlar bazasi',
+    dbOk: 'Sxema kod bilan mos',
+    dbUnchecked: 'Tekshirib boʻlmadi',
+    pending: (list: string) => `Qoʻllanmagan migratsiyalar: ${list}`,
+    missing: (list: string) => `Yetishmayotgan jadvallar: ${list}`,
+    dbFix: 'Kompyuterda bajaring: dotnet ef database update',
+    telegram: 'Telegram bot',
+    webhook: 'Webhook',
+    pendingUpdates: (n: number) => `Kutilayotgan xabarlar: ${n}`,
+    lastError: (when: string, text: string) => `Oxirgi xato (${when}): ${text}`,
+    linked: (n: number, r: number) => `Ulangan: ${n} · eslatma yoqilgan: ${r}`,
+    reminders: 'Kunlik eslatmalar (cron)',
+    emailVerification: 'Email tasdiqlash',
+    google: 'Google orqali kirish',
+    gemini: 'Gemini AI',
+    on: 'Yoqilgan',
+    off: 'Oʻchiq',
+    issues: {
+      tg_off: 'Bot oʻchiq: Renderda Telegram__BotToken yoʻq.',
+      tg_unreachable: 'Telegramga ulanib boʻlmadi — token notoʻgʻri yoki bekor qilingan boʻlishi mumkin.',
+      tg_username_mismatch: 'Token boshqa botga tegishli: Telegram__BotUsername ni tekshiring.',
+      public_url_missing: 'Server manzili nomaʼlum: Telegram__PublicUrl ni qoʻying.',
+      webhook_missing: 'Webhook oʻrnatilmagan — serverni qayta ishga tushiring.',
+      webhook_mismatch: 'Webhook boshqa manzilga ulangan — serverni qayta ishga tushiring.',
+      webhook_error: 'Soʻnggi 24 soatda webhook xatosi boʻlgan (Webhook qatoriga qarang).',
+      webhook_backlog: 'Telegramda koʻp xabar yetkazilmay turibdi — server javob bermayapti.',
+      cron_missing: 'Eslatmalar oʻchiq: Renderda Telegram__CronSecret yoʻq.',
+    } as Record<SystemIssue, string>,
+  },
+  {
+    ru: {
+      title: 'Состояние системы',
+      refresh: 'Обновить',
+      checking: 'Проверяем…',
+      loadFailed: 'Не удалось получить состояние',
+      allGood: 'Всё в порядке',
+      database: 'База данных',
+      dbOk: 'Схема совпадает с кодом',
+      dbUnchecked: 'Не удалось проверить',
+      pending: (list: string) => `Непримененные миграции: ${list}`,
+      missing: (list: string) => `Отсутствующие таблицы: ${list}`,
+      dbFix: 'Выполните на компьютере: dotnet ef database update',
+      telegram: 'Telegram-бот',
+      webhook: 'Webhook',
+      pendingUpdates: (n: number) => `Ожидающие сообщения: ${n}`,
+      lastError: (when: string, text: string) => `Последняя ошибка (${when}): ${text}`,
+      linked: (n: number, r: number) => `Подключено: ${n} · с напоминаниями: ${r}`,
+      reminders: 'Ежедневные напоминания (cron)',
+      emailVerification: 'Подтверждение email',
+      google: 'Вход через Google',
+      gemini: 'Gemini AI',
+      on: 'Включено',
+      off: 'Выключено',
+      issues: {
+        tg_off: 'Бот выключен: в Render нет Telegram__BotToken.',
+        tg_unreachable: 'Нет связи с Telegram — токен неверный или отозван.',
+        tg_username_mismatch: 'Токен принадлежит другому боту: проверьте Telegram__BotUsername.',
+        public_url_missing: 'Адрес сервера неизвестен: задайте Telegram__PublicUrl.',
+        webhook_missing: 'Webhook не установлен — перезапустите сервер.',
+        webhook_mismatch: 'Webhook указывает на другой адрес — перезапустите сервер.',
+        webhook_error: 'За последние 24 часа была ошибка webhook (см. строку Webhook).',
+        webhook_backlog: 'В Telegram скопились недоставленные сообщения — сервер не отвечает.',
+        cron_missing: 'Напоминания выключены: в Render нет Telegram__CronSecret.',
+      },
+    },
+    en: {
+      title: 'System status',
+      refresh: 'Refresh',
+      checking: 'Checking…',
+      loadFailed: 'Could not load status',
+      allGood: 'All good',
+      database: 'Database',
+      dbOk: 'Schema matches the code',
+      dbUnchecked: 'Could not check',
+      pending: (list: string) => `Pending migrations: ${list}`,
+      missing: (list: string) => `Missing tables: ${list}`,
+      dbFix: 'Run on your computer: dotnet ef database update',
+      telegram: 'Telegram bot',
+      webhook: 'Webhook',
+      pendingUpdates: (n: number) => `Pending updates: ${n}`,
+      lastError: (when: string, text: string) => `Last error (${when}): ${text}`,
+      linked: (n: number, r: number) => `Linked: ${n} · reminders on: ${r}`,
+      reminders: 'Daily reminders (cron)',
+      emailVerification: 'Email verification',
+      google: 'Google sign-in',
+      gemini: 'Gemini AI',
+      on: 'On',
+      off: 'Off',
+      issues: {
+        tg_off: 'Bot is off: Telegram__BotToken is not set on Render.',
+        tg_unreachable: 'Cannot reach Telegram — the token may be wrong or revoked.',
+        tg_username_mismatch: 'The token belongs to another bot: check Telegram__BotUsername.',
+        public_url_missing: 'Server URL unknown: set Telegram__PublicUrl.',
+        webhook_missing: 'Webhook is not set — restart the server.',
+        webhook_mismatch: 'Webhook points elsewhere — restart the server.',
+        webhook_error: 'A webhook error happened in the last 24 hours (see the Webhook row).',
+        webhook_backlog: 'Many updates are waiting in Telegram — the server is not responding.',
+        cron_missing: 'Reminders are off: Telegram__CronSecret is not set on Render.',
+      },
+    },
+  },
+);

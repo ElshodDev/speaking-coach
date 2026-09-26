@@ -78,6 +78,9 @@ builder.Services.AddScoped<SpeakingCoach.Api.Services.Telegram.TelegramBot>();
 builder.Services.AddScoped<SpeakingCoach.Api.Services.Telegram.TelegramReminders>();
 builder.Services.AddHostedService<SpeakingCoach.Api.Services.Telegram.TelegramStartup>();
 
+// Ishga tushganda: bazada yetishmayotgan jadval/migratsiya bo'lsa — logga aniq xato.
+builder.Services.AddHostedService<SchemaStartupCheck>();
+
 // PasswordHasher holatsiz (stateless) — singleton yetarli. AuthService va
 // ReviewService esa AppDbContext'ga bog'liq; DbContext har so'rov uchun
 // alohida (scoped) bo'lgani uchun ular ham scoped.

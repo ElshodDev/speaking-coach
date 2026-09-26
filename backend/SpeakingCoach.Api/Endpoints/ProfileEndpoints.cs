@@ -105,6 +105,21 @@ public static partial class ProfileEndpoints
             return Results.Ok(await admin.GetOverviewAsync(Math.Clamp(tzOffsetMinutes, -840, 840)));
         });
 
+        // Tizim holati: baza sxemasi, Telegram bot, sozlamalar. Sirlar qaytarilmaydi.
+        app.MapGet("/api/admin/system", async (
+            HttpRequest request, AuthService auth, AdminOptions admins, AppDbContext db,
+            SpeakingCoach.Api.Services.Telegram.ITelegramApi telegram, SpeakingCoach.Api.Services.Telegram.TelegramOptions tg,
+            IEmailSender email, IGoogleSignIn google, IConfiguration config) =>
+        {
+            var user = await auth.GetCurrentUserAsync(request);
+            if (user is null) return Unauthorized(request);
+            if (!admins.IsAdmin(user))
+            {
+                return Results.Json(request.Error("admin.only"), statusCode: StatusCodes.Status403Forbidden);
+            }
+            return Results.Ok(await SystemHealth.GetAsync(db, telegram, tg, email, google, config, request.HttpContext.RequestAborted));
+        });
+
         // So'z ma'nosi — mehmonga ham ochiq (faqat kartaga saqlash uchun kirish kerak).
         // Tarjima so'rov tilida: o'zbekcha, ruscha yoki (en) sodda inglizcha sinonim.
         app.MapPost("/api/words/explain", async (WordExplainRequest body, HttpRequest request, IWordService words, AiQuotaService quotas, ILogger<Program> logger) =>

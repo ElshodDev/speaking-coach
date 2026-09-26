@@ -35,6 +35,13 @@ public record TgUpdate(
     [property: JsonPropertyName("message")] TgMessage? Message,
     [property: JsonPropertyName("callback_query")] TgCallbackQuery? CallbackQuery);
 
+/// <summary>getWebhookInfo javobi — admin paneldagi "Telegram holati" uchun.</summary>
+public record TgWebhookInfo(
+    [property: JsonPropertyName("url")] string? Url,
+    [property: JsonPropertyName("pending_update_count")] int PendingUpdateCount,
+    [property: JsonPropertyName("last_error_date")] long? LastErrorDate,
+    [property: JsonPropertyName("last_error_message")] string? LastErrorMessage);
+
 /// <summary>Inline tugma: bosilganda botga callback keladi yoki havola ochiladi.</summary>
 public record TgButton(
     [property: JsonPropertyName("text")] string Text,
@@ -94,11 +101,13 @@ public interface ITelegramApi
     Task AnswerCallbackAsync(string callbackId, string? text = null, CancellationToken ct = default);
     Task SetWebhookAsync(string url, string secret, CancellationToken ct = default);
     Task SetCommandsAsync(IReadOnlyList<(string Command, string Description)> commands, string? languageCode, CancellationToken ct = default);
+    Task<TgUser> GetMeAsync(CancellationToken ct = default);
+    Task<TgWebhookInfo> GetWebhookInfoAsync(CancellationToken ct = default);
 }
 
 /// <summary>
 /// Telegram Bot API — oddiy HTTPS + JSON (api.telegram.org/bot&lt;token&gt;/METHOD).
-/// Tashqi paket ishlatilmaydi: bizga 5 ta metod yetarli.
+/// Tashqi paket ishlatilmaydi: bizga 7 ta metod yetarli.
 /// </summary>
 public class TelegramApi : ITelegramApi
 {
@@ -186,4 +195,10 @@ public class TelegramApi : ITelegramApi
             commands = commands.Select(c => new { command = c.Command, description = c.Description }),
             language_code = languageCode,
         }, ct);
+
+    public async Task<TgUser> GetMeAsync(CancellationToken ct = default) =>
+        (await CallAsync("getMe", new { }, ct)).Deserialize<TgUser>()!;
+
+    public async Task<TgWebhookInfo> GetWebhookInfoAsync(CancellationToken ct = default) =>
+        (await CallAsync("getWebhookInfo", new { }, ct)).Deserialize<TgWebhookInfo>()!;
 }
