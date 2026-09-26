@@ -58,6 +58,11 @@ public static class AccountEndpoints
                     user.DisplayName,
                     user.Level,
                     user.ShowOnLeaderboard,
+                    user.Goal,
+                    user.TargetScore,
+                    user.ExamDate,
+                    user.DailyMinutes,
+                    user.OnboardedAtUtc,
                 },
                 activities = activities.Select(a => new
                 {

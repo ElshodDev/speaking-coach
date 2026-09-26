@@ -88,6 +88,18 @@ qolishga** yordam beradigan takrorlash tizimi:
   - Eʼlon qilinmagan narsalar natija sahifasida "taxmin" deb yozilgan:
     Speaking 0–21 ni 75 ga oʻtkazish (chiziqli), Listening/Reading oraliq
     ichidagi aniq ball va Writing vaqti (60 daqiqa).
+- **🧭 Tanishtiruv va "Bugungi reja"** — birinchi kirishda 4 ta qisqa savol:
+  maqsad (IELTS, CEFR yoki umumiy ingliz tili), daraja ("bilmayman" → B1),
+  maqsad ball va imtihon sanasi (umumiy ingliz tilida soʻralmaydi), kuniga
+  necha daqiqa. "Keyinroq" bilan oʻtkazib yuborish, Profilda oʻzgartirish
+  mumkin.
+  - Bosh sahifada **Bugungi reja**: takrorlash (kunlik maqsadgacha), kunning
+    koʻnikmasi (har kuni boshqasi; 30+ daqiqada ikkitasi) va imtihonga
+    tayyorlanayotganlarga bitta mock boʻlimi — haftasiga bir, imtihongacha
+    14 kun qolganda har kuni (hali topshirilmagan yoki eng uzoq vaqt
+    oldin topshirilgan boʻlim).
+  - Bajarilganlari oʻzi belgilanadi (server bugungi faoliyatni koʻradi,
+    vaqt zonasi hisobga olinadi); imtihongacha qolgan kunlar koʻrsatiladi.
 - **👩‍🏫 Oʻqituvchi boʻlimi (guruhlar)** — har qanday foydalanuvchi Profil
   sahifasidan oʻqituvchi panelini ochib, guruh yaratadi va oʻquvchilarga
   havola yoki 6 belgili kod yuboradi (0/O, 1/I/L kabi adashtiradigan
@@ -250,8 +262,8 @@ npm run dev
 ### 7. Avtomatik testlar
 
 ```bash
-dotnet test backend/SpeakingCoach.Api.Tests   # backend: 359 ta unit test
-cd frontend/speaking-coach-web && npm test     # frontend: 82 ta vitest testi
+dotnet test backend/SpeakingCoach.Api.Tests   # backend: 382 ta unit test
+cd frontend/speaking-coach-web && npm test     # frontend: 89 ta vitest testi
 ```
 
 Xuddi shu testlar har bir push'da GitHub Actions'da ham ishlaydi

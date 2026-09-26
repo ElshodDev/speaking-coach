@@ -218,7 +218,7 @@ export function JoinGroup({ code, loggedIn, go, onLogin }: { code: string; logge
 export function GroupsShortcut({ go }: { go: (route: string) => void }) {
   const t = useT(teacherMsg);
   return (
-    <div className="row" data-testid="groups-shortcut" style={{ flexWrap: 'wrap' }}>
+    <div className="row" data-testid="groups-shortcut" style={{ flexWrap: 'wrap', marginTop: 16 }}>
       <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => go('tasks')}>📚 {t.tasksTitle}</button>
       <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => go('teacher')}>👩‍🏫 {t.groupsTitle}</button>
     </div>

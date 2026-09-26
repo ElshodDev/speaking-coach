@@ -4,6 +4,7 @@ import { homeMsg } from './locales/home';
 import { UsageNote } from './Usage';
 import { TelegramPromo } from './TelegramCard';
 import { GroupsShortcut, TasksCard } from './StudentTasks';
+import { TodayPlan } from './TodayPlan';
 
 export type ExerciseKind = 'speaking' | 'writing' | 'reading' | 'listening';
 
@@ -100,6 +101,7 @@ export function Home({
         <p>{stats && stats.reviewedToday >= stats.dailyGoal ? t.goalDone : t.goalTodo}</p>
       </div>
 
+      <TodayPlan go={go} />
       <TasksCard loggedIn go={go} />
       <GroupsShortcut go={go} />
 

@@ -286,6 +286,10 @@ public static class Texts
             "Текст слишком длинный (не более {0} символов).",
             "The text is too long (at most {0} characters)."),
 
+        ["goal.bad_goal"] = new("Maqsadni tanlang: IELTS, CEFR yoki umumiy ingliz tili.", "Выберите цель: IELTS, CEFR или общий английский.", "Choose a goal: IELTS, CEFR or general English."),
+        ["goal.bad_target"] = new("Bu maqsad ball tanlangan imtihonga mos emas.", "Этот целевой балл не подходит к выбранному экзамену.", "This target score does not match the chosen exam."),
+        ["goal.bad_date"] = new("Imtihon sanasi bugundan keyingi 2 yil ichida boʻlishi kerak.", "Дата экзамена должна быть в ближайшие 2 года, не в прошлом.", "The exam date must be within the next 2 years, not in the past."),
+        ["goal.bad_minutes"] = new("Kunlik vaqt 10, 20, 30 yoki 45 daqiqa boʻlishi kerak.", "Время в день: 10, 20, 30 или 45 минут.", "Daily time must be 10, 20, 30 or 45 minutes."),
         ["profile.bad_level"] = new("Daraja A2, B1, B2 yoki C1 boʻlishi kerak.", "Уровень должен быть A2, B1, B2 или C1.", "The level must be A2, B1, B2 or C1."),
         ["profile.bad_nickname"] = new(
             "Taxallus 2–30 ta belgidan iborat boʻlsin: harflar, raqamlar, boʻsh joy va . _ - ʼ belgilari.",

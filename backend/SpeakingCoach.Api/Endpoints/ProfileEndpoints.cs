@@ -7,6 +7,7 @@ namespace SpeakingCoach.Api.Endpoints;
 
 public record ProfileUpdateRequest(string? DisplayName, string? Level, bool ShowOnLeaderboard);
 public record WordExplainRequest(string Word, string? Sentence, string? Level);
+public record OnboardingRequest(bool Skip, string? Goal, string? Level, string? TargetScore, string? ExamDate, int? DailyMinutes, int TzOffsetMinutes = 0);
 
 public static partial class ProfileEndpoints
 {
@@ -43,6 +44,83 @@ public static partial class ProfileEndpoints
                 level = LearnerLevel.Normalize(user.Level),
                 showOnLeaderboard = user.ShowOnLeaderboard,
                 isAdmin = admins.IsAdmin(user),
+                goal = user.Goal,
+                targetScore = user.TargetScore,
+                examDate = user.ExamDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+                dailyMinutes = user.DailyMinutes ?? PlanLogic.DefaultMinutes,
+                onboarded = user.OnboardedAtUtc is not null,
+            });
+        });
+
+        // Tanishtiruv: maqsad, daraja, maqsad ball, imtihon sanasi, kunlik vaqt.
+        // "Keyinroq" (Skip) — faqat qayta ko'rsatilmasligi uchun belgilanadi.
+        app.MapPut("/api/profile/onboarding", async (OnboardingRequest body, HttpRequest request, AuthService auth, AppDbContext db) =>
+        {
+            var user = await auth.GetCurrentUserAsync(request);
+            if (user is null) return Unauthorized(request);
+            if (!body.Skip)
+            {
+                var today = ReviewScheduler.ToLocalDate(DateTime.UtcNow, Math.Clamp(body.TzOffsetMinutes, -840, 840));
+                var target = string.IsNullOrWhiteSpace(body.TargetScore) ? null : body.TargetScore.Trim().ToUpperInvariant();
+                var date = string.IsNullOrWhiteSpace(body.ExamDate) ? null : PlanLogic.ParseDate(body.ExamDate.Trim());
+                if (!PlanLogic.IsValidGoal(body.Goal)) return Results.BadRequest(request.Error("goal.bad_goal"));
+                if (body.Level is not null && !LearnerLevel.IsValid(body.Level)) return Results.BadRequest(request.Error("profile.bad_level"));
+                if (!PlanLogic.IsValidTarget(body.Goal, target)) return Results.BadRequest(request.Error("goal.bad_target"));
+                if ((!string.IsNullOrWhiteSpace(body.ExamDate) && date is null) || !PlanLogic.IsValidExamDate(date, today) || (body.Goal == "general" && date is not null))
+                    return Results.BadRequest(request.Error("goal.bad_date"));
+                if (!PlanLogic.IsValidMinutes(body.DailyMinutes)) return Results.BadRequest(request.Error("goal.bad_minutes"));
+
+                user.Goal = body.Goal;
+                if (body.Level is not null) user.Level = LearnerLevel.Normalize(body.Level);
+                user.TargetScore = target;
+                user.ExamDate = date;
+                user.DailyMinutes = body.DailyMinutes ?? PlanLogic.DefaultMinutes;
+            }
+            user.OnboardedAtUtc ??= DateTime.UtcNow;
+            await db.SaveChangesAsync();
+            return Results.Ok(new { goal = user.Goal, level = user.Level, targetScore = user.TargetScore, onboarded = true });
+        });
+
+        // Bugungi reja: takrorlash, kunning ko'nikmasi, (imtihonga tayyorlanayotganlarga) mock.
+        app.MapGet("/api/plan/today", async (HttpRequest request, AuthService auth, AppDbContext db, ReviewService reviews, int tzOffsetMinutes = 0) =>
+        {
+            var user = await auth.GetCurrentUserAsync(request);
+            if (user is null) return Unauthorized(request);
+            var offset = Math.Clamp(tzOffsetMinutes, -840, 840);
+            var now = DateTime.UtcNow;
+            var today = ReviewScheduler.ToLocalDate(now, offset);
+            var stats = await reviews.GetStatsAsync(user.Id, offset);
+
+            var since = now.AddDays(-60);
+            var rows = await db.Activities
+                .Where(a => a.UserId == user.Id && a.CreatedAtUtc >= since)
+                .Select(a => new { a.Type, a.CreatedAtUtc, a.PromptData })
+                .ToListAsync();
+            var practiced = rows
+                .Where(r => ReviewScheduler.ToLocalDate(r.CreatedAtUtc, offset) == today)
+                .Select(r => PlanLogic.SkillOf(r.Type)).OfType<string>().ToHashSet();
+            var exam = user.Goal is "ielts" or "cefr" ? user.Goal : null;
+            var mocks = rows
+                .Where(r => r.Type == ActivityType.MockExam)
+                .Select(r => (r.CreatedAtUtc, P: MockEndpoints.ParsePrompt(r.PromptData)))
+                .Where(x => x.P.Exam == exam && PlanLogic.Skills.Contains(x.P.Module))
+                .ToList();
+            var mockedToday = mocks.Where(x => ReviewScheduler.ToLocalDate(x.CreatedAtUtc, offset) == today).Select(x => x.P.Module).ToHashSet();
+            var lastMock = mocks.GroupBy(x => x.P.Module).ToDictionary(g => g.Key, g => g.Max(x => x.CreatedAtUtc));
+
+            var plan = PlanLogic.Build(new PlanLogic.Input(
+                user.Goal, user.DailyMinutes, user.ExamDate, today,
+                stats.Total, stats.Due, stats.ReviewedToday, stats.DailyGoal,
+                practiced, mockedToday, lastMock));
+            return Results.Ok(new
+            {
+                plan.Goal,
+                user.TargetScore,
+                examDate = user.ExamDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+                plan.DaysToExam,
+                dailyMinutes = user.DailyMinutes ?? PlanLogic.DefaultMinutes,
+                onboarded = user.OnboardedAtUtc is not null,
+                items = plan.Items,
             });
         });
 

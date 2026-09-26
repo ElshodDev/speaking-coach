@@ -112,4 +112,11 @@ export interface Profile {
   level: string;
   showOnLeaderboard: boolean;
   isAdmin: boolean;
+  /** Maqsad (tanishtiruvda tanlanadi): "ielts" | "cefr" | "general" | null. */
+  goal?: string | null;
+  targetScore?: string | null;
+  examDate?: string | null;
+  dailyMinutes?: number;
+  /** false — birinchi kirish: bosh sahifa o'rniga tanishtiruv ochiladi. */
+  onboarded?: boolean;
 }

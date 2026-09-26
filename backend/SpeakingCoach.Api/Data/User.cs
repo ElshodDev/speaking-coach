@@ -39,6 +39,23 @@ public class User
     /// yopiq: hech kim roziligisiz reytingda ko'rinmaydi.
     /// </summary>
     public bool ShowOnLeaderboard { get; set; }
+
+    // ---- Maqsad (birinchi kirishdagi tanishtiruvda so'raladi) ----
+
+    /// <summary>"ielts", "cefr" yoki "general" (umumiy ingliz tili). null — hali tanlanmagan.</summary>
+    public string? Goal { get; set; }
+
+    /// <summary>Maqsad natija: IELTS uchun "6.5", CEFR uchun "B2". Ixtiyoriy.</summary>
+    public string? TargetScore { get; set; }
+
+    /// <summary>Imtihon sanasi (foydalanuvchi mahalliy sanasi). Ixtiyoriy.</summary>
+    public DateOnly? ExamDate { get; set; }
+
+    /// <summary>Kuniga necha daqiqa (10, 20, 30, 45). null — 20.</summary>
+    public int? DailyMinutes { get; set; }
+
+    /// <summary>Tanishtiruv tugagan (yoki o'tkazib yuborilgan) vaqt. null — hali ko'rsatilmagan.</summary>
+    public DateTime? OnboardedAtUtc { get; set; }
 }
 
 /// <summary>

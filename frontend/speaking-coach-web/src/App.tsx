@@ -29,6 +29,9 @@ import { apiJson, getToken, setLevel, setToken, type Profile as ProfileData } fr
 import { common, LangSelect, useLang, useT } from './i18n';
 import { appMsg } from './locales/app';
 import { homeMsg } from './locales/home';
+import { planMsg } from './locales/plan';
+import { Onboarding } from './Onboarding';
+import { shouldOnboard } from './planLogic';
 
 /**
  * Oddiy "hash" marshrutlash: manzil #/review, #/practice/writing kabi.
@@ -120,6 +123,11 @@ function App() {
     refreshStats();
   }, [refreshStats]);
 
+  // Birinchi kirish: maqsad hali so'ralmagan — bosh sahifa o'rniga tanishtiruv.
+  useEffect(() => {
+    if (shouldOnboard(route, profile)) go('welcome');
+  }, [route, profile, go]);
+
   // Kirgandan ham, chiqqandan ham keyin bosh sahifaga qaytamiz: kirgan
   // foydalanuvchi o'z holatini, chiqqan esa mehmon sahifasini ko'radi.
   function onAuthChange(next: string | null) {
@@ -194,6 +202,8 @@ function App() {
     page = <TeacherHome key={userKey} go={go} />;
   } else if (section === 'join' && sub) {
     page = <JoinGroup key={`${sub}-${userKey}`} code={sub} loggedIn={loggedIn} go={go} onLogin={() => { savePendingJoin(sub); toLogin(); }} />;
+  } else if (section === 'welcome' && loggedIn) {
+    page = <Onboarding key={userKey} profile={profile} go={go} onSaved={setProfile} />;
   } else if (section === 'tasks' && loggedIn) {
     page = <TasksPage key={userKey} go={go} />;
   } else if (section === 'mock' && sub === 'session' && third && loggedIn) {
@@ -320,8 +330,17 @@ function Profile({
   go: (route: string) => void;
 }) {
   const tt = useT(teacherMsg);
+  const tp = useT(planMsg);
   const t = useT(appMsg);
   const { lang } = useLang();
+  const goalText = profile?.goal
+    ? [
+        tp.goals[profile.goal]?.[0] ?? profile.goal,
+        profile.targetScore ? tp.target(profile.targetScore) : null,
+        profile.examDate ?? null,
+        profile.dailyMinutes ? tp.perDay(profile.dailyMinutes) : null,
+      ].filter(Boolean).join(' · ')
+    : tp.goalNone;
   return (
     <>
       <PageHeader title={t.profile} />
@@ -329,6 +348,15 @@ function Profile({
       {/* key: profil serverdan kelganda forma qiymatlari yangilansin */}
       {(!email || profile) && <Settings key={profile ? 'user' : 'guest'} profile={profile} onSaved={onProfileSaved} />}
       {email && <TelegramCard key={email} />}
+      {email && profile && (
+        <div className="card cta" data-testid="goal-card">
+          <div>
+            <strong>{tp.goalCard}</strong>
+            <div className="muted small">{goalText}</div>
+          </div>
+          <button className="btn btn-outline" onClick={() => go('welcome')}>{tp.change}</button>
+        </div>
+      )}
       {email && (
         <div className="card cta" data-testid="teacher-entry">
           <div>

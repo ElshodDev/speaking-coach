@@ -58,6 +58,8 @@ public class AppDbContext : DbContext
             // cheklov bazaning o'zida (unique index), faqat C# kodida emas:
             // bir vaqtda kelgan ikki so'rov ham ikkinchi nusxani yarata olmaydi.
             entity.HasIndex(u => u.Email).IsUnique();
+            entity.Property(u => u.Goal).HasMaxLength(16);
+            entity.Property(u => u.TargetScore).HasMaxLength(8);
         });
 
         modelBuilder.Entity<TelegramAccount>(entity =>
