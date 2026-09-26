@@ -201,6 +201,30 @@ public static class Texts
             "Что-то пошло не так. Попробуйте немного позже.",
             "Something went wrong. Please try again shortly."),
         ["login.required"] = new("Tizimga kiring.", "Войдите в систему.", "Please log in."),
+        ["mock.login"] = new(
+            "Mock imtihon natijasi saqlanadi — buning uchun tizimga kiring.",
+            "Результат пробного экзамена сохраняется — для этого войдите в систему.",
+            "Mock exam results are saved, so please log in first."),
+        ["mock.limit"] = new(
+            "Bir sutkada {0} ta mock imtihon topshirish mumkin.",
+            "Лимит пробных экзаменов за сутки: {0}.",
+            "You can take {0} mock exams per 24 hours."),
+        ["mock.bad_set"] = new(
+            "Imtihon topilmadi. Sahifani yangilab, qaytadan boshlang.",
+            "Экзамен не найден. Обновите страницу и начните заново.",
+            "Exam not found. Refresh the page and start again."),
+        ["mock.no_answers"] = new(
+            "Birorta javob yozib olinmadi — baholash uchun kamida bitta savolga javob bering.",
+            "Не записано ни одного ответа — ответьте хотя бы на один вопрос.",
+            "No answers were recorded — answer at least one question to get a score."),
+        ["mock.too_big"] = new(
+            "Audio hajmi juda katta ({0} MB dan oshmasin).",
+            "Слишком большой объём аудио (не более {0} МБ).",
+            "The audio is too large (max {0} MB)."),
+        ["mock.empty_text"] = new(
+            "Ikkala vazifa ham boʻsh — baholash uchun kamida bittasini yozing.",
+            "Оба задания пустые — напишите хотя бы одно.",
+            "Both tasks are empty — write at least one to get a score."),
         ["login.review"] = new("Takrorlash uchun tizimga kiring.", "Войдите, чтобы повторять карточки.", "Log in to review your cards."),
         ["login.vocab"] = new("Lugʻatni saqlash uchun tizimga kiring.", "Войдите, чтобы сохранять словарь.", "Log in to save your vocabulary."),
         ["admin.only"] = new("Bu sahifa faqat administrator uchun.", "Эта страница только для администратора.", "This page is for the administrator only."),

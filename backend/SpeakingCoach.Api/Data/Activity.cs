@@ -13,6 +13,9 @@ public enum ActivityType
     Writing = 1,
     Reading = 2,
     Listening = 3,
+
+    /// <summary>To'liq mock imtihon (IELTS Speaking yoki Writing) — natija ResponseData'da.</summary>
+    MockExam = 4,
 }
 
 /// <summary>

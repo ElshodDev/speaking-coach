@@ -43,6 +43,16 @@ qolishga** yordam beradigan takrorlash tizimi:
 - **🌐 Uch til** — butun interfeys, server xabarlari va soʻz tarjimasi
   oʻzbek (rasmiy lotin imlosi: oʻ, gʻ, maʼno), rus yoki ingliz tilida.
   Til brauzerdan aniqlanadi, tepadagi panelda va Profilda almashtiriladi.
+- **🎓 Mock imtihonlar (IELTS)** — toʻliq formatda **Speaking** (1-qism: 4 savol
+  ovoz bilan oʻqiladi; 2-qism: kartochka — 1 daqiqa tayyorgarlik, 2 daqiqagacha
+  nutq; 3-qism: 4 savol; ≈11 daqiqa) va **Writing** (60 daqiqalik taymer,
+  Academic diagramma yoki General Training xati + Task 2 esse, soʻz hisoblagichi,
+  sahifa yangilansa ham qoralama saqlanadi, vaqt tugasa avtomatik topshiriladi).
+  Butun imtihon bitta Gemini soʻrovida 4 ta rasmiy mezon boʻyicha baholanadi;
+  umumiy band'ni **server** hisoblaydi (mezonlar teng, Task 2 ikki barobar,
+  .25/.75 yaxlitlash) — natija "taxminiy" deb belgilanadi. Sutkasiga 3 ta.
+  Format ielts.org boʻyicha tekshirilgan; CEFR (Multilevel) formati uzbmb.uz'dan
+  tasdiqlanmaguncha "tez orada" holatida.
 - **🛠 Admin panel** — faqat `Admin:Emails` ro'yxatidagi egasi uchun:
   ro'yxatdan o'tishlar, kunlik/haftalik/oylik faol foydalanuvchilar, mashq
   turlari — faqat umumiy sonlar va niqoblangan emaillar. **Tizim holati**
@@ -190,8 +200,8 @@ npm run dev
 ### 7. Avtomatik testlar
 
 ```bash
-dotnet test backend/SpeakingCoach.Api.Tests   # backend: 202 ta unit test
-cd frontend/speaking-coach-web && npm test     # frontend: 37 ta vitest testi
+dotnet test backend/SpeakingCoach.Api.Tests   # backend: 228 ta unit test
+cd frontend/speaking-coach-web && npm test     # frontend: 49 ta vitest testi
 ```
 
 Xuddi shu testlar har bir push'da GitHub Actions'da ham ishlaydi

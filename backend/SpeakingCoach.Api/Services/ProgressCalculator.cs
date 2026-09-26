@@ -28,11 +28,13 @@ public static class ProgressCalculator
     public const int ComprehensionXp = 15;
     public const int PerCorrectAnswerXp = 5;
     public const int ReviewXp = 2;
+    public const int MockExamXp = 50;
 
     public static int XpFor(ActivityFact a) => a.Type switch
     {
         ActivityType.Speaking or ActivityType.Writing => SpeakingWritingXp,
         ActivityType.Reading or ActivityType.Listening => ComprehensionXp + PerCorrectAnswerXp * (a.CorrectAnswers ?? 0),
+        ActivityType.MockExam => MockExamXp,
         _ => 0,
     };
 
@@ -71,7 +73,8 @@ public static class ProgressCalculator
     public static IReadOnlyList<Badge> Badges(IReadOnlyList<ActivityFact> activities, int reviewCount, int bestStreak)
     {
         int Count(ActivityType t) => activities.Count(a => a.Type == t);
-        var kinds = activities.Select(a => a.Type).Distinct().Count();
+        // "To'rtala mashq turi" — faqat asosiy 4 tur (mock imtihon hisoblanmaydi).
+        var kinds = activities.Select(a => a.Type).Where(t => t <= ActivityType.Listening).Distinct().Count();
         var perfect = activities.Any(a => a.CorrectAnswers == GeminiComprehensionService.QuestionCount);
 
         return new List<Badge>

@@ -5,6 +5,10 @@ import { Comprehension } from './Comprehension';
 import { Review, statsPath, type ReviewStats } from './Review';
 import { AuthPanel } from './AuthPanel';
 import { EXERCISES, ExerciseTiles, Home, type ExerciseKind } from './Home';
+import { MockHub, MockResultView } from './Mock';
+import { MockSpeaking } from './MockSpeaking';
+import { MockWriting } from './MockWriting';
+import { mockMsg } from './locales/mock';
 import { PageHeader } from './ui';
 import { Progress } from './Progress';
 import { Admin } from './Admin';
@@ -56,6 +60,7 @@ const NAV = [
 function App() {
   const t = useT(appMsg);
   const tHome = useT(homeMsg);
+  const tMock = useT(mockMsg);
   const c = useT(common);
   const [route, go] = useRoute();
   const [email, setEmail] = useState<string | null>(null);
@@ -114,7 +119,7 @@ function App() {
     go('home');
   }
 
-  const [section, sub] = route.split('/') as [string, string | undefined];
+  const [section, sub, third] = route.split('/') as [string, string | undefined, string | undefined];
   const exercise = EXERCISES.find((e) => e.kind === sub);
   // key: kirish/chiqishda mashq ekranlari qaytadan yaratiladi — tarix
   // yangi foydalanuvchi uchun qayta yuklanadi, eski natijalar ko'rinmaydi.
@@ -160,8 +165,25 @@ function App() {
         <PageHeader title={t.practiceTitle} subtitle={t.practiceSubtitle} />
         <UsageNote userKey={userKey} />
         <ExerciseTiles onOpen={(kind: ExerciseKind) => go(`practice/${kind}`)} />
+        <div className="card cta" style={{ marginTop: 16 }}>
+          <div>
+            <strong>{tMock.tile}</strong>
+            <div className="muted small">{tMock.tileText}</div>
+          </div>
+          <button className="btn btn-primary" onClick={() => go('mock')}>
+            {t.open}
+          </button>
+        </div>
       </>
     );
+  } else if (section === 'mock' && sub === 'result' && third) {
+    page = <MockResultView key={`${third}-${userKey}`} id={third} go={go} />;
+  } else if (section === 'mock' && sub === 'speaking' && loggedIn) {
+    page = <MockSpeaking key={`ms-${userKey}`} go={go} />;
+  } else if (section === 'mock' && (sub === 'writing-academic' || sub === 'writing-general') && loggedIn) {
+    page = <MockWriting key={`${sub}-${userKey}`} variant={sub === 'writing-general' ? 'general' : 'academic'} go={go} />;
+  } else if (section === 'mock') {
+    page = <MockHub key={userKey} loggedIn={loggedIn} go={go} onLogin={toLogin} />;
   } else if (section === 'progress') {
     page = <Progress key={userKey} loggedIn={loggedIn} onLogin={toLogin} go={go} />;
   } else if (section === 'admin' && profile?.isAdmin) {
@@ -187,6 +209,8 @@ function App() {
     ? null
     : section === 'review' && sub === 'vocab'
       ? 'vocab'
+      : section === 'mock'
+        ? 'practice'
       : NAV.some((n) => n.id === section)
         ? section
         : 'home';
