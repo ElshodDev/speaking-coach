@@ -25,7 +25,17 @@ interface Timing {
  * yoki telefon uxlab qolsa ham matn va vaqt yo'qolmaydi. Vaqt tugasa —
  * avtomatik topshiriladi.
  */
-export function MockWriting({ variant, go }: { variant: 'academic' | 'general'; go: (route: string) => void }) {
+export function MockWriting({
+  variant,
+  go,
+  sessionId,
+  onSubmitted,
+}: {
+  variant: 'academic' | 'general';
+  go: (route: string) => void;
+  sessionId?: string;
+  onSubmitted?: (id: string) => void;
+}) {
   const t = useT(mockMsg);
   const [set, setSet] = useState<WritingSet | null>(null);
   const [timing, setTiming] = useState<Timing | null>(null);
@@ -96,16 +106,18 @@ export function MockWriting({ variant, go }: { variant: 'academic' | 'general'; 
           task1,
           task2,
           secondsUsed: Math.round((Date.now() - startedAt) / 1000),
+          sessionId,
         });
         writeDraft(null);
-        go(`mock/result/${res.id}`);
+        if (onSubmitted) onSubmitted(res.id);
+        else go(`mock/result/${res.id}`);
       } catch (e) {
         submittedRef.current = false;
         setError(e instanceof Error ? e.message : String(e));
         setStatus('exam'); // matn joyida qoladi — qayta topshirish mumkin
       }
     },
-    [set, task1, task2, startedAt, go],
+    [set, task1, task2, startedAt, go, sessionId, onSubmitted],
   );
 
   const left = timing ? startedAt + timing.minutes * 60_000 - now : 1;
@@ -135,11 +147,11 @@ export function MockWriting({ variant, go }: { variant: 'academic' | 'general'; 
 
   const title = `${t.writingTitle} · ${variant === 'academic' ? t.academic : t.general}`;
 
-  if (status === 'loading') return <><PageHeader title={title} onBack={() => go('mock')} backLabel={t.title} /><p className="muted">…</p></>;
+  if (status === 'loading') return <><PageHeader title={title} onBack={sessionId ? undefined : () => go('mock')} backLabel={t.title} /><p className="muted">…</p></>;
   if (!set || !timing) {
     return (
       <>
-        <PageHeader title={title} onBack={() => go('mock')} backLabel={t.title} />
+        <PageHeader title={title} onBack={sessionId ? undefined : () => go('mock')} backLabel={t.title} />
         <div className="card"><p className="error" role="alert">{error}</p></div>
       </>
     );
@@ -151,7 +163,7 @@ export function MockWriting({ variant, go }: { variant: 'academic' | 'general'; 
 
   return (
     <>
-      <PageHeader title={title} onBack={() => go('mock')} backLabel={t.title} />
+      <PageHeader title={title} onBack={sessionId ? undefined : () => go('mock')} backLabel={t.title} />
 
       <div className="card mock-sticky" style={{ position: 'sticky', top: 8, zIndex: 5, padding: '10px 14px' }}>
         <div className="spread" style={{ alignItems: 'center' }}>

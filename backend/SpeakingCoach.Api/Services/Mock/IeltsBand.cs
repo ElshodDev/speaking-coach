@@ -42,3 +42,17 @@ public static partial class IeltsBand
     [GeneratedRegex(@"[\p{L}\p{N}]+(?:['’\-][\p{L}\p{N}]+)*")]
     private static partial Regex WordRegex();
 }
+
+/// <summary>To'liq IELTS mock: 4 ko'nikmaning o'rtachasi, rasmiy .25/.75 qoidasi bilan (ielts.org).</summary>
+public static class FullMock
+{
+    public static readonly string[] Modules = ["listening", "reading", "writing", "speaking"];
+
+    /// <summary>Faqat 4 ta modulning hammasi bo'lsa — umumiy band; aks holda null.</summary>
+    public static decimal? Overall(IReadOnlyDictionary<string, decimal?> bands)
+    {
+        var values = Modules.Select(m => bands.TryGetValue(m, out var b) ? b : null).ToList();
+        if (values.Any(v => v is null)) return null;
+        return IeltsBand.RoundHalfBand(values.Sum(v => v!.Value) / 4m);
+    }
+}

@@ -7,6 +7,9 @@ import { AuthPanel } from './AuthPanel';
 import { EXERCISES, ExerciseTiles, Home, type ExerciseKind } from './Home';
 import { MockHub, MockResultView } from './Mock';
 import { MockSpeaking } from './MockSpeaking';
+import { MockFullStart, MockFullStep, MockSessionView } from './MockFull';
+import { MockListening } from './MockListening';
+import { MockReading } from './MockReading';
 import { MockWriting } from './MockWriting';
 import { mockMsg } from './locales/mock';
 import { PageHeader } from './ui';
@@ -119,7 +122,7 @@ function App() {
     go('home');
   }
 
-  const [section, sub, third] = route.split('/') as [string, string | undefined, string | undefined];
+  const [section, sub, third, fourth, fifth] = route.split('/') as (string | undefined)[] as [string, string?, string?, string?, string?];
   const exercise = EXERCISES.find((e) => e.kind === sub);
   // key: kirish/chiqishda mashq ekranlari qaytadan yaratiladi — tarix
   // yangi foydalanuvchi uchun qayta yuklanadi, eski natijalar ko'rinmaydi.
@@ -178,6 +181,16 @@ function App() {
     );
   } else if (section === 'mock' && sub === 'result' && third) {
     page = <MockResultView key={`${third}-${userKey}`} id={third} go={go} />;
+  } else if (section === 'mock' && sub === 'session' && third && loggedIn) {
+    page = <MockSessionView key={`${third}-${userKey}`} sessionId={third} go={go} />;
+  } else if (section === 'mock' && sub === 'full' && (third === 'academic' || third === 'general') && fourth && loggedIn) {
+    page = <MockFullStep key={route} variant={third} sessionId={fourth} step={Number(fifth ?? 0) || 0} go={go} />;
+  } else if (section === 'mock' && sub === 'full' && loggedIn) {
+    page = <MockFullStart go={go} />;
+  } else if (section === 'mock' && sub === 'listening' && loggedIn) {
+    page = <MockListening key={`ml-${userKey}`} go={go} />;
+  } else if (section === 'mock' && (sub === 'reading-academic' || sub === 'reading-general') && loggedIn) {
+    page = <MockReading key={`${sub}-${userKey}`} variant={sub === 'reading-general' ? 'general' : 'academic'} go={go} />;
   } else if (section === 'mock' && sub === 'speaking' && loggedIn) {
     page = <MockSpeaking key={`ms-${userKey}`} go={go} />;
   } else if (section === 'mock' && (sub === 'writing-academic' || sub === 'writing-general') && loggedIn) {

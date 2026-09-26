@@ -206,9 +206,13 @@ public static class Texts
             "Результат пробного экзамена сохраняется — для этого войдите в систему.",
             "Mock exam results are saved, so please log in first."),
         ["mock.limit"] = new(
-            "Bir sutkada {0} ta mock imtihon topshirish mumkin.",
-            "Лимит пробных экзаменов за сутки: {0}.",
-            "You can take {0} mock exams per 24 hours."),
+            "Bir sutkada {0} ta Speaking/Writing mock imtihonini topshirish mumkin (Listening va Reading cheklanmagan).",
+            "Лимит пробных экзаменов Speaking/Writing за сутки: {0} (Listening и Reading без ограничений).",
+            "You can take {0} Speaking/Writing mock exams per 24 hours (Listening and Reading are unlimited)."),
+        ["mock.generate_limit"] = new(
+            "Bugun yangi test yaratish limiti tugadi. Ertaga yana urinib koʻring yoki Speaking/Writing mock imtihonini topshiring.",
+            "Лимит создания новых тестов на сегодня исчерпан. Попробуйте завтра или сдайте Speaking/Writing.",
+            "Today's limit for creating new tests is used up. Try again tomorrow, or take a Speaking/Writing mock."),
         ["mock.bad_set"] = new(
             "Imtihon topilmadi. Sahifani yangilab, qaytadan boshlang.",
             "Экзамен не найден. Обновите страницу и начните заново.",

@@ -11,7 +11,7 @@ export const mockMsg = defineMessages(
     tileText: 'IELTS Speaking va Writing — toʻliq format, taymer va taxminiy band.',
     loginNeeded: 'Mock imtihon natijasi saqlanadi — boshlash uchun tizimga kiring.',
     login: 'Kirish',
-    remaining: (n: number, per: number) => `Bugun yana ${n} ta imtihon topshirish mumkin (sutkasiga ${per} ta).`,
+    remaining: (n: number, per: number) => `Speaking/Writing: bugun yana ${n} ta (sutkasiga ${per} ta). Listening va Reading cheklanmagan.`,
     noneLeft: (time: string) => `Sutkalik limit tugadi. Keyingisi: ${time}.`,
     speakingTitle: '🎙 IELTS Speaking',
     speakingText: '3 qism · taxminan 11 daqiqa · 1-qism: 4 savol, 2-qism: kartochka (1 daqiqa tayyorgarlik + 2 daqiqa nutq), 3-qism: 4 savol.',
@@ -27,7 +27,7 @@ export const mockMsg = defineMessages(
     soon: 'Tez orada',
     history: 'Oldingi natijalar',
     historyEmpty: 'Hali mock imtihon topshirmagansiz.',
-    moduleName: { speaking: 'Speaking', writing: 'Writing' } as Record<string, string>,
+    moduleName: { speaking: 'Speaking', writing: 'Writing', listening: 'Listening', reading: 'Reading' } as Record<string, string>,
     open: 'Koʻrish',
     disclaimer:
       'Bu — sunʼiy intellekt bergan TAXMINIY band. Rasmiy IELTS natijasi faqat sertifikatlangan imtihon markazida olinadi.',
@@ -127,7 +127,7 @@ export const mockMsg = defineMessages(
       loginNeeded: 'Результат пробного экзамена сохраняется — войдите, чтобы начать.',
       login: 'Войти',
       remaining: (n: number, per: number) =>
-        `Сегодня можно сдать ещё ${n} ${ruPlural(n, 'экзамен', 'экзамена', 'экзаменов')} (${per} в сутки).`,
+        `Speaking/Writing: сегодня ещё ${n} (${per} в сутки). Listening и Reading без ограничений.`,
       noneLeft: (time: string) => `Суточный лимит исчерпан. Следующий: ${time}.`,
       speakingTitle: '🎙 IELTS Speaking',
       speakingText: '3 части · около 11 минут · часть 1: 4 вопроса, часть 2: карточка (1 минута подготовки + 2 минуты речи), часть 3: 4 вопроса.',
@@ -143,7 +143,7 @@ export const mockMsg = defineMessages(
       soon: 'Скоро',
       history: 'Прошлые результаты',
       historyEmpty: 'Вы ещё не сдавали пробный экзамен.',
-      moduleName: { speaking: 'Speaking', writing: 'Writing' },
+      moduleName: { speaking: 'Speaking', writing: 'Writing', listening: 'Listening', reading: 'Reading' },
       open: 'Открыть',
       disclaimer:
         'Это ПРИМЕРНЫЙ балл от искусственного интеллекта. Официальный результат IELTS можно получить только в сертифицированном центре.',
@@ -236,7 +236,7 @@ export const mockMsg = defineMessages(
       tileText: 'IELTS Speaking and Writing — full format, timer and an estimated band.',
       loginNeeded: 'Mock exam results are saved — log in to start.',
       login: 'Log in',
-      remaining: (n: number, per: number) => `You can take ${n} more ${enPlural(n, 'exam', 'exams')} today (${per} per 24 hours).`,
+      remaining: (n: number, per: number) => `Speaking/Writing: ${n} more today (${per} per 24 hours). Listening and Reading are unlimited.`,
       noneLeft: (time: string) => `Daily limit reached. Next one: ${time}.`,
       speakingTitle: '🎙 IELTS Speaking',
       speakingText: '3 parts · about 11 minutes · Part 1: 4 questions, Part 2: cue card (1 minute to prepare + 2 minutes to speak), Part 3: 4 questions.',
@@ -252,7 +252,7 @@ export const mockMsg = defineMessages(
       soon: 'Soon',
       history: 'Past results',
       historyEmpty: 'You haven’t taken a mock exam yet.',
-      moduleName: { speaking: 'Speaking', writing: 'Writing' },
+      moduleName: { speaking: 'Speaking', writing: 'Writing', listening: 'Listening', reading: 'Reading' },
       open: 'View',
       disclaimer:
         'This is an ESTIMATED band from AI. An official IELTS result is only available from a certified test centre.',

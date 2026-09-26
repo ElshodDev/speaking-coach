@@ -65,6 +65,7 @@ builder.Services.AddSingleton<IWritingEvaluationService, GeminiWritingService>()
 builder.Services.AddSingleton<IComprehensionService, GeminiComprehensionService>();
 builder.Services.AddSingleton<IWordService, GeminiWordService>();
 builder.Services.AddSingleton<SpeakingCoach.Api.Services.Mock.IIeltsEvaluator, SpeakingCoach.Api.Services.Mock.GeminiIeltsEvaluator>();
+builder.Services.AddSingleton<SpeakingCoach.Api.Services.Mock.IMockGenerator, SpeakingCoach.Api.Services.Mock.GeminiMockGenerator>();
 builder.Services.AddSingleton<AdminOptions>();
 builder.Services.AddSingleton<IEmailSender, BrevoEmailSender>();
 builder.Services.AddSingleton<IGoogleSignIn, GoogleSignInService>();

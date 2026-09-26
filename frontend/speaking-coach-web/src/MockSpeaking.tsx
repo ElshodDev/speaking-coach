@@ -19,7 +19,15 @@ type StepState = 'asking' | 'recording' | 'prep';
  * (vaqt chegarasi bilan) → keyingi savol. Orqaga qaytish yo'q, xuddi
  * haqiqiy imtihondagidek. Oxirida barcha javoblar bitta so'rovda baholanadi.
  */
-export function MockSpeaking({ go }: { go: (route: string) => void }) {
+export function MockSpeaking({
+  go,
+  sessionId,
+  onSubmitted,
+}: {
+  go: (route: string) => void;
+  sessionId?: string;
+  onSubmitted?: (id: string) => void;
+}) {
   const t = useT(mockMsg);
   const [phase, setPhase] = useState<Phase>('loading');
   const [error, setError] = useState('');
@@ -85,6 +93,7 @@ export function MockSpeaking({ go }: { go: (route: string) => void }) {
     streamRef.current?.getTracks().forEach((tr) => tr.stop());
     const form = new FormData();
     form.append('setId', set.id);
+    if (sessionId) form.append('sessionId', sessionId);
     answersRef.current.forEach((a, index) => {
       const ext = a.blob.type.includes('mp4') ? 'mp4' : a.blob.type.includes('ogg') ? 'ogg' : 'webm';
       form.append(`a${index}`, a.blob, `a${index}.${ext}`);
@@ -92,12 +101,13 @@ export function MockSpeaking({ go }: { go: (route: string) => void }) {
     });
     try {
       const res = await apiJson<{ id: string }>('/api/mock/ielts/speaking', { method: 'POST', body: form });
-      go(`mock/result/${res.id}`);
+      if (onSubmitted) onSubmitted(res.id);
+      else go(`mock/result/${res.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setPhase('error');
     }
-  }, [set, go]);
+  }, [set, go, sessionId, onSubmitted]);
 
   // Joriy qadam ref'da ham — MediaRecorder.onstop kabi eski closure'lar ham
   // to'g'ri qadamni ko'rishi uchun (setState updater ichida yon ta'sir qilmaymiz).
@@ -187,7 +197,7 @@ export function MockSpeaking({ go }: { go: (route: string) => void }) {
   }, [phase, stepState, stepIndex, steps, advance, finishAnswer]);
 
   const step = steps[stepIndex];
-  const header = <PageHeader title={t.speakingTitle} onBack={phase === 'running' || phase === 'submitting' ? undefined : () => go('mock')} backLabel={t.title} />;
+  const header = <PageHeader title={t.speakingTitle} onBack={sessionId || phase === 'running' || phase === 'submitting' ? undefined : () => go('mock')} backLabel={t.title} />;
 
   if (phase === 'loading') return <>{header}<p className="muted">…</p></>;
 

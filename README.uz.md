@@ -43,16 +43,25 @@ qolishga** yordam beradigan takrorlash tizimi:
 - **🌐 Uch til** — butun interfeys, server xabarlari va soʻz tarjimasi
   oʻzbek (rasmiy lotin imlosi: oʻ, gʻ, maʼno), rus yoki ingliz tilida.
   Til brauzerdan aniqlanadi, tepadagi panelda va Profilda almashtiriladi.
-- **🎓 Mock imtihonlar (IELTS)** — toʻliq formatda **Speaking** (1-qism: 4 savol
-  ovoz bilan oʻqiladi; 2-qism: kartochka — 1 daqiqa tayyorgarlik, 2 daqiqagacha
-  nutq; 3-qism: 4 savol; ≈11 daqiqa) va **Writing** (60 daqiqalik taymer,
-  Academic diagramma yoki General Training xati + Task 2 esse, soʻz hisoblagichi,
-  sahifa yangilansa ham qoralama saqlanadi, vaqt tugasa avtomatik topshiriladi).
-  Butun imtihon bitta Gemini soʻrovida 4 ta rasmiy mezon boʻyicha baholanadi;
-  umumiy band'ni **server** hisoblaydi (mezonlar teng, Task 2 ikki barobar,
-  .25/.75 yaxlitlash) — natija "taxminiy" deb belgilanadi. Sutkasiga 3 ta.
-  Format ielts.org boʻyicha tekshirilgan; CEFR (Multilevel) formati uzbmb.uz'dan
-  tasdiqlanmaguncha "tez orada" holatida.
+- **🎓 Mock imtihonlar (IELTS)** — toʻrt koʻnikma va **toʻliq imtihon**
+  (Listening → Reading → Writing → Speaking; umumiy band — toʻrttasining
+  oʻrtachasi, rasmiy .25/.75 yaxlitlash bilan).
+  - **Listening:** 4 qism, 40 savol; har qism oldidan savollarni oʻqish uchun
+    30 soniya, yozuv **bir marta** eshittiriladi (brauzer ovozi, suhbatda
+    ikki xil ovoz), oxirida 2 daqiqa tekshirish.
+  - **Reading:** 3 matn, 40 savol (variantli, TRUE/FALSE/NOT GIVEN,
+    YES/NO/NOT GIVEN, soʻz chegarali boʻsh joy), 60 daqiqa, savollar xaritasi,
+    qoralama sahifa yangilansa ham saqlanadi.
+  - Listening/Reading testlarini Gemini **bir marta** yaratadi, qatʼiy
+    tekshiradi (raqamlar, javob turlari, boʻsh joy javobi matnda borligi) va
+    umumiy **test banki**da saqlaydi — har kim hali ishlamaganini oladi, AI
+    kvotasi faqat bank tugaganda sarflanadi. Toʻgʻri javoblar serverdan
+    chiqmaydi. Xom ball → band: ielts.org'dagi oʻrtacha nuqtalar
+    (16→5, 23→6, 30→7, 35→8).
+  - **Speaking** (1–3-qismlar, ≈11 daqiqa) va **Writing** (60 daqiqa,
+    Academic diagramma yoki GT xati + esse) — Gemini 4 ta rasmiy mezon
+    boʻyicha baholaydi, band'ni server hisoblaydi. Hammasi "taxminiy" deb
+    belgilanadi. CEFR (Multilevel) rasmiy format tasdiqlangach qoʻshiladi.
 - **🛠 Admin panel** — faqat `Admin:Emails` ro'yxatidagi egasi uchun:
   ro'yxatdan o'tishlar, kunlik/haftalik/oylik faol foydalanuvchilar, mashq
   turlari — faqat umumiy sonlar va niqoblangan emaillar. **Tizim holati**
@@ -200,8 +209,8 @@ npm run dev
 ### 7. Avtomatik testlar
 
 ```bash
-dotnet test backend/SpeakingCoach.Api.Tests   # backend: 228 ta unit test
-cd frontend/speaking-coach-web && npm test     # frontend: 49 ta vitest testi
+dotnet test backend/SpeakingCoach.Api.Tests   # backend: 258 ta unit test
+cd frontend/speaking-coach-web && npm test     # frontend: 54 ta vitest testi
 ```
 
 Xuddi shu testlar har bir push'da GitHub Actions'da ham ishlaydi

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { apiJson } from './api';
 import { localeOf, useLang, useT } from './i18n';
 import { mockMsg } from './locales/mock';
+import { mockObjMsg } from './locales/mockObjective';
+import type { ClientGroup } from './ObjectiveQuestions';
 import { bandKey, formatBand } from './mockLogic';
 import { Corrections, PageHeader, type CorrectionItem } from './ui';
 
@@ -19,6 +21,7 @@ interface HistoryRow {
   variant: string | null;
   setId: string;
   overall: number | null;
+  sessionId?: string | null;
 }
 
 interface Band {
@@ -59,7 +62,107 @@ interface WritingResult {
   nextSteps: string[];
 }
 
-type MockResult = SpeakingResult | WritingResult;
+interface ObjectiveReview {
+  number: number;
+  given: string;
+  accepted: string[];
+  correct: boolean;
+  explanation: string;
+}
+
+interface ObjectiveResult {
+  module: 'listening' | 'reading';
+  variant: string;
+  overall: number;
+  score: number;
+  total: number;
+  secondsUsed: number;
+  questions: ObjectiveReview[];
+}
+
+interface TestContent {
+  variant?: string;
+  passages?: { title: string; text: string; groups: (ClientGroup & { questions: { number: number; prompt: string; options: string[] | null }[] })[] }[];
+  parts?: { part: number; context: string; script: { speaker: string; text: string }[]; groups: ClientGroup[] }[];
+}
+
+type MockResult = SpeakingResult | WritingResult | ObjectiveResult;
+
+/** Listening/Reading natijasi: ball, band, har savol tahlili va matn/skript. */
+function ObjectiveResultView({ r, test }: { r: ObjectiveResult; test: TestContent | null }) {
+  const t = useT(mockMsg);
+  const to = useT(mockObjMsg);
+  const [onlyWrong, setOnlyWrong] = useState(true);
+  const prompts = new Map<number, string>();
+  for (const g of [...(test?.passages ?? []).flatMap((p) => p.groups), ...(test?.parts ?? []).flatMap((p) => p.groups)]) {
+    for (const q of g.questions) prompts.set(q.number, q.prompt);
+  }
+  const shown = r.questions.filter((q) => !onlyWrong || !q.correct);
+  const title = r.module === 'listening' ? 'IELTS Listening' : `IELTS Reading · ${r.variant === 'general' ? t.general : t.academic}`;
+
+  return (
+    <>
+      <Overall band={r.overall} extra={`${title} · ${to.score(r.score, r.total)}`} />
+      <p className="muted tiny">{to.bandNote}</p>
+      <div className="card">
+        <div className="spread">
+          <h3 style={{ margin: 0 }}>{to.reviewTitle}</h3>
+          <div className="segmented" role="group">
+            <button aria-pressed={onlyWrong} onClick={() => setOnlyWrong(true)}>{to.onlyWrong}</button>
+            <button aria-pressed={!onlyWrong} onClick={() => setOnlyWrong(false)}>{to.all}</button>
+          </div>
+        </div>
+        <ul style={{ listStyle: 'none', padding: 0, margin: '10px 0 0' }}>
+          {shown.map((q) => (
+            <li key={q.number} style={{ padding: '8px 0', borderTop: '1px solid var(--border)' }} className="small">
+              <div>
+                {q.correct ? '✅' : '❌'} <strong>{q.number}.</strong> {prompts.get(q.number) ?? ''}
+              </div>
+              <div>
+                {to.your}: <span className={q.correct ? 'txt-great' : 'txt-low'}>{q.given || to.empty}</span>
+                {!q.correct && (
+                  <>
+                    {' · '}
+                    {to.correctAnswer}: <strong>{q.accepted.join(' / ')}</strong>
+                  </>
+                )}
+              </div>
+              <div className="muted tiny">{q.explanation}</div>
+            </li>
+          ))}
+        </ul>
+      </div>
+      {test?.parts && (
+        <div className="card">
+          <details>
+            <summary><strong>{to.script}</strong></summary>
+            {test.parts.map((p) => (
+              <div key={p.part}>
+                <h4>{to.part(p.part)}</h4>
+                {p.script.map((l, i) => (
+                  <p key={i} className="small"><strong>{l.speaker}:</strong> {l.text}</p>
+                ))}
+              </div>
+            ))}
+          </details>
+        </div>
+      )}
+      {test?.passages && (
+        <div className="card">
+          <details>
+            <summary><strong>{to.texts}</strong></summary>
+            {test.passages.map((p, i) => (
+              <div key={i}>
+                <h4>{to.passage(i + 1)}: {p.title}</h4>
+                {p.text.split(/\n\s*\n/).map((para, j) => <p key={j} className="small">{para}</p>)}
+              </div>
+            ))}
+          </details>
+        </div>
+      )}
+    </>
+  );
+}
 
 /** Mock imtihonlar markazi: turini tanlash, sutkalik limit, oldingi natijalar. */
 export function MockHub({ loggedIn, go, onLogin }: { loggedIn: boolean; go: (route: string) => void; onLogin: () => void }) {
@@ -74,6 +177,7 @@ export function MockHub({ loggedIn, go, onLogin }: { loggedIn: boolean; go: (rou
     apiJson<HistoryRow[]>('/api/mock/history').then(setHistory).catch(() => undefined);
   }, [loggedIn]);
 
+  const to = useT(mockObjMsg);
   const blocked = !loggedIn || status?.remaining === 0;
 
   return (
@@ -93,6 +197,35 @@ export function MockHub({ loggedIn, go, onLogin }: { loggedIn: boolean; go: (rou
             : t.noneLeft(status.retryAtUtc ? new Date(status.retryAtUtc).toLocaleString(locale) : '—')}
         </p>
       )}
+
+      <div className="card stack" style={{ borderColor: 'var(--primary)' }}>
+        <h3 style={{ margin: 0 }}>{to.fullTitle}</h3>
+        <p className="muted small" style={{ margin: 0 }}>{to.fullText}</p>
+        <button className="btn btn-primary" disabled={blocked} onClick={() => go('mock/full')}>
+          {to.fullStart}
+        </button>
+      </div>
+
+      <div className="card stack">
+        <h3 style={{ margin: 0 }}>{to.listeningTitle}</h3>
+        <p className="muted small" style={{ margin: 0 }}>{to.listeningText}</p>
+        <button className="btn btn-primary" disabled={!loggedIn} onClick={() => go('mock/listening')}>
+          {t.start}
+        </button>
+      </div>
+
+      <div className="card stack">
+        <h3 style={{ margin: 0 }}>{to.readingTitle}</h3>
+        <p className="muted small" style={{ margin: 0 }}>{to.readingText}</p>
+        <div className="row">
+          <button className="btn btn-primary" disabled={!loggedIn} onClick={() => go('mock/reading-academic')}>
+            {t.academic}
+          </button>
+          <button className="btn btn-outline" disabled={!loggedIn} onClick={() => go('mock/reading-general')}>
+            {t.general}
+          </button>
+        </div>
+      </div>
 
       <div className="card stack">
         <h3 style={{ margin: 0 }}>{t.speakingTitle}</h3>
@@ -137,6 +270,11 @@ export function MockHub({ loggedIn, go, onLogin }: { loggedIn: boolean; go: (rou
                   <span className="small">
                     <strong>IELTS {t.moduleName[h.module] ?? h.module}</strong>
                     {h.variant ? ` · ${h.variant === 'general' ? t.general : t.academic}` : ''}
+                    {h.sessionId && (
+                      <button className="btn-link tiny" style={{ marginLeft: 6 }} onClick={() => go(`mock/session/${h.sessionId}`)}>
+                        🏁 {to.fullTitle.replace(/^🏁\s*/, '')}
+                      </button>
+                    )}
                     <div className="muted tiny">{new Date(h.createdAtUtc).toLocaleString(locale)}</div>
                   </span>
                   <span className="row" style={{ alignItems: 'center', gap: 10 }}>
@@ -177,7 +315,7 @@ function Overall({ band, extra }: { band: number; extra?: string }) {
   );
 }
 
-function Advice({ result }: { result: MockResult }) {
+function Advice({ result }: { result: SpeakingResult | WritingResult }) {
   const t = useT(mockMsg);
   return (
     <div className="card">
@@ -197,11 +335,12 @@ function Advice({ result }: { result: MockResult }) {
 export function MockResultView({ id, go }: { id: string; go: (route: string) => void }) {
   const t = useT(mockMsg);
   const locale = localeOf(useLang().lang);
-  const [data, setData] = useState<{ createdAtUtc: string; result: MockResult } | null>(null);
+  const to = useT(mockObjMsg);
+  const [data, setData] = useState<{ createdAtUtc: string; result: MockResult; test: TestContent | null; sessionId: string | null } | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    apiJson<{ createdAtUtc: string; result: MockResult }>(`/api/mock/${id}`)
+    apiJson<{ createdAtUtc: string; result: MockResult; test: TestContent | null; sessionId: string | null }>(`/api/mock/${id}`)
       .then(setData)
       .catch((e) => setError(e instanceof Error ? e.message : String(e)));
   }, [id]);
@@ -211,12 +350,19 @@ export function MockResultView({ id, go }: { id: string; go: (route: string) => 
   if (!data) return <>{header}<p className="muted">…</p></>;
 
   const r = data.result;
-  const againRoute = r.module === 'speaking' ? 'mock/speaking' : `mock/writing-${r.variant}`;
+  const w = r as WritingResult;
+  const againRoute =
+    r.module === 'speaking' ? 'mock/speaking'
+    : r.module === 'writing' ? `mock/writing-${r.variant}`
+    : r.module === 'listening' ? 'mock/listening'
+    : `mock/reading-${r.variant === 'general' ? 'general' : 'academic'}`;
 
   return (
     <>
       {header}
-      {r.module === 'speaking' ? (
+      {r.module === 'listening' || r.module === 'reading' ? (
+        <ObjectiveResultView r={r} test={data.test} />
+      ) : r.module === 'speaking' ? (
         <>
           <Overall band={r.overall} extra="IELTS Speaking" />
           <div className="card">
@@ -242,10 +388,10 @@ export function MockResultView({ id, go }: { id: string; go: (route: string) => 
       ) : (
         <>
           <Overall
-            band={r.overall}
-            extra={`IELTS Writing · ${r.variant === 'general' ? t.general : t.academic} · ${t.timeUsed(Math.round(r.secondsUsed / 60))}`}
+            band={w.overall}
+            extra={`IELTS Writing · ${w.variant === 'general' ? t.general : t.academic} · ${t.timeUsed(Math.round(w.secondsUsed / 60))}`}
           />
-          {([['task1', r.task1], ['task2', r.task2]] as const).map(([key, task]) => (
+          {([['task1', w.task1], ['task2', w.task2]] as const).map(([key, task]) => (
             <div className="card" key={key}>
               <div className="spread">
                 <h3 style={{ margin: 0 }}>{key === 'task1' ? t.task1 : t.task2}</h3>
@@ -262,12 +408,15 @@ export function MockResultView({ id, go }: { id: string; go: (route: string) => 
               </details>
             </div>
           ))}
-          <Advice result={r} />
+          <Advice result={w} />
         </>
       )}
       <p className="muted tiny">{t.disclaimer}</p>
       <div className="row">
-        <button className="btn btn-primary" onClick={() => go(againRoute)}>{t.again}</button>
+        {data.sessionId && (
+          <button className="btn btn-primary" onClick={() => go(`mock/session/${data.sessionId}`)}>🏁 {to.sessionTitle}</button>
+        )}
+        <button className={data.sessionId ? 'btn btn-outline' : 'btn btn-primary'} onClick={() => go(againRoute)}>{t.again}</button>
         <button className="btn btn-outline" onClick={() => go('mock')}>{t.backToMock}</button>
       </div>
     </>

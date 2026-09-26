@@ -18,6 +18,7 @@ public class AppDbContext : DbContext
     public DbSet<AiUsage> AiUsages => Set<AiUsage>();
     public DbSet<TelegramAccount> TelegramAccounts => Set<TelegramAccount>();
     public DbSet<TelegramLinkToken> TelegramLinkTokens => Set<TelegramLinkToken>();
+    public DbSet<MockTest> MockTests => Set<MockTest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -101,6 +102,18 @@ public class AppDbContext : DbContext
             entity.Property(p => p.Type).HasConversion<string>().HasMaxLength(20);
             entity.Property(p => p.Payload).HasColumnType("jsonb");
             entity.HasIndex(p => p.CreatedAtUtc);
+        });
+
+        modelBuilder.Entity<MockTest>(entity =>
+        {
+            entity.Property(t => t.Exam).HasMaxLength(10);
+            entity.Property(t => t.Module).HasMaxLength(20);
+            entity.Property(t => t.Variant).HasMaxLength(20);
+            entity.Property(t => t.Payload).HasColumnType("jsonb");
+            // "Shu turdagi testlar" so'rovi: WHERE Exam = ? AND Module = ? AND Variant = ?.
+            entity.HasIndex(t => new { t.Exam, t.Module, t.Variant, t.CreatedAtUtc });
+            // Foydalanuvchi o'chirilsa, test bankda qoladi (boshqalar ishlatadi) — faqat bog'lanish uziladi.
+            entity.HasOne<User>().WithMany().HasForeignKey(t => t.CreatedByUserId).OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<Activity>(entity =>
