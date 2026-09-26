@@ -3,6 +3,7 @@ import { useT } from './i18n';
 import { homeMsg } from './locales/home';
 import { UsageNote } from './Usage';
 import { TelegramPromo } from './TelegramCard';
+import { TasksCard } from './StudentTasks';
 
 export type ExerciseKind = 'speaking' | 'writing' | 'reading' | 'listening';
 
@@ -98,6 +99,8 @@ export function Home({
         <h1>{t.hello(name)}</h1>
         <p>{stats && stats.reviewedToday >= stats.dailyGoal ? t.goalDone : t.goalTodo}</p>
       </div>
+
+      <TasksCard loggedIn go={go} />
 
       {stats && (
         <div className="card">

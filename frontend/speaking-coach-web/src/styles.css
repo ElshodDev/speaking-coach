@@ -313,6 +313,11 @@ p {
 .stack > * + * {
   margin-top: 0.75rem;
 }
+/* Yorliq ustida, maydon ostida (shakllar) */
+.field {
+  display: grid;
+  gap: 0.35rem;
+}
 .break {
   overflow-wrap: anywhere;
 }

@@ -76,6 +76,21 @@ qolishga** yordam beradigan takrorlash tizimi:
     **0–36 → 75 jadvali**, daraja: C1 65–75, B2 51–64, B1 38–50.
   - Eʼlon qilinmagan ikki narsa natija sahifasida "taxmin" deb yozilgan:
     Speaking 0–21 ni 75 ga oʻtkazish (chiziqli) va Writing vaqti (60 daqiqa).
+- **👩‍🏫 Oʻqituvchi boʻlimi (guruhlar)** — har qanday foydalanuvchi Profil
+  sahifasidan oʻqituvchi panelini ochib, guruh yaratadi va oʻquvchilarga
+  havola yoki 6 belgili kod yuboradi (0/O, 1/I/L kabi adashtiradigan
+  belgilar yoʻq; yangi kod eski havolani bekor qiladi).
+  - Vazifa: mashq turi, mock moduli yoki "N ta kartani takrorlash";
+    muddat va izoh ixtiyoriy.
+  - **Alohida "topshirish" yoʻq** — vazifa berilgandan keyingi birinchi mos
+    urinish avtomatik "bajarildi" boʻladi (muddatdan keyin boʻlsa —
+    "kechikib"; takrorlashda jarayon 12/20 koʻrinishida).
+  - Oʻqituvchi natijalar jadvalini va mos urinishni koʻradi, lekin faqat
+    oʻquvchining taxallusini (yoki emailning @ gacha qismini) va faqat
+    guruh vazifalariga mos urinishlarni. Oʻquvchiga bu qoʻshilishdan oldin
+    aytiladi; u istalgan vaqtda guruhdan chiqa oladi.
+  - Oʻquvchida "Vazifalarim" sahifasi va bosh sahifada vazifalar kartasi.
+  - Cheklov: oʻqituvchiga 20 ta guruh, guruhga 200 ta oʻquvchi.
 - **🛠 Admin panel** — faqat `Admin:Emails` ro'yxatidagi egasi uchun:
   ro'yxatdan o'tishlar, kunlik/haftalik/oylik faol foydalanuvchilar, mashq
   turlari — faqat umumiy sonlar va niqoblangan emaillar. **Tizim holati**
@@ -223,8 +238,8 @@ npm run dev
 ### 7. Avtomatik testlar
 
 ```bash
-dotnet test backend/SpeakingCoach.Api.Tests   # backend: 299 ta unit test
-cd frontend/speaking-coach-web && npm test     # frontend: 69 ta vitest testi
+dotnet test backend/SpeakingCoach.Api.Tests   # backend: 332 ta unit test
+cd frontend/speaking-coach-web && npm test     # frontend: 77 ta vitest testi
 ```
 
 Xuddi shu testlar har bir push'da GitHub Actions'da ham ishlaydi
@@ -430,7 +445,8 @@ unutilsa — boshidan boshlanadi. Bu Anki va Duolingo ishlatadigan g'oya.
   algoritmi, streak (vaqt zonalari bilan), karta yaratish, test
   savollarini tekshirish, Gemini javobini qat'iy o'qish, token xeshi,
   XP/daraja/nishonlar, reyting (teng ballar), darajaga mos promptlar,
-  lug'at holati (Yangi/O'rganilmoqda/Yodlangan).
+  lug'at holati (Yangi/O'rganilmoqda/Yodlangan), guruhlar (taklif kodi,
+  vazifa turlari, bajarildi/kechikdi qoidalari, oʻqituvchi nimani koʻradi).
   Frontend: `vitest` — gap bo'lish, statistika, karta matnlari, grafik
   yordamchilari, so'zni ajratish.
 - **CI**: GitHub Actions har bir push'da backend'ni build qilib testlarni,

@@ -19,6 +19,9 @@ public class AppDbContext : DbContext
     public DbSet<TelegramAccount> TelegramAccounts => Set<TelegramAccount>();
     public DbSet<TelegramLinkToken> TelegramLinkTokens => Set<TelegramLinkToken>();
     public DbSet<MockTest> MockTests => Set<MockTest>();
+    public DbSet<Group> Groups => Set<Group>();
+    public DbSet<GroupMember> GroupMembers => Set<GroupMember>();
+    public DbSet<Assignment> Assignments => Set<Assignment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -102,6 +105,32 @@ public class AppDbContext : DbContext
             entity.Property(p => p.Type).HasConversion<string>().HasMaxLength(20);
             entity.Property(p => p.Payload).HasColumnType("jsonb");
             entity.HasIndex(p => p.CreatedAtUtc);
+        });
+
+        modelBuilder.Entity<Group>(entity =>
+        {
+            entity.Property(g => g.Name).HasMaxLength(80);
+            entity.Property(g => g.JoinCode).HasMaxLength(12);
+            entity.HasIndex(g => g.JoinCode).IsUnique();
+            entity.HasIndex(g => g.TeacherId);
+            // O'qituvchi hisobini o'chirsa — uning guruhlari ham o'chadi.
+            entity.HasOne<User>().WithMany().HasForeignKey(g => g.TeacherId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<GroupMember>(entity =>
+        {
+            entity.HasKey(m => new { m.GroupId, m.UserId });
+            entity.HasIndex(m => m.UserId);
+            entity.HasOne<Group>().WithMany().HasForeignKey(m => m.GroupId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<User>().WithMany().HasForeignKey(m => m.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Assignment>(entity =>
+        {
+            entity.Property(a => a.Kind).HasMaxLength(40);
+            entity.Property(a => a.Instructions).HasMaxLength(1000);
+            entity.HasIndex(a => new { a.GroupId, a.CreatedAtUtc });
+            entity.HasOne<Group>().WithMany().HasForeignKey(a => a.GroupId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<MockTest>(entity =>

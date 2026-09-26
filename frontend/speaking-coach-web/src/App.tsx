@@ -10,6 +10,10 @@ import { MockSpeaking } from './MockSpeaking';
 import { MockFullStart, MockFullStep, MockSessionView } from './MockFull';
 import { MockListening } from './MockListening';
 import { CefrWriting } from './CefrWriting';
+import { JoinByCode, JoinGroup, TasksPage } from './StudentTasks';
+import { savePendingJoin, takePendingJoin } from './groupLogic';
+import { TeacherGroup, TeacherHome } from './Teacher';
+import { teacherMsg } from './locales/teacher';
 import { MockReading } from './MockReading';
 import { MockWriting } from './MockWriting';
 import { mockMsg } from './locales/mock';
@@ -120,7 +124,9 @@ function App() {
   // foydalanuvchi o'z holatini, chiqqan esa mehmon sahifasini ko'radi.
   function onAuthChange(next: string | null) {
     setEmail(next);
-    go('home');
+    // Taklif havolasidan kelib, keyin kirgan bo'lsa — o'sha taklifga qaytaramiz.
+    const pending = next ? takePendingJoin() : null;
+    go(pending ? `join/${pending}` : 'home');
   }
 
   const [section, sub, third, fourth, fifth] = route.split('/') as (string | undefined)[] as [string, string?, string?, string?, string?];
@@ -182,6 +188,14 @@ function App() {
     );
   } else if (section === 'mock' && sub === 'result' && third) {
     page = <MockResultView key={`${third}-${userKey}`} id={third} go={go} />;
+  } else if (section === 'teacher' && sub && loggedIn) {
+    page = <TeacherGroup key={`${sub}-${userKey}`} id={sub} go={go} />;
+  } else if (section === 'teacher' && loggedIn) {
+    page = <TeacherHome key={userKey} go={go} />;
+  } else if (section === 'join' && sub) {
+    page = <JoinGroup key={`${sub}-${userKey}`} code={sub} loggedIn={loggedIn} go={go} onLogin={() => { savePendingJoin(sub); toLogin(); }} />;
+  } else if (section === 'tasks' && loggedIn) {
+    page = <TasksPage key={userKey} go={go} />;
   } else if (section === 'mock' && sub === 'session' && third && loggedIn) {
     page = <MockSessionView key={`${third}-${userKey}`} sessionId={third} go={go} />;
   } else if (section === 'mock' && sub === 'full' && (third === 'academic' || third === 'general') && fourth && loggedIn) {
@@ -222,7 +236,7 @@ function App() {
   }
 
   // Profil va Admin menyuda yo'q — ularda menyuning hech biri belgilanmaydi.
-  const onProfile = section === 'profile' || section === 'admin';
+  const onProfile = section === 'profile' || section === 'admin' || section === 'teacher';
   const activeNav = onProfile
     ? null
     : section === 'review' && sub === 'vocab'
@@ -299,6 +313,7 @@ function Profile({
   onProfileSaved: (p: ProfileData) => void;
   go: (route: string) => void;
 }) {
+  const tt = useT(teacherMsg);
   const t = useT(appMsg);
   const { lang } = useLang();
   return (
@@ -308,6 +323,18 @@ function Profile({
       {/* key: profil serverdan kelganda forma qiymatlari yangilansin */}
       {(!email || profile) && <Settings key={profile ? 'user' : 'guest'} profile={profile} onSaved={onProfileSaved} />}
       {email && <TelegramCard key={email} />}
+      {email && (
+        <div className="card cta" data-testid="teacher-entry">
+          <div>
+            <strong>{tt.panelTitle}</strong>
+            <div className="muted small">{tt.panelText}</div>
+          </div>
+          <button className="btn btn-primary" onClick={() => go('teacher')}>
+            {tt.groupsTitle}
+          </button>
+        </div>
+      )}
+      {email && <JoinByCode go={go} />}
       {email && <AccountData email={email} onDeleted={() => onAuthChange(null)} />}
 
       {profile?.isAdmin && (

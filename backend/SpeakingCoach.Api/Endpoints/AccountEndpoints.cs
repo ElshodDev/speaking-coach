@@ -44,6 +44,9 @@ public static class AccountEndpoints
                 .Select(l => new { l.CardId, l.Grade, l.ReviewedAtUtc })
                 .ToListAsync();
 
+            var taught = await db.Groups.Where(g => g.TeacherId == user.Id).Select(g => new { g.Id, g.Name, g.CreatedAtUtc }).ToListAsync();
+            var memberOf = await db.GroupMembers.Where(m => m.UserId == user.Id).Select(m => new { m.GroupId, m.JoinedAtUtc }).ToListAsync();
+
             var export = new
             {
                 exportedAtUtc = DateTime.UtcNow,
@@ -79,6 +82,8 @@ public static class AccountEndpoints
                     c.Lapses,
                 }),
                 reviewLog = logs,
+                groupsTaught = taught,
+                groupMemberships = memberOf,
             };
 
             var bytes = JsonSerializer.SerializeToUtf8Bytes(export, Pretty);

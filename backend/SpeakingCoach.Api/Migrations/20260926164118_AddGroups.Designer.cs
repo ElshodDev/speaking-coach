@@ -12,7 +12,7 @@ using SpeakingCoach.Api.Data;
 namespace SpeakingCoach.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260926161812_AddGroups")]
+    [Migration("20260926164118_AddGroups")]
     partial class AddGroups
     {
         /// <inheritdoc />
@@ -78,6 +78,41 @@ namespace SpeakingCoach.Api.Migrations
                     b.ToTable("AiUsages");
                 });
 
+            modelBuilder.Entity("SpeakingCoach.Api.Data.Assignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DueAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("GroupId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Instructions")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<int?>("Target")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GroupId", "CreatedAtUtc");
+
+                    b.ToTable("Assignments");
+                });
+
             modelBuilder.Entity("SpeakingCoach.Api.Data.EmailCode", b =>
                 {
                     b.Property<Guid>("Id")
@@ -114,6 +149,56 @@ namespace SpeakingCoach.Api.Migrations
                     b.HasIndex("UserId", "Purpose", "CreatedAtUtc");
 
                     b.ToTable("EmailCodes");
+                });
+
+            modelBuilder.Entity("SpeakingCoach.Api.Data.Group", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("JoinCode")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<Guid>("TeacherId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JoinCode")
+                        .IsUnique();
+
+                    b.HasIndex("TeacherId");
+
+                    b.ToTable("Groups");
+                });
+
+            modelBuilder.Entity("SpeakingCoach.Api.Data.GroupMember", b =>
+                {
+                    b.Property<Guid>("GroupId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("JoinedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("GroupId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("GroupMembers");
                 });
 
             modelBuilder.Entity("SpeakingCoach.Api.Data.MockTest", b =>
@@ -425,8 +510,41 @@ namespace SpeakingCoach.Api.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("SpeakingCoach.Api.Data.Assignment", b =>
+                {
+                    b.HasOne("SpeakingCoach.Api.Data.Group", null)
+                        .WithMany()
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("SpeakingCoach.Api.Data.EmailCode", b =>
                 {
+                    b.HasOne("SpeakingCoach.Api.Data.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SpeakingCoach.Api.Data.Group", b =>
+                {
+                    b.HasOne("SpeakingCoach.Api.Data.User", null)
+                        .WithMany()
+                        .HasForeignKey("TeacherId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SpeakingCoach.Api.Data.GroupMember", b =>
+                {
+                    b.HasOne("SpeakingCoach.Api.Data.Group", null)
+                        .WithMany()
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("SpeakingCoach.Api.Data.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
