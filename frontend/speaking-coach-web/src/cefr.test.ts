@@ -12,8 +12,9 @@ const set: CefrSpeakingSet = {
   part3Statement: 'Public transport should be free.',
   for: ['f1', 'f2', 'f3'],
   against: ['x1', 'x2', 'x3'],
+  part2Picture: { emoji: '🧳', caption: 'A traveller' },
 };
-const timing = { part11Seconds: 30, part12Seconds: 30, part2PrepSeconds: 60, part2SpeakSeconds: 120, part3PrepSeconds: 60, part3SpeakSeconds: 120 };
+const timing = { part11Seconds: 30, part12FirstSeconds: 45, part12Seconds: 30, part2PrepSeconds: 60, part2SpeakSeconds: 120, part3PrepSeconds: 60, part3SpeakSeconds: 120 };
 
 describe('cefrSpeakingSteps', () => {
   const steps = cefrSpeakingSteps(set, timing);
@@ -22,6 +23,16 @@ describe('cefrSpeakingSteps', () => {
     expect(steps.map((s) => `${s.kind === 'prep' ? 'prep' : 'ans'}:${s.partLabel}:${s.index}`)).toEqual([
       'ans:1.1:0', 'ans:1.1:1', 'ans:1.1:2', 'ans:1.2:3', 'ans:1.2:4', 'ans:1.2:5', 'prep:2:6', 'ans:2:6', 'prep:3:7', 'ans:3:7',
     ]);
+  });
+
+  it('uses the official timings: 30 s for 1.1, 45 s for question 4, 30 s for 5–6, 1 + 2 min for Parts 2 and 3', () => {
+    const secs = steps.map((s) => (s.kind === 'prep' ? `p${s.seconds}` : s.maxSeconds));
+    expect(secs).toEqual([30, 30, 30, 45, 30, 30, 'p60', 120, 'p60', 120]);
+  });
+
+  it('shows one picture in Part 2 (official format)', () => {
+    const p2 = steps[7];
+    expect(p2.kind === 'answer' && p2.card?.pictures).toEqual([{ emoji: '🧳', caption: 'A traveller' }]);
   });
 
   it('shows pictures in 1.2 and the for/against table in Part 3', () => {

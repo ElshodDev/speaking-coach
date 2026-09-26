@@ -324,7 +324,7 @@ public static class MockEndpoints
                 set,
                 timing = new
                 {
-                    part11Seconds = CefrBank.Part11Seconds, part12Seconds = CefrBank.Part12Seconds,
+                    part11Seconds = CefrBank.Part11Seconds, part12FirstSeconds = CefrBank.Part12FirstSeconds, part12Seconds = CefrBank.Part12Seconds,
                     part2PrepSeconds = CefrBank.Part2PrepSeconds, part2SpeakSeconds = CefrBank.Part2SpeakSeconds,
                     part3PrepSeconds = CefrBank.Part3PrepSeconds, part3SpeakSeconds = CefrBank.Part3SpeakSeconds,
                 },

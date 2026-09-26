@@ -38,7 +38,7 @@ export function SpeakingCard({ card }: { card: StepCard }) {
     <div className="quote" style={{ margin: 0 }} data-testid="speaking-card">
       {card.pictures && (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${card.pictures.length}, 1fr)`, gap: 8 }}>
             {card.pictures.map((p) => (
               <figure key={p.caption} className="card" style={{ margin: 0, padding: 10, textAlign: 'center' }}>
                 <div style={{ fontSize: '2.4rem' }} aria-hidden>{p.emoji}</div>
@@ -46,7 +46,9 @@ export function SpeakingCard({ card }: { card: StepCard }) {
               </figure>
             ))}
           </div>
-          <div className="muted tiny" style={{ marginTop: 6 }}>{c.picturesNote}</div>
+          <div className="muted tiny" style={{ marginTop: 6 }}>
+            {c.picturesNote} {card.bulletsHeading === 'questions' ? c.part2PictureNote : ''}
+          </div>
         </>
       )}
       {card.title && <strong>{card.title}</strong>}

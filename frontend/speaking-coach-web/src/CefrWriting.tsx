@@ -229,7 +229,7 @@ export function CefrWriting({ go, sessionId, onSubmitted }: { go: (route: string
         />
         <div className="spread small">
           <span className={st === 'ok' ? 'txt-great' : 'muted'}>
-            {t.words(n, r.min, r.max)}
+            {tab === '11' ? t.about50(n) : t.words(n, r.min, r.max)}
             {st !== 'ok' && n > 0 ? ` · ${st === 'low' ? t.tooShort : t.tooLong}` : ''}
           </span>
           <span className="muted tiny">{tm.draftSaved}</span>

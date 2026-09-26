@@ -62,18 +62,20 @@ qolishga** yordam beradigan takrorlash tizimi:
     Academic diagramma yoki GT xati + esse) — Gemini 4 ta rasmiy mezon
     boʻyicha baholaydi, band'ni server hisoblaydi. Hammasi "taxminiy" deb
     belgilanadi. CEFR (Multilevel) rasmiy format tasdiqlangach qoʻshiladi.
-- **🇺🇿 Mock imtihon (CEFR Multilevel)** — **baholash rasmiy hujjat boʻyicha**
-  (Bilim va malakalarni baholash agentligi, 16.03.2023, uzbmb.uz): xom ball
-  (0–36, ekspertlar ballarining oʻrtachasi) **rasmiy jadval** bilan 0–75 ga
-  aylantiriladi; Writing = 1-topshiriq (12 ball) + 2-topshiriq (24 ball);
-  Speaking — yaxlit baho; daraja: C1 65–75, B2 51–64, B1 38–50.
-  **Speaking**: 1.1 (3 savol), 1.2 (ikki rasm — soʻz bilan tavsif, 3 savol),
-  2 (mavzu + 3 savol, 1 + 2 daqiqa), 3 (bahsli fikr + "tarafdor/qarshi"
-  jadvali, 1 + 2 daqiqa). **Writing**: bitta vaziyat, 1.1 doʻstga xat (50–70)
-  va 1.2 rasmiy xat (120–150) birgalikda 1-topshiriq, 2 — onlayn muhokama
-  posti (180–200); 60 daqiqa, soʻz oraligʻi tekshiruvi, qoralama saqlanadi.
-  Topshiriqlar tuzilishi — 2024-yilgi yangi format boʻyicha tayyorlov
-  materiallaridan; ball hisobi — rasmiy. Listening va Reading keyin.
+- **🇺🇿 Mock imtihon (CEFR Multilevel)** — **Bilim va malakalarni baholash
+  agentligining rasmiy hujjatlari** asosida:
+  - Speaking yangi formati (2024-yil sentabrdan): 1.1 — 3 savol × 30 s;
+    1.2 — rasmlarni solishtirish, 4-savol 45 s, 5–6-savollar 30 s; 2 — 3 savol
+    va bitta rasm, 1 daqiqa tayyorgarlik + 2 daqiqa; 3 — bahs, 1 + 2 daqiqa;
+    **rasmiy baholash shkalasi** (1–3: 0–5, 4–6: 0–5, 7: 0–5, 8: 0–6,
+    tavsiflari bilan);
+  - Writing yangi formati (2025-yil oktabrdan): 1.1 norasmiy xat (taxminan
+    50 soʻz), 1.2 rasmiy xat (120–150), 2-qism onlayn muhokama posti
+    (180–200); 5 ta mezon;
+  - Baholash mezonlari (16.03.2023): Writing 1-qism 12 + 2-qism 24 ball,
+    **0–36 → 75 jadvali**, daraja: C1 65–75, B2 51–64, B1 38–50.
+  - Eʼlon qilinmagan ikki narsa natija sahifasida "taxmin" deb yozilgan:
+    Speaking 0–21 ni 75 ga oʻtkazish (chiziqli) va Writing vaqti (60 daqiqa).
 - **🛠 Admin panel** — faqat `Admin:Emails` ro'yxatidagi egasi uchun:
   ro'yxatdan o'tishlar, kunlik/haftalik/oylik faol foydalanuvchilar, mashq
   turlari — faqat umumiy sonlar va niqoblangan emaillar. **Tizim holati**
@@ -221,8 +223,8 @@ npm run dev
 ### 7. Avtomatik testlar
 
 ```bash
-dotnet test backend/SpeakingCoach.Api.Tests   # backend: 298 ta unit test
-cd frontend/speaking-coach-web && npm test     # frontend: 67 ta vitest testi
+dotnet test backend/SpeakingCoach.Api.Tests   # backend: 299 ta unit test
+cd frontend/speaking-coach-web && npm test     # frontend: 69 ta vitest testi
 ```
 
 Xuddi shu testlar har bir push'da GitHub Actions'da ham ishlaydi

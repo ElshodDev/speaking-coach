@@ -87,11 +87,6 @@ interface TestContent {
   parts?: { part: number; context: string; script: { speaker: string; text: string }[]; groups: ClientGroup[] }[];
 }
 
-interface PartScore {
-  score: number;
-  reasoning: string;
-}
-
 interface CefrSpeakingResult {
   exam: 'cefr';
   module: 'speaking';
@@ -99,8 +94,7 @@ interface CefrSpeakingResult {
   level: string;
   raw: number;
   rawMax: number;
-  reasoning: string;
-  parts: { part: string; comment: string }[];
+  groups: { questions: string; part: string; score: number; max: number; reasoning: string }[];
   answers: { index: number; part: string; question: string; transcript: string; seconds: number }[];
   topCorrections: CorrectionItem[];
   strengths: string;
@@ -115,11 +109,12 @@ interface CefrWritingResult {
   raw: number;
   rawMax: number;
   secondsUsed: number;
-  tasks: {
-    task: string;
-    raw: number;
+  parts: {
+    part: string;
+    score: number;
     max: number;
-    criteria: { task: PartScore; organisation: PartScore; vocabulary: PartScore; grammar: PartScore };
+    reasoning: string;
+    criteria: { taskCompletion: string; grammar: string; vocabulary: string; coherence: string; punctuation: string };
   }[];
   texts: { task: string; words: number; minWords: number; maxWords: number; text: string }[];
   topCorrections: CorrectionItem[];
@@ -147,19 +142,18 @@ function CefrResultView({ r }: { r: CefrResult }) {
         </div>
       </div>
 
+      <p className="muted small" style={{ textAlign: 'center' }}>{c.rawPoints(r.raw, r.rawMax)}</p>
       {r.module === 'speaking' ? (
         <>
           <div className="card">
-            <div className="spread">
-              <h3 style={{ margin: 0 }}>{c.holistic}</h3>
-              <strong>{c.rawPoints(r.raw, r.rawMax)}</strong>
-            </div>
-            <p className="muted small">{r.reasoning}</p>
             <h3 style={{ marginBottom: 0 }}>{c.parts}</h3>
-            {r.parts.map((p) => (
-              <div key={p.part} style={{ padding: '10px 0', borderTop: '1px solid var(--border)' }}>
-                <strong className="small">{c.partScore(p.part)}</strong>
-                <div className="muted small" style={{ marginTop: 4 }}>{p.comment}</div>
+            {r.groups.map((g) => (
+              <div key={g.questions} style={{ padding: '10px 0', borderTop: '1px solid var(--border)' }}>
+                <div className="spread">
+                  <strong className="small">{c.questionsGroup(g.questions, g.part)}</strong>
+                  <strong>{c.points(g.score, g.max)}</strong>
+                </div>
+                <div className="muted small" style={{ marginTop: 4 }}>{g.reasoning}</div>
               </div>
             ))}
           </div>
@@ -178,31 +172,28 @@ function CefrResultView({ r }: { r: CefrResult }) {
         </>
       ) : (
         <>
-          <p className="muted small" style={{ textAlign: 'center' }}>{c.rawPoints(r.raw, r.rawMax)}</p>
-          {r.tasks.map((task) => (
-            <div className="card" key={task.task}>
+          {r.parts.map((part) => (
+            <div className="card" key={part.part}>
               <div className="spread">
-                <h3 style={{ margin: 0 }}>{c.task(task.task)}</h3>
-                <strong>{c.points(task.raw, task.max)}</strong>
+                <h3 style={{ margin: 0 }}>{t.part(part.part)}</h3>
+                <strong>{c.points(part.score, part.max)}</strong>
               </div>
               {r.texts
-                .filter((x) => x.task.startsWith(task.task))
+                .filter((x) => x.task.startsWith(part.part))
                 .map((x) => (
                   <div key={x.task} className={x.words < x.minWords || x.words > x.maxWords ? 'txt-low small' : 'muted small'}>
-                    {x.task}: {c.words(x.words, x.minWords, x.maxWords)}
+                    {x.task}: {x.task === '1.1' ? c.about50(x.words) : c.words(x.words, x.minWords, x.maxWords)}
                   </div>
                 ))}
-              {(['task', 'organisation', 'vocabulary', 'grammar'] as const).map((k) => (
+              <p className="small">{part.reasoning}</p>
+              {(['taskCompletion', 'grammar', 'vocabulary', 'coherence', 'punctuation'] as const).map((k) => (
                 <div key={k} style={{ padding: '8px 0', borderTop: '1px solid var(--border)' }}>
-                  <div className="spread">
-                    <strong className="small">{c.criteria[k]}</strong>
-                    <strong>{task.criteria[k].score}/{task.max / 4}</strong>
-                  </div>
-                  <div className="muted small" style={{ marginTop: 4 }}>{task.criteria[k].reasoning}</div>
+                  <strong className="small">{c.criteria[k]}</strong>
+                  <div className="muted small" style={{ marginTop: 4 }}>{part.criteria[k]}</div>
                 </div>
               ))}
               {r.texts
-                .filter((x) => x.task.startsWith(task.task))
+                .filter((x) => x.task.startsWith(part.part))
                 .map((x) => (
                   <details key={x.task} style={{ marginTop: 8 }}>
                     <summary className="small">{t.yourText} — {x.task}</summary>

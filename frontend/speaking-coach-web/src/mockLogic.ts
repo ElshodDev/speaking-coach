@@ -81,10 +81,13 @@ export interface CefrSpeakingSet {
   part3Statement: string;
   for: string[];
   against: string[];
+  part2Picture: { emoji: string; caption: string };
 }
 
 export interface CefrSpeakingTiming {
   part11Seconds: number;
+  /** Rasmiy: 1.2-qismning birinchi savoli (4-savol) — 45 s. */
+  part12FirstSeconds: number;
   part12Seconds: number;
   part2PrepSeconds: number;
   part2SpeakSeconds: number;
@@ -101,10 +104,11 @@ export function cefrSpeakingSteps(set: CefrSpeakingSet, t: CefrSpeakingTiming): 
   const pics: StepCard = { title: '', pictures: set.pictures };
   const base = set.part11.length;
   set.part12.forEach((text, i) =>
-    steps.push({ kind: 'answer', index: base + i, part: 1, partLabel: '1.2', text, maxSeconds: t.part12Seconds, numberInPart: i + 1, ofInPart: set.part12.length, speak: true, longTurn: false, card: pics }),
+    steps.push({ kind: 'answer', index: base + i, part: 1, partLabel: '1.2', text, maxSeconds: i === 0 ? t.part12FirstSeconds : t.part12Seconds, numberInPart: i + 1, ofInPart: set.part12.length, speak: true, longTurn: false, card: pics }),
   );
   const i2 = base + set.part12.length;
-  const card2: StepCard = { title: set.part2Topic, bullets: set.part2Questions, bulletsHeading: 'questions' };
+  // Rasmiy: 2-qismda bitta rasm ko'rsatiladi, uni tasvirlash talab qilinmaydi.
+  const card2: StepCard = { title: set.part2Topic, bullets: set.part2Questions, bulletsHeading: 'questions', pictures: [set.part2Picture] };
   steps.push({ kind: 'prep', index: i2, partLabel: '2', seconds: t.part2PrepSeconds, card: card2 });
   steps.push({ kind: 'answer', index: i2, part: 2, partLabel: '2', text: set.part2Topic, maxSeconds: t.part2SpeakSeconds, numberInPart: 1, ofInPart: 1, speak: false, longTurn: true, card: card2 });
   const card3: StepCard = { title: set.part3Statement, table: { for: set.for, against: set.against } };
