@@ -4,7 +4,7 @@ import { localeOf, useLang, useT } from './i18n';
 import { mockMsg } from './locales/mock';
 import { mockObjMsg } from './locales/mockObjective';
 import { cefrMsg } from './locales/cefr';
-import type { ClientGroup } from './ObjectiveQuestions';
+import { choiceLabel, type ClientGroup } from './ObjectiveQuestions';
 import { bandKey, cefrLevel, formatBand } from './mockLogic';
 import { Corrections, PageHeader, type CorrectionItem } from './ui';
 
@@ -72,6 +72,7 @@ interface ObjectiveReview {
 }
 
 interface ObjectiveResult {
+  exam?: 'ielts' | 'cefr';
   module: 'listening' | 'reading';
   variant: string;
   overall: number;
@@ -79,6 +80,9 @@ interface ObjectiveResult {
   total: number;
   secondsUsed: number;
   questions: ObjectiveReview[];
+  /** faqat CEFR */
+  level?: string;
+  parts?: { part: number; score: number; total: number }[];
 }
 
 interface TestContent {
@@ -227,22 +231,52 @@ function CefrAdvice({ r }: { r: CefrResult }) {
   );
 }
 
-/** Listening/Reading natijasi: ball, band, har savol tahlili va matn/skript. */
+/** Listening/Reading natijasi: ball (IELTS band yoki CEFR 0–75), har savol tahlili va matn/skript. */
 function ObjectiveResultView({ r, test }: { r: ObjectiveResult; test: TestContent | null }) {
   const t = useT(mockMsg);
   const to = useT(mockObjMsg);
+  const c = useT(cefrMsg);
   const [onlyWrong, setOnlyWrong] = useState(true);
-  const prompts = new Map<number, string>();
+  const questions = new Map<number, { group: ClientGroup; q: ClientGroup['questions'][number] }>();
   for (const g of [...(test?.passages ?? []).flatMap((p) => p.groups), ...(test?.parts ?? []).flatMap((p) => p.groups)]) {
-    for (const q of g.questions) prompts.set(q.number, q.prompt);
+    for (const q of g.questions) questions.set(q.number, { group: g, q });
   }
+  const label = (n: number, v: string) => choiceLabel(questions.get(n)?.group, questions.get(n)?.q, v);
   const shown = r.questions.filter((q) => !onlyWrong || !q.correct);
-  const title = r.module === 'listening' ? 'IELTS Listening' : `IELTS Reading · ${r.variant === 'general' ? t.general : t.academic}`;
+  const cefr = r.exam === 'cefr';
+  const title = cefr
+    ? `CEFR ${r.module === 'listening' ? 'Listening' : 'Reading'}`
+    : r.module === 'listening' ? 'IELTS Listening' : `IELTS Reading · ${r.variant === 'general' ? t.general : t.academic}`;
 
   return (
     <>
-      <Overall band={r.overall} extra={`${title} · ${to.score(r.score, r.total)}`} />
-      <p className="muted tiny">{to.bandNote}</p>
+      {cefr ? (
+        <>
+          <div className="card" style={{ textAlign: 'center' }}>
+            <div className="muted small">{c.score}</div>
+            <div style={{ fontSize: '3rem', fontWeight: 800, lineHeight: 1.1 }} data-testid="mock-overall">{c.of75(r.overall)}</div>
+            <div className="small"><strong>{c.level(r.level ?? '')}</strong></div>
+            <div className="muted small" style={{ marginTop: 6 }}>{title} · {c.rawOf35(r.score, r.total)}</div>
+          </div>
+          {r.parts && (
+            <div className="card">
+              <h3 style={{ marginBottom: 0 }}>{c.parts}</h3>
+              {r.parts.map((p) => (
+                <div key={p.part} className="spread small" style={{ padding: '8px 0', borderTop: '1px solid var(--border)' }}>
+                  <span>{to.part(p.part)}</span>
+                  <strong>{p.score} / {p.total}</strong>
+                </div>
+              ))}
+            </div>
+          )}
+          <p className="muted tiny">{c.lrNote}</p>
+        </>
+      ) : (
+        <>
+          <Overall band={r.overall} extra={`${title} · ${to.score(r.score, r.total)}`} />
+          <p className="muted tiny">{to.bandNote}</p>
+        </>
+      )}
       <div className="card">
         <div className="spread">
           <h3 style={{ margin: 0 }}>{to.reviewTitle}</h3>
@@ -255,14 +289,14 @@ function ObjectiveResultView({ r, test }: { r: ObjectiveResult; test: TestConten
           {shown.map((q) => (
             <li key={q.number} style={{ padding: '8px 0', borderTop: '1px solid var(--border)' }} className="small">
               <div>
-                {q.correct ? '✅' : '❌'} <strong>{q.number}.</strong> {prompts.get(q.number) ?? ''}
+                {q.correct ? '✅' : '❌'} <strong>{q.number}.</strong> {questions.get(q.number)?.q.prompt ?? ''}
               </div>
               <div>
-                {to.your}: <span className={q.correct ? 'txt-great' : 'txt-low'}>{q.given || to.empty}</span>
+                {to.your}: <span className={q.correct ? 'txt-great' : 'txt-low'}>{q.given ? label(q.number, q.given) : to.empty}</span>
                 {!q.correct && (
                   <>
                     {' · '}
-                    {to.correctAnswer}: <strong>{q.accepted.join(' / ')}</strong>
+                    {to.correctAnswer}: <strong>{q.accepted.map((a) => label(q.number, a)).join(' / ')}</strong>
                   </>
                 )}
               </div>
@@ -292,7 +326,7 @@ function ObjectiveResultView({ r, test }: { r: ObjectiveResult; test: TestConten
             <summary><strong>{to.texts}</strong></summary>
             {test.passages.map((p, i) => (
               <div key={i}>
-                <h4>{to.passage(i + 1)}: {p.title}</h4>
+                <h4>{cefr ? to.part(i + 1) : to.passage(i + 1)}: {p.title}</h4>
                 {p.text.split(/\n\s*\n/).map((para, j) => <p key={j} className="small">{para}</p>)}
               </div>
             ))}
@@ -402,8 +436,19 @@ export function MockHub({ loggedIn, go, onLogin }: { loggedIn: boolean; go: (rou
             <button className="btn btn-primary" disabled={blocked} onClick={() => go('mock/cefr-writing')}>{tc.writing}</button>
             <div className="muted tiny" style={{ marginTop: 4 }}>{tc.writingText}</div>
           </div>
+          <div>
+            <button className="btn btn-primary" disabled={!loggedIn} onClick={() => go('mock/cefr-listening')}>{tc.listening}</button>
+            <div className="muted tiny" style={{ marginTop: 4 }}>{tc.listeningText}</div>
+          </div>
+          <div>
+            <button className="btn btn-primary" disabled={!loggedIn} onClick={() => go('mock/cefr-reading')}>{tc.reading}</button>
+            <div className="muted tiny" style={{ marginTop: 4 }}>{tc.readingText}</div>
+          </div>
+          <div>
+            <button className="btn btn-outline" disabled={blocked} onClick={() => go('mock/cefr-full')}>{tc.full}</button>
+            <div className="muted tiny" style={{ marginTop: 4 }}>{tc.fullText}</div>
+          </div>
         </div>
-        <p className="muted tiny" style={{ margin: 0 }}>{tc.lrSoon}</p>
       </div>
 
       {loggedIn && (
@@ -486,6 +531,7 @@ export function MockResultView({ id, go }: { id: string; go: (route: string) => 
   const t = useT(mockMsg);
   const locale = localeOf(useLang().lang);
   const to = useT(mockObjMsg);
+  const tcefr = useT(cefrMsg);
   const [data, setData] = useState<{ createdAtUtc: string; result: MockResult; test: TestContent | null; sessionId: string | null } | null>(null);
   const [error, setError] = useState('');
 
@@ -499,14 +545,35 @@ export function MockResultView({ id, go }: { id: string; go: (route: string) => 
   if (error) return <>{header}<p className="error" role="alert">{error}</p></>;
   if (!data) return <>{header}<p className="muted">…</p></>;
 
-  if ((data.result as unknown as { exam?: string }).exam === 'cefr') {
+  const exam = (data.result as unknown as { exam?: string }).exam;
+  const module = (data.result as unknown as { module?: string }).module;
+  if (exam === 'cefr' && (module === 'listening' || module === 'reading')) {
+    return (
+      <>
+        {header}
+        <ObjectiveResultView r={data.result as ObjectiveResult} test={data.test} />
+        <p className="muted tiny">{tcefr.disclaimer}</p>
+        <div className="row">
+          {data.sessionId && (
+            <button className="btn btn-primary" onClick={() => go(`mock/session/${data.sessionId}`)}>🏁 {to.sessionTitle}</button>
+          )}
+          <button className={data.sessionId ? 'btn btn-outline' : 'btn btn-primary'} onClick={() => go(`mock/cefr-${module}`)}>{t.again}</button>
+          <button className="btn btn-outline" onClick={() => go('mock')}>{t.backToMock}</button>
+        </div>
+      </>
+    );
+  }
+  if (exam === 'cefr') {
     const cr = data.result as unknown as CefrResult;
     return (
       <>
         {header}
         <CefrResultView r={cr} />
         <div className="row">
-          <button className="btn btn-primary" onClick={() => go(cr.module === 'speaking' ? 'mock/cefr-speaking' : 'mock/cefr-writing')}>{t.again}</button>
+          {data.sessionId && (
+            <button className="btn btn-primary" onClick={() => go(`mock/session/${data.sessionId}`)}>🏁 {to.sessionTitle}</button>
+          )}
+          <button className={data.sessionId ? 'btn btn-outline' : 'btn btn-primary'} onClick={() => go(cr.module === 'speaking' ? 'mock/cefr-speaking' : 'mock/cefr-writing')}>{t.again}</button>
           <button className="btn btn-outline" onClick={() => go('mock')}>{t.backToMock}</button>
         </div>
       </>

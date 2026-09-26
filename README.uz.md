@@ -74,8 +74,20 @@ qolishga** yordam beradigan takrorlash tizimi:
     (180–200); 5 ta mezon;
   - Baholash mezonlari (16.03.2023): Writing 1-qism 12 + 2-qism 24 ball,
     **0–36 → 75 jadvali**, daraja: C1 65–75, B2 51–64, B1 38–50.
-  - Eʼlon qilinmagan ikki narsa natija sahifasida "taxmin" deb yozilgan:
-    Speaking 0–21 ni 75 ga oʻtkazish (chiziqli) va Writing vaqti (60 daqiqa).
+  - **Listening** (6 qism, 35 savol, 45 daqiqa; har yozuv ikki marta,
+    1-qismda har gap ketma-ket ikki marta; javob tanlash, eslatma
+    toʻldirish, soʻzlovchilarni moslashtirish, **xarita** (SVG), uchta
+    parcha, maʼruza) va **Reading** (5 qism, 35 savol, 60 daqiqa):
+    savollar soni va vaqt — VM 16.02.2022 dagi 73-son qarori boʻyicha.
+    Testlar qism-qism yaratiladi va qatʼiy tekshiriladi.
+  - Rasmiy tartibda bu boʻlimlar Rasch metodi bilan baholanadi; biz toʻgʻri
+    javoblar sonini hujjatdagi "toʻgʻri javoblar taxminiy soni" jadvaliga
+    bogʻlaymiz (C1 28–35, B2 18–27, B1 10–17) — daraja jadvalga toʻliq mos.
+  - **Toʻliq CEFR imtihoni**: umumiy ball — 4 boʻlim ballarining oʻrtachasi
+    (rasmiy qoida).
+  - Eʼlon qilinmagan narsalar natija sahifasida "taxmin" deb yozilgan:
+    Speaking 0–21 ni 75 ga oʻtkazish (chiziqli), Listening/Reading oraliq
+    ichidagi aniq ball va Writing vaqti (60 daqiqa).
 - **👩‍🏫 Oʻqituvchi boʻlimi (guruhlar)** — har qanday foydalanuvchi Profil
   sahifasidan oʻqituvchi panelini ochib, guruh yaratadi va oʻquvchilarga
   havola yoki 6 belgili kod yuboradi (0/O, 1/I/L kabi adashtiradigan
@@ -238,8 +250,8 @@ npm run dev
 ### 7. Avtomatik testlar
 
 ```bash
-dotnet test backend/SpeakingCoach.Api.Tests   # backend: 332 ta unit test
-cd frontend/speaking-coach-web && npm test     # frontend: 77 ta vitest testi
+dotnet test backend/SpeakingCoach.Api.Tests   # backend: 359 ta unit test
+cd frontend/speaking-coach-web && npm test     # frontend: 82 ta vitest testi
 ```
 
 Xuddi shu testlar har bir push'da GitHub Actions'da ham ishlaydi

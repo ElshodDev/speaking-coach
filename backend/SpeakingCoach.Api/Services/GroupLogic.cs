@@ -47,7 +47,7 @@ public static class GroupLogic
         {
             ["practice", var k] => PracticeKinds.Contains(k),
             ["mock", "ielts", var m] => MockModules.Contains(m),
-            ["mock", "cefr", "speaking" or "writing"] => true,
+            ["mock", "cefr", var m] => MockModules.Contains(m),
             _ => false,
         };
     }

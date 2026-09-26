@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiJson, postJson } from './api';
 import { msg, useT } from './i18n';
+import { cefrMsg } from './locales/cefr';
 import { mockMsg } from './locales/mock';
 import { mockObjMsg } from './locales/mockObjective';
 import { formatClock } from './mockLogic';
@@ -51,21 +52,36 @@ function speakOne(text: string, voice: SpeechSynthesisVoice | undefined, pitch: 
 type Phase = 'loading' | 'intro' | 'read' | 'play' | 'review' | 'submitting' | 'error';
 
 /**
- * IELTS Listening mock: har qism oldidan 30 s savollarni o'qish, keyin
- * yozuv BIR MARTA eshittiriladi (brauzer ovozi, suhbatda ikki xil ovoz),
- * oxirida 2 daqiqa tekshirish. Skript imtihon tugaguncha ko'rsatilmaydi.
+ * Tinglash tartibi. IELTS: har yozuv BIR marta. CEFR (Multilevel): har yozuv
+ * IKKI marta; 1-qismda har gap ketma-ket ikki marta ("You will hear each
+ * sentence twice"), boshqa qismlarda butun yozuv qaytadan.
+ */
+export function playbackPlan(exam: 'ielts' | 'cefr', part: number, lines: number): number[][] {
+  const all = Array.from({ length: lines }, (_, i) => i);
+  if (exam === 'ielts') return [all];
+  if (part === 1) return [all.flatMap((i) => [i, i])];
+  return [all, all];
+}
+
+/**
+ * Listening mock: har qism oldidan 30 s savollarni o'qish, keyin yozuv
+ * eshittiriladi (brauzer ovozi, suhbatda ikki xil ovoz), oxirida 2 daqiqa
+ * tekshirish. Skript imtihon tugaguncha ko'rsatilmaydi.
  */
 export function MockListening({
   go,
   sessionId,
   onSubmitted,
+  exam = 'ielts',
 }: {
   go: (route: string) => void;
   sessionId?: string;
   onSubmitted?: (id: string) => void;
+  exam?: 'ielts' | 'cefr';
 }) {
   const t = useT(mockObjMsg);
   const tm = useT(mockMsg);
+  const tc = useT(cefrMsg);
   const [test, setTest] = useState<ListeningClient | null>(null);
   const [repeated, setRepeated] = useState(false);
   const [phase, setPhase] = useState<Phase>('loading');
@@ -73,6 +89,7 @@ export function MockListening({
   const [answers, setAnswers] = useState<Answers>({});
   const [countdown, setCountdown] = useState(0);
   const [error, setError] = useState('');
+  const [listenAgain, setListenAgain] = useState(false);
   const cancelled = useRef(false);
   const startedAt = useRef(0);
   const submittedRef = useRef(false);
@@ -80,7 +97,7 @@ export function MockListening({
   answersRef.current = answers;
 
   useEffect(() => {
-    apiJson<{ test: ListeningClient; repeated: boolean }>('/api/mock/ielts/listening/new')
+    apiJson<{ test: ListeningClient; repeated: boolean }>(`/api/mock/${exam}/listening/new`)
       .then(({ test, repeated }) => {
         setTest(test);
         setRepeated(repeated);
@@ -94,7 +111,7 @@ export function MockListening({
       cancelled.current = true;
       stopSpeaking();
     };
-  }, []);
+  }, [exam]);
 
   useEffect(() => {
     if (phase === 'loading' || phase === 'intro' || phase === 'error') return;
@@ -112,7 +129,7 @@ export function MockListening({
     stopSpeaking();
     setPhase('submitting');
     try {
-      const res = await postJson<{ id: string }>('/api/mock/ielts/listening', {
+      const res = await postJson<{ id: string }>(`/api/mock/${exam}/listening`, {
         testId: test.id,
         answers: answersRef.current,
         secondsUsed: Math.round((Date.now() - startedAt.current) / 1000),
@@ -125,7 +142,7 @@ export function MockListening({
       setError(e instanceof Error ? e.message : String(e));
       setPhase('review');
     }
-  }, [test, sessionId, onSubmitted, go]);
+  }, [test, sessionId, onSubmitted, go, exam]);
 
   // Ortga sanash: savollarni o'qish (read) yoki tekshirish (review) vaqti.
   useEffect(() => {
@@ -146,14 +163,25 @@ export function MockListening({
     (async () => {
       const { male, female } = pickVoices(window.speechSynthesis.getVoices());
       const sameVoice = male === female;
-      for (const line of test.parts[part].script) {
-        for (const sentence of splitSentences(line.text)) {
+      const script = test.parts[part].script;
+      const plan = playbackPlan(exam, test.parts[part].part, script.length);
+      for (let round = 0; round < plan.length; round++) {
+        if (round > 0) {
+          await sleep(1500);
           if (!alive || cancelled.current) return;
-          const isMale = line.voice === 'male';
-          await speakOne(sentence, isMale ? male : female, sameVoice ? (isMale ? 0.8 : 1.2) : 1);
+          setListenAgain(true);
         }
-        await sleep(350);
+        for (const idx of plan[round]) {
+          const line = script[idx];
+          for (const sentence of splitSentences(line.text)) {
+            if (!alive || cancelled.current) return;
+            const isMale = line.voice === 'male';
+            await speakOne(sentence, isMale ? male : female, sameVoice ? (isMale ? 0.8 : 1.2) : 1);
+          }
+          await sleep(350);
+        }
       }
+      setListenAgain(false);
       if (!alive || cancelled.current) return;
       if (part + 1 < test.parts.length) {
         await sleep(1500);
@@ -169,10 +197,11 @@ export function MockListening({
       alive = false;
       stopSpeaking();
     };
-  }, [phase, part, test]);
+  }, [phase, part, test, exam]);
 
   const back = sessionId ? undefined : () => go('mock');
-  const header = <PageHeader title={t.listeningTitle} onBack={phase === 'intro' || phase === 'error' || phase === 'loading' ? back : undefined} backLabel={tm.title} />;
+  const title = exam === 'cefr' ? tc.listeningTitle : t.listeningTitle;
+  const header = <PageHeader title={title} onBack={phase === 'intro' || phase === 'error' || phase === 'loading' ? back : undefined} backLabel={tm.title} />;
 
   if (phase === 'loading') return <>{header}<p className="muted" role="status">⏳ {t.preparing}</p></>;
   if (phase === 'error' || !test) return <>{header}<div className="card"><p className="error" role="alert">{error}</p></div></>;
@@ -200,7 +229,7 @@ export function MockListening({
             {t.playSample}
           </button>
           <ul className="small" style={{ margin: 0, paddingLeft: 20 }}>
-            {t.listeningRules.map((r) => <li key={r}>{r}</li>)}
+            {(exam === 'cefr' ? tc.listeningRules : t.listeningRules).map((r) => <li key={r}>{r}</li>)}
           </ul>
           <button
             className="btn btn-primary block"
@@ -215,7 +244,7 @@ export function MockListening({
           >
             {t.begin}
           </button>
-          <p className="muted tiny" style={{ margin: 0 }}>{tm.disclaimer}</p>
+          <p className="muted tiny" style={{ margin: 0 }}>{exam === 'cefr' ? tc.disclaimer : tm.disclaimer}</p>
         </div>
       </>
     );
@@ -235,7 +264,7 @@ export function MockListening({
             <strong>{showAll ? t.answered(answered, all.length) : t.part(current.part)}</strong>
             <span className="muted small" style={{ display: 'block' }} role="status">
               {phase === 'read' && t.readQuestions(countdown)}
-              {phase === 'play' && t.playing}
+              {phase === 'play' && (listenAgain ? tc.listenAgain : t.playing)}
               {phase === 'review' && t.review(formatClock(countdown))}
               {phase === 'submitting' && '⏳'}
             </span>

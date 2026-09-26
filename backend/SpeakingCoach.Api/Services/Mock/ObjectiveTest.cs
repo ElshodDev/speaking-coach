@@ -12,6 +12,10 @@ namespace SpeakingCoach.Api.Services.Mock;
 //   "tfng" — TRUE / FALSE / NOT GIVEN (Reading: ma'lumotni aniqlash);
 //   "ynng" — YES / NO / NOT GIVEN (Reading: muallif fikri);
 //   "gap"  — bo'sh joyni to'ldirish (forma/eslatma/gap), so'z chegarasi bilan.
+// CEFR (Multilevel) uchun qo'shimcha:
+//   "match" — moslashtirish: guruhning umumiy variantlari (A, B, C...),
+//             har savolga bitta harf, har variant bir marta (ortiqchalari bor);
+//   "map"   — xarita: A–H belgilangan joylar, savol — joy nomi, javob — harf.
 
 public record ObjQuestion(
     [property: JsonPropertyName("number")] int Number,
@@ -24,7 +28,20 @@ public record QuestionGroup(
     [property: JsonPropertyName("type")] string Type,
     [property: JsonPropertyName("instructions")] string Instructions,
     [property: JsonPropertyName("maxWords")] int? MaxWords,
-    [property: JsonPropertyName("questions")] List<ObjQuestion> Questions);
+    [property: JsonPropertyName("questions")] List<ObjQuestion> Questions,
+    [property: JsonPropertyName("options")] List<string>? Options = null,
+    [property: JsonPropertyName("map")] MapPlan? Map = null);
+
+/// <summary>Xarita: 5×5 katak. Nomli joylar — mo'ljal ("Entrance"), harfli joylar (A–H) — javob variantlari.</summary>
+public record MapSpot(
+    [property: JsonPropertyName("label")] string Label,
+    [property: JsonPropertyName("x")] int X,
+    [property: JsonPropertyName("y")] int Y);
+
+public record MapPlan(
+    [property: JsonPropertyName("title")] string Title,
+    [property: JsonPropertyName("landmarks")] List<MapSpot> Landmarks,
+    [property: JsonPropertyName("spots")] List<MapSpot> Spots);
 
 public record ReadingPassage(
     [property: JsonPropertyName("title")] string Title,
@@ -188,11 +205,52 @@ public static class ObjectiveValidator
                         if (!q.Answers.Any(a => normalizedSource.Contains(ObjectiveGrading.Normalize(a))))
                             throw new InvalidOperationException($"{q.Number}-savol javobi matnda yo'q: {q.Answers[0]}");
                         break;
+                    case "match":
+                    case "map":
+                        var valid = g.Type == "match"
+                            ? Enumerable.Range(0, g.Options?.Count ?? 0).Select(i => ((char)('A' + i)).ToString()).ToList()
+                            : (g.Map?.Spots.Select(x => x.Label.Trim().ToUpperInvariant()).ToList() ?? []);
+                        if (q.Answers.Count != 1 || !valid.Contains(q.Answers[0].Trim().ToUpperInvariant()))
+                            throw new InvalidOperationException($"{q.Number}-savol javobi variant harfi emas: {string.Join(",", q.Answers)}");
+                        break;
                     default:
                         throw new InvalidOperationException($"Noma'lum savol turi: {g.Type}");
                 }
             }
+            if (g.Type is "match" or "map") ValidateMatching(g);
         }
+    }
+
+    /// <summary>
+    /// Moslashtirish: har variant bir marta ishlatiladi, ortiqcha variantlar
+    /// bor (rasmiy: "There are TWO extra options"), xaritada 5×5 katak ichida
+    /// joylar ustma-ust tushmaydi.
+    /// </summary>
+    private static void ValidateMatching(QuestionGroup g)
+    {
+        var answers = g.Questions.Select(q => q.Answers[0].Trim().ToUpperInvariant()).ToList();
+        if (answers.Distinct().Count() != answers.Count)
+            throw new InvalidOperationException("Moslashtirishda bir variant ikki marta javob bo'lgan");
+        if (g.Type == "match")
+        {
+            if (g.Options is null || g.Options.Count < g.Questions.Count + 2 || g.Options.Count > 10 || g.Options.Any(string.IsNullOrWhiteSpace))
+                throw new InvalidOperationException($"match: variantlar savollardan kamida 2 ta ko'p bo'lishi kerak ({g.Options?.Count ?? 0})");
+            if (g.Questions.Any(q => q.Options is not null))
+                throw new InvalidOperationException("match: variantlar guruhda bo'ladi, savolda emas");
+            return;
+        }
+        var map = g.Map ?? throw new InvalidOperationException("map: xarita yo'q");
+        var letters = map.Spots.Select(x => x.Label.Trim().ToUpperInvariant()).ToList();
+        var expected = Enumerable.Range(0, letters.Count).Select(i => ((char)('A' + i)).ToString()).ToList();
+        if (letters.Count < g.Questions.Count + 2 || letters.Count > 9 || !letters.SequenceEqual(expected))
+            throw new InvalidOperationException("map: joylar A dan boshlab ketma-ket harflangan va savollardan kamida 2 ta ko'p bo'lishi kerak");
+        if (map.Landmarks.Count < 2 || map.Landmarks.Any(l => string.IsNullOrWhiteSpace(l.Label) || l.Label.Length > 24))
+            throw new InvalidOperationException("map: kamida 2 ta nomli mo'ljal kerak");
+        var cells = map.Spots.Concat(map.Landmarks).ToList();
+        if (cells.Any(c => c.X is < 0 or > 4 || c.Y is < 0 or > 4))
+            throw new InvalidOperationException("map: koordinatalar 0–4 oralig'ida bo'lishi kerak");
+        if (cells.Select(c => (c.X, c.Y)).Distinct().Count() != cells.Count)
+            throw new InvalidOperationException("map: ikki joy bitta katakda");
     }
 
     public static int Words(string text) => text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
@@ -202,11 +260,11 @@ public static class ObjectiveValidator
 public static class ClientView
 {
     public record Q(int Number, string Prompt, List<string>? Options);
-    public record G(string Type, string Instructions, int? MaxWords, List<Q> Questions);
+    public record G(string Type, string Instructions, int? MaxWords, List<Q> Questions, List<string>? Options, MapPlan? Map);
 
     public static List<G> Groups(IEnumerable<QuestionGroup> groups) =>
         groups.Select(g => new G(g.Type, g.Instructions, g.MaxWords,
-            g.Questions.Select(q => new Q(q.Number, q.Prompt, q.Options)).ToList())).ToList();
+            g.Questions.Select(q => new Q(q.Number, q.Prompt, q.Options)).ToList(), g.Options, g.Map)).ToList();
 
     public static object Reading(Guid id, ReadingTest t) => new
     {

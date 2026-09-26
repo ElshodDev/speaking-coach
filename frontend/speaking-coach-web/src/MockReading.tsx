@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiJson, postJson } from './api';
 import { msg, useT } from './i18n';
+import { cefrMsg } from './locales/cefr';
 import { mockMsg } from './locales/mock';
 import { mockObjMsg } from './locales/mockObjective';
 import { formatClock } from './mockLogic';
@@ -9,12 +10,14 @@ import { PageHeader } from './ui';
 
 interface ReadingClient {
   id: string;
-  variant: 'academic' | 'general';
+  variant: '' | 'academic' | 'general';
   passages: { title: string; text: string; groups: ClientGroup[] }[];
 }
 
+/** IELTS va CEFR Reading ikkalasi ham 60 daqiqa (CEFR: VM 16.02.2022 dagi 73-son qarori). */
 const MINUTES = 60;
 const DRAFT = 'speakingCoach.mockReading';
+const draftKey = (exam: string) => (exam === 'ielts' ? DRAFT : `${DRAFT}.${exam}`);
 
 interface Draft {
   testId: string;
@@ -22,25 +25,26 @@ interface Draft {
   answers: Answers;
 }
 
-function loadDraft(): Draft | null {
+function loadDraft(exam: string): Draft | null {
   try {
-    const d = JSON.parse(localStorage.getItem(DRAFT) ?? 'null') as Draft | null;
+    const d = JSON.parse(localStorage.getItem(draftKey(exam)) ?? 'null') as Draft | null;
     return d && typeof d.testId === 'string' ? d : null;
   } catch {
     return null;
   }
 }
-function saveDraft(d: Draft | null) {
+function saveDraft(exam: string, d: Draft | null) {
   try {
-    if (d) localStorage.setItem(DRAFT, JSON.stringify(d));
-    else localStorage.removeItem(DRAFT);
+    if (d) localStorage.setItem(draftKey(exam), JSON.stringify(d));
+    else localStorage.removeItem(draftKey(exam));
   } catch {
     // qoralamasiz ham ishlaydi
   }
 }
 
 /**
- * IELTS Reading mock: 3 matn, 40 savol, 60 daqiqa. Matn va savollar
+ * Reading mock. IELTS: 3 matn, 40 savol; CEFR: 5 qism, 35 savol; 60 daqiqa.
+ * (IELTS) Matn va savollar
  * o'rtasida bitta tugma bilan o'tiladi (telefonda ikkalasi sig'maydi).
  * Javoblar shu qurilmada saqlanadi — sahifa yangilansa ham yo'qolmaydi.
  */
@@ -49,14 +53,17 @@ export function MockReading({
   go,
   sessionId,
   onSubmitted,
+  exam = 'ielts',
 }: {
   variant: 'academic' | 'general';
   go: (route: string) => void;
   sessionId?: string;
   onSubmitted?: (id: string) => void;
+  exam?: 'ielts' | 'cefr';
 }) {
   const t = useT(mockObjMsg);
   const tm = useT(mockMsg);
+  const tc = useT(cefrMsg);
   const [test, setTest] = useState<ReadingClient | null>(null);
   const [repeated, setRepeated] = useState(false);
   const [answers, setAnswers] = useState<Answers>({});
@@ -70,11 +77,11 @@ export function MockReading({
   const autoRef = useRef(false);
 
   useEffect(() => {
-    apiJson<{ test: ReadingClient; repeated: boolean }>(`/api/mock/ielts/reading/new?variant=${variant}`)
+    apiJson<{ test: ReadingClient; repeated: boolean }>(exam === 'cefr' ? '/api/mock/cefr/reading/new' : `/api/mock/ielts/reading/new?variant=${variant}`)
       .then(({ test, repeated }) => {
         setTest(test);
         setRepeated(repeated);
-        const d = loadDraft();
+        const d = loadDraft(exam);
         if (d && d.testId === test.id && Date.now() < d.startedAt + (MINUTES + 5) * 60_000) {
           setAnswers(d.answers);
           setStartedAt(d.startedAt);
@@ -87,11 +94,11 @@ export function MockReading({
         setError(e instanceof Error ? e.message : String(e));
         setStatus('error');
       });
-  }, [variant]);
+  }, [variant, exam]);
 
   useEffect(() => {
-    if (status === 'exam' && test) saveDraft({ testId: test.id, startedAt, answers });
-  }, [status, test, startedAt, answers]);
+    if (status === 'exam' && test) saveDraft(exam, { testId: test.id, startedAt, answers });
+  }, [status, test, startedAt, answers, exam]);
 
   useEffect(() => {
     if (status !== 'exam') return;
@@ -112,13 +119,13 @@ export function MockReading({
     submittedRef.current = true;
     setStatus('submitting');
     try {
-      const res = await postJson<{ id: string }>('/api/mock/ielts/reading', {
+      const res = await postJson<{ id: string }>(`/api/mock/${exam}/reading`, {
         testId: test.id,
         answers,
         secondsUsed: Math.round((Date.now() - startedAt) / 1000),
         sessionId,
       });
-      saveDraft(null);
+      saveDraft(exam, null);
       if (onSubmitted) onSubmitted(res.id);
       else go(`mock/result/${res.id}`);
     } catch (e) {
@@ -126,9 +133,10 @@ export function MockReading({
       setError(e instanceof Error ? e.message : String(e));
       setStatus('exam');
     }
-  }, [test, answers, startedAt, sessionId, onSubmitted, go]);
+  }, [test, answers, startedAt, sessionId, onSubmitted, go, exam]);
 
-  const left = startedAt + MINUTES * 60_000 - now;
+  // `now` sahifa ochilgan paytdan, `startedAt` test kelgan paytdan — boshida 60:01 chiqmasin.
+  const left = Math.min(MINUTES * 60_000, startedAt + MINUTES * 60_000 - now);
   useEffect(() => {
     if (status === 'exam' && test && left <= 0 && !autoRef.current) {
       autoRef.current = true;
@@ -136,7 +144,7 @@ export function MockReading({
     }
   }, [status, test, left, submit]);
 
-  const title = `${t.readingTitle} · ${variant === 'general' ? tm.general : tm.academic}`;
+  const title = exam === 'cefr' ? tc.readingTitle : `${t.readingTitle} · ${variant === 'general' ? tm.general : tm.academic}`;
   const back = sessionId ? undefined : () => go('mock');
 
   if (status === 'loading') {
@@ -193,7 +201,7 @@ export function MockReading({
         <div className="chips" style={{ marginTop: 8 }}>
           {test.passages.map((_, i) => (
             <button key={i} aria-pressed={passage === i} onClick={() => setPassage(i)}>
-              {t.passage(i + 1)}
+              {exam === 'cefr' ? t.part(i + 1) : t.passage(i + 1)}
             </button>
           ))}
         </div>

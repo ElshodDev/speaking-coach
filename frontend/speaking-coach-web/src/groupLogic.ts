@@ -10,6 +10,8 @@ export const ASSIGNMENT_KINDS = [
   'mock:ielts:reading',
   'mock:ielts:writing',
   'mock:ielts:speaking',
+  'mock:cefr:listening',
+  'mock:cefr:reading',
   'mock:cefr:writing',
   'mock:cefr:speaking',
 ] as const;
@@ -38,6 +40,8 @@ export function routeFor(kind: string): string {
     'mock:ielts:reading': 'mock/reading-academic',
     'mock:ielts:writing': 'mock/writing-academic',
     'mock:ielts:speaking': 'mock/speaking',
+    'mock:cefr:listening': 'mock/cefr-listening',
+    'mock:cefr:reading': 'mock/cefr-reading',
     'mock:cefr:writing': 'mock/cefr-writing',
     'mock:cefr:speaking': 'mock/cefr-speaking',
   };

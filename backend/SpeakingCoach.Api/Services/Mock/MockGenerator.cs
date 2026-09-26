@@ -6,6 +6,8 @@ public interface IMockGenerator
 {
     Task<ReadingTest> GenerateReadingAsync(string variant, CancellationToken ct = default);
     Task<ListeningTest> GenerateListeningAsync(CancellationToken ct = default);
+    Task<ReadingTest> GenerateCefrReadingAsync(CancellationToken ct = default);
+    Task<ListeningTest> GenerateCefrListeningAsync(CancellationToken ct = default);
 }
 
 /// <summary>
@@ -14,7 +16,7 @@ public interface IMockGenerator
 /// so'rovdan ko'ra tezroq va ishonchliroq. Har bir bo'lak qat'iy
 /// tekshiriladi (ObjectiveValidator); o'tmasa — bir marta qayta yaratiladi.
 /// </summary>
-public class GeminiMockGenerator(GeminiClient gemini, ILogger<GeminiMockGenerator> logger) : IMockGenerator
+public partial class GeminiMockGenerator(GeminiClient gemini, ILogger<GeminiMockGenerator> logger) : IMockGenerator
 {
     private static readonly string[] AcademicTopics =
     [
@@ -103,7 +105,7 @@ public class GeminiMockGenerator(GeminiClient gemini, ILogger<GeminiMockGenerato
             """;
     }
 
-    private async Task<T> AskAsync<T>(string prompt, Action<T> validate, CancellationToken ct)
+    private async Task<T> AskAsync<T>(string prompt, Action<T> validate, CancellationToken ct, int attempts = 2)
     {
         for (var attempt = 1; ; attempt++)
         {
@@ -119,7 +121,7 @@ public class GeminiMockGenerator(GeminiClient gemini, ILogger<GeminiMockGenerato
                 validate(result);
                 return result;
             }
-            catch (InvalidOperationException ex) when (attempt < 2)
+            catch (InvalidOperationException ex) when (attempt < attempts)
             {
                 logger.LogWarning("Mock bo'lagi yaroqsiz, qayta yaratilmoqda: {Error}", ex.Message);
             }

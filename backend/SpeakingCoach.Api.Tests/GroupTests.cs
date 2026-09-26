@@ -35,7 +35,9 @@ public class GroupTests
     [InlineData("mock:ielts:reading", true)]
     [InlineData("mock:ielts:speaking", true)]
     [InlineData("mock:cefr:writing", true)]
-    [InlineData("mock:cefr:listening", false)]   // CEFR Listening hali yo'q
+    [InlineData("mock:cefr:listening", true)]
+    [InlineData("mock:cefr:reading", true)]
+    [InlineData("mock:cefr:full", false)]
     [InlineData("mock:toefl:writing", false)]
     [InlineData("", false)]
     [InlineData(null, false)]

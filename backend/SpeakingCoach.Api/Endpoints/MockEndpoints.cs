@@ -208,18 +208,20 @@ public static class MockEndpoints
         }).RequireRateLimiting("ai");
 
         // ---- Listening va Reading: test bankdan (bo'lmasa — AI yaratadi) ----
-        app.MapGet("/api/mock/ielts/{module}/new", async (
-            string module, HttpRequest request, AuthService auth, AppDbContext db, AdminOptions admins, IConfiguration config,
+        // IELTS va CEFR uchun bitta yo'l: /api/mock/{ielts|cefr}/{listening|reading}/new
+        // (/api/mock/cefr/speaking/new kabi aniq yo'llar ustun turadi).
+        app.MapGet("/api/mock/{exam}/{module}/new", async (
+            string exam, string module, HttpRequest request, AuthService auth, AppDbContext db, AdminOptions admins, IConfiguration config,
             IMockGenerator generator, ILogger<Program> logger, string? variant) =>
         {
-            if (module is not ("listening" or "reading")) return Results.NotFound();
+            if (exam is not ("ielts" or "cefr") || module is not ("listening" or "reading")) return Results.NotFound();
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return LoginFirst(request);
-            var v = module == "reading" ? (variant == IeltsBank.General ? IeltsBank.General : IeltsBank.Academic) : "";
+            var v = exam == "ielts" && module == "reading" ? (variant == IeltsBank.General ? IeltsBank.General : IeltsBank.Academic) : "";
 
             var done = (await RecentAsync(db, user.Id)).Where(r => r.Module == module).Select(r => r.SetId).ToHashSet();
             var candidates = await db.MockTests
-                .Where(t => t.Exam == "ielts" && t.Module == module && t.Variant == v)
+                .Where(t => t.Exam == exam && t.Module == module && t.Variant == v)
                 .OrderBy(t => t.CreatedAtUtc)
                 .Select(t => new { t.Id, t.Payload })
                 .ToListAsync();
@@ -249,43 +251,51 @@ public static class MockEndpoints
                 }
                 try
                 {
-                    object content = module == "reading"
-                        ? await generator.GenerateReadingAsync(v, request.HttpContext.RequestAborted)
-                        : await generator.GenerateListeningAsync(request.HttpContext.RequestAborted);
+                    var ct = request.HttpContext.RequestAborted;
+                    object content = (exam, module) switch
+                    {
+                        ("cefr", "reading") => await generator.GenerateCefrReadingAsync(ct),
+                        ("cefr", _) => await generator.GenerateCefrListeningAsync(ct),
+                        (_, "reading") => await generator.GenerateReadingAsync(v, ct),
+                        _ => await generator.GenerateListeningAsync(ct),
+                    };
                     id = Guid.NewGuid();
                     payload = JsonSerializer.Serialize(content, content.GetType(), GeminiMockGenerator.Web);
                     db.MockTests.Add(new MockTest
                     {
-                        Id = id, Exam = "ielts", Module = module, Variant = v, Payload = payload,
+                        Id = id, Exam = exam, Module = module, Variant = v, Payload = payload,
                         CreatedByUserId = user.Id, CreatedAtUtc = DateTime.UtcNow,
                     });
                     await db.SaveChangesAsync();
-                    logger.LogInformation("Yangi IELTS {Module} testi yaratildi: {Id}", module, id);
+                    logger.LogInformation("Yangi {Exam} {Module} testi yaratildi: {Id}", exam, module, id);
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
-                    logger.LogError(ex, "IELTS {Module} testini yaratib bo'lmadi", module);
+                    logger.LogError(ex, "{Exam} {Module} testini yaratib bo'lmadi", exam, module);
                     return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);
                 }
             }
             return Results.Ok(new { test = ClientPayload(module, id, payload), repeated = false });
         });
 
-        app.MapPost("/api/mock/ielts/{module}", async (
-            string module, ObjectiveMockRequest body, HttpRequest request, AuthService auth, AppDbContext db) =>
+        app.MapPost("/api/mock/{exam}/{module}", async (
+            string exam, string module, ObjectiveMockRequest body, HttpRequest request, AuthService auth, AppDbContext db) =>
         {
-            if (module is not ("listening" or "reading")) return Results.NotFound();
+            if (exam is not ("ielts" or "cefr") || module is not ("listening" or "reading")) return Results.NotFound();
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return LoginFirst(request);
-            var test = await db.MockTests.FirstOrDefaultAsync(t => t.Id == body.TestId && t.Module == module);
+            var test = await db.MockTests.FirstOrDefaultAsync(t => t.Id == body.TestId && t.Module == module && t.Exam == exam);
             if (test is null) return Results.BadRequest(request.Error("mock.bad_set"));
 
             var answers = (body.Answers ?? new())
                 .Where(kv => kv.Key.Length <= 3 && kv.Value is not null)
                 .ToDictionary(kv => kv.Key, kv => kv.Value.Length > 200 ? kv.Value[..200] : kv.Value);
-            var result = GradeObjective(module, test, answers, Math.Clamp(body.SecondsUsed, 0, 3 * 60 * 60));
-            var id = await SaveAsync(db, null!, user.Id, module, test.Id.ToString(), test.Variant.Length == 0 ? null : test.Variant,
-                MockLimit.CleanSession(body.SessionId), result, [], null);
+            var seconds = Math.Clamp(body.SecondsUsed, 0, 3 * 60 * 60);
+            var sessionId = MockLimit.CleanSession(body.SessionId);
+            var id = exam == "cefr"
+                ? await SaveAsync(db, null!, "cefr", user.Id, module, test.Id.ToString(), null, sessionId, GradeCefrObjective(module, test, answers, seconds), [], null)
+                : await SaveAsync(db, null!, user.Id, module, test.Id.ToString(), test.Variant.Length == 0 ? null : test.Variant,
+                    sessionId, GradeObjective(module, test, answers, seconds), [], null);
             return Results.Ok(new { id });
         });
 
@@ -302,14 +312,25 @@ public static class MockEndpoints
                 .Take(300)
                 .Select(a => new { a.Id, a.CreatedAtUtc, a.PromptData, a.ResponseData })
                 .ToListAsync();
-            var modules = rows
+            var inSession = rows
                 .Select(r => new { r.Id, r.CreatedAtUtc, P = ParsePrompt(r.PromptData), Overall = ReadOverall(r.ResponseData) })
                 .Where(r => r.P.SessionId == sid)
+                .ToList();
+            var exam = inSession.FirstOrDefault()?.P.Exam ?? "ielts";
+            var modules = inSession
+                .Where(r => r.P.Exam == exam)
                 .GroupBy(r => r.P.Module)
                 .Select(g => g.First())
                 .ToDictionary(r => r.P.Module, r => new { r.Id, r.CreatedAtUtc, overall = r.Overall, variant = r.P.Variant });
+            if (exam == "cefr")
+            {
+                // Rasmiy: daraja 4 bo'lim ballarining o'rtachasi bo'yicha aniqlanadi.
+                var scores = FullMock.Modules.Select(m => modules.TryGetValue(m, out var x) ? x.overall : null).ToList();
+                int? total = scores.Any(v => v is null) ? null : CefrObjective.Overall(scores.Select(v => (int)v!.Value).ToList());
+                return Results.Ok(new { sessionId = sid, exam, modules, overall = total, level = total is int t ? CefrScale.Level(t) : null });
+            }
             decimal? overall = FullMock.Overall(modules.ToDictionary(kv => kv.Key, kv => kv.Value.overall));
-            return Results.Ok(new { sessionId = sid, modules, overall });
+            return Results.Ok(new { sessionId = sid, exam, modules, overall, level = (string?)null });
         });
 
         // ---- CEFR (Multilevel): Speaking va Writing ----
@@ -519,6 +540,21 @@ public static class MockEndpoints
         var score = review.Count(q => q.Correct);
         return new ObjectiveResult("ielts", module, test.Id.ToString(), test.Variant, score, review.Count,
             ObjectiveGrading.BandFor(score, anchors, review.Count), seconds, review);
+    }
+
+    /// <summary>CEFR Listening/Reading: to'g'ri javoblar soni, 75 ballik taxminiy natija va daraja.</summary>
+    public static CefrObjectiveResult GradeCefrObjective(string module, MockTest test, IReadOnlyDictionary<string, string> answers, int seconds)
+    {
+        var layout = module == "reading" ? CefrObjective.ReadingLayout : CefrObjective.ListeningLayout;
+        var groups = module == "reading"
+            ? JsonSerializer.Deserialize<ReadingTest>(test.Payload, GeminiMockGenerator.Web)!.Passages.SelectMany(p => p.Groups).ToList()
+            : JsonSerializer.Deserialize<ListeningTest>(test.Payload, GeminiMockGenerator.Web)!.Parts.SelectMany(p => p.Groups).ToList();
+        var review = ObjectiveGrading.Grade(groups, answers);
+        var score = review.Count(q => q.Correct);
+        var overall = CefrObjective.Score(score, review.Count);
+        var parts = layout.Select(l => new CefrPartScore(l.Part,
+            review.Count(q => q.Correct && q.Number >= l.First && q.Number < l.First + l.Count), l.Count)).ToList();
+        return new CefrObjectiveResult("cefr", module, test.Id.ToString(), "", score, review.Count, overall, CefrScale.Level(overall), seconds, parts, review);
     }
 
     public record MockPrompt(string Exam, string Module, string SetId, string? Variant, string? SessionId = null);

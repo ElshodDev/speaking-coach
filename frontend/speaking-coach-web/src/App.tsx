@@ -198,10 +198,16 @@ function App() {
     page = <TasksPage key={userKey} go={go} />;
   } else if (section === 'mock' && sub === 'session' && third && loggedIn) {
     page = <MockSessionView key={`${third}-${userKey}`} sessionId={third} go={go} />;
-  } else if (section === 'mock' && sub === 'full' && (third === 'academic' || third === 'general') && fourth && loggedIn) {
+  } else if (section === 'mock' && sub === 'full' && (third === 'academic' || third === 'general' || third === 'cefr') && fourth && loggedIn) {
     page = <MockFullStep key={route} variant={third} sessionId={fourth} step={Number(fifth ?? 0) || 0} go={go} />;
   } else if (section === 'mock' && sub === 'full' && loggedIn) {
     page = <MockFullStart go={go} />;
+  } else if (section === 'mock' && sub === 'cefr-full' && loggedIn) {
+    page = <MockFullStart go={go} exam="cefr" />;
+  } else if (section === 'mock' && sub === 'cefr-listening' && loggedIn) {
+    page = <MockListening key={`cl-${userKey}`} exam="cefr" go={go} />;
+  } else if (section === 'mock' && sub === 'cefr-reading' && loggedIn) {
+    page = <MockReading key={`cr-${userKey}`} exam="cefr" variant="academic" go={go} />;
   } else if (section === 'mock' && sub === 'listening' && loggedIn) {
     page = <MockListening key={`ml-${userKey}`} go={go} />;
   } else if (section === 'mock' && (sub === 'reading-academic' || sub === 'reading-general') && loggedIn) {
