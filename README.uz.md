@@ -62,17 +62,18 @@ qolishga** yordam beradigan takrorlash tizimi:
     Academic diagramma yoki GT xati + esse) — Gemini 4 ta rasmiy mezon
     boʻyicha baholaydi, band'ni server hisoblaydi. Hammasi "taxminiy" deb
     belgilanadi. CEFR (Multilevel) rasmiy format tasdiqlangach qoʻshiladi.
-- **🇺🇿 Mock imtihon (CEFR Multilevel)** — **Speaking**: 1.1 (3 savol, 30 s),
-  1.2 (ikki rasm — soʻz bilan tavsiflangan, 3 savol), 2 (mavzu va 3 savol,
-  1 daqiqa tayyorgarlik + 2 daqiqa), 3 (bahsli fikr va "tarafdor/qarshi"
-  jadvali, 1 + 2 daqiqa). **Writing**: bitta vaziyat (email), 1.1 doʻstga xat
-  (50–70 soʻz), 1.2 rasmiy xat (120–150), 2 onlayn muhokama posti (180–200),
-  60 daqiqa, soʻz oraligʻi tekshiruvi, qoralama saqlanadi. Natija **0–75 ball
-  va rasmiy daraja chegaralari** (uzbmb.uz: C1 65–75, B2 51–64, B1 38–50).
-  Qismlar formati joriy tayyorlov materiallari boʻyicha (2024-yil 2-yarmidan
-  yangi format); Speaking qismlari 5/5/5/6 → 75; Writing vazifalari ulushi
-  rasman eʼlon qilinmagan — hajmga mutanosib 1 : 2 : 3 olingan (natija
-  sahifasida yozilgan). Listening va Reading formati tasdiqlangach qoʻshiladi.
+- **🇺🇿 Mock imtihon (CEFR Multilevel)** — **baholash rasmiy hujjat boʻyicha**
+  (Bilim va malakalarni baholash agentligi, 16.03.2023, uzbmb.uz): xom ball
+  (0–36, ekspertlar ballarining oʻrtachasi) **rasmiy jadval** bilan 0–75 ga
+  aylantiriladi; Writing = 1-topshiriq (12 ball) + 2-topshiriq (24 ball);
+  Speaking — yaxlit baho; daraja: C1 65–75, B2 51–64, B1 38–50.
+  **Speaking**: 1.1 (3 savol), 1.2 (ikki rasm — soʻz bilan tavsif, 3 savol),
+  2 (mavzu + 3 savol, 1 + 2 daqiqa), 3 (bahsli fikr + "tarafdor/qarshi"
+  jadvali, 1 + 2 daqiqa). **Writing**: bitta vaziyat, 1.1 doʻstga xat (50–70)
+  va 1.2 rasmiy xat (120–150) birgalikda 1-topshiriq, 2 — onlayn muhokama
+  posti (180–200); 60 daqiqa, soʻz oraligʻi tekshiruvi, qoralama saqlanadi.
+  Topshiriqlar tuzilishi — 2024-yilgi yangi format boʻyicha tayyorlov
+  materiallaridan; ball hisobi — rasmiy. Listening va Reading keyin.
 - **🛠 Admin panel** — faqat `Admin:Emails` ro'yxatidagi egasi uchun:
   ro'yxatdan o'tishlar, kunlik/haftalik/oylik faol foydalanuvchilar, mashq
   turlari — faqat umumiy sonlar va niqoblangan emaillar. **Tizim holati**
@@ -220,7 +221,7 @@ npm run dev
 ### 7. Avtomatik testlar
 
 ```bash
-dotnet test backend/SpeakingCoach.Api.Tests   # backend: 273 ta unit test
+dotnet test backend/SpeakingCoach.Api.Tests   # backend: 298 ta unit test
 cd frontend/speaking-coach-web && npm test     # frontend: 67 ta vitest testi
 ```
 

@@ -3,9 +3,10 @@ namespace SpeakingCoach.Api.Services.Mock;
 // CEFR (Multilevel, O'zbekiston) formatidagi mock savollar. Matnlar ORIGINAL.
 //
 // Manbalar va ishonch darajasi (README'da ham yozilgan):
-// - RASMIY (uzbmb.uz, "Multilevel-bm.pdf"): har ko'nikma 0–75 ball;
-//   C1 65–75, B2 51–64, B1 38–50, B1 dan past 0–37. Writing va Speaking
-//   mezonlar bilan baholanadi.
+// - RASMIY (uzbmb.uz, "Multilevel-bm.pdf", 16.03.2023): 0–75 shkala, xom
+//   ball (0–36) → 75 jadvali, Writing 12 + 24 ball, Speaking — yaxlit baho,
+//   daraja chegaralari (pastda — CefrScale). UZA (18.12.2023): yozma qism
+//   2 soat 45 daqiqa (Listening 35 + Reading 35 savol + Writing 2 topshiriq).
 // - TAYYORLOV MATERIALLARI (2024-yil 2-yarmidan "yangi format"; bir necha
 //   mustaqil manba mos keladi):
 //   Writing — umumiy vaziyat (email); 1.1: do'stga xat 50–70 so'z;
@@ -14,7 +15,6 @@ namespace SpeakingCoach.Api.Services.Mock;
 //   Speaking — 1.1: 3 savol (tayyorgarliksiz, 30 s); 1.2: ikki rasm, 3 savol
 //   (30 s); 2: mavzu + 3 yo'naltiruvchi savol (1 daqiqa tayyorgarlik,
 //   2 daqiqa); 3: bahsli fikr + "for/against" jadvali (1 daqiqa + 2 daqiqa).
-//   Ball: 1.1, 1.2, 2 — 0–5 dan, 3 — 0–6 (jami 21) → 75 ballik shkalaga.
 
 public record CefrPicture(string Emoji, string Caption);
 
@@ -158,11 +158,22 @@ public static class CefrBank
 }
 
 /// <summary>
-/// CEFR 0–75 shkala va daraja (rasmiy chegaralar — uzbmb.uz).
+/// CEFR 0–75 shkala — RASMIY: "Chet tilini bilish darajasini baholash ko'p
+/// darajali test formati uchun baholash mezonlari" (Bilim va malakalarni
+/// baholash agentligi ilmiy-metodik kengashi, 16.03.2023; uzbmb.uz,
+/// Multilevel-bm.pdf):
+/// - Writing va Speaking: ekspertlar ballarining o'rta arifmetigi (0–36)
+///   quyidagi jadval bo'yicha 0–75 ga aylantiriladi;
+/// - Writing: 1-topshiriq — 33% (12 ball), 2-topshiriq — 67% (24 ball);
+/// - Speaking: topshiriqlar bo'yicha umumlashgan (yaxlit) baho;
+/// - daraja: C1 65–75, B2 51–64, B1 38–50, B1 dan past 0–37.
 /// </summary>
 public static class CefrScale
 {
     public const int Max = 75;
+    public const int RawMax = 36;
+    public const int WritingTask1Max = 12;
+    public const int WritingTask2Max = 24;
 
     public static string Level(int score) => score switch
     {
@@ -172,22 +183,27 @@ public static class CefrScale
         _ => "below B1",
     };
 
-    /// <summary>Speaking: 1.1, 1.2, 2 — 0–5; 3 — 0–6 (jami 21) → 0–75.</summary>
-    public static readonly int[] SpeakingMax = [5, 5, 5, 6];
+    // Rasmiy jadvalning 27.0 dan yuqori qismi (undan pastda — har 0.5 xom ball
+    // uchun +1: 0.1–0.5 → 10, …, 26.6–27.0 → 63).
+    private static readonly (decimal UpTo, int Score)[] Top =
+    [
+        (28.0m, 64), (29.0m, 65), (30.0m, 66), (30.5m, 67), (31.0m, 68), (31.5m, 69),
+        (32.0m, 70), (32.5m, 71), (33.0m, 72), (34.0m, 73), (35.0m, 74), (36.0m, 75),
+    ];
 
-    public static int SpeakingScore(IReadOnlyList<int> parts)
+    /// <summary>Xom ball (0–36, o'nli bo'lishi mumkin) → 0–75 (rasmiy jadval).</summary>
+    public static int Convert(decimal raw)
     {
-        var raw = parts.Select((p, i) => Math.Clamp(p, 0, SpeakingMax[i])).Sum();
-        return (int)Math.Round(raw * (decimal)Max / SpeakingMax.Sum(), MidpointRounding.AwayFromZero);
+        raw = Math.Clamp(raw, 0m, RawMax);
+        if (raw == 0m) return 0;
+        if (raw <= 27.0m) return 9 + (int)Math.Ceiling(raw / 0.5m);
+        foreach (var (upTo, score) in Top)
+        {
+            if (raw <= upTo) return score;
+        }
+        return Max;
     }
 
-    /// <summary>
-    /// Writing vazifalarining ulushi — RASMIY E'LON QILINMAGAN. Biz so'z
-    /// hajmiga mutanosib 1 : 2 : 3 nisbatini ishlatamiz (1.1 — 12.5,
-    /// 1.2 — 25, 2 — 37.5 ball). Har vazifa 4 mezon × 0–5 = 0–20 bilan baholanadi.
-    /// </summary>
-    public static readonly decimal[] WritingWeights = [12.5m, 25m, 37.5m];
-
-    public static int WritingScore(IReadOnlyList<int> taskRaw20) =>
-        (int)Math.Round(taskRaw20.Select((r, i) => Math.Clamp(r, 0, 20) / 20m * WritingWeights[i]).Sum(), MidpointRounding.AwayFromZero);
+    public static int WritingScore(int task1Raw12, int task2Raw24) =>
+        Convert(Math.Clamp(task1Raw12, 0, WritingTask1Max) + Math.Clamp(task2Raw24, 0, WritingTask2Max));
 }

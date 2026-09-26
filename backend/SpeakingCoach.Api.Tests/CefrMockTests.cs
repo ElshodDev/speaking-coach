@@ -17,23 +17,62 @@ public class CefrMockTests
     [InlineData(0, "below B1")]
     public void Official_level_cut_offs(int score, string level) => Assert.Equal(level, CefrScale.Level(score));
 
+    [Theory]
+    // Rasmiy jadval (uzbmb.uz, Multilevel-bm.pdf, 16.03.2023) — har bir qator chegarasi.
+    [InlineData(0.0, 0)]
+    [InlineData(0.1, 10)]
+    [InlineData(0.5, 10)]
+    [InlineData(0.6, 11)]
+    [InlineData(10.0, 29)]
+    [InlineData(14.0, 37)]
+    [InlineData(14.1, 38)]
+    [InlineData(20.5, 50)]
+    [InlineData(20.6, 51)]
+    [InlineData(26.6, 63)]
+    [InlineData(27.0, 63)]
+    [InlineData(27.1, 64)]
+    [InlineData(28.0, 64)]
+    [InlineData(28.1, 65)]
+    [InlineData(29.5, 66)]
+    [InlineData(30.3, 67)]
+    [InlineData(30.6, 68)]
+    [InlineData(31.2, 69)]
+    [InlineData(31.9, 70)]
+    [InlineData(32.4, 71)]
+    [InlineData(33.0, 72)]
+    [InlineData(33.9, 73)]
+    [InlineData(34.5, 74)]
+    [InlineData(36.0, 75)]
+    [InlineData(40.0, 75)]
+    public void Official_raw_to_75_table(double raw, int score) => Assert.Equal(score, CefrScale.Convert((decimal)raw));
+
     [Fact]
-    public void Speaking_raw_21_maps_to_75()
+    public void Table_is_monotonic_and_integer_raw_bands_match_levels()
     {
-        Assert.Equal(75, CefrScale.SpeakingScore([5, 5, 5, 6]));
-        Assert.Equal(0, CefrScale.SpeakingScore([0, 0, 0, 0]));
-        Assert.Equal(54, CefrScale.SpeakingScore([4, 4, 3, 4]));   // 15/21·75 = 53.57 → 54
-        Assert.Equal(75, CefrScale.SpeakingScore([9, 9, 9, 9]));   // chegaradan oshgani kesiladi
+        var prev = -1;
+        for (var r = 0m; r <= 36m; r += 0.1m)
+        {
+            var s = CefrScale.Convert(r);
+            Assert.True(s >= prev);
+            prev = s;
+        }
+        Assert.Equal("below B1", CefrScale.Level(CefrScale.Convert(14)));
+        Assert.Equal("B1", CefrScale.Level(CefrScale.Convert(15)));
+        Assert.Equal("B1", CefrScale.Level(CefrScale.Convert(20)));
+        Assert.Equal("B2", CefrScale.Level(CefrScale.Convert(21)));
+        Assert.Equal("B2", CefrScale.Level(CefrScale.Convert(28)));
+        Assert.Equal("C1", CefrScale.Level(CefrScale.Convert(29)));
     }
 
     [Fact]
-    public void Writing_weights_sum_to_75_and_follow_task_size()
+    public void Writing_uses_official_12_plus_24_points()
     {
-        Assert.Equal(75m, CefrScale.WritingWeights.Sum());
-        Assert.Equal(75, CefrScale.WritingScore([20, 20, 20]));
-        Assert.Equal(0, CefrScale.WritingScore([0, 0, 0]));
-        // 1.1: 10/20·12.5 = 6.25; 1.2: 15/20·25 = 18.75; 2: 16/20·37.5 = 30 → 55
-        Assert.Equal(55, CefrScale.WritingScore([10, 15, 16]));
+        Assert.Equal(12, CefrScale.WritingTask1Max);
+        Assert.Equal(24, CefrScale.WritingTask2Max);
+        Assert.Equal(75, CefrScale.WritingScore(12, 24));
+        Assert.Equal(0, CefrScale.WritingScore(0, 0));
+        Assert.Equal(55, CefrScale.WritingScore(8, 15));    // 23 → 55
+        Assert.Equal(75, CefrScale.WritingScore(99, 99));   // chegaradan oshgani kesiladi
     }
 
     [Fact]
@@ -73,34 +112,38 @@ public class CefrMockTests
     private static PartScore P(int s) => new(s, "because");
 
     [Fact]
-    public void Speaking_result_is_computed_on_the_server()
+    public void Speaking_result_uses_one_holistic_score_and_the_official_table()
     {
         var set = CefrBank.FindSpeaking("c1")!;
         var answers = Enumerable.Range(0, 8).Select(i => new SpokenAnswer(i, i == 7 ? null : [1, 2, 3], "audio/webm", 20)).ToList();
-        var ai = new CefrSpeakingAi([new(0, "I like reading."), new(7, "should be ignored")], P(4), P(4), P(3), P(4), [], "good", ["a", "b", "c", "d"]);
+        var ai = new CefrSpeakingAi([new(0, "I like reading."), new(7, "should be ignored")], P(22), new("a", "b", "c", "d"), [], "good", ["a", "b", "c", "d"]);
         var r = GeminiCefrEvaluator.BuildSpeakingResult(set, answers, ai);
-        Assert.Equal(54, r.Overall);
+        Assert.Equal(53, r.Overall);   // 22 → 53
         Assert.Equal("B2", r.Level);
+        Assert.Equal(22, r.Raw);
         Assert.Equal("I like reading.", r.Answers[0].Transcript);
-        Assert.Equal("", r.Answers[7].Transcript);   // audio yo'q — AI matni olinmaydi
-        Assert.Equal(6, r.Parts[3].Max);
+        Assert.Equal("", r.Answers[7].Transcript);
+        Assert.Equal("d", r.Parts[3].Comment);
         Assert.Equal(3, r.NextSteps.Count);
-        Assert.Throws<InvalidOperationException>(() => GeminiCefrEvaluator.BuildSpeakingResult(set, answers, ai with { Part3 = P(7) }));
+        Assert.Throws<InvalidOperationException>(() => GeminiCefrEvaluator.BuildSpeakingResult(set, answers, ai with { Overall = P(37) }));
     }
 
     [Fact]
-    public void Writing_result_is_computed_on_the_server()
+    public void Writing_result_uses_task1_12_and_task2_24()
     {
         var set = CefrBank.FindWriting("w1")!;
         CefrTaskAi T(int a, int b, int c, int d) => new(P(a), P(b), P(c), P(d));
-        var ai = new CefrWritingAi(T(3, 2, 3, 2), T(4, 4, 4, 3), T(4, 4, 4, 4), [], "ok", ["x"]);
+        var ai = new CefrWritingAi(T(2, 2, 2, 2), T(4, 4, 4, 3), [], "ok", ["x"]);
         var r = GeminiCefrEvaluator.BuildWritingResult(set, "Hi Alex, the club is moving.", "Dear Secretary,", "", 1200, ai);
+        Assert.Equal(23, r.Raw);
         Assert.Equal(55, r.Overall);
         Assert.Equal("B2", r.Level);
-        Assert.Equal(6, r.Tasks[0].Words);
-        Assert.Equal(0, r.Tasks[2].Words);
-        Assert.Equal(19, r.Tasks[1].Points);   // 15/20·25 = 18.75 → 19
-        Assert.Throws<InvalidOperationException>(() => GeminiCefrEvaluator.BuildWritingResult(set, "", "", "", 0, ai with { Task2 = T(6, 0, 0, 0) }));
+        Assert.Equal(12, r.Tasks[0].Max);
+        Assert.Equal(24, r.Tasks[1].Max);
+        Assert.Equal(6, r.Texts[0].Words);
+        Assert.Equal(0, r.Texts[2].Words);
+        Assert.Throws<InvalidOperationException>(() => GeminiCefrEvaluator.BuildWritingResult(set, "", "", "", 0, ai with { Task1 = T(4, 0, 0, 0) }));  // task1 mezoni 0–3
+        GeminiCefrEvaluator.BuildWritingResult(set, "", "", "", 0, ai with { Task2 = T(6, 6, 6, 6) });                                                   // task2 mezoni 0–6
     }
 
     [Fact]
@@ -108,11 +151,14 @@ public class CefrMockTests
     {
         var w = GeminiCefrEvaluator.BuildWritingPrompt(CefrBank.FindWriting("w2")!, "Hi", "", "Post", "ru");
         Assert.Contains("INFORMAL letter", w);
+        Assert.Contains("TASK 1 (worth 12 points)", w);
+        Assert.Contains("TASK 2 (worth 24 points)", w);
         Assert.Contains("TASK 1.2 (120-150 words)", w);
         Assert.Contains("(no answer)", w);
         Assert.Contains("Russian", w);
         var s = GeminiCefrEvaluator.BuildSpeakingPrompt(CefrBank.FindSpeaking("c2")!, "uz");
-        Assert.Contains("part3 0-6", s);
+        Assert.Contains("0-36 scale", s);
+        Assert.Contains("29-36 = C1", s);
         Assert.Contains("Online learning is better", s);
     }
 }

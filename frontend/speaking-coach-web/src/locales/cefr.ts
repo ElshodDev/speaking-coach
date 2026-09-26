@@ -36,6 +36,8 @@ export const cefrMsg = defineMessages(
     of75: (n: number) => `${n} / 75`,
     level: (l: string) => (l === 'below B1' ? 'B1 dan past' : `${l} daraja`),
     parts: 'Qismlar',
+    holistic: 'Yaxlit baho',
+    rawPoints: (n: number, max: number) => `Xom ball: ${n} / ${max}`,
     partScore: (p: string) => `${p}-qism`,
     criteria: {
       task: 'Topshiriq bajarilishi',
@@ -45,7 +47,7 @@ export const cefrMsg = defineMessages(
     } as Record<string, string>,
     points: (p: number, max: number) => `${p} / ${max} ball`,
     scaleNote:
-      'Shkala va daraja chegaralari rasmiy (uzbmb.uz): C1 65–75, B2 51–64, B1 38–50. Qismlar formati — joriy tayyorlov materiallari boʻyicha. Speaking: 1.1, 1.2, 2 — 5 balldan, 3 — 6 ball (jami 21) → 75. Writing vazifalarining ulushi rasman eʼlon qilinmagan: soʻz hajmiga mutanosib 1 : 2 : 3 olingan.',
+      'Baholash tartibi rasmiy hujjat boʻyicha (Bilim va malakalarni baholash agentligi, 16.03.2023): xom ball (0–36) rasmiy jadval bilan 0–75 ga aylantiriladi; Writing — 1-topshiriq 12 ball, 2-topshiriq 24 ball; Speaking — yaxlit baho; daraja: C1 65–75, B2 51–64, B1 38–50. Topshiriqlar tuzilishi (1.1/1.2, soʻz oraliqlari, vaqtlar) — 2024-yildagi yangi format boʻyicha tayyorlov materiallaridan.',
   },
   {
     ru: {
@@ -81,6 +83,8 @@ export const cefrMsg = defineMessages(
       of75: (n: number) => `${n} / 75`,
       level: (l: string) => (l === 'below B1' ? 'ниже B1' : `уровень ${l}`),
       parts: 'Части',
+      holistic: 'Общая оценка',
+      rawPoints: (n: number, max: number) => `Первичный балл: ${n} / ${max}`,
       partScore: (p: string) => `Часть ${p}`,
       criteria: {
         task: 'Выполнение задания',
@@ -90,7 +94,7 @@ export const cefrMsg = defineMessages(
       },
       points: (p: number, max: number) => `${p} / ${max}`,
       scaleNote:
-        'Шкала и границы уровней — официальные (uzbmb.uz): C1 65–75, B2 51–64, B1 38–50. Формат частей — по текущим материалам для подготовки. Speaking: 1.1, 1.2, 2 — по 5 баллов, 3 — 6 (всего 21) → 75. Вес заданий Writing официально не опубликован: взято 1 : 2 : 3 пропорционально объёму.',
+        'Порядок оценки — по официальному документу (Агентство по оценке знаний и навыков, 16.03.2023): первичный балл (0–36) переводится в 0–75 по официальной таблице; Writing — задание 1: 12 баллов, задание 2: 24 балла; Speaking — общая оценка; уровни: C1 65–75, B2 51–64, B1 38–50. Структура заданий (1.1/1.2, объём, время) — по материалам подготовки к новому формату 2024 года.',
     },
     en: {
       title: '🇺🇿 CEFR (Multilevel)',
@@ -125,6 +129,8 @@ export const cefrMsg = defineMessages(
       of75: (n: number) => `${n} / 75`,
       level: (l: string) => (l === 'below B1' ? 'below B1' : `level ${l}`),
       parts: 'Parts',
+      holistic: 'Holistic score',
+      rawPoints: (n: number, max: number) => `Raw score: ${n} / ${max}`,
       partScore: (p: string) => `Part ${p}`,
       criteria: {
         task: 'Task achievement',
@@ -134,7 +140,7 @@ export const cefrMsg = defineMessages(
       },
       points: (p: number, max: number) => `${p} / ${max}`,
       scaleNote:
-        'The scale and level cut-offs are official (uzbmb.uz): C1 65–75, B2 51–64, B1 38–50. The part format follows current preparation materials. Speaking: 1.1, 1.2 and 2 are marked out of 5, Part 3 out of 6 (21 in total) → 75. Writing task weights are not published: we use 1 : 2 : 3, in proportion to length.',
+        'Scoring follows the official document (Agency for Assessment of Knowledge and Skills, 16 March 2023): the raw score (0–36) is converted to 0–75 with the official table; Writing — Task 1: 12 points, Task 2: 24 points; Speaking — one holistic score; levels: C1 65–75, B2 51–64, B1 38–50. The task layout (1.1/1.2, word ranges, timings) follows preparation materials for the new 2024 format.',
     },
   },
 );

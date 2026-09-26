@@ -7,16 +7,22 @@ public record PartScore(
     [property: JsonPropertyName("score")] int Score,
     [property: JsonPropertyName("reasoning")] string Reasoning);
 
+public record CefrPartComments(
+    [property: JsonPropertyName("part11")] string Part11,
+    [property: JsonPropertyName("part12")] string Part12,
+    [property: JsonPropertyName("part2")] string Part2,
+    [property: JsonPropertyName("part3")] string Part3);
+
+/// <summary>Speaking: rasmiy tartibda — butun nutq uchun bitta yaxlit baho (0–36), qismlar bo'yicha izoh.</summary>
 public record CefrSpeakingAi(
     [property: JsonPropertyName("answers")] List<AnswerTranscript> Answers,
-    [property: JsonPropertyName("part11")] PartScore Part11,
-    [property: JsonPropertyName("part12")] PartScore Part12,
-    [property: JsonPropertyName("part2")] PartScore Part2,
-    [property: JsonPropertyName("part3")] PartScore Part3,
+    [property: JsonPropertyName("overall")] PartScore Overall,
+    [property: JsonPropertyName("parts")] CefrPartComments Parts,
     [property: JsonPropertyName("topCorrections")] List<CorrectionItem> TopCorrections,
     [property: JsonPropertyName("strengths")] string Strengths,
     [property: JsonPropertyName("nextSteps")] List<string> NextSteps);
 
+/// <summary>Bitta Writing topshirig'i: 4 mezon. 1-topshiriq: har biri 0–3 (jami 12), 2-topshiriq: 0–6 (jami 24).</summary>
 public record CefrTaskAi(
     [property: JsonPropertyName("task")] PartScore Task,
     [property: JsonPropertyName("organisation")] PartScore Organisation,
@@ -27,25 +33,25 @@ public record CefrTaskAi(
 }
 
 public record CefrWritingAi(
-    [property: JsonPropertyName("task11")] CefrTaskAi Task11,
-    [property: JsonPropertyName("task12")] CefrTaskAi Task12,
+    [property: JsonPropertyName("task1")] CefrTaskAi Task1,
     [property: JsonPropertyName("task2")] CefrTaskAi Task2,
     [property: JsonPropertyName("topCorrections")] List<CorrectionItem> TopCorrections,
     [property: JsonPropertyName("strengths")] string Strengths,
     [property: JsonPropertyName("nextSteps")] List<string> NextSteps);
 
-public record CefrPartResult(string Part, int Score, int Max, string Reasoning);
+public record CefrPartResult(string Part, string Comment);
 public record CefrAnswer(int Index, string Part, string Question, string Transcript, int Seconds);
 
 public record CefrSpeakingResult(
-    string Exam, string Module, string SetId, int Overall, int Max, string Level,
+    string Exam, string Module, string SetId, int Overall, int Max, string Level, int Raw, int RawMax, string Reasoning,
     List<CefrPartResult> Parts, List<CefrAnswer> Answers, List<CorrectionItem> TopCorrections, string Strengths, List<string> NextSteps);
 
-public record CefrTaskResult(string Task, int Raw, int Points, decimal MaxPoints, int Words, int MinWords, int MaxWords, string Text, CefrTaskAi Criteria);
+public record CefrText(string Task, int Words, int MinWords, int MaxWords, string Text);
+public record CefrTaskResult(string Task, int Raw, int Max, CefrTaskAi Criteria);
 
 public record CefrWritingResult(
-    string Exam, string Module, string SetId, int Overall, int Max, string Level, int SecondsUsed,
-    List<CefrTaskResult> Tasks, List<CorrectionItem> TopCorrections, string Strengths, List<string> NextSteps);
+    string Exam, string Module, string SetId, int Overall, int Max, string Level, int Raw, int RawMax, int SecondsUsed,
+    List<CefrTaskResult> Tasks, List<CefrText> Texts, List<CorrectionItem> TopCorrections, string Strengths, List<string> NextSteps);
 
 public interface ICefrEvaluator
 {
@@ -54,8 +60,9 @@ public interface ICefrEvaluator
 }
 
 /// <summary>
-/// CEFR (Multilevel) mock'ni Gemini bilan baholash. AI qism/mezon ballarini
-/// beradi, 0–75 ball va darajani server hisoblaydi (CefrScale).
+/// CEFR (Multilevel) mock'ni Gemini bilan baholash — rasmiy tartibda: Writing
+/// 12 + 24 xom ball, Speaking — yaxlit 0–36; 0–75 ball va darajani server
+/// rasmiy jadval bilan hisoblaydi (CefrScale).
 /// </summary>
 public class GeminiCefrEvaluator(GeminiClient gemini) : ICefrEvaluator
 {
@@ -72,14 +79,17 @@ public class GeminiCefrEvaluator(GeminiClient gemini) : ICefrEvaluator
         sb.AppendLine($"Pictures: {string.Join("; ", set.Pictures.Select(p => p.Caption))}.");
         sb.AppendLine($"Part 2: a long turn (up to 2 minutes) on a topic with guiding questions: {string.Join(" ", set.Part2Questions)}");
         sb.AppendLine($"Part 3: a balanced argument (up to 2 minutes) about the statement \"{set.Part3Statement}\"; the candidate saw these points FOR: {string.Join("; ", set.For)}; AGAINST: {string.Join("; ", set.Against)}.");
-        sb.AppendLine("First transcribe every answer exactly (keep hesitations). Then score each part holistically, considering fluency and coherence, vocabulary, grammar and task completion:");
-        sb.AppendLine("part11 0-5, part12 0-5, part2 0-5, part3 0-6. A missing or very short answer must get a low score.");
-        sb.AppendLine($"Write every \"reasoning\", \"strengths\", \"nextSteps\" item and correction \"explanation\" in {GeminiIeltsEvaluator.FeedbackLanguage(lang)}.");
+        sb.AppendLine("First transcribe every answer exactly (keep hesitations).");
+        sb.AppendLine($"Then give ONE holistic score for the whole speaking test on a 0-{CefrScale.RawMax} scale, as the official multilevel assessment does,");
+        sb.AppendLine("considering fluency and coherence, vocabulary, grammar, pronunciation and task completion across all parts.");
+        sb.AppendLine("Guidance from the official conversion table: 15-20 = B1, 21-28 = B2, 29-36 = C1, 14 or less = below B1; missing or very short answers must lower the score.");
+        sb.AppendLine("Also write one short comment per part.");
+        sb.AppendLine($"Write every \"reasoning\", part comment, \"strengths\", \"nextSteps\" item and correction \"explanation\" in {GeminiIeltsEvaluator.FeedbackLanguage(lang)}.");
         sb.AppendLine("""
             Return ONLY valid JSON, no markdown fences:
             {"answers": [{"index": <int>, "transcript": "<exact transcription or empty string>"}],
-             "part11": {"score": <0-5>, "reasoning": "..."}, "part12": {"score": <0-5>, "reasoning": "..."},
-             "part2": {"score": <0-5>, "reasoning": "..."}, "part3": {"score": <0-6>, "reasoning": "..."},
+             "overall": {"score": <0-36>, "reasoning": "<evidence with quotes>"},
+             "parts": {"part11": "...", "part12": "...", "part2": "...", "part3": "..."},
              "topCorrections": [{"original": "...", "corrected": "...", "explanation": "..."}],
              "strengths": "...", "nextSteps": ["...", "...", "..."]}
             Give at most 5 topCorrections.
@@ -90,9 +100,11 @@ public class GeminiCefrEvaluator(GeminiClient gemini) : ICefrEvaluator
     public static string BuildWritingPrompt(CefrWritingSet set, string t11, string t12, string t2, string lang)
     {
         var sb = new StringBuilder(Examiner);
-        sb.AppendLine("This is a full multilevel Writing mock. Assess each of the three tasks separately with four criteria, each 0-5:");
-        sb.AppendLine("task (task achievement: all points covered, right register and format), organisation (coherence, paragraphs, linking), vocabulary (range and accuracy), grammar (range and accuracy).");
-        sb.AppendLine("Task 1.1 is an INFORMAL letter to a friend; task 1.2 is a FORMAL letter; task 2 is an online discussion post (opinion with reasons and examples).");
+        sb.AppendLine("This is a full multilevel Writing mock with two tasks, assessed as in the official scheme:");
+        sb.AppendLine($"TASK 1 (worth {CefrScale.WritingTask1Max} points) consists of two letters based on the same situation: 1.1 an INFORMAL letter to a friend and 1.2 a FORMAL letter. Assess them TOGETHER.");
+        sb.AppendLine($"TASK 2 (worth {CefrScale.WritingTask2Max} points) is an online discussion post giving an opinion with reasons and examples.");
+        sb.AppendLine("Use four criteria for each task: task (all points covered, correct register, format and length), organisation (coherence, paragraphs, linking), vocabulary (range and accuracy), grammar (range and accuracy).");
+        sb.AppendLine("For Task 1 each criterion is scored 0-3; for Task 2 each criterion is scored 0-6.");
         sb.AppendLine("A response far outside the word range, off-topic, or in the wrong register must lose marks in \"task\". An empty response gets 0 for every criterion.");
         sb.AppendLine($"Write every \"reasoning\", \"strengths\", \"nextSteps\" item and correction \"explanation\" in {GeminiIeltsEvaluator.FeedbackLanguage(lang)}.");
         sb.AppendLine();
@@ -112,8 +124,8 @@ public class GeminiCefrEvaluator(GeminiClient gemini) : ICefrEvaluator
         Task("2", set.Task2, CefrBank.Words2, t2);
         sb.AppendLine("""
             Return ONLY valid JSON, no markdown fences:
-            {"task11": {"task": {"score": <0-5>, "reasoning": "..."}, "organisation": {...}, "vocabulary": {...}, "grammar": {...}},
-             "task12": {same shape}, "task2": {same shape},
+            {"task1": {"task": {"score": <0-3>, "reasoning": "..."}, "organisation": {...}, "vocabulary": {...}, "grammar": {...}},
+             "task2": {"task": {"score": <0-6>, "reasoning": "..."}, "organisation": {...}, "vocabulary": {...}, "grammar": {...}},
              "topCorrections": [{"original": "...", "corrected": "...", "explanation": "..."}],
              "strengths": "...", "nextSteps": ["...", "...", "..."]}
             Give at most 5 topCorrections.
@@ -154,23 +166,16 @@ public class GeminiCefrEvaluator(GeminiClient gemini) : ICefrEvaluator
 
     public static CefrSpeakingResult BuildSpeakingResult(CefrSpeakingSet set, IReadOnlyList<SpokenAnswer> answers, CefrSpeakingAi ai)
     {
-        EnsureScores(("part11", ai.Part11, 5), ("part12", ai.Part12, 5), ("part2", ai.Part2, 5), ("part3", ai.Part3, 6));
-        var scores = new[] { ai.Part11.Score, ai.Part12.Score, ai.Part2.Score, ai.Part3.Score };
-        var total = CefrScale.SpeakingScore(scores);
-        var questions = set.Questions();
-        var list = questions.Select((q, i) =>
+        EnsureScores(("overall", ai.Overall, CefrScale.RawMax));
+        var total = CefrScale.Convert(ai.Overall.Score);
+        var list = set.Questions().Select((q, i) =>
         {
             var spoken = answers.FirstOrDefault(x => x.Index == i);
             var transcript = spoken?.Audio is { Length: > 0 } ? ai.Answers.FirstOrDefault(t => t.Index == i)?.Transcript ?? "" : "";
             return new CefrAnswer(i, q.Part, q.Text, transcript, spoken?.Seconds ?? 0);
         }).ToList();
-        return new CefrSpeakingResult("cefr", "speaking", set.Id, total, CefrScale.Max, CefrScale.Level(total),
-            [
-                new("1.1", ai.Part11.Score, 5, ai.Part11.Reasoning),
-                new("1.2", ai.Part12.Score, 5, ai.Part12.Reasoning),
-                new("2", ai.Part2.Score, 5, ai.Part2.Reasoning),
-                new("3", ai.Part3.Score, 6, ai.Part3.Reasoning),
-            ],
+        return new CefrSpeakingResult("cefr", "speaking", set.Id, total, CefrScale.Max, CefrScale.Level(total), ai.Overall.Score, CefrScale.RawMax, ai.Overall.Reasoning,
+            [new("1.1", ai.Parts.Part11), new("1.2", ai.Parts.Part12), new("2", ai.Parts.Part2), new("3", ai.Parts.Part3)],
             list, ai.TopCorrections.Take(5).ToList(), ai.Strengths, ai.NextSteps.Take(3).ToList());
     }
 
@@ -188,18 +193,19 @@ public class GeminiCefrEvaluator(GeminiClient gemini) : ICefrEvaluator
 
     public static CefrWritingResult BuildWritingResult(CefrWritingSet set, string t11, string t12, string t2, int secondsUsed, CefrWritingAi ai)
     {
-        foreach (var (name, t) in new[] { ("1.1", ai.Task11), ("1.2", ai.Task12), ("2", ai.Task2) })
-        {
-            EnsureScores(($"{name}.task", t.Task, 5), ($"{name}.organisation", t.Organisation, 5),
-                ($"{name}.vocabulary", t.Vocabulary, 5), ($"{name}.grammar", t.Grammar, 5));
-        }
-        var raws = new[] { ai.Task11.Total, ai.Task12.Total, ai.Task2.Total };
-        var total = CefrScale.WritingScore(raws);
-        CefrTaskResult R(int i, string name, (int Min, int Max) range, string text, CefrTaskAi c) =>
-            new(name, c.Total, (int)Math.Round(c.Total / 20m * CefrScale.WritingWeights[i], MidpointRounding.AwayFromZero),
-                CefrScale.WritingWeights[i], IeltsBand.CountWords(text), range.Min, range.Max, text, c);
-        return new CefrWritingResult("cefr", "writing", set.Id, total, CefrScale.Max, CefrScale.Level(total), secondsUsed,
-            [R(0, "1.1", CefrBank.Words11, t11, ai.Task11), R(1, "1.2", CefrBank.Words12, t12, ai.Task12), R(2, "2", CefrBank.Words2, t2, ai.Task2)],
+        void Check(string name, CefrTaskAi t, int max) => EnsureScores(($"{name}.task", t.Task, max), ($"{name}.organisation", t.Organisation, max),
+            ($"{name}.vocabulary", t.Vocabulary, max), ($"{name}.grammar", t.Grammar, max));
+        Check("task1", ai.Task1, CefrScale.WritingTask1Max / 4);
+        Check("task2", ai.Task2, CefrScale.WritingTask2Max / 4);
+        var raw = ai.Task1.Total + ai.Task2.Total;
+        var total = CefrScale.WritingScore(ai.Task1.Total, ai.Task2.Total);
+        return new CefrWritingResult("cefr", "writing", set.Id, total, CefrScale.Max, CefrScale.Level(total), raw, CefrScale.RawMax, secondsUsed,
+            [new("1", ai.Task1.Total, CefrScale.WritingTask1Max, ai.Task1), new("2", ai.Task2.Total, CefrScale.WritingTask2Max, ai.Task2)],
+            [
+                new("1.1", IeltsBand.CountWords(t11), CefrBank.Words11.Min, CefrBank.Words11.Max, t11),
+                new("1.2", IeltsBand.CountWords(t12), CefrBank.Words12.Min, CefrBank.Words12.Max, t12),
+                new("2", IeltsBand.CountWords(t2), CefrBank.Words2.Min, CefrBank.Words2.Max, t2),
+            ],
             ai.TopCorrections.Take(5).ToList(), ai.Strengths, ai.NextSteps.Take(3).ToList());
     }
 }
