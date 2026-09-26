@@ -12,7 +12,7 @@ using SpeakingCoach.Api.Data;
 namespace SpeakingCoach.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260926035122_AddTelegram")]
+    [Migration("20260926043151_AddTelegram")]
     partial class AddTelegram
     {
         /// <inheritdoc />
@@ -261,6 +261,70 @@ namespace SpeakingCoach.Api.Migrations
                     b.ToTable("Sessions");
                 });
 
+            modelBuilder.Entity("SpeakingCoach.Api.Data.TelegramAccount", b =>
+                {
+                    b.Property<long>("ChatId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Lang")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
+
+                    b.Property<DateOnly?>("LastReminderDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("LinkedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ReminderHour")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TzOffsetMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Username")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("ChatId");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("TelegramAccounts");
+                });
+
+            modelBuilder.Entity("SpeakingCoach.Api.Data.TelegramLinkToken", b =>
+                {
+                    b.Property<string>("TokenHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("ExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Lang")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
+
+                    b.Property<int>("TzOffsetMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("TokenHash");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("TelegramLinkTokens");
+                });
+
             modelBuilder.Entity("SpeakingCoach.Api.Data.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -349,6 +413,24 @@ namespace SpeakingCoach.Api.Migrations
                 });
 
             modelBuilder.Entity("SpeakingCoach.Api.Data.Session", b =>
+                {
+                    b.HasOne("SpeakingCoach.Api.Data.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SpeakingCoach.Api.Data.TelegramAccount", b =>
+                {
+                    b.HasOne("SpeakingCoach.Api.Data.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SpeakingCoach.Api.Data.TelegramLinkToken", b =>
                 {
                     b.HasOne("SpeakingCoach.Api.Data.User", null)
                         .WithMany()
