@@ -1,25 +1,15 @@
-import { useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { Recorder } from './Recorder';
 import { WritingCoach } from './WritingCoach';
 import { Comprehension } from './Comprehension';
 import { Review, statsPath, type ReviewStats } from './Review';
 import { AuthPanel } from './AuthPanel';
 import { EXERCISES, ExerciseTiles, Home, type ExerciseKind } from './Home';
-import { MockHub, MockResultView } from './Mock';
-import { MockSpeaking } from './MockSpeaking';
-import { MockFullStart, MockFullStep, MockSessionView } from './MockFull';
-import { MockListening } from './MockListening';
-import { CefrWriting } from './CefrWriting';
 import { JoinByCode, JoinGroup, TasksPage } from './StudentTasks';
 import { savePendingJoin, takePendingJoin } from './groupLogic';
-import { TeacherGroup, TeacherHome } from './Teacher';
 import { teacherMsg } from './locales/teacher';
-import { MockReading } from './MockReading';
-import { MockWriting } from './MockWriting';
 import { mockMsg } from './locales/mock';
 import { PageHeader } from './ui';
-import { Progress } from './Progress';
-import { Admin } from './Admin';
 import { Settings } from './Settings';
 import { Vocab } from './Vocab';
 import { UsageNote } from './Usage';
@@ -31,8 +21,25 @@ import { appMsg } from './locales/app';
 import { homeMsg } from './locales/home';
 import { planMsg } from './locales/plan';
 import { Onboarding } from './Onboarding';
-import { Quiz } from './Quiz';
 import { shouldOnboard } from './planLogic';
+
+// Kam ochiladigan og'ir sahifalar — alohida fayllarda, faqat kerak bo'lganda
+// yuklanadi (bosh sahifa, takrorlash va mashqlar tezroq ochiladi).
+const MockHub = lazy(() => import('./Mock').then((m) => ({ default: m.MockHub })));
+const MockResultView = lazy(() => import('./Mock').then((m) => ({ default: m.MockResultView })));
+const MockSpeaking = lazy(() => import('./MockSpeaking').then((m) => ({ default: m.MockSpeaking })));
+const MockFullStart = lazy(() => import('./MockFull').then((m) => ({ default: m.MockFullStart })));
+const MockFullStep = lazy(() => import('./MockFull').then((m) => ({ default: m.MockFullStep })));
+const MockSessionView = lazy(() => import('./MockFull').then((m) => ({ default: m.MockSessionView })));
+const MockListening = lazy(() => import('./MockListening').then((m) => ({ default: m.MockListening })));
+const MockReading = lazy(() => import('./MockReading').then((m) => ({ default: m.MockReading })));
+const MockWriting = lazy(() => import('./MockWriting').then((m) => ({ default: m.MockWriting })));
+const CefrWriting = lazy(() => import('./CefrWriting').then((m) => ({ default: m.CefrWriting })));
+const TeacherHome = lazy(() => import('./Teacher').then((m) => ({ default: m.TeacherHome })));
+const TeacherGroup = lazy(() => import('./Teacher').then((m) => ({ default: m.TeacherGroup })));
+const Progress = lazy(() => import('./Progress').then((m) => ({ default: m.Progress })));
+const Admin = lazy(() => import('./Admin').then((m) => ({ default: m.Admin })));
+const Quiz = lazy(() => import('./Quiz').then((m) => ({ default: m.Quiz })));
 
 /**
  * Oddiy "hash" marshrutlash: manzil #/review, #/practice/writing kabi.
@@ -313,7 +320,9 @@ function App() {
           </div>
         </nav>
 
-        <main>{page}</main>
+        <main>
+          <Suspense fallback={<p className="muted" role="status" style={{ marginTop: 24 }}>⏳</p>}>{page}</Suspense>
+        </main>
       </div>
     </>
   );
