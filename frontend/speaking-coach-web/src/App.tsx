@@ -12,6 +12,7 @@ import { Settings } from './Settings';
 import { Vocab } from './Vocab';
 import { UsageNote } from './Usage';
 import { AccountData } from './AccountData';
+import { TelegramCard } from './TelegramCard';
 import { apiJson, getToken, setLevel, setToken, type Profile as ProfileData } from './api';
 import { common, LangSelect, useLang, useT } from './i18n';
 import { appMsg } from './locales/app';
@@ -264,6 +265,7 @@ function Profile({
       <AuthPanel email={email} onChange={onAuthChange} />
       {/* key: profil serverdan kelganda forma qiymatlari yangilansin */}
       {(!email || profile) && <Settings key={profile ? 'user' : 'guest'} profile={profile} onSaved={onProfileSaved} />}
+      {email && <TelegramCard key={email} />}
       {email && <AccountData email={email} onDeleted={() => onAuthChange(null)} />}
 
       {profile?.isAdmin && (

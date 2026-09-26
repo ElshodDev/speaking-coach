@@ -92,16 +92,34 @@ public class AiQuotaService
 
     private static string IpOf(HttpRequest request) => request.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
-    public async Task<QuotaStatus> GetStatusAsync(HttpRequest request)
+    // ---- Sayt (HTTP so'rov): foydalanuvchi tokendan, mehmon — IP bo'yicha ----
+
+    public async Task<QuotaStatus> GetStatusAsync(HttpRequest request) =>
+        await GetStatusAsync(await _auth.GetCurrentUserAsync(request), IpOf(request));
+
+    /// <summary>Limit tugagan bo'lsa — 429 va tushunarli xabar; aks holda null (davom etaverish mumkin).</summary>
+    public async Task<IResult?> CheckAsync(HttpRequest request, AiKind kind)
     {
-        var user = await _auth.GetCurrentUserAsync(request);
+        var denied = await CheckAsync(await _auth.GetCurrentUserAsync(request), IpOf(request), kind);
+        return denied is null
+            ? null
+            : Results.Json(request.Error(denied.Value.Key, denied.Value.Args), statusCode: StatusCodes.Status429TooManyRequests);
+    }
+
+    /// <summary>Muvaffaqiyatli AI javobidan keyin chaqiriladi.</summary>
+    public async Task RecordAsync(HttpRequest request, AiKind kind) =>
+        await RecordAsync(await _auth.GetCurrentUserAsync(request), IpOf(request), kind);
+
+    // ---- Umumiy yadro (Telegram bot ham ishlatadi: mehmon kaliti — "tg:CHAT_ID") ----
+
+    public async Task<QuotaStatus> GetStatusAsync(User? user, string guestKey)
+    {
         var day = Today(DateTime.UtcNow);
         if (user is null)
         {
-            var ip = IpOf(request);
             return new QuotaStatus(
-                new QuotaCounter(_guests.Get(ip, day, AiKind.Exercise), _options.GuestExercises),
-                new QuotaCounter(_guests.Get(ip, day, AiKind.Word), _options.GuestWords),
+                new QuotaCounter(_guests.Get(guestKey, day, AiKind.Exercise), _options.GuestExercises),
+                new QuotaCounter(_guests.Get(guestKey, day, AiKind.Word), _options.GuestWords),
                 Unlimited: false,
                 Guest: true);
         }
@@ -114,10 +132,10 @@ public class AiQuotaService
             Guest: false);
     }
 
-    /// <summary>Limit tugagan bo'lsa — 429 va tushunarli xabar; aks holda null (davom etaverish mumkin).</summary>
-    public async Task<IResult?> CheckAsync(HttpRequest request, AiKind kind)
+    /// <summary>null — ruxsat; aks holda xabar kaliti (Texts) va parametrlari.</summary>
+    public async Task<(string Key, object?[] Args)?> CheckAsync(User? user, string guestKey, AiKind kind)
     {
-        var status = await GetStatusAsync(request);
+        var status = await GetStatusAsync(user, guestKey);
         if (status.Unlimited) return null;
         var counter = kind == AiKind.Exercise ? status.Exercises : status.Words;
         if (counter.Left > 0) return null;
@@ -129,19 +147,15 @@ public class AiQuotaService
             (AiKind.Word, true) => "ai.limit_words_guest",
             _ => "ai.limit_words",
         };
-        return Results.Json(
-            request.Error(key, counter.Limit, _options.LimitFor(kind, guest: false)),
-            statusCode: StatusCodes.Status429TooManyRequests);
+        return (key, new object?[] { counter.Limit, _options.LimitFor(kind, guest: false) });
     }
 
-    /// <summary>Muvaffaqiyatli AI javobidan keyin chaqiriladi.</summary>
-    public async Task RecordAsync(HttpRequest request, AiKind kind)
+    public async Task RecordAsync(User? user, string guestKey, AiKind kind)
     {
-        var user = await _auth.GetCurrentUserAsync(request);
         var day = Today(DateTime.UtcNow);
         if (user is null)
         {
-            _guests.Add(IpOf(request), day, kind);
+            _guests.Add(guestKey, day, kind);
             return;
         }
 

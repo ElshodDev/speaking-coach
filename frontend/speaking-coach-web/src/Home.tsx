@@ -2,6 +2,7 @@ import type { ReviewStats } from './Review';
 import { useT } from './i18n';
 import { homeMsg } from './locales/home';
 import { UsageNote } from './Usage';
+import { TelegramPromo } from './TelegramCard';
 
 export type ExerciseKind = 'speaking' | 'writing' | 'reading' | 'listening';
 
@@ -137,6 +138,8 @@ export function Home({
           <div className="card soft small">{t.nothingDue}</div>
         )
       )}
+
+      <TelegramPromo go={go} />
 
       <button className="card cta" style={{ width: '100%', font: 'inherit', color: 'inherit', textAlign: 'left', cursor: 'pointer' }} onClick={() => go('progress')}>
         <div>

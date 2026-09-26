@@ -71,6 +71,13 @@ builder.Services.AddSingleton<AiQuotaOptions>();
 builder.Services.AddSingleton<GuestQuotaStore>();
 builder.Services.AddScoped<AiQuotaService>();
 
+// Telegram bot: token bo'lmasa — hammasi o'chiq, ilova avvalgidek ishlaydi.
+builder.Services.AddSingleton<SpeakingCoach.Api.Services.Telegram.TelegramOptions>();
+builder.Services.AddSingleton<SpeakingCoach.Api.Services.Telegram.ITelegramApi, SpeakingCoach.Api.Services.Telegram.TelegramApi>();
+builder.Services.AddScoped<SpeakingCoach.Api.Services.Telegram.TelegramBot>();
+builder.Services.AddScoped<SpeakingCoach.Api.Services.Telegram.TelegramReminders>();
+builder.Services.AddHostedService<SpeakingCoach.Api.Services.Telegram.TelegramStartup>();
+
 // PasswordHasher holatsiz (stateless) — singleton yetarli. AuthService va
 // ReviewService esa AppDbContext'ga bog'liq; DbContext har so'rov uchun
 // alohida (scoped) bo'lgani uchun ular ham scoped.
@@ -122,6 +129,7 @@ app.MapReviewEndpoints();
 app.MapProfileEndpoints();
 app.MapVocabEndpoints();
 app.MapAccountEndpoints(uploadsPath);
+app.MapTelegramEndpoints();
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 app.Run($"http://0.0.0.0:{port}");

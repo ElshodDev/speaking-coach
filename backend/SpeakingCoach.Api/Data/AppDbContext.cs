@@ -16,6 +16,8 @@ public class AppDbContext : DbContext
     public DbSet<ReviewLog> ReviewLogs => Set<ReviewLog>();
     public DbSet<EmailCode> EmailCodes => Set<EmailCode>();
     public DbSet<AiUsage> AiUsages => Set<AiUsage>();
+    public DbSet<TelegramAccount> TelegramAccounts => Set<TelegramAccount>();
+    public DbSet<TelegramLinkToken> TelegramLinkTokens => Set<TelegramLinkToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -52,6 +54,25 @@ public class AppDbContext : DbContext
             // cheklov bazaning o'zida (unique index), faqat C# kodida emas:
             // bir vaqtda kelgan ikki so'rov ham ikkinchi nusxani yarata olmaydi.
             entity.HasIndex(u => u.Email).IsUnique();
+        });
+
+        modelBuilder.Entity<TelegramAccount>(entity =>
+        {
+            entity.HasKey(t => t.ChatId);
+            // ChatId — Telegram beradi, biz yaratmaymiz.
+            entity.Property(t => t.ChatId).ValueGeneratedNever();
+            entity.Property(t => t.Username).HasMaxLength(64);
+            entity.Property(t => t.Lang).HasMaxLength(2);
+            entity.HasIndex(t => t.UserId).IsUnique();
+            entity.HasOne<User>().WithMany().HasForeignKey(t => t.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TelegramLinkToken>(entity =>
+        {
+            entity.HasKey(t => t.TokenHash);
+            entity.Property(t => t.TokenHash).HasMaxLength(64);
+            entity.Property(t => t.Lang).HasMaxLength(2);
+            entity.HasOne<User>().WithMany().HasForeignKey(t => t.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<AiUsage>(entity =>

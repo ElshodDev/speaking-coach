@@ -186,7 +186,7 @@ npm run dev
 ### 7. Avtomatik testlar
 
 ```bash
-dotnet test backend/SpeakingCoach.Api.Tests   # backend: 136 ta unit test
+dotnet test backend/SpeakingCoach.Api.Tests   # backend: 190 ta unit test
 cd frontend/speaking-coach-web && npm test     # frontend: 34 ta vitest testi
 ```
 
@@ -291,6 +291,30 @@ Render'ning bepul tarifi 2025-yil sentabridan beri SMTP portlarini (25, 465,
 3. **SMTP & API → API Keys → Generate a new API key**.
 4. Render → Environment: `Email__BrevoApiKey`, `Email__FromAddress`
    (2-qadamdagi email), ixtiyoriy `Email__FromName`.
+
+### Telegram bot (@SpeakingCoachUzBot)
+
+Profil → **Telegramni ulash**: sayt bir martalik havola beradi
+(`t.me/SpeakingCoachUzBot?start=TOKEN`, 15 daqiqa, bazada faqat xeshi), START
+bosilgach hisob ulanadi. Botda: navbatdagi kartalarni chatda takrorlash
+(javob → Yana/Qiyin/Yaxshi/Oson), inglizcha so'z yuborib tarjima olish va
+lug'atga qo'shish, seriya va natijalar, eslatma vaqti va til. Baza saytniki
+bilan bir xil — botda takrorlangan karta saytda ham takrorlangan.
+
+Qanday ishlaydi: Telegram webhook orqali serverga yozadi (uxlab yotgan Render
+uyg'onadi), so'rov `X-Telegram-Bot-Api-Secret-Token` sarlavhasi bilan
+tekshiriladi. Uxlab yotgan server o'zi soat 20:00 ni kuta olmaydi — shuning
+uchun `.github/workflows/telegram-reminders.yml` har soatda
+`/api/telegram/cron`ni chaqiradi. Qoida: "eslatma soati o'tgan va bugun hali
+yuborilmagan" — cron kechiksa ham ishlaydi, kuniga bittadan ortiq xabar
+yo'q; bugungi maqsad bajarilgan bo'lsa, umuman yozilmaydi; botni bloklagan
+foydalanuvchiga eslatma o'chadi.
+
+Sozlash: Render'da `Telegram__BotToken` (BotFather'dan) va
+`Telegram__CronSecret` (tasodifiy uzun qator); GitHub → Settings → Secrets →
+Actions: `API_URL` (Render manzili) va `CRON_SECRET` (xuddi o'sha qator).
+Webhook server ishga tushganda o'zi o'rnatiladi (Render bergan
+`RENDER_EXTERNAL_URL` orqali).
 
 ### Kunlik AI limiti va ma'lumotlar ustidan nazorat
 

@@ -1,0 +1,40 @@
+# Telegram bot eslatmalari. Render'ning bepul serveri 15 daqiqa so'rov
+# bo'lmasa uxlaydi va o'zi taymer bilan ishlay olmaydi — shuning uchun
+# GitHub har soatda serverni "chaqiradi", server esa vaqti kelgan
+# foydalanuvchilarga eslatma yuboradi (kuniga ko'pi bilan bittadan).
+#
+# Kerakli GitHub sirlari (Settings → Secrets and variables → Actions):
+#   API_URL      — backend manzili, masalan https://speaking-coach-api.onrender.com
+#   CRON_SECRET  — Render'dagi Telegram__CronSecret bilan bir xil tasodifiy qator
+#
+# Eslatma: GitHub jadvaldagi ishni bir necha daqiqa kechiktirishi mumkin —
+# server buni hisobga oladi ("soat o'tgan va bugun hali yuborilmagan").
+name: Telegram reminders
+
+on:
+  schedule:
+    - cron: '7 * * * *' # har soatda, :07 da (soat boshidagi navbatdan qochib)
+  workflow_dispatch: {} # Actions sahifasidan qo'lda ishga tushirish uchun
+
+permissions: {}
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call /api/telegram/cron
+        env:
+          API_URL: ${{ secrets.API_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$API_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::notice::API_URL yoki CRON_SECRET sozlanmagan — o'tkazib yuborildi"
+            exit 0
+          fi
+          # Uxlab yotgan server 30–60 soniyada uyg'onadi — kutamiz va qayta urinamiz.
+          curl --fail-with-body --silent --show-error \
+               --retry 3 --retry-delay 20 --retry-all-errors --max-time 90 \
+               -X POST "$API_URL/api/telegram/cron" \
+               -H "X-Cron-Secret: $CRON_SECRET"
+          echo
