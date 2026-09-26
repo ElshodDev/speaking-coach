@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SpeakingCoach.Api.Data;
 using SpeakingCoach.Api.Services;
@@ -88,7 +89,9 @@ public static class AccountEndpoints
         // kiritiladi. Foydalanuvchi o'chirilganda bazadagi hamma narsa
         // (mashqlar, kartalar, sessiyalar, kodlar, limitlar) cascade bilan
         // o'chadi; diskdagi ovoz yozuvlarini esa alohida o'chiramiz.
-        app.MapDelete("/api/account", async (DeleteAccountRequest body, HttpRequest request, AuthService auth, AppDbContext db, ILogger<Program> logger) =>
+        // DELETE so'rovida tana (body) avtomatik o'qilmaydi — [FromBody] majburiy,
+        // aks holda ASP.NET ishga tushishda BUTUN marshrutlashni yiqitadi.
+        app.MapDelete("/api/account", async ([FromBody] DeleteAccountRequest body, HttpRequest request, AuthService auth, AppDbContext db, ILogger<Program> logger) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return Unauthorized(request);
