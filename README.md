@@ -90,7 +90,7 @@ Each of these is explained in more depth (in Uzbek) in [README.uz.md](README.uz.
 ## Quality
 
 - **Tests:** 403 backend unit tests (xUnit) — scheduler, streak across time zones, card creation, grading, strict parsing, token hashing, XP/levels/badges, leaderboard ranking, level-aware prompts, vocabulary status, localized messages (every key in all three languages with matching placeholders), email-code rules (expiry, attempts, cooldown, hourly cap), email templates Google ID-token validation (forged signature, wrong audience/issuer, expiry, `alg: none`), AI quota, the Telegram bot logic (including the Today message, reminder lines and new-assignment messages), the system-status rules and IELTS band maths (official rounding, Task 2 weighting, word count, mock limits, question-bank format, objective grading and word limits, raw-score→band anchors, the test validator, answer-free client payloads, full-mock rounding, the official CEFR raw→75 table, row by row, CEFR Listening/Reading format checks and the correct-answers→level table, the daily plan (rotation, mock cadence, onboarding validation), the word list and quiz builder, teacher groups: join codes, assignment types, completion/lateness rules, score labels, what the teacher can see) — and 92 frontend tests with Vitest (charts, word tapping, vocabulary search, plurals).
-- **CI:** GitHub Actions builds and tests the backend and type-checks, tests and builds the frontend on every push.
+- **CI:** GitHub Actions builds and tests the backend and type-checks, tests and builds the frontend on every push, and fails on known vulnerable packages (`dotnet list package --vulnerable --include-transitive`, `npm audit --audit-level=high`). **Dependabot** opens grouped update PRs weekly (npm, NuGet) and monthly (GitHub Actions).
 - **Rate limiting:** 10 req/min per IP on login/register, 30 req/min on Gemini-backed endpoints; the real client IP is read from `X-Forwarded-For` behind Render's proxy (last hop only).
 - **Health check:** `GET /health` reports API and database status (503 if the DB is unreachable).
 
@@ -98,7 +98,7 @@ Each of these is explained in more depth (in Uzbek) in [README.uz.md](README.uz.
 
 | Part | Technology |
 |---|---|
-| Frontend | React 18, TypeScript, Vite, CSS variables (no UI framework), PWA — Vercel |
+| Frontend | React 18, TypeScript, Vite 8, Vitest 5, CSS variables (no UI framework), PWA — Vercel |
 | Backend | ASP.NET Core 10 Minimal API, EF Core, Docker — Render |
 | Database | PostgreSQL — Neon |
 | AI | Google Gemini (AI Studio key, no credit card) |

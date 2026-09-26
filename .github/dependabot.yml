@@ -1,0 +1,32 @@
+# Dependabot: paketlar uchun yangilanishlarni o'zi tekshiradi va haftasiga
+# bir marta pull request ochadi (xavfsizlik tuzatishlari — darhol). Har bir
+# PR'da CI ishlaydi: testlar o'tsa — "Merge" qilish kifoya.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /frontend/speaking-coach-web
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Vite, Vitest va plugin'lar birga yangilansin (bir-biriga bog'liq).
+      build-tools:
+        patterns: ["vite", "vitest", "@vitejs/*", "@vitest/*", "typescript"]
+      react:
+        patterns: ["react", "react-dom", "@types/react*"]
+  - package-ecosystem: nuget
+    directories:
+      - /backend/SpeakingCoach.Api
+      - /backend/SpeakingCoach.Api.Tests
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      efcore:
+        patterns: ["Microsoft.EntityFrameworkCore*", "Npgsql*"]
+      tests:
+        patterns: ["xunit*", "Microsoft.NET.Test.Sdk"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

@@ -19,6 +19,11 @@ jobs:
           dotnet-version: '10.0.x'
       # Test loyihasi API loyihasiga bog'langan — build ikkalasini ham qiladi.
       - run: dotnet test backend/SpeakingCoach.Api.Tests --configuration Release
+      # Ma'lum zaifligi bor NuGet paketlari (bevosita va bilvosita) — bo'lsa, CI qizil.
+      - name: Vulnerable NuGet packages
+        run: |
+          dotnet list backend/SpeakingCoach.Api package --vulnerable --include-transitive | tee vuln.txt
+          if grep -q "has the following vulnerable packages" vuln.txt; then exit 1; fi
 
   frontend:
     name: Frontend (type check + build + tests)
@@ -36,5 +41,7 @@ jobs:
       # npm ci — package-lock.json'dagi AYNAN o'sha versiyalarni o'rnatadi
       # (npm install'dan farqli, lock faylni o'zgartirmaydi).
       - run: npm ci
+      # Ma'lum zaifliklar (yuqori va kritik) — bo'lsa, CI qizil.
+      - run: npm audit --audit-level=high
       - run: npm test
       - run: npm run build

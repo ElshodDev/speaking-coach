@@ -492,7 +492,11 @@ unutilsa — boshidan boshlanadi. Bu Anki va Duolingo ishlatadigan g'oya.
   Frontend: `vitest` — gap bo'lish, statistika, karta matnlari, grafik
   yordamchilari, so'zni ajratish.
 - **CI**: GitHub Actions har bir push'da backend'ni build qilib testlarni,
-  frontend'da esa type check + testlar + build'ni ishga tushiradi.
+  frontend'da esa type check + testlar + build'ni ishga tushiradi; maʼlum
+  zaifligi bor paket boʻlsa (`dotnet list package --vulnerable`,
+  `npm audit --audit-level=high`) — CI qizil boʻladi.
+- **Dependabot** paketlar yangilanishini oʻzi tekshiradi va guruhlangan
+  pull request ochadi (npm va NuGet — haftasiga, GitHub Actions — oyiga).
 - **Rate limiting** (ASP.NET Core'ning o'rnatilgan `RateLimiter`'i, har
   bir IP uchun): kirish/ro'yxatdan o'tish — daqiqasiga 10 ta (parolni
   taxmin qilishni sekinlashtiradi), Gemini'ga boradigan endpoint'lar —
