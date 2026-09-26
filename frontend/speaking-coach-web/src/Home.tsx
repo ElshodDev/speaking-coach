@@ -3,7 +3,7 @@ import { useT } from './i18n';
 import { homeMsg } from './locales/home';
 import { UsageNote } from './Usage';
 import { TelegramPromo } from './TelegramCard';
-import { TasksCard } from './StudentTasks';
+import { GroupsShortcut, TasksCard } from './StudentTasks';
 
 export type ExerciseKind = 'speaking' | 'writing' | 'reading' | 'listening';
 
@@ -101,6 +101,7 @@ export function Home({
       </div>
 
       <TasksCard loggedIn go={go} />
+      <GroupsShortcut go={go} />
 
       {stats && (
         <div className="card">

@@ -213,3 +213,14 @@ export function JoinGroup({ code, loggedIn, go, onLogin }: { code: string; logge
     </>
   );
 }
+
+/** Bosh sahifadagi ixcham kirish: o'quvchi — vazifalar, o'qituvchi — guruhlar. */
+export function GroupsShortcut({ go }: { go: (route: string) => void }) {
+  const t = useT(teacherMsg);
+  return (
+    <div className="row" data-testid="groups-shortcut" style={{ flexWrap: 'wrap' }}>
+      <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => go('tasks')}>📚 {t.tasksTitle}</button>
+      <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => go('teacher')}>👩‍🏫 {t.groupsTitle}</button>
+    </div>
+  );
+}
