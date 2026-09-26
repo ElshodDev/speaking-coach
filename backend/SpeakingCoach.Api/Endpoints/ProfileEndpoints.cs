@@ -82,36 +82,11 @@ public static partial class ProfileEndpoints
         });
 
         // Bugungi reja: takrorlash, kunning ko'nikmasi, (imtihonga tayyorlanayotganlarga) mock.
-        app.MapGet("/api/plan/today", async (HttpRequest request, AuthService auth, AppDbContext db, ReviewService reviews, int tzOffsetMinutes = 0) =>
+        app.MapGet("/api/plan/today", async (HttpRequest request, AuthService auth, TodayService todayService, int tzOffsetMinutes = 0) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return Unauthorized(request);
-            var offset = Math.Clamp(tzOffsetMinutes, -840, 840);
-            var now = DateTime.UtcNow;
-            var today = ReviewScheduler.ToLocalDate(now, offset);
-            var stats = await reviews.GetStatsAsync(user.Id, offset);
-
-            var since = now.AddDays(-60);
-            var rows = await db.Activities
-                .Where(a => a.UserId == user.Id && a.CreatedAtUtc >= since)
-                .Select(a => new { a.Type, a.CreatedAtUtc, a.PromptData })
-                .ToListAsync();
-            var practiced = rows
-                .Where(r => ReviewScheduler.ToLocalDate(r.CreatedAtUtc, offset) == today)
-                .Select(r => PlanLogic.SkillOf(r.Type)).OfType<string>().ToHashSet();
-            var exam = user.Goal is "ielts" or "cefr" ? user.Goal : null;
-            var mocks = rows
-                .Where(r => r.Type == ActivityType.MockExam)
-                .Select(r => (r.CreatedAtUtc, P: MockEndpoints.ParsePrompt(r.PromptData)))
-                .Where(x => x.P.Exam == exam && PlanLogic.Skills.Contains(x.P.Module))
-                .ToList();
-            var mockedToday = mocks.Where(x => ReviewScheduler.ToLocalDate(x.CreatedAtUtc, offset) == today).Select(x => x.P.Module).ToHashSet();
-            var lastMock = mocks.GroupBy(x => x.P.Module).ToDictionary(g => g.Key, g => g.Max(x => x.CreatedAtUtc));
-
-            var plan = PlanLogic.Build(new PlanLogic.Input(
-                user.Goal, user.DailyMinutes, user.ExamDate, today,
-                stats.Total, stats.Due, stats.ReviewedToday, stats.DailyGoal,
-                practiced, mockedToday, lastMock));
+            var (plan, _) = await todayService.PlanAsync(user, tzOffsetMinutes);
             return Results.Ok(new
             {
                 plan.Goal,

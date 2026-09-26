@@ -17,10 +17,12 @@ public class TelegramReminders
     private readonly AppDbContext _db;
     private readonly ITelegramApi _api;
     private readonly ReviewService _reviews;
+    private readonly TodayService _today;
     private readonly ILogger<TelegramReminders> _logger;
 
-    public TelegramReminders(AppDbContext db, ITelegramApi api, ReviewService reviews, ILogger<TelegramReminders> logger)
+    public TelegramReminders(AppDbContext db, ITelegramApi api, ReviewService reviews, TodayService today, ILogger<TelegramReminders> logger)
     {
+        _today = today;
         _db = db;
         _api = api;
         _reviews = reviews;
@@ -39,18 +41,28 @@ public class TelegramReminders
             try
             {
                 var s = await _reviews.GetStatsAsync(a.UserId, a.TzOffsetMinutes);
-                if (s.ReviewedToday >= s.DailyGoal)
+                var tasks = await _today.PendingTasksAsync(a.UserId);
+                if (s.ReviewedToday >= s.DailyGoal && tasks.Count == 0)
                 {
                     goalDone++;
-                    continue; // bugun allaqachon shug'ullangan — bezovta qilmaymiz
+                    continue; // bugun allaqachon shug'ullangan va vazifa yo'q — bezovta qilmaymiz
                 }
 
-                var head = s.StreakDays > 0 ? Texts.Get(a.Lang, "bot.reminder_streak", s.StreakDays) : Texts.Get(a.Lang, "bot.reminder_start");
-                var body = s.Due > 0 ? Texts.Get(a.Lang, "bot.reminder_due", s.Due) : Texts.Get(a.Lang, "bot.reminder_nodue");
-                await _api.SendMessageAsync(a.ChatId, $"{head}\n{body}", new[]
+                var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == a.UserId, ct);
+                int? daysToExam = user?.ExamDate is DateOnly exam && exam >= BotLogic.LocalToday(nowUtc, a.TzOffsetMinutes)
+                    ? exam.DayNumber - BotLogic.LocalToday(nowUtc, a.TzOffsetMinutes).DayNumber
+                    : null;
+                var lines = new List<string>
                 {
-                    new[] { new TgButton(Texts.Get(a.Lang, "bot.start_button"), BotLogic.Encode(new BotCallback.StartReview())) },
-                }, ct: ct);
+                    s.StreakDays > 0 ? Texts.Get(a.Lang, "bot.reminder_streak", s.StreakDays) : Texts.Get(a.Lang, "bot.reminder_start"),
+                };
+                if (s.ReviewedToday < s.DailyGoal) lines.Add(s.Due > 0 ? Texts.Get(a.Lang, "bot.reminder_due", s.Due) : Texts.Get(a.Lang, "bot.reminder_nodue"));
+                lines.AddRange(BotToday.ReminderExtra(a.Lang, tasks, user?.Goal, daysToExam, nowUtc));
+                var buttons = new List<TgButton[]>();
+                if (s.Due > 0 && s.ReviewedToday < s.DailyGoal)
+                    buttons.Add(new[] { new TgButton(Texts.Get(a.Lang, "bot.start_button"), BotLogic.Encode(new BotCallback.StartReview())) });
+                buttons.Add(new[] { new TgButton(Texts.Get(a.Lang, "bot.today_button"), BotLogic.Encode(new BotCallback.ShowToday())) });
+                await _api.SendMessageAsync(a.ChatId, string.Join("\n", lines), buttons, ct: ct);
                 sent++;
             }
             catch (TelegramApiException ex) when (ex.ChatGone)
@@ -105,6 +117,7 @@ public class TelegramStartup : BackgroundService
                 {
                     var commands = new[]
                     {
+                        ("today", Texts.Get(lang, "bot.cmd_today")),
                         ("review", Texts.Get(lang, "bot.cmd_review")),
                         ("stats", Texts.Get(lang, "bot.cmd_stats")),
                         ("settings", Texts.Get(lang, "bot.cmd_settings")),

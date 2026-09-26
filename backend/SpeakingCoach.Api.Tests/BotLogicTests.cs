@@ -71,12 +71,13 @@ public class BotLogicTests
     }
 
     [Fact]
-    public void Main_menu_has_two_rows_in_the_chosen_language()
+    public void Main_menu_has_three_rows_in_the_chosen_language()
     {
         var menu = BotLogic.MainMenu("en");
 
-        Assert.Equal(2, menu.Count);
-        Assert.Equal("🔁 Review", menu[0][0]);
+        Assert.Equal(3, menu.Count);
+        Assert.Equal("📋 Today", menu[0][0]);
+        Assert.Equal("🔁 Review", menu[0][1]);
     }
 
     [Theory]
@@ -157,6 +158,7 @@ public class BotLogicTests
     public void Html_is_escaped_for_telegram()
     {
         Assert.Equal("a &lt;b&gt; &amp; c", BotLogic.Html("a <b> & c"));
+        Assert.Equal("🔁 Oʻqish &quot;test&quot;", BotLogic.Html("🔁 Oʻqish \"test\""));   // emoji va oʻ o'zgarmaydi
     }
 
     [Fact]

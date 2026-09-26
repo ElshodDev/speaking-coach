@@ -38,6 +38,18 @@ public static class GroupLogic
     public static readonly string[] MockModules = ["speaking", "writing", "listening", "reading"];
 
     /// <summary>Vazifa turi to'g'rimi (CEFR'da hozircha faqat Speaking va Writing bor).</summary>
+    /// <summary>Vazifani bajarish sahifasi (saytdagi #/… manzil) — frontend'dagi routeFor bilan bir xil.</summary>
+    public static string RouteFor(string kind) => kind.Split(':') switch
+    {
+        ["review"] => "review",
+        ["practice", var k] when PracticeKinds.Contains(k) => $"practice/{k}",
+        ["mock", "cefr", var m] when MockModules.Contains(m) => $"mock/cefr-{m}",
+        ["mock", "ielts", "reading"] => "mock/reading-academic",
+        ["mock", "ielts", "writing"] => "mock/writing-academic",
+        ["mock", "ielts", var m] when MockModules.Contains(m) => $"mock/{m}",
+        _ => "tasks",
+    };
+
     public static bool IsValidKind(string? kind)
     {
         if (kind is null) return false;

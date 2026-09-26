@@ -1,4 +1,3 @@
-using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -9,6 +8,7 @@ namespace SpeakingCoach.Api.Services.Telegram;
 public enum MenuAction
 {
     None,
+    Today,
     Review,
     Stats,
     Settings,
@@ -19,6 +19,7 @@ public enum MenuAction
 public abstract record BotCallback
 {
     public sealed record StartReview : BotCallback;
+    public sealed record ShowToday : BotCallback;
     public sealed record ShowAnswer(Guid CardId) : BotCallback;
     public sealed record Grade(Guid CardId, ReviewGrade Value) : BotCallback;
     public sealed record AddWord(string Word) : BotCallback;
@@ -40,6 +41,7 @@ public static partial class BotLogic
     public static string Encode(BotCallback cb) => cb switch
     {
         BotCallback.StartReview => "rv:start",
+        BotCallback.ShowToday => "today",
         BotCallback.ShowAnswer s => $"rv:show:{s.CardId:N}",
         BotCallback.Grade g => $"rv:g:{g.CardId:N}:{(int)g.Value}",
         BotCallback.AddWord w => $"w:add:{w.Word}",
@@ -57,6 +59,7 @@ public static partial class BotLogic
         return p switch
         {
             ["rv", "start"] => new BotCallback.StartReview(),
+            ["today"] => new BotCallback.ShowToday(),
             ["rv", "show", var id] when Guid.TryParseExact(id, "N", out var g) => new BotCallback.ShowAnswer(g),
             ["rv", "g", var id, var v] when Guid.TryParseExact(id, "N", out var g)
                 && int.TryParse(v, out var n) && Enum.IsDefined(typeof(ReviewGrade), n) => new BotCallback.Grade(g, (ReviewGrade)n),
@@ -93,6 +96,7 @@ public static partial class BotLogic
     {
         var t = (text ?? "").Trim();
         var cmd = t.StartsWith('/') ? t.Split(' ', '@')[0].ToLowerInvariant() : null;
+        if (cmd is "/today" || MenuLabels(MenuAction.Today).Contains(t)) return MenuAction.Today;
         if (cmd is "/review" || MenuLabels(MenuAction.Review).Contains(t)) return MenuAction.Review;
         if (cmd is "/stats" || MenuLabels(MenuAction.Stats).Contains(t)) return MenuAction.Stats;
         if (cmd is "/settings" || MenuLabels(MenuAction.Settings).Contains(t)) return MenuAction.Settings;
@@ -104,6 +108,7 @@ public static partial class BotLogic
 
     public static string MenuLabel(string lang, MenuAction a) => Texts.Get(lang, a switch
     {
+        MenuAction.Today => "bot.menu_today",
         MenuAction.Review => "bot.menu_review",
         MenuAction.Stats => "bot.menu_stats",
         MenuAction.Settings => "bot.menu_settings",
@@ -112,8 +117,9 @@ public static partial class BotLogic
 
     public static IReadOnlyList<IReadOnlyList<string>> MainMenu(string lang) => new[]
     {
-        new[] { MenuLabel(lang, MenuAction.Review), MenuLabel(lang, MenuAction.Stats) },
-        new[] { MenuLabel(lang, MenuAction.Settings), MenuLabel(lang, MenuAction.Help) },
+        new[] { MenuLabel(lang, MenuAction.Today), MenuLabel(lang, MenuAction.Review) },
+        new[] { MenuLabel(lang, MenuAction.Stats), MenuLabel(lang, MenuAction.Settings) },
+        new[] { MenuLabel(lang, MenuAction.Help) },
     };
 
     /// <summary>Telegram'dagi language_code → bizning tillarimizdan biri.</summary>
@@ -151,8 +157,13 @@ public static partial class BotLogic
     public static DateOnly LocalToday(DateTime nowUtc, int tzOffsetMinutes) =>
         DateOnly.FromDateTime(nowUtc.AddMinutes(-tzOffsetMinutes));
 
-    /// <summary>Telegram HTML rejimi uchun: &lt;, &gt;, &amp; va qo'shtirnoq.</summary>
-    public static string Html(string? s) => WebUtility.HtmlEncode(s ?? "");
+    /// <summary>
+    /// Telegram HTML rejimi uchun: faqat &amp;, &lt;, &gt; va qo'shtirnoq
+    /// (Telegram talabi). WebUtility.HtmlEncode emas — u emoji va ba'zi
+    /// harflarni ham &amp;#…; ga aylantirib, xabarni keraksiz uzaytiradi.
+    /// </summary>
+    public static string Html(string? s) =>
+        (s ?? "").Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("\"", "&quot;");
 
     /// <summary>"aziza@mail.com" → "az***@mail.com" (chatda to'liq email ko'rsatilmaydi).</summary>
     public static string MaskEmail(string email) => ProgressCalculator.MaskEmail(email);

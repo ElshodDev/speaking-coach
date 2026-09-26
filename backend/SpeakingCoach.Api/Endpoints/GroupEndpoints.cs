@@ -147,7 +147,7 @@ public static class GroupEndpoints
             return Results.Ok(new { removed = true });
         });
 
-        app.MapPost("/api/teacher/groups/{id:guid}/assignments", async (Guid id, AssignmentRequest body, HttpRequest request, AuthService auth, AppDbContext db) =>
+        app.MapPost("/api/teacher/groups/{id:guid}/assignments", async (Guid id, AssignmentRequest body, HttpRequest request, AuthService auth, AppDbContext db, IServiceScopeFactory scopes) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return Unauthorized(request);
@@ -169,6 +169,19 @@ public static class GroupEndpoints
             var a = new Assignment { Id = Guid.NewGuid(), GroupId = id, Kind = body.Kind!, Target = target, Instructions = instructions, DueAtUtc = due, CreatedAtUtc = now };
             db.Assignments.Add(a);
             await db.SaveChangesAsync();
+            // O'quvchilarga Telegram xabari — fonda (o'qituvchi kutib qolmasin).
+            _ = Task.Run(async () =>
+            {
+                using var scope = scopes.CreateScope();
+                try
+                {
+                    await scope.ServiceProvider.GetRequiredService<Services.Telegram.AssignmentNotifier>().NotifyAsync(a.Id);
+                }
+                catch (Exception ex)
+                {
+                    scope.ServiceProvider.GetRequiredService<ILogger<Program>>().LogWarning(ex, "Vazifa xabarlari yuborilmadi: {Id}", a.Id);
+                }
+            });
             return Results.Ok(new { a.Id });
         });
 

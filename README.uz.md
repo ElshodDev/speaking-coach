@@ -262,7 +262,7 @@ npm run dev
 ### 7. Avtomatik testlar
 
 ```bash
-dotnet test backend/SpeakingCoach.Api.Tests   # backend: 382 ta unit test
+dotnet test backend/SpeakingCoach.Api.Tests   # backend: 396 ta unit test
 cd frontend/speaking-coach-web && npm test     # frontend: 89 ta vitest testi
 ```
 
@@ -376,6 +376,15 @@ bosilgach hisob ulanadi. Botda: navbatdagi kartalarni chatda takrorlash
 (javob → Yana/Qiyin/Yaxshi/Oson), inglizcha so'z yuborib tarjima olish va
 lug'atga qo'shish, seriya va natijalar, eslatma vaqti va til. Baza saytniki
 bilan bir xil — botda takrorlangan karta saytda ham takrorlangan.
+
+- **📋 Bugun** (`/today`) — saytdagi "Bugungi reja", imtihongacha qolgan
+  kunlar va bajarilmagan oʻqituvchi vazifalari; har bir band tugmasi kerakli
+  sahifani ochadi (takrorlash — botning oʻzida).
+- **Kechki eslatma** vazifalar (muddati oʻtganlari ham) va imtihongacha
+  kunlarni ham aytadi; faqat bugungi maqsad bajarilgan va vazifa qolmagan
+  boʻlsa yozilmaydi.
+- **Yangi vazifa**: oʻqituvchi vazifa berishi bilan botni ulagan
+  oʻquvchilarga xabar boradi ("▶️ Bajarish" tugmasi bilan).
 
 Qanday ishlaydi: Telegram webhook orqali serverga yozadi (uxlab yotgan Render
 uyg'onadi), so'rov `X-Telegram-Bot-Api-Secret-Token` sarlavhasi bilan

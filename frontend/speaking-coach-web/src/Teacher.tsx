@@ -208,6 +208,7 @@ export function TeacherGroup({ id, go }: { id: string; go: (route: string) => vo
             >
               {t.give}
             </button>
+            <p className="muted tiny" style={{ margin: 0 }}>{t.notifyNote}</p>
           </div>
 
           {data.assignments.length === 0 && <p className="muted">{t.noAssignments}</p>}

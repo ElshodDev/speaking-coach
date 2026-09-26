@@ -79,6 +79,7 @@ builder.Services.AddSingleton<SpeakingCoach.Api.Services.Telegram.TelegramOption
 builder.Services.AddSingleton<SpeakingCoach.Api.Services.Telegram.ITelegramApi, SpeakingCoach.Api.Services.Telegram.TelegramApi>();
 builder.Services.AddScoped<SpeakingCoach.Api.Services.Telegram.TelegramBot>();
 builder.Services.AddScoped<SpeakingCoach.Api.Services.Telegram.TelegramReminders>();
+builder.Services.AddScoped<SpeakingCoach.Api.Services.Telegram.AssignmentNotifier>();
 builder.Services.AddHostedService<SpeakingCoach.Api.Services.Telegram.TelegramStartup>();
 
 // Ishga tushganda: bazada yetishmayotgan jadval/migratsiya bo'lsa — logga aniq xato.
@@ -90,6 +91,7 @@ builder.Services.AddHostedService<SchemaStartupCheck>();
 builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ReviewService>();
+builder.Services.AddScoped<TodayService>();
 builder.Services.AddScoped<ProgressService>();
 builder.Services.AddScoped<AdminService>();
 

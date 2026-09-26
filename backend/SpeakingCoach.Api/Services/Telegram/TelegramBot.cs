@@ -29,11 +29,13 @@ public class TelegramBot
     private readonly ReviewService _reviews;
     private readonly IWordService _words;
     private readonly AiQuotaService _quotas;
+    private readonly TodayService _today;
     private readonly ILogger<TelegramBot> _logger;
 
     public TelegramBot(AppDbContext db, ITelegramApi api, TelegramOptions options, ReviewService reviews,
-        IWordService words, AiQuotaService quotas, ILogger<TelegramBot> logger)
+        IWordService words, AiQuotaService quotas, TodayService today, ILogger<TelegramBot> logger)
     {
+        _today = today;
         _db = db;
         _api = api;
         _options = options;
@@ -95,6 +97,9 @@ public class TelegramBot
 
             switch (BotLogic.ParseMenu(text))
             {
+                case MenuAction.Today:
+                    if (await RequireLinkAsync(c, ct)) await SendTodayAsync(c, ct);
+                    return;
                 case MenuAction.Review:
                     if (await RequireLinkAsync(c, ct)) await SendNextCardAsync(c, ct);
                     return;
@@ -257,6 +262,20 @@ public class TelegramBot
         }, ct: ct);
     }
 
+    // ---------------- Bugun: reja va vazifalar ----------------
+
+    private async Task SendTodayAsync(Ctx c, CancellationToken ct)
+    {
+        var tz = c.Account!.TzOffsetMinutes;
+        var (plan, _) = await _today.PlanAsync(c.User!, tz);
+        var tasks = await _today.PendingTasksAsync(c.User!.Id);
+        var (html, buttons) = BotToday.TodayMessage(c.Lang, plan, c.User.TargetScore, tasks, DateTime.UtcNow, tz);
+        var rows = buttons
+            .Select(b => new[] { b.Callback is not null ? new TgButton(b.Label, BotLogic.Encode(b.Callback)) : new TgButton(b.Label, Url: $"{_options.FrontendUrl}/#/{b.Route}") })
+            .ToList();
+        await _api.SendMessageAsync(c.ChatId, html, rows, ct: ct);
+    }
+
     // ---------------- Natijalar va sozlamalar ----------------
 
     private async Task SendStatsAsync(Ctx c, CancellationToken ct)
@@ -313,6 +332,10 @@ public class TelegramBot
             {
                 case BotCallback.StartReview:
                     await SendNextCardAsync(c, ct);
+                    break;
+
+                case BotCallback.ShowToday:
+                    await SendTodayAsync(c, ct);
                     break;
 
                 case BotCallback.ShowAnswer show:
