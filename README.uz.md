@@ -186,8 +186,8 @@ npm run dev
 ### 7. Avtomatik testlar
 
 ```bash
-dotnet test backend/SpeakingCoach.Api.Tests   # backend: 127 ta unit test
-cd frontend/speaking-coach-web && npm test     # frontend: 29 ta vitest testi
+dotnet test backend/SpeakingCoach.Api.Tests   # backend: 136 ta unit test
+cd frontend/speaking-coach-web && npm test     # frontend: 34 ta vitest testi
 ```
 
 Xuddi shu testlar har bir push'da GitHub Actions'da ham ishlaydi
@@ -291,6 +291,21 @@ Render'ning bepul tarifi 2025-yil sentabridan beri SMTP portlarini (25, 465,
 3. **SMTP & API → API Keys → Generate a new API key**.
 4. Render → Environment: `Email__BrevoApiKey`, `Email__FromAddress`
    (2-qadamdagi email), ixtiyoriy `Email__FromName`.
+
+### Kunlik AI limiti va ma'lumotlar ustidan nazorat
+
+Gemini'ning bepul kvotasi hamma uchun umumiy, shuning uchun har bir hisobga
+kunlik limit: 30 ta mashq va 100 ta so'z izohi (mehmonga IP bo'yicha 5/20).
+Qiymatlar `Ai:ExercisesPerDay`, `Ai:WordsPerDay`, `Ai:GuestExercisesPerDay`,
+`Ai:GuestWordsPerDay` bilan o'zgartiriladi. Limit Gemini'ga murojaatdan
+**oldin** tekshiriladi, lekin faqat **muvaffaqiyatli** javobdan keyin
+hisoblanadi — Gemini xato qilsa, foydalanuvchi limitini yo'qotmaydi. Qolgan
+limit bosh sahifada va Mashqlar sahifasida ko'rinadi; takrorlash va lug'at
+cheklanmagan. Admin uchun limit yo'q.
+
+Profil → **Ma'lumotlaringiz**: barcha ma'lumotni JSON faylga yuklab olish va
+hisobni darhol o'chirish (emailni qayta yozib tasdiqlanadi). Bazadagi hamma
+narsa foydalanuvchi bilan birga (cascade) o'chadi, ovoz fayllari diskdan.
 
 ### Google bilan kirish
 

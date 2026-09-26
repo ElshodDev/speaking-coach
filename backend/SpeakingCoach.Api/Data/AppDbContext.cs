@@ -15,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<ReviewCard> ReviewCards => Set<ReviewCard>();
     public DbSet<ReviewLog> ReviewLogs => Set<ReviewLog>();
     public DbSet<EmailCode> EmailCodes => Set<EmailCode>();
+    public DbSet<AiUsage> AiUsages => Set<AiUsage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -51,6 +52,12 @@ public class AppDbContext : DbContext
             // cheklov bazaning o'zida (unique index), faqat C# kodida emas:
             // bir vaqtda kelgan ikki so'rov ham ikkinchi nusxani yarata olmaydi.
             entity.HasIndex(u => u.Email).IsUnique();
+        });
+
+        modelBuilder.Entity<AiUsage>(entity =>
+        {
+            entity.HasKey(u => new { u.UserId, u.Day });
+            entity.HasOne<User>().WithMany().HasForeignKey(u => u.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<EmailCode>(entity =>

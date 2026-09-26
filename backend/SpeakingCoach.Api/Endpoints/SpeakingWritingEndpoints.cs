@@ -17,6 +17,7 @@ public static class SpeakingWritingEndpoints
             AppDbContext db,
             AuthService auth,
             ReviewService reviews,
+            AiQuotaService quotas,
             ILogger<Program> logger) =>
         {
             if (!request.HasFormContentType)
@@ -44,6 +45,10 @@ public static class SpeakingWritingEndpoints
             {
                 return Results.BadRequest(request.Error("speaking.too_big"));
             }
+
+            // Kunlik AI limiti — Gemini'ga murojaatdan OLDIN.
+            var limited = await quotas.CheckAsync(request, AiKind.Exercise);
+            if (limited is not null) return limited;
 
             var submissionId = Guid.NewGuid();
 
@@ -96,6 +101,7 @@ public static class SpeakingWritingEndpoints
                     await db.SaveChangesAsync();
                 }
 
+                await quotas.RecordAsync(request, AiKind.Exercise);
                 return Results.Ok(new { submissionId, evaluation, saved = shouldSave, newCards });
             }
             catch (Exception ex)
@@ -117,6 +123,7 @@ public static class SpeakingWritingEndpoints
             AppDbContext db,
             AuthService auth,
             ReviewService reviews,
+            AiQuotaService quotas,
             ILogger<Program> logger,
             bool save = true) =>
         {
@@ -142,6 +149,10 @@ public static class SpeakingWritingEndpoints
             {
                 return Results.BadRequest(request.Error("text.too_long", maxChars));
             }
+
+            // Kunlik AI limiti — Gemini'ga murojaatdan OLDIN.
+            var limited = await quotas.CheckAsync(request, AiKind.Exercise);
+            if (limited is not null) return limited;
 
             var submissionId = Guid.NewGuid();
             var userId = await auth.GetCurrentUserIdAsync(request);
@@ -171,6 +182,7 @@ public static class SpeakingWritingEndpoints
                     await db.SaveChangesAsync();
                 }
 
+                await quotas.RecordAsync(request, AiKind.Exercise);
                 return Results.Ok(new { submissionId, evaluation, saved = shouldSave, newCards });
             }
             catch (Exception ex)

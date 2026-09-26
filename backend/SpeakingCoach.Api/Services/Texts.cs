@@ -82,6 +82,26 @@ public static class Texts
             "Google orqali kirish hozircha sozlanmagan.",
             "Вход через Google пока не настроен.",
             "Google sign-in is not set up yet."),
+        ["ai.limit_exercises"] = new(
+            "Bugungi mashqlar limiti tugadi ({0} ta). Ertaga yana davom eting — takrorlash va lugʻat cheklanmagan.",
+            "Лимит упражнений на сегодня исчерпан ({0}). Продолжите завтра — повторение и словарь без ограничений.",
+            "You've used today's exercise limit ({0}). Come back tomorrow — review and vocabulary are unlimited."),
+        ["ai.limit_guest"] = new(
+            "Mehmonlar uchun kunlik limit tugadi ({0} ta mashq). Bepul hisob oching — kuniga {1} ta mashq.",
+            "Дневной лимит для гостей исчерпан ({0} упражнений). Создайте бесплатный аккаунт — {1} упражнений в день.",
+            "The daily guest limit is used up ({0} exercises). Create a free account to get {1} a day."),
+        ["ai.limit_words"] = new(
+            "Bugun {0} ta soʻz izohi olindi — limit tugadi. Ertaga yana davom eting.",
+            "Сегодня получено {0} объяснений слов — лимит исчерпан. Продолжите завтра.",
+            "You've looked up {0} words today — that's the daily limit. Come back tomorrow."),
+        ["ai.limit_words_guest"] = new(
+            "Mehmonlar uchun soʻz izohlari limiti tugadi ({0} ta). Bepul hisob oching — kuniga {1} ta.",
+            "Лимит объяснений слов для гостей исчерпан ({0}). Создайте бесплатный аккаунт — {1} в день.",
+            "The guest limit for word look-ups is used up ({0}). Create a free account to get {1} a day."),
+        ["account.confirm_mismatch"] = new(
+            "Tasdiqlash uchun hisobingiz emailini aynan kiriting.",
+            "Для подтверждения введите точный email вашего аккаунта.",
+            "To confirm, type your account's email exactly."),
         ["login.required"] = new("Tizimga kiring.", "Войдите в систему.", "Please log in."),
         ["login.review"] = new("Takrorlash uchun tizimga kiring.", "Войдите, чтобы повторять карточки.", "Log in to review your cards."),
         ["login.vocab"] = new("Lugʻatni saqlash uchun tizimga kiring.", "Войдите, чтобы сохранять словарь.", "Log in to save your vocabulary."),

@@ -67,6 +67,9 @@ builder.Services.AddSingleton<IWordService, GeminiWordService>();
 builder.Services.AddSingleton<AdminOptions>();
 builder.Services.AddSingleton<IEmailSender, BrevoEmailSender>();
 builder.Services.AddSingleton<IGoogleSignIn, GoogleSignInService>();
+builder.Services.AddSingleton<AiQuotaOptions>();
+builder.Services.AddSingleton<GuestQuotaStore>();
+builder.Services.AddScoped<AiQuotaService>();
 
 // PasswordHasher holatsiz (stateless) — singleton yetarli. AuthService va
 // ReviewService esa AppDbContext'ga bog'liq; DbContext har so'rov uchun
@@ -118,6 +121,7 @@ app.MapComprehensionEndpoints();
 app.MapReviewEndpoints();
 app.MapProfileEndpoints();
 app.MapVocabEndpoints();
+app.MapAccountEndpoints(uploadsPath);
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 app.Run($"http://0.0.0.0:{port}");

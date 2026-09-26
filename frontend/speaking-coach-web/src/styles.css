@@ -1066,3 +1066,19 @@ table.data td {
   flex: 1;
   border-top: 1px solid var(--border);
 }
+
+/* Kunlik AI limiti eslatmasi */
+.usage {
+  margin: 4px 0 12px;
+  color: var(--muted);
+}
+.usage-empty {
+  color: var(--warning);
+}
+/* Hisobni o'chirish — xavfli amal alohida ramkada */
+.danger-zone {
+  border: 1px solid var(--danger);
+  background: var(--danger-soft);
+  border-radius: 12px;
+  padding: 12px;
+}

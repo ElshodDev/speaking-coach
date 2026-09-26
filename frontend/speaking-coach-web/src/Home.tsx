@@ -1,6 +1,7 @@
 import type { ReviewStats } from './Review';
 import { useT } from './i18n';
 import { homeMsg } from './locales/home';
+import { UsageNote } from './Usage';
 
 export type ExerciseKind = 'speaking' | 'writing' | 'reading' | 'listening';
 
@@ -81,6 +82,7 @@ export function Home({
         </div>
 
         <h2 style={{ marginTop: 24 }}>{t.practice}</h2>
+        <UsageNote userKey="guest" />
         <ExerciseTiles onOpen={open} />
       </>
     );
@@ -145,6 +147,7 @@ export function Home({
       </button>
 
       <h2 style={{ marginTop: 24 }}>{t.practice}</h2>
+      <UsageNote userKey={email} />
       <ExerciseTiles onOpen={open} />
     </>
   );

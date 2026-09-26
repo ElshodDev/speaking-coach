@@ -10,6 +10,8 @@ import { Progress } from './Progress';
 import { Admin } from './Admin';
 import { Settings } from './Settings';
 import { Vocab } from './Vocab';
+import { UsageNote } from './Usage';
+import { AccountData } from './AccountData';
 import { apiJson, getToken, setLevel, setToken, type Profile as ProfileData } from './api';
 import { common, LangSelect, useLang, useT } from './i18n';
 import { appMsg } from './locales/app';
@@ -155,6 +157,7 @@ function App() {
     page = (
       <>
         <PageHeader title={t.practiceTitle} subtitle={t.practiceSubtitle} />
+        <UsageNote userKey={userKey} />
         <ExerciseTiles onOpen={(kind: ExerciseKind) => go(`practice/${kind}`)} />
       </>
     );
@@ -261,6 +264,7 @@ function Profile({
       <AuthPanel email={email} onChange={onAuthChange} />
       {/* key: profil serverdan kelganda forma qiymatlari yangilansin */}
       {(!email || profile) && <Settings key={profile ? 'user' : 'guest'} profile={profile} onSaved={onProfileSaved} />}
+      {email && <AccountData email={email} onDeleted={() => onAuthChange(null)} />}
 
       {profile?.isAdmin && (
         <div className="card cta">

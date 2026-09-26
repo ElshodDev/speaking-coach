@@ -19,6 +19,19 @@ public static partial class ProfileEndpoints
 
     public static void MapProfileEndpoints(this IEndpointRouteBuilder app)
     {
+        // Bugungi AI limiti: qancha ishlatildi va qancha qoldi (mehmon uchun ham).
+        app.MapGet("/api/usage", async (HttpRequest request, AiQuotaService quotas) =>
+        {
+            var s = await quotas.GetStatusAsync(request);
+            return Results.Ok(new
+            {
+                exercises = new { used = s.Exercises.Used, limit = s.Exercises.Limit, left = s.Exercises.Left },
+                words = new { used = s.Words.Used, limit = s.Words.Limit, left = s.Words.Left },
+                unlimited = s.Unlimited,
+                guest = s.Guest,
+            });
+        });
+
         app.MapGet("/api/profile", async (HttpRequest request, AuthService auth, AdminOptions admins) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
@@ -94,14 +107,18 @@ public static partial class ProfileEndpoints
 
         // So'z ma'nosi — mehmonga ham ochiq (faqat kartaga saqlash uchun kirish kerak).
         // Tarjima so'rov tilida: o'zbekcha, ruscha yoki (en) sodda inglizcha sinonim.
-        app.MapPost("/api/words/explain", async (WordExplainRequest body, HttpRequest request, IWordService words, ILogger<Program> logger) =>
+        app.MapPost("/api/words/explain", async (WordExplainRequest body, HttpRequest request, IWordService words, AiQuotaService quotas, ILogger<Program> logger) =>
         {
             var clean = GeminiWordService.Sanitize(body.Word, body.Sentence, out var errorKey);
             if (clean is null) return Results.BadRequest(request.Error(errorKey!));
+            var limited = await quotas.CheckAsync(request, AiKind.Word);
+            if (limited is not null) return limited;
             try
             {
-                return Results.Ok(await words.ExplainAsync(
-                    clean.Value.Word, clean.Value.Sentence, LearnerLevel.Normalize(body.Level), Texts.LangOf(request)));
+                var explanation = await words.ExplainAsync(
+                    clean.Value.Word, clean.Value.Sentence, LearnerLevel.Normalize(body.Level), Texts.LangOf(request));
+                await quotas.RecordAsync(request, AiKind.Word);
+                return Results.Ok(explanation);
             }
             catch (Exception ex)
             {

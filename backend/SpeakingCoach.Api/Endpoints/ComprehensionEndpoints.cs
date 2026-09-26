@@ -26,8 +26,13 @@ public static class ComprehensionEndpoints
                 HttpRequest request,
                 IComprehensionService service,
                 AppDbContext db,
+                AiQuotaService quotas,
                 ILogger<Program> logger) =>
             {
+                // Kunlik AI limiti: yangi matn yaratish Gemini'ga murojaat.
+                var limited = await quotas.CheckAsync(request, AiKind.Exercise);
+                if (limited is not null) return limited;
+
                 // Javob berilmay tashlab ketilgan eski mashqlarni tozalaymiz —
                 // alohida fon vazifasi (background job) o'rniga shu yerda,
                 // oddiy va yetarli.
@@ -46,6 +51,7 @@ public static class ComprehensionEndpoints
                     };
                     db.PendingExercises.Add(pending);
                     await db.SaveChangesAsync();
+                    await quotas.RecordAsync(request, AiKind.Exercise);
 
                     // Brauzerga to'g'ri javoblar (correctIndex) va izohlar
                     // YUBORILMAYDI — faqat savol va variantlar.
