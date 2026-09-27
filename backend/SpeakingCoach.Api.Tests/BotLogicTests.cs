@@ -148,6 +148,15 @@ public class BotLogicTests
     }
 
     [Fact]
+    public void A_reminder_set_for_23_is_still_sent_at_23()
+    {
+        var at2310 = new DateTime(2026, 9, 26, 18, 10, 0, DateTimeKind.Utc);
+        Assert.True(BotLogic.ShouldRemind(23, null, at2310, Tashkent));
+        Assert.False(BotLogic.ShouldRemind(23, null, at2310.AddHours(-1), Tashkent));
+        Assert.False(BotLogic.ShouldRemind(22, null, at2310, Tashkent));
+    }
+
+    [Fact]
     public void Local_day_follows_the_users_time_zone()
     {
         // 20:30 UTC = ertasi kun 01:30 Toshkentda.
@@ -188,19 +197,20 @@ public class BotLogicTests
     }
 
     [Fact]
-    public void Telegram_admins_are_matched_by_id_or_username()
+    public void Telegram_admins_are_matched_by_numeric_id_only()
     {
         var o = new TelegramOptions(new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
-            ["Telegram:Admins"] = " @Elshod_Developer , 123456789,, @ ",
+            // Username (o'zgarishi mumkin) va xato qiymatlar e'tiborsiz qoldiriladi.
+            ["Telegram:Admins"] = " @Elshod_Developer , 123456789,, @ , -5, 12a, +77 ",
         }).Build());
 
-        Assert.True(o.IsAdmin(new TgUser(1, "E", "elshod_developer", "uz")));
+        Assert.Equal([123456789L], o.AdminIds.ToArray());
         Assert.True(o.IsAdmin(new TgUser(123456789, "X", null, "uz")));
-        Assert.False(o.IsAdmin(new TgUser(2, "Y", "someone", "uz")));
-        Assert.False(o.IsAdmin(new TgUser(3, "Z", null, "uz")));
+        Assert.False(o.IsAdmin(new TgUser(1, "E", "elshod_developer", "uz")));
+        Assert.False(o.IsAdmin(new TgUser(5, "Z", null, "uz")));
         Assert.False(o.IsAdmin(null));
-        Assert.False(new TelegramOptions(new ConfigurationBuilder().Build()).IsAdmin(new TgUser(1, "E", "elshod_developer", "uz")));
+        Assert.False(new TelegramOptions(new ConfigurationBuilder().Build()).IsAdmin(new TgUser(123456789, "E", null, "uz")));
     }
 
     [Fact]

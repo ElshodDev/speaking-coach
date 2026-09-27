@@ -42,14 +42,26 @@ export function apiFetch(path: string, init: RequestInit = {}): Promise<Response
   return fetch(`${API_BASE}${path}`, { ...init, headers });
 }
 
-/** apiFetch + JSON o'qish. Server xato qaytarsa, uning xabari bilan Error otiladi. */
+/** Server xatosi: xabar foydalanuvchi tilida, status — dasturiy tekshiruv uchun (masalan 401). */
+export class ApiError extends Error {
+  readonly status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
+/** apiFetch + JSON o'qish. Server xato qaytarsa, uning xabari bilan ApiError otiladi. */
 export async function apiJson<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await apiFetch(path, init);
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new Error(body.error ?? body.detail ?? msg(common).serverError(response.status));
+    throw new ApiError(body.error ?? body.detail ?? msg(common).serverError(response.status), response.status);
   }
-  return response.json();
+  // 204 / bo'sh javob — JSON yo'q.
+  const text = await response.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 }
 
 /** JSON body bilan POST — eng ko'p ishlatiladigan holat uchun qisqartma. */

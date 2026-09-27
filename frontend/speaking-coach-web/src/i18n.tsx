@@ -119,6 +119,10 @@ export const common = defineMessages(
     error: 'Xatolik yuz berdi',
     serverError: (status: number) => `Server xatosi: ${status}`,
     language: 'Til',
+    crashTitle: 'Bu sahifani ochib boʻlmadi',
+    crashHint: 'Ehtimol, sayt yangilangan yoki internet uzildi. Sahifani qayta yuklang.',
+    reload: 'Qayta yuklash',
+    home: 'Bosh sahifa',
   },
   {
     ru: {
@@ -134,6 +138,10 @@ export const common = defineMessages(
       error: 'Произошла ошибка',
       serverError: (status: number) => `Ошибка сервера: ${status}`,
       language: 'Язык',
+      crashTitle: 'Не удалось открыть эту страницу',
+      crashHint: 'Возможно, сайт обновился или пропал интернет. Перезагрузите страницу.',
+      reload: 'Перезагрузить',
+      home: 'На главную',
     },
     en: {
       back: 'Back',
@@ -148,6 +156,10 @@ export const common = defineMessages(
       error: 'Something went wrong',
       serverError: (status: number) => `Server error: ${status}`,
       language: 'Language',
+      crashTitle: "This page couldn't be opened",
+      crashHint: 'The site may have been updated or the connection dropped. Please reload the page.',
+      reload: 'Reload',
+      home: 'Home',
     },
   },
 );

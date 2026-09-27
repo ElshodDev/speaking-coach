@@ -125,7 +125,7 @@ public static class AccountEndpoints
                 {
                     if (File.Exists(file)) File.Delete(file);
                 }
-                catch (IOException ex)
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                 {
                     logger.LogWarning(ex, "Audio faylni o'chirib bo'lmadi: {File}", file);
                 }

@@ -69,6 +69,10 @@ public static class VocabEndpoints
             }
 
             var note = Vocabulary.ComposeNote(body.PartOfSpeech, body.DefinitionEn, body.Example);
+            if (await reviews.IsFullAsync(userId.Value))
+            {
+                return Results.BadRequest(request.Error("review.limit", ReviewService.MaxCardsPerUser));
+            }
             var added = await reviews.AddCardsAsync(userId.Value, Vocabulary.ParseSource(body.Source), new[]
             {
                 new NewCard(ReviewCardKind.Word, word, meaning, note),

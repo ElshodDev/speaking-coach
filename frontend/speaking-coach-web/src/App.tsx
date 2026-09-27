@@ -16,8 +16,10 @@ import { Vocab } from './Vocab';
 import { UsageNote } from './Usage';
 import { AccountData } from './AccountData';
 import { TelegramCard } from './TelegramCard';
-import { cleanLaunchUrl, readyTelegram, telegramLaunch } from './tgApp';
-import { apiJson, getToken, postJson, setLevel, setToken, type Profile as ProfileData } from './api';
+import { ErrorBoundary } from './ErrorBoundary';
+import { DemoBanner, DemoOffer, DemoStart, isDemoEmail } from './Demo';
+import { cleanLaunchUrl, genuineTelegram, readyTelegram, telegramLaunch } from './tgApp';
+import { ApiError, apiFetch, apiJson, getToken, postJson, setLevel, setToken, type Profile as ProfileData } from './api';
 import { common, LangSelect, useLang, useT } from './i18n';
 import { appMsg } from './locales/app';
 import { homeMsg } from './locales/home';
@@ -96,9 +98,26 @@ function App() {
   // o'chirib tashlaymiz, foydalanuvchi mehmon sifatida davom etadi.
   useEffect(() => {
     if (!getToken()) return;
-    apiJson<{ email: string }>('/api/auth/me')
-      .then((me) => setEmail(me.email))
-      .catch(() => setToken(null));
+    let cancelled = false;
+    let timer: number | undefined;
+    // Faqat 401 (token yaroqsiz) — chiqarib yuboramiz. Tarmoq xatosi yoki server
+    // uyg'onayotgan bo'lsa (Render: 30–60 s) — hisobdan chiqarmay, qayta so'raymiz.
+    const load = (attempt: number) => {
+      apiJson<{ email: string }>('/api/auth/me')
+        .then((me) => {
+          if (!cancelled) setEmail(me.email);
+        })
+        .catch((e) => {
+          if (cancelled) return;
+          if (e instanceof ApiError && e.status === 401) setToken(null);
+          else if (attempt < 4) timer = window.setTimeout(() => load(attempt + 1), 5000 * (attempt + 1));
+        });
+    };
+    load(0);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, []);
 
   // Telegram ichida (Mini App): skript, bot ulangan hisob bo'lsa — parolsiz kirish, keyin kerakli bo'lim.
@@ -107,7 +126,8 @@ function App() {
     if (!launch) return;
     (async () => {
       await readyTelegram();
-      if (!getToken() && launch.initData) {
+      // Faqat haqiqiy Telegram ichida — begona havola orqali boshqa hisobga kiritib bo'lmasin.
+      if (!getToken() && launch.initData && genuineTelegram()) {
         try {
           const r = await postJson<{ token: string; email: string }>('/api/auth/telegram', { initData: launch.initData });
           setToken(r.token);
@@ -169,6 +189,19 @@ function App() {
     go(pending ? `join/${pending}` : 'home');
   }
 
+  const onDemoStarted = useCallback((next: string) => {
+    setEmail(next);
+    go('home');
+  }, [go]);
+
+  // Demo'dan o'z hisobiga: demo sessiyasini yopib, ro'yxatdan o'tish formasi.
+  async function leaveDemo() {
+    await apiFetch('/api/auth/logout', { method: 'POST' }).catch(() => undefined);
+    setToken(null);
+    setEmail(null);
+    go('register');
+  }
+
   const [section, sub, third, fourth, fifth] = route.split('/') as (string | undefined)[] as [string, string?, string?, string?, string?];
   const exercise = EXERCISES.find((e) => e.kind === sub);
   // key: kirish/chiqishda mashq ekranlari qaytadan yaratiladi — tarix
@@ -177,7 +210,9 @@ function App() {
   const toLogin = () => go('login');
 
   let page;
-  if (section === 'review' && sub === 'vocab') {
+  if (section === 'demo') {
+    page = <DemoStart email={email} onStarted={onDemoStarted} go={go} />;
+  } else if (section === 'review' && sub === 'vocab') {
     page = (
       <Review
         key={`vocab-${userKey}`}
@@ -359,7 +394,10 @@ function App() {
         </nav>
 
         <main>
-          <Suspense fallback={<p className="muted" role="status" style={{ marginTop: 24 }}>⏳</p>}>{page}</Suspense>
+          {isDemoEmail(email) && section !== 'demo' && <DemoBanner onRegister={leaveDemo} />}
+          <ErrorBoundary resetKey={route} onHome={() => go('home')}>
+            <Suspense fallback={<p className="muted" role="status" style={{ marginTop: 24 }}>⏳</p>}>{page}</Suspense>
+          </ErrorBoundary>
         </main>
       </div>
     </>
@@ -398,6 +436,7 @@ function Profile({
     return (
       <div style={{ marginTop: 16 }}>
         <AuthPanel email={null} onChange={onAuthChange} initialMode={authMode} />
+        <DemoOffer go={go} />
         <details className="card" style={{ padding: '12px 18px' }} data-testid="guest-settings">
           <summary className="small" style={{ cursor: 'pointer' }}>{t.guestSettings}</summary>
           <Settings key="guest" profile={null} onSaved={onProfileSaved} bare />
@@ -414,7 +453,7 @@ function Profile({
       <AuthPanel email={email} onChange={onAuthChange} />
       {/* key: profil serverdan kelganda forma qiymatlari yangilansin */}
       {(!email || profile) && <Settings key={profile ? 'user' : 'guest'} profile={profile} onSaved={onProfileSaved} />}
-      {email && <TelegramCard key={email} />}
+      {email && !isDemoEmail(email) && <TelegramCard key={email} />}
       {email && profile && (
         <div className="card cta" data-testid="goal-card">
           <div>

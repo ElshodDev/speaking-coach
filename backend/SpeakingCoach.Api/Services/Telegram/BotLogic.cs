@@ -195,7 +195,9 @@ public static partial class BotLogic
         if (reminderHour is null) return false;
         var local = nowUtc.AddMinutes(-tzOffsetMinutes);
         var today = DateOnly.FromDateTime(local);
-        return local.Hour >= reminderHour && local.Hour < 23 && lastSent != today;
+        // Kechikkan cron tunda yozmasin (23:00 dan keyin — yo'q), lekin 23:00 ga
+        // qo'yilgan eslatma o'sha soatda yuboriladi.
+        return local.Hour >= reminderHour && (local.Hour < 23 || local.Hour == reminderHour) && lastSent != today;
     }
 
     public static DateOnly LocalToday(DateTime nowUtc, int tzOffsetMinutes) =>

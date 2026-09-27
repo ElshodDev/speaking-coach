@@ -78,7 +78,7 @@ public static class ShadowingEndpoints
                 await quotas.RecordAsync(request, AiKind.Shadowing);
                 return Results.Ok(result);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (ex is not OperationCanceledException || !request.HttpContext.RequestAborted.IsCancellationRequested)
             {
                 logger.LogWarning(ex, "Shadowing tekshiruvi bajarilmadi: {Lesson} #{Line}", lesson.Id, index);
                 return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);

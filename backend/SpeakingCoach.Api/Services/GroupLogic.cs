@@ -24,6 +24,10 @@ public static class GroupLogic
     private const string CodeAlphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
     public const int CodeLength = 6;
 
+    /// <summary>Kriptografik tasodifiy kod — ketma-ketlikni taxmin qilib bo'lmaydi.</summary>
+    public static string NewJoinCode() =>
+        System.Security.Cryptography.RandomNumberGenerator.GetString(CodeAlphabet, CodeLength);
+
     public static string NewJoinCode(Random rng) =>
         new(Enumerable.Range(0, CodeLength).Select(_ => CodeAlphabet[rng.Next(CodeAlphabet.Length)]).ToArray());
 

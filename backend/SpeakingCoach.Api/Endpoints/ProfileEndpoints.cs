@@ -45,6 +45,7 @@ public static partial class ProfileEndpoints
                 level = LearnerLevel.Normalize(user.Level),
                 showOnLeaderboard = user.ShowOnLeaderboard,
                 isAdmin = admins.IsAdmin(user),
+                isDemo = DemoAccount.IsDemo(user.Email),
                 goal = user.Goal,
                 targetScore = user.TargetScore,
                 examDate = user.ExamDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
@@ -114,6 +115,10 @@ public static partial class ProfileEndpoints
             if (name is not null && !DisplayNamePattern().IsMatch(name))
             {
                 return Results.BadRequest(request.Error("profile.bad_nickname"));
+            }
+            if (body.ShowOnLeaderboard && DemoAccount.IsDemo(user.Email))
+            {
+                return Results.BadRequest(request.Error("demo.not_allowed"));
             }
             if (body.ShowOnLeaderboard && name is null)
             {

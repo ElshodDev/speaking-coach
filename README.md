@@ -6,16 +6,26 @@
 
 An English-practice app for Uzbek- and Russian-speaking learners (A2–C1), with the interface in **Uzbek, Russian or English**. You **speak, write, read and listen**; an LLM (Google Gemini) grades your work against a rubric and points out concrete mistakes — and every mistake becomes a **spaced-repetition flashcard** that comes back right before you would forget it, including in a hands-free **commute mode** for earphones.
 
-**Live demo:** https://speaking-coach-theta.vercel.app
+**Live app:** https://speaking-coach-theta.vercel.app · **[▶ Try the demo — no sign-up](https://speaking-coach-theta.vercel.app/#/demo)** (a private demo account with a history, flashcards and a streak already in place; deleted after 24 h)
 (The backend runs on a free tier and sleeps after 15 minutes of inactivity — the first request may take 30–60 s.)
 
-| Home | Review card | Writing feedback | Dark mode |
+**How it was built and what went wrong along the way:** [case study](docs/case-study.md)
+
+<p align="center"><img src="docs/demo.gif" width="320" alt="Demo: open the demo account, review a flashcard, shadow a dialogue"></p>
+
+| Today's plan | Review card | Writing feedback | Dark mode |
 |---|---|---|---|
 | ![Home](docs/screenshots/home-user.png) | ![Review](docs/screenshots/review.png) | ![Writing](docs/screenshots/writing-result.png) | ![Dark mode](docs/screenshots/review-dark.png) |
 
-| Progress & levels | Vocabulary | Tap a word | Admin panel |
+| IELTS Reading mock | Full mock result | CEFR Listening (map) | Teacher results |
 |---|---|---|---|
-| ![Progress](docs/screenshots/progress.png) | ![Vocabulary](docs/screenshots/vocab.png) | ![Word tap](docs/screenshots/word-tap.png) | ![Admin](docs/screenshots/admin.png) |
+| ![IELTS Reading](docs/screenshots/mock-reading.png) | ![Mock result](docs/screenshots/mock-result.png) | ![CEFR map](docs/screenshots/cefr-map.png) | ![Teacher](docs/screenshots/teacher.png) |
+
+| Shadowing | Shadowing: AI check | Progress & levels | Vocabulary |
+|---|---|---|---|
+| ![Shadowing](docs/screenshots/shadowing.png) | ![Shadowing check](docs/screenshots/shadowing-check.png) | ![Progress](docs/screenshots/progress.png) | ![Vocabulary](docs/screenshots/vocab.png) |
+
+<sub>The interface is shown in Uzbek; it also switches to Russian and English. Screens are captured by the Playwright end-to-end tests against a mocked API.</sub>
 
 ## Features
 
@@ -42,28 +52,44 @@ An English-practice app for Uzbek- and Russian-speaking learners (A2–C1), with
 | 🛠 **Admin panel** | For the owner only (`Admin:Emails`): signups, daily/weekly/monthly active users, exercises by type, reviews — aggregates and masked emails only. A **System status** card checks the database schema against the code (pending migrations, missing tables), the Telegram webhook (URL, pending updates, last error) and which optional features are on — without ever returning a secret. |
 | 📲 **Telegram bot** | [@SpeakingCoachUzBot](https://t.me/SpeakingCoachUzBot): connect from Profile with one tap, then review due cards right in the chat, send any English word to get a translation and add it to your vocabulary, check your streak, open **📋 Today** (the same daily plan as the website, the exam countdown and pending teacher assignments, with buttons that open each task), and get **one** daily reminder at the hour you choose — it also mentions pending and overdue assignments and the days left to the exam, and is skipped only when today's goal is done and nothing is pending. When a teacher sets an assignment, connected students get a message with a **▶️ Do it** button. **Teachers and the admin can add mock tests** with `/add`: pick IELTS or CEFR and a section, then send material (text, a PDF or a photo — existing questions and answers are kept, gaps are filled, Listening takes a script) or just a topic for Gemini to write an original test; the result passes the same strict validators and comes back as a draft with the full text and answers as a `.txt` file. The admin publishes directly; a teacher sends it for review and the admin approves or rejects (the author is notified). Published tests join the mock-exam bank; `/bank` shows counts and the review queue. Same database as the website, in Uzbek, Russian or English — pick it with `/lang`; `/guide` explains every section of the website with a button for each, and those buttons open the site **inside Telegram as a Mini App**, signing linked users in without a password (the Telegram-signed `initData` is verified with HMAC-SHA256 on the server) (works before linking too, and the welcome message offers the choice). |
 | 🌐 **Three languages** | The whole interface, server error messages and word translations switch between Uzbek (official Latin orthography), Russian and English. Detected from the browser, switchable in the header and in Profile. |
+| 👀 **Demo account** | One tap (or the [`#/demo`](https://speaking-coach-theta.vercel.app/#/demo) link) opens a private, temporary account that already has a week of history: three speaking and two writing attempts with feedback, a reading and a listening result, a finished shadowing lesson, saved words, flashcards (some due now), a 6-day streak and a half-done daily plan. It behaves like a real account with guest-level AI limits, can't receive email, link Telegram or join the leaderboard, is left out of admin statistics, and is deleted with all its data after 24 hours. |
 | 🔐 **Accounts** | Register / log in; your history and cards are private. The email is **verified with a 6-digit code** (so only real, owned addresses get accounts), and a forgotten password is reset with the same code. **Sign in with Google** is available too. Everything also works as a guest (nothing is saved). |
 
 ## Architecture
 
+```mermaid
+flowchart LR
+    subgraph Client["Browser / phone"]
+        SPA["React 19 + TypeScript PWA<br/>(Vercel)"]
+        MINI["Same app as a<br/>Telegram Mini App"]
+    end
+
+    subgraph API["ASP.NET Core 10 Minimal API — Docker on Render"]
+        EP["Endpoints<br/>auth · practice · review · vocab<br/>mock exams · shadowing · groups · admin"]
+        SVC["Services<br/>GeminiClient (fallback, retry, strict JSON)<br/>ReviewScheduler (SM-2) · ProgressCalculator<br/>IELTS/CEFR scoring · validators"]
+        BOT["Telegram bot<br/>(webhook, no library)"]
+        RL["Rate limiting<br/>per user · per IP · global AI concurrency"]
+    end
+
+    DB[("PostgreSQL — Neon<br/>EF Core, jsonb results")]
+    GEM["Google Gemini<br/>audio grading · test generation"]
+    TG["Telegram Bot API"]
+    BREVO["Brevo<br/>verification emails"]
+    GOOGLE["Google Identity<br/>sign-in (JWT checked on the server)"]
+    GH["GitHub Actions<br/>CI + hourly reminder cron"]
+
+    SPA -- "Bearer token (opaque, hashed in DB)" --> RL --> EP
+    MINI -- "initData (HMAC-SHA256)" --> RL
+    EP --> SVC --> DB
+    SVC --> GEM
+    TG -- "webhook + secret header" --> BOT --> SVC
+    BOT --> TG
+    SVC --> BREVO
+    SPA --> GOOGLE
+    GH -- "POST /api/telegram/cron" --> EP
 ```
-Browser (React + TypeScript, Vite, PWA — Vercel)
-   │  Authorization: Bearer <token>
-   ▼
-ASP.NET Core 10 Minimal API (Docker — Render)
-   │  Endpoints/  auth · speaking/writing · reading/listening · review
-   │              profile · progress · leaderboard · admin · words · vocab
-   │  Services/   GeminiClient (model fallback, retry, strict JSON parsing)
-   │              evaluation & generation services, AuthService,
-   │              ReviewScheduler (SM-2), ReviewCardFactory,
-   │              ProgressCalculator (XP, levels, badges, ranking)
-   │  Rate limiting per IP · /health
-   ▼
-Google Gemini                         PostgreSQL (Neon) via EF Core
- - speaking: audio → transcript+grade  Activities, Users, Sessions,
- - writing: text → grade               PendingExercises, ReviewCards,
- - reading/listening: generate         ReviewLogs
-```
+
+**One request, end to end (speaking):** the browser records audio → `POST /api/speaking/submit` → rate limiter (per user, per IP, server-wide AI slots) → daily AI quota check → one multimodal Gemini call returns transcript + scores → the JSON is parsed strictly and range-checked → the attempt is saved to `Activities` and every correction becomes a spaced-repetition card in the same transaction → the quota is charged only after success.
 
 ## Engineering decisions
 
@@ -73,16 +99,17 @@ Each of these is explained in more depth (in Uzbek) in [README.uz.md](README.uz.
 - **LLM output is never trusted blindly.** Replies are parsed with `RespectRequiredConstructorParameters` and `RespectNullableAnnotations`, then range-checked. The default `System.Text.Json` behaviour silently turned a missing `"score"` into `0` and saved it — a real bug this project hit and fixed.
 - **The LLM generates, code grades.** For Reading/Listening the answer key is known, so grading is deterministic C#. The key is kept server-side (`PendingExercises`) and never sent to the browser.
 - **Measuring LLM grading stability.** A built-in "stability test" re-grades the same input 5× (`?save=false`, sequential to respect rate limits) and shows min/max/spread per criterion — the honest answer to "how reliable is an AI grader?".
-- **Email ownership is proven, not assumed.** A format check can't tell whether an address exists, so sign-up sends a 6-digit code (stored as a SHA-256 hash, 15-minute lifetime, 5 attempts, 60 s cooldown, 5 emails/hour, constant-time comparison). Unverified accounts can't log in, and re-registering an unverified address re-sends the code to its real owner, so nobody can squat on someone else's email. Emails go through Brevo's HTTPS API because Render's free tier blocks outbound SMTP ports (25/465/587) since September 2025. Verification switches on only when a Brevo key is configured, so deploying the code never locks anyone out.
+- **Email ownership is proven, not assumed.** A format check can't tell whether an address exists, so sign-up sends a 6-digit code (stored as a SHA-256 hash, 15-minute lifetime, 5 attempts, 60 s cooldown, 5 emails/hour, constant-time comparison). Unverified accounts can't log in, and re-registering an unverified address re-sends the code to its real owner; the password is stored only when the code is confirmed, so a stranger who registered first can't keep a password on someone else's email. Code attempts are reserved with an atomic `UPDATE … WHERE Attempts < 5`, so parallel guesses can't exceed the limit. Emails go through Brevo's HTTPS API because Render's free tier blocks outbound SMTP ports (25/465/587) since September 2025. Verification switches on only when a Brevo key is configured, so deploying the code never locks anyone out.
 - **Google sign-in without an auth library.** The browser gets a Google-signed ID token; the server verifies it itself (RS256 signature against Google's JWKS, `iss`, `aud` = our client ID, expiry, `email_verified`) using .NET's built-in RSA. Signing in with Google to an account whose email was never verified wipes the old password, since a stranger could have set it.
 - **A Telegram bot on a free, sleeping server.** The bot uses a webhook (Telegram wakes the Render instance), verified with the `X-Telegram-Bot-Api-Secret-Token` header. A sleeping server can't run timers, so a GitHub Actions cron pings `/api/telegram/cron` hourly and the server sends whatever reminders are due — logic is "the hour has passed and none was sent today", so a delayed cron still works and nobody gets two messages. Linking uses a one-time `t.me/…?start=TOKEN` link (hashed, 15 min). No bot library: five Bot API calls over `HttpClient`, with the pure parts (callback encoding, reminder timing, menu parsing, Telegram JSON) unit-tested.
 - **Daily AI quota per user.** Gemini's free quota is shared by everyone, so each account gets a daily budget (30 exercises, 100 word look-ups; guests 5/20 per IP, configurable via `Ai:*`). It is checked *before* calling Gemini and charged only *after* a successful answer, so a Gemini outage never eats a user's quota; the remaining budget is shown in the UI. Review and vocabulary never touch the AI and stay unlimited.
-- **Your data, your control.** Profile → *Your data* downloads everything as JSON and deletes the account on the spot (confirmed by retyping the email); all rows cascade from the user, and speaking audio files are removed from disk.
+- **Your data, your control.** Profile → *Your data* downloads everything as JSON and deletes the account on the spot (confirmed by retyping the email); all rows cascade from the user. Speaking audio is only sent to the grader and never written to disk.
 - **Opaque session tokens instead of JWT.** 32 random bytes, stored only as a SHA-256 hash. Logging out revokes the token immediately — impossible with a plain JWT. Passwords use ASP.NET Core's `PasswordHasher` (PBKDF2).
 - **Pure core logic.** `ReviewScheduler`, `ReviewCardFactory`, grading and parsing don't touch the database or HTTP, which is what makes them unit-testable.
 - **Streaks use the user's local day**, not UTC — a review at 01:00 in Tashkent must not count as "yesterday".
 - **Type-safe i18n without a library.** Each screen declares its texts once in Uzbek (`defineMessages(uz, { ru, en })`); the Russian and English objects must have the same shape, so a missing translation fails the TypeScript build. Plurals are plain functions (`ruPlural(n, 'слово', 'слова', 'слов')`). The server localizes its messages from the standard `Accept-Language` header; services return message keys, not text.
 - **XP is derived, not stored.** Levels, badges and the weekly leaderboard are computed from `Activities` and `ReviewLogs` by a pure `ProgressCalculator`. There is no XP counter to drift out of sync, and changing the rules re-scores history automatically.
+- **A demo that can't be abused.** Every click creates a *separate* account (visitors never see each other's data) seeded by a pure, unit-tested `DemoSeed` that builds results with the same records and card factory as the real endpoints, so every screen renders them normally. Its address is on the reserved `.invalid` domain (RFC 2606), so no email can ever be sent; there is no password; AI use is capped at guest level; creation is limited per IP and per day; and an hourly job deletes demo accounts older than 24 hours through the database's cascading foreign keys.
 - **Privacy by default.** The leaderboard is opt-in and shows only a nickname; the admin panel shows aggregates and masked emails (`az***@mail.com`), never anyone's essays or cards.
 - **Charts without a chart library.** Small hand-built SVG charts with a colour-blind-checked palette, tooltips, keyboard navigation and a table view for accessibility.
 - **One `Activities` table with `jsonb` payloads** for all exercise types, so adding a new type needs no new table.
@@ -90,9 +117,11 @@ Each of these is explained in more depth (in Uzbek) in [README.uz.md](README.uz.
 
 ## Quality
 
-- **Tests:** 509 backend unit tests (xUnit) — scheduler, streak across time zones, card creation, grading, strict parsing, token hashing, XP/levels/badges, leaderboard ranking, level-aware prompts, vocabulary status, localized messages (every key in all three languages with matching placeholders), email-code rules (expiry, attempts, cooldown, hourly cap), email templates Google ID-token validation (forged signature, wrong audience/issuer, expiry, `alg: none`), AI quota, the Telegram bot logic (including the Today message, reminder lines and new-assignment messages), the system-status rules and IELTS band maths (official rounding, Task 2 weighting, word count, mock limits, question-bank format, objective grading and word limits, raw-score→band anchors, the test validator, answer-free client payloads, full-mock rounding, the official CEFR raw→75 table, row by row, CEFR Listening/Reading format checks and the correct-answers→level table, the daily plan (rotation, mock cadence, onboarding validation), the word list and quiz builder, teacher groups: join codes, assignment types, completion/lateness rules, score labels, what the teacher can see, bot test authoring: review rules, callbacks, accepted files, validators and the review text, shadowing: YouTube link/range parsing, timestamp shifting, lesson validation, aligning the AI pronunciation result) — and 117 frontend tests with Vitest (charts, word tapping, vocabulary search, plurals).
+- **Tests:** 525 backend unit tests (xUnit) — scheduler, streak across time zones, card creation, grading, strict parsing, token hashing, XP/levels/badges, leaderboard ranking, level-aware prompts, vocabulary status, localized messages (every key in all three languages with matching placeholders), email-code rules (expiry, attempts, cooldown, hourly cap), email templates Google ID-token validation (forged signature, wrong audience/issuer, expiry, `alg: none`), AI quota, the Telegram bot logic (including the Today message, reminder lines and new-assignment messages), the system-status rules and IELTS band maths (official rounding, Task 2 weighting, word count, mock limits, question-bank format, objective grading and word limits, raw-score→band anchors, the test validator, answer-free client payloads, full-mock rounding, the official CEFR raw→75 table, row by row, CEFR Listening/Reading format checks and the correct-answers→level table, the daily plan (rotation, mock cadence, onboarding validation), the word list and quiz builder, teacher groups: join codes, assignment types, completion/lateness rules, score labels, what the teacher can see, bot test authoring: review rules, callbacks, accepted files, validators and the review text, shadowing: YouTube link/range parsing, timestamp shifting, lesson validation, aligning the AI pronunciation result, security rules: email-code precheck/match, admin-ID parsing, rate-limit keys, the test-generation gate, double-click grading, join-code randomness, demo data: streak across time zones, result shapes, limits) — and 118 frontend tests with Vitest (charts, word tapping, vocabulary search, plurals).
 - **CI:** GitHub Actions builds and tests the backend and type-checks, tests and builds the frontend on every push, and fails on known vulnerable packages (`dotnet list package --vulnerable --include-transitive`, `npm audit --audit-level=high`). **Dependabot** opens grouped update PRs weekly (npm, NuGet) and monthly (GitHub Actions).
-- **Rate limiting:** 10 req/min per IP on login/register, 30 req/min on Gemini-backed endpoints; the real client IP is read from `X-Forwarded-For` behind Render's proxy (last hop only).
+- **Rate limiting:** 10 req/min per IP on login/register; Gemini-backed endpoints get 30 req/min per signed-in user (or per IP for guests), at most 2 concurrent AI requests per user, 8 per IP and 16 for the whole server (the rest wait in a short queue), so a class behind one Wi-Fi still works but nobody can flood the AI. Test generation also allows one run at a time per user and counts failed attempts. The real client IP is read from `X-Forwarded-For` behind Render's proxy (last hop only).
+- **Hardening:** the Gemini key travels in the `x-goog-api-key` header (never in a URL that could reach logs); large AI payloads are serialized once and limited to two in flight; the Telegram Mini App auto-login only runs inside a real Telegram client with `initData` no older than 1 hour (no login-CSRF via a crafted link); bot admins are matched by numeric Telegram ID only (usernames can change hands); the Docker image runs as a non-root user; the site sends `nosniff`, a strict referrer policy, a microphone-only permissions policy and `frame-ancestors` limited to Telegram; group join codes come from a CSPRNG; expired sessions and codes are purged hourly; the database connection retries transient Neon errors.
+- **Resilience in the browser:** a page crash or a missing lazy chunk after a new deploy shows a "Reload" card (with one automatic reload) instead of a white screen; a slow cold start no longer signs the user out (only a real 401 does); the microphone is released when you leave a page.
 - **Health check:** `GET /health` reports API and database status (503 if the DB is unreachable).
 
 ## Tech stack (all on free tiers)
@@ -136,7 +165,7 @@ cd frontend/speaking-coach-web && npm test
 
 ## Deploy
 
-- **Render** (backend): root directory `backend/SpeakingCoach.Api`, Docker; env vars `Gemini__ApiKey`, `ConnectionStrings__Default`, `FrontendOrigin` (the Vercel URL, for CORS), optionally `Admin__Emails` (comma-separated) and, to turn on email verification, `Email__BrevoApiKey` + `Email__FromAddress` (a sender verified in [Brevo](https://www.brevo.com); free plan: 300 emails/day), and `Google__ClientId` for Google sign-in (a Web OAuth client with the Vercel URL as an authorized JavaScript origin), and `Telegram__BotToken` + `Telegram__CronSecret` for the bot (optionally `Telegram__Admins` — Telegram IDs or @usernames that may publish and approve tests in the bot) (plus GitHub secrets `API_URL` and `CRON_SECRET` for the reminder workflow).
+- **Render** (backend): root directory `backend/SpeakingCoach.Api`, Docker; env vars `Gemini__ApiKey`, `ConnectionStrings__Default`, `FrontendOrigin` (the Vercel URL, for CORS), optionally `Admin__Emails` (comma-separated) and, to turn on email verification, `Email__BrevoApiKey` + `Email__FromAddress` (a sender verified in [Brevo](https://www.brevo.com); free plan: 300 emails/day), and `Google__ClientId` for Google sign-in (a Web OAuth client with the Vercel URL as an authorized JavaScript origin), and `Telegram__BotToken` + `Telegram__CronSecret` for the bot (optionally `Telegram__Admins` — comma-separated numeric Telegram IDs that may publish and approve tests in the bot; send `/id` to the bot to see yours) (plus GitHub secrets `API_URL` and `CRON_SECRET` for the reminder workflow).
 - **Vercel** (frontend): root directory `frontend/speaking-coach-web`; env var `VITE_API_URL` (the Render URL).
 - **Migrations** are applied with `dotnet ef database update` before pushing code that depends on them (Render does not run them).
 
@@ -150,6 +179,8 @@ cd frontend/speaking-coach-web && npm test
 
 ## Roadmap
 
+- [x] One-click demo account with seeded data
+- [x] Telegram bot, teacher groups, IELTS/CEFR mock exams, shadowing
 - [ ] Daily reminder via Web Push ("12 cards are waiting")
 - [ ] Integration tests with `WebApplicationFactory` + Testcontainers Postgres
 - [x] Progress page, XP/levels/badges, weekly leaderboard, admin panel

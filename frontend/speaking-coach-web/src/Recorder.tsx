@@ -4,6 +4,7 @@ import { apiJson, getLevel, loadHistory as fetchHistory, type HistoryItem } from
 import { cardsMessage } from './cards';
 import { useT } from './i18n';
 import { speakingMsg } from './locales/speaking';
+import { audioExt } from './shadowLogic';
 import { stabilityMsg } from './locales/stability';
 import { Corrections, Feedback, GuestNote, HistoryList, ScoreBar, type CorrectionItem, type ScoreWithReasoning } from './ui';
 
@@ -62,9 +63,31 @@ export function Recorder({
   const [isTesting, setIsTesting] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const aliveRef = useRef(true);
 
   useEffect(() => {
     loadHistory();
+  }, []);
+
+  // Sahifadan chiqilganda mikrofon o'chadi (yozuv yuborilmaydi) —
+  // aks holda brauzer "mikrofon yoniq" belgisini ko'rsatib turadi.
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => {
+      aliveRef.current = false;
+      const rec = mediaRecorderRef.current;
+      if (rec && rec.state !== 'inactive') {
+        rec.onstop = null;
+        try {
+          rec.stop();
+        } catch {
+          /* allaqachon to'xtagan */
+        }
+      }
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    };
   }, []);
 
   // Yozish davomida soniyalarni sanaymiz — 15-20 soniya tavsiya etiladi.
@@ -82,6 +105,11 @@ export function Recorder({
   async function startRecording() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (!aliveRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+      streamRef.current = stream;
       const recorder = new MediaRecorder(stream);
       chunksRef.current = [];
 
@@ -90,8 +118,11 @@ export function Recorder({
       };
 
       recorder.onstop = async () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        // Safari — audio/mp4, Firefox — ogg: brauzer yozgan haqiqiy format.
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' });
         stream.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+        if (!aliveRef.current) return;
         setLastBlob(blob);
         await uploadAudio(blob);
       };
@@ -119,7 +150,7 @@ export function Recorder({
   // (save=false) ham shu funksiyani ishlatadi.
   async function postAudio(blob: Blob, save: boolean): Promise<SubmitResponse> {
     const formData = new FormData();
-    formData.append('audio', blob, 'recording.webm');
+    formData.append('audio', blob, `recording.${audioExt(blob.type)}`);
     formData.append('topic', topic);
     formData.append('level', getLevel());
 

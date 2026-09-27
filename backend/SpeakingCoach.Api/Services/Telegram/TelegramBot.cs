@@ -116,6 +116,13 @@ public partial class TelegramBot
                 return;
             }
 
+            if (BotLogic.IsCommand(text, "/id"))
+            {
+                // Faqat o'zining ID'si — admin sozlash (Telegram__Admins) uchun.
+                await _api.SendMessageAsync(c.ChatId, c.T("bot.your_id", c.From.Id), ct: ct);
+                return;
+            }
+
             if (BotLogic.IsCommand(text, "/word"))
             {
                 await SendDailyWordAsync(c, ct);

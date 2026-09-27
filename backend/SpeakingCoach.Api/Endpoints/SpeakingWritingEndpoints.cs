@@ -9,7 +9,10 @@ public record WritingSubmitRequest(string Topic, string Text, string? Level = nu
 
 public static class SpeakingWritingEndpoints
 {
-    public static void MapSpeakingWritingEndpoints(this IEndpointRouteBuilder app, string uploadsPath)
+    /// <summary>Mavzu — bitta savol yoki sarlavha; uzun matn promptni shishirmasin.</summary>
+    public const int MaxTopicChars = 300;
+
+    public static void MapSpeakingWritingEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapPost("/api/speaking/submit", async (
             HttpRequest request,
@@ -38,6 +41,10 @@ public static class SpeakingWritingEndpoints
             if (string.IsNullOrWhiteSpace(topic))
             {
                 return Results.BadRequest(request.Error("topic.empty"));
+            }
+            if (topic.Length > MaxTopicChars)
+            {
+                return Results.BadRequest(request.Error("topic.too_long", MaxTopicChars));
             }
 
             const long maxBytes = 10 * 1024 * 1024; // 10 MB
@@ -69,10 +76,8 @@ public static class SpeakingWritingEndpoints
             var userId = await auth.GetCurrentUserIdAsync(request);
             var shouldSave = saveRequested && userId is not null;
 
-            if (shouldSave)
-            {
-                await File.WriteAllBytesAsync(Path.Combine(uploadsPath, $"{submissionId}.webm"), audioBytes);
-            }
+            // Audio diskka yozilmaydi: faqat baholash uchun kerak, keyin hech
+            // qayerda ishlatilmaydi (shaxsiy ma'lumot — keraksiz saqlanmaydi).
 
             var newCards = 0;
             try
@@ -130,6 +135,10 @@ public static class SpeakingWritingEndpoints
             if (string.IsNullOrWhiteSpace(body.Topic))
             {
                 return Results.BadRequest(request.Error("topic.empty"));
+            }
+            if (body.Topic.Length > MaxTopicChars)
+            {
+                return Results.BadRequest(request.Error("topic.too_long", MaxTopicChars));
             }
 
             if (string.IsNullOrWhiteSpace(body.Text))

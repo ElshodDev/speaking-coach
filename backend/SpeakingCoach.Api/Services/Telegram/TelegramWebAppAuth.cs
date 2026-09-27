@@ -12,11 +12,11 @@ namespace SpeakingCoach.Api.Services.Telegram;
 ///   hash   = hex(HMAC_SHA256(key: secret, data: data_check_string))
 /// data_check_string — "hash" dan boshqa barcha maydonlar "key=value"
 /// ko'rinishida, alifbo tartibida, "\n" bilan. Imzo to'g'ri va yangi
-/// (24 soat ichida) bo'lsa — Telegram foydalanuvchisi haqiqiy.
+/// (1 soat ichida — begona havola bilan qayta ishlatib bo'lmasin) bo'lsa — Telegram foydalanuvchisi haqiqiy.
 /// </summary>
 public static class TelegramWebAppAuth
 {
-    public static readonly TimeSpan MaxAge = TimeSpan.FromHours(24);
+    public static readonly TimeSpan MaxAge = TimeSpan.FromHours(1);
 
     public static string DataCheckString(IEnumerable<KeyValuePair<string, string>> fields) =>
         string.Join("\n", fields.Where(f => f.Key != "hash").OrderBy(f => f.Key, StringComparer.Ordinal).Select(f => $"{f.Key}={f.Value}"));

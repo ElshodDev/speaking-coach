@@ -27,6 +27,14 @@ public static class Texts
             "ИИ сейчас не ответил. Попробуйте немного позже.",
             "The AI didn't respond just now. Please try again shortly."),
 
+        ["demo.limit"] = new(
+            "Bugun demo hisoblar soni tugadi. Oddiy hisob oching — bu bepul va bir daqiqa oladi.",
+            "Лимит демо-аккаунтов на сегодня исчерпан. Создайте обычный аккаунт — это бесплатно и займёт минуту.",
+            "No more demo accounts today. Create a normal account instead — it's free and takes a minute."),
+        ["demo.not_allowed"] = new(
+            "Demo hisobda bu mavjud emas. Oʻz hisobingizni oching — maʼlumotlaringiz saqlanadi.",
+            "В демо-аккаунте это недоступно. Создайте свой аккаунт — ваши данные сохранятся.",
+            "This isn't available in the demo account. Create your own account to keep your data."),
         ["auth.invalid_email"] = new("Email manzili notoʻgʻri.", "Неверный адрес электронной почты.", "The email address is not valid."),
         ["auth.password_short"] = new(
             "Parol kamida {0} ta belgidan iborat boʻlishi kerak.",
@@ -158,6 +166,10 @@ public static class Texts
             "🌐 Bot tilini tanlang:\n<i>Выберите язык · Choose a language</i>",
             "🌐 Выберите язык бота:\n<i>Tilni tanlang · Choose a language</i>",
             "🌐 Choose the bot language:\n<i>Tilni tanlang · Выберите язык</i>"),
+        ["bot.your_id"] = new(
+            "🆔 Telegram ID'ingiz: <code>{0}</code>",
+            "🆔 Ваш Telegram ID: <code>{0}</code>",
+            "🆔 Your Telegram ID: <code>{0}</code>"),
         ["bot.lang_saved"] = new("✅ Bot tili: {0}", "✅ Язык бота: {0}", "✅ Bot language: {0}"),
         ["bot.cmd_guide"] = new("Saytda nimalar bor — qoʻllanma", "Что есть на сайте — путеводитель", "What's on the website — a quick guide"),
         ["bot.guide_button"] = new("🧭 Saytda nimalar bor?", "🧭 Что есть на сайте?", "🧭 What's on the website?"),
@@ -431,6 +443,10 @@ public static class Texts
             "Bir sutkada {0} ta Speaking/Writing mock imtihonini topshirish mumkin (Listening va Reading cheklanmagan).",
             "Лимит пробных экзаменов Speaking/Writing за сутки: {0} (Listening и Reading без ограничений).",
             "You can take {0} Speaking/Writing mock exams per 24 hours (Listening and Reading are unlimited)."),
+        ["mock.generating"] = new(
+            "Siz uchun test tayyorlanmoqda — bir daqiqadan soʻng qayta oching.",
+            "Тест для вас уже готовится — откройте снова через минуту.",
+            "A test is already being prepared for you — open it again in a minute."),
         ["mock.generate_limit"] = new(
             "Bugun yangi test yaratish limiti tugadi. Ertaga yana urinib koʻring yoki Speaking/Writing mock imtihonini topshiring.",
             "Лимит создания новых тестов на сегодня исчерпан. Попробуйте завтра или сдайте Speaking/Writing.",
@@ -461,6 +477,10 @@ public static class Texts
             "The grade must be 0 (Again), 1 (Hard), 2 (Good) or 3 (Easy)."),
         ["review.card_not_found"] = new("Karta topilmadi.", "Карточка не найдена.", "Card not found."),
         ["review.both_sides"] = new("Kartaning ikkala tomoni ham toʻldirilishi kerak.", "Заполните обе стороны карточки.", "Fill in both sides of the card."),
+        ["review.limit"] = new(
+            "Kartalar soni chegaraga yetdi ({0} ta). Keraksizlarini oʻchirib, yangisini qoʻshing.",
+            "Достигнут лимит карточек ({0}). Удалите ненужные, чтобы добавить новые.",
+            "You've reached the card limit ({0}). Delete some you no longer need to add new ones."),
         ["review.phrase_exists"] = new("Bu ibora sizda allaqachon bor.", "Эта фраза у вас уже есть.", "You already have this phrase."),
 
         ["vocab.word_required"] = new("Soʻz va uning tarjimasi kerak.", "Нужны слово и его перевод.", "A word and its translation are required."),
@@ -487,6 +507,7 @@ public static class Texts
         ["speaking.no_audio"] = new("Audio fayl topilmadi yoki u boʻsh.", "Аудиофайл не найден или пуст.", "The audio file is missing or empty."),
         ["speaking.too_big"] = new("Fayl hajmi 10 MB dan katta.", "Размер файла больше 10 МБ.", "The file is larger than 10 MB."),
         ["topic.empty"] = new("Mavzu koʻrsatilmagan.", "Тема не указана.", "The topic is missing."),
+        ["topic.too_long"] = new("Mavzu juda uzun (koʻpi bilan {0} ta belgi).", "Тема слишком длинная (не более {0} символов).", "The topic is too long (at most {0} characters)."),
         ["text.empty"] = new("Matn boʻsh boʻlishi mumkin emas.", "Текст не может быть пустым.", "The text cannot be empty."),
         ["text.too_short"] = new(
             "Matn juda qisqa (kamida {0} ta belgi kerak).",

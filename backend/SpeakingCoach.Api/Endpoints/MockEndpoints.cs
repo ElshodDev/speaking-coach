@@ -168,7 +168,7 @@ public static class MockEndpoints
                 var id = await SaveAsync(db, reviews, user.Id, "speaking", set.Id, null, MockLimit.CleanSession(form["sessionId"].ToString()), result, result.TopCorrections, ActivityType.Speaking);
                 return Results.Ok(new { id, result });
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (ex is not OperationCanceledException || !request.HttpContext.RequestAborted.IsCancellationRequested)
             {
                 logger.LogError(ex, "IELTS speaking mock baholanmadi");
                 return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);
@@ -200,7 +200,7 @@ public static class MockEndpoints
                 var id = await SaveAsync(db, reviews, user.Id, "writing", set.Id, set.Variant, MockLimit.CleanSession(body.SessionId), result, result.TopCorrections, ActivityType.Writing);
                 return Results.Ok(new { id, result });
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (ex is not OperationCanceledException || !request.HttpContext.RequestAborted.IsCancellationRequested)
             {
                 logger.LogError(ex, "IELTS writing mock baholanmadi");
                 return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);
@@ -212,7 +212,7 @@ public static class MockEndpoints
         // (/api/mock/cefr/speaking/new kabi aniq yo'llar ustun turadi).
         app.MapGet("/api/mock/{exam}/{module}/new", async (
             string exam, string module, HttpRequest request, AuthService auth, AppDbContext db, AdminOptions admins, IConfiguration config,
-            IMockGenerator generator, ILogger<Program> logger, string? variant) =>
+            IMockGenerator generator, GenerationGate gate, ILogger<Program> logger, string? variant) =>
         {
             if (exam is not ("ielts" or "cefr") || module is not ("listening" or "reading")) return Results.NotFound();
             var user = await auth.GetCurrentUserAsync(request);
@@ -220,35 +220,47 @@ public static class MockEndpoints
             var v = exam == "ielts" && module == "reading" ? (variant == IeltsBank.General ? IeltsBank.General : IeltsBank.Academic) : "";
 
             var done = (await RecentAsync(db, user.Id)).Where(r => r.Module == module).Select(r => r.SetId).ToHashSet();
+            // Avval faqat Id'lar (yengil), keyin tanlangan bitta testning matni.
             var candidates = await db.MockTests
                 .Where(t => t.Exam == exam && t.Module == module && t.Variant == v && t.Status == MockTestStatus.Published)
                 .OrderBy(t => t.CreatedAtUtc)
-                .Select(t => new { t.Id, t.Payload })
+                .Select(t => t.Id)
                 .ToListAsync();
-            var fresh = candidates.FirstOrDefault(t => !done.Contains(t.Id.ToString()));
+            var freshId = candidates.Cast<Guid?>().FirstOrDefault(t => !done.Contains(t!.Value.ToString()));
 
-            Guid id;
-            string payload;
-            if (fresh is not null)
+            async Task<string> PayloadOf(Guid testId) =>
+                await db.MockTests.Where(t => t.Id == testId).Select(t => t.Payload).FirstAsync();
+
+            if (freshId is { } fid)
             {
-                (id, payload) = (fresh.Id, fresh.Payload);
+                return Results.Ok(new { test = ClientPayload(module, fid, await PayloadOf(fid)), repeated = false });
             }
-            else
+
+            // Bankda yangi test yo'q — yaratamiz (sutkalik limit bilan).
+            var isAdmin = admins.IsAdmin(user);
+            var perDay = MockLimit.GeneratePerDay(config);
+            if (!isAdmin)
             {
-                // Bankda yangi test yo'q — yaratamiz (sutkalik limit bilan).
-                if (!admins.IsAdmin(user))
+                var since = DateTime.UtcNow.AddHours(-24);
+                var made = await db.MockTests.CountAsync(t => t.CreatedByUserId == user.Id && t.CreatedAtUtc > since && t.Title == null);
+                if (made >= perDay)
                 {
-                    var since = DateTime.UtcNow.AddHours(-24);
-                    var made = await db.MockTests.CountAsync(t => t.CreatedByUserId == user.Id && t.CreatedAtUtc > since && t.Title == null);
-                    if (made >= MockLimit.GeneratePerDay(config))
-                    {
-                        if (candidates.Count == 0) return Results.Json(request.Error("mock.generate_limit"), statusCode: StatusCodes.Status429TooManyRequests);
-                        // Hammasini ishlagan — eng eskisini qayta beramiz.
-                        var oldest = candidates.OrderBy(t => done.Contains(t.Id.ToString()) ? 0 : 1).First();
-                        (id, payload) = (oldest.Id, oldest.Payload);
-                        return Results.Ok(new { test = ClientPayload(module, id, payload), repeated = true });
-                    }
+                    if (candidates.Count == 0) return Results.Json(request.Error("mock.generate_limit"), statusCode: StatusCodes.Status429TooManyRequests);
+                    // Hammasini ishlagan — eng eskisini qayta beramiz.
+                    var oldest = candidates[0];
+                    return Results.Ok(new { test = ClientPayload(module, oldest, await PayloadOf(oldest)), repeated = true });
                 }
+            }
+
+            // Parallel so'rovlar va muvaffaqiyatsiz urinishlar ham hisobda.
+            var gateResult = gate.TryEnter(user.Id, isAdmin ? int.MaxValue : perDay * 2 + 2, out var lease);
+            if (gateResult == GenerationGate.Outcome.Busy)
+                return Results.Json(request.Error("mock.generating"), statusCode: StatusCodes.Status409Conflict);
+            if (gateResult == GenerationGate.Outcome.Exhausted)
+                return Results.Json(request.Error("mock.generate_limit"), statusCode: StatusCodes.Status429TooManyRequests);
+
+            using (lease)
+            {
                 try
                 {
                     var ct = request.HttpContext.RequestAborted;
@@ -259,24 +271,24 @@ public static class MockEndpoints
                         (_, "reading") => await generator.GenerateReadingAsync(v, ct),
                         _ => await generator.GenerateListeningAsync(ct),
                     };
-                    id = Guid.NewGuid();
-                    payload = JsonSerializer.Serialize(content, content.GetType(), GeminiMockGenerator.Web);
+                    var id = Guid.NewGuid();
+                    var payload = JsonSerializer.Serialize(content, content.GetType(), GeminiMockGenerator.Web);
                     db.MockTests.Add(new MockTest
                     {
                         Id = id, Exam = exam, Module = module, Variant = v, Payload = payload,
                         CreatedByUserId = user.Id, CreatedAtUtc = DateTime.UtcNow,
                     });
-                    await db.SaveChangesAsync();
+                    await db.SaveChangesAsync(CancellationToken.None);
                     logger.LogInformation("Yangi {Exam} {Module} testi yaratildi: {Id}", exam, module, id);
+                    return Results.Ok(new { test = ClientPayload(module, id, payload), repeated = false });
                 }
-                catch (Exception ex) when (ex is not OperationCanceledException)
+                catch (Exception ex) when (ex is not OperationCanceledException || !request.HttpContext.RequestAborted.IsCancellationRequested)
                 {
                     logger.LogError(ex, "{Exam} {Module} testini yaratib bo'lmadi", exam, module);
                     return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);
                 }
             }
-            return Results.Ok(new { test = ClientPayload(module, id, payload), repeated = false });
-        });
+        }).RequireRateLimiting("ai");
 
         app.MapPost("/api/mock/{exam}/{module}", async (
             string exam, string module, ObjectiveMockRequest body, HttpRequest request, AuthService auth, AppDbContext db) =>
@@ -394,7 +406,7 @@ public static class MockEndpoints
                     result, result.TopCorrections, ActivityType.Speaking);
                 return Results.Ok(new { id, result });
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (ex is not OperationCanceledException || !request.HttpContext.RequestAborted.IsCancellationRequested)
             {
                 logger.LogError(ex, "CEFR speaking mock baholanmadi");
                 return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);
@@ -423,7 +435,7 @@ public static class MockEndpoints
                     result, result.TopCorrections, ActivityType.Writing);
                 return Results.Ok(new { id, result });
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (ex is not OperationCanceledException || !request.HttpContext.RequestAborted.IsCancellationRequested)
             {
                 logger.LogError(ex, "CEFR writing mock baholanmadi");
                 return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);

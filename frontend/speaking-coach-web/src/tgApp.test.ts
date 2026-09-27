@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseLaunch } from './tgApp';
+import { genuineTelegram, parseLaunch } from './tgApp';
 
 describe('Telegram Mini App launch', () => {
   const data = encodeURIComponent('query_id=AAH&user=%7B%22id%22%3A7%7D&auth_date=1&hash=abc');
@@ -18,5 +18,17 @@ describe('Telegram Mini App launch', () => {
   });
   it('handles empty init data', () => {
     expect(parseLaunch('#tgWebAppData=&tgWebAppVersion=7.0', '')!.initData).toBeNull();
+  });
+});
+
+describe('genuine Telegram check (login CSRF)', () => {
+  it('trusts the native client bridge or an iframe, not a plain tab', () => {
+    const top = {} as Window;
+    const plain = { parent: top } as unknown as Window;
+    Object.assign(plain, { parent: plain });
+    expect(genuineTelegram(plain)).toBe(false);
+    expect(genuineTelegram({ parent: plain, TelegramWebviewProxy: { postEvent() {} } } as unknown as Window)).toBe(true);
+    const framed = { parent: top } as unknown as Window; // web.telegram.org iframe ichida
+    expect(genuineTelegram(framed)).toBe(true);
   });
 });

@@ -67,7 +67,10 @@ public class AdminService
         DateOnly Local(DateTime t) => ReviewScheduler.ToLocalDate(t, tzOffsetMinutes);
         var today = Local(now);
 
-        var users = await _db.Users.Select(u => new { u.Id, u.Email, u.CreatedAtUtc, u.Level, u.EmailVerifiedAtUtc }).ToListAsync();
+        // Demo hisoblar statistikaga kirmaydi (ular 24 soatlik va haqiqiy foydalanuvchi emas).
+        var allUsers = await _db.Users.Select(u => new { u.Id, u.Email, u.CreatedAtUtc, u.Level, u.EmailVerifiedAtUtc }).ToListAsync();
+        var demoIds = allUsers.Where(u => DemoAccount.IsDemo(u.Email)).Select(u => u.Id).ToHashSet();
+        var users = allUsers.Where(u => !demoIds.Contains(u.Id)).ToList();
 
         // Oxirgi 30 kundagi barcha "harakatlar" (mashq yoki takrorlash) —
         // kim, qachon. Faol foydalanuvchilar va kunlik grafik shundan.
@@ -79,6 +82,8 @@ public class AdminService
             .Where(l => l.ReviewedAtUtc >= since30)
             .Select(l => new { l.UserId, l.ReviewedAtUtc })
             .ToListAsync();
+        recentActs = recentActs.Where(a => !demoIds.Contains(a.UserId)).ToList();
+        recentReviews = recentReviews.Where(r => !demoIds.Contains(r.UserId)).ToList();
         var events = recentActs.Select(a => (a.UserId, At: a.CreatedAtUtc))
             .Concat(recentReviews.Select(r => (r.UserId, At: r.ReviewedAtUtc)))
             .ToList();

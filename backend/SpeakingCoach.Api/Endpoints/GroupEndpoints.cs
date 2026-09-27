@@ -25,7 +25,7 @@ public static class GroupEndpoints
         {
             for (var i = 0; i < 20; i++)
             {
-                var code = GroupLogic.NewJoinCode(Random.Shared);
+                var code = GroupLogic.NewJoinCode();
                 if (!await db.Groups.AnyAsync(g => g.JoinCode == code)) return code;
             }
             throw new InvalidOperationException("Taklif kodini yaratib bo'lmadi");
@@ -233,7 +233,7 @@ public static class GroupEndpoints
                 isTeacher = group.TeacherId == user.Id,
                 isMember = await db.GroupMembers.AnyAsync(m => m.GroupId == group.Id && m.UserId == user.Id),
             });
-        });
+        }).RequireRateLimiting(RateLimits.JoinPolicy);
 
         app.MapPost("/api/groups/join/{code}", async (string code, HttpRequest request, AuthService auth, AppDbContext db) =>
         {
@@ -251,7 +251,7 @@ public static class GroupEndpoints
             db.GroupMembers.Add(new GroupMember { GroupId = group.Id, UserId = user.Id, JoinedAtUtc = DateTime.UtcNow });
             await db.SaveChangesAsync();
             return Results.Ok(new { group.Id, joined = true });
-        }).RequireRateLimiting("auth");
+        }).RequireRateLimiting(RateLimits.JoinPolicy);
 
         app.MapGet("/api/student/assignments", async (HttpRequest request, AuthService auth, AppDbContext db) =>
         {
@@ -303,14 +303,15 @@ public static class GroupEndpoints
         var since = assignments.Min(a => a.CreatedAtUtc);
         var rows = await db.Activities
             .Where(x => x.UserId != null && userIds.Contains(x.UserId.Value) && x.CreatedAtUtc >= since)
-            .Select(x => new { x.Id, UserId = x.UserId!.Value, x.Type, x.CreatedAtUtc, x.PromptData, x.ResponseData })
+            // PromptData (writing'da butun insho) faqat mock imtihonlarda kerak — qolganlarida o'qilmaydi.
+            .Select(x => new { x.Id, UserId = x.UserId!.Value, x.Type, x.CreatedAtUtc, PromptData = x.Type == ActivityType.MockExam ? x.PromptData : null, x.ResponseData })
             .ToListAsync();
         var refs = rows.Select(x =>
         {
             string? exam = null, module = null;
             if (x.Type == ActivityType.MockExam)
             {
-                var p = MockEndpoints.ParsePrompt(x.PromptData);
+                var p = MockEndpoints.ParsePrompt(x.PromptData ?? "");
                 (exam, module) = (p.Exam, p.Module);
             }
             return (x.UserId, Ref: new ActivityRef(x.Id, x.Type, x.CreatedAtUtc, exam, module, GroupLogic.ScoreText(x.ResponseData)));

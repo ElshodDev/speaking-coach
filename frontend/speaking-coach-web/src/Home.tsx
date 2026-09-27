@@ -6,6 +6,8 @@ import { TelegramPromo } from './TelegramCard';
 import { GroupsShortcut, TasksCard } from './StudentTasks';
 import { TodayPlan } from './TodayPlan';
 import { QuizTile, WordOfDay } from './WordOfDay';
+import { DemoHeroButton, isDemoEmail } from './Demo';
+import { demoMsg } from './locales/demo';
 
 export type ExerciseKind = 'speaking' | 'writing' | 'reading' | 'listening';
 
@@ -50,6 +52,7 @@ export function Home({
   go: (route: string) => void;
 }) {
   const t = useT(homeMsg);
+  const td = useT(demoMsg);
   const open = (kind: ExerciseKind) => go(`practice/${kind}`);
 
   if (!email) {
@@ -65,6 +68,7 @@ export function Home({
             <button className="btn-link" style={{ color: '#fff' }} onClick={() => go('register')}>
               {t.createAccount}
             </button>
+            <DemoHeroButton go={go} />
           </div>
         </div>
 
@@ -95,7 +99,7 @@ export function Home({
     );
   }
 
-  const name = email.split('@')[0];
+  const name = isDemoEmail(email) ? td.name : email.split('@')[0];
   const goal = stats ? Math.min(100, Math.round((stats.reviewedToday / stats.dailyGoal) * 100)) : 0;
 
   return (
@@ -152,7 +156,7 @@ export function Home({
       <WordOfDay loggedIn />
       <QuizTile go={go} />
 
-      <TelegramPromo go={go} />
+      {!isDemoEmail(email) && <TelegramPromo go={go} />}
 
       <button className="card cta" style={{ width: '100%', font: 'inherit', color: 'inherit', textAlign: 'left', cursor: 'pointer' }} onClick={() => go('progress')}>
         <div>

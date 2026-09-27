@@ -36,8 +36,11 @@ public class AuthService
     private readonly IEmailSender _email;
     private readonly ILogger<AuthService> _logger;
 
-    public AuthService(AppDbContext db, IPasswordHasher<User> hasher, IEmailSender email, ILogger<AuthService> logger)
+    private readonly AdminOptions _admins;
+
+    public AuthService(AppDbContext db, IPasswordHasher<User> hasher, IEmailSender email, ILogger<AuthService> logger, AdminOptions admins)
     {
+        _admins = admins;
         _db = db;
         _hasher = hasher;
         _email = email;
@@ -56,12 +59,20 @@ public class AuthService
     public async Task<AuthResult> RegisterAsync(string email, string password, string lang = Texts.DefaultLang)
     {
         var normalized = NormalizeEmail(email ?? "");
-        if (normalized.Length > 256 || !System.Net.Mail.MailAddress.TryCreate(normalized, out _) || !normalized.Contains('.'))
+        if (normalized.Length > 256 || !System.Net.Mail.MailAddress.TryCreate(normalized, out _) || !normalized.Contains('.')
+            || DemoAccount.IsDemo(normalized))
         {
             return AuthResult.Fail("auth.invalid_email");
         }
         var passwordError = CheckPassword(password);
         if (passwordError is not null) return passwordError;
+
+        // Email tasdiqlash o'chiq bo'lsa, admin emailini hech kim "egallab" olmasin —
+        // egaligini isbotlab bo'lmaydi (admin Google orqali kiradi).
+        if (!VerificationRequired && _admins.Emails.Contains(normalized))
+        {
+            return AuthResult.Fail("auth.email_taken");
+        }
 
         var existing = await _db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
         if (existing is not null)
@@ -74,8 +85,10 @@ public class AuthService
             {
                 return AuthResult.Fail("auth.email_taken");
             }
-            existing.PasswordHash = _hasher.HashPassword(existing, password);
-            await _db.SaveChangesAsync();
+            // Parol BU YERDA almashtirilmaydi: aks holda begona odam egasi kod
+            // kiritayotgan paytda o'z parolini yozib qo'yib, tasdiqlangan hisobni
+            // egallab olardi. Parol kod bilan birga (VerifyEmailAsync) — kodni
+            // olgan email egasi tomonidan o'rnatiladi.
             return await SendCodeAsync(existing, EmailCodePurpose.Verify, lang, quietCooldown: true)
                 ?? AuthResult.VerifyEmail(existing.Email);
         }
@@ -185,14 +198,29 @@ public class AuthService
     }
 
     /// <summary>Emailga kelgan kod bilan tasdiqlash. Muvaffaqiyatli bo'lsa — darhol kirilgan holat (token).</summary>
-    public async Task<AuthResult> VerifyEmailAsync(string email, string code)
+    /// <remarks>
+    /// Parol ham shu yerda — kod bilan birga — o'rnatiladi: kodni faqat email
+    /// egasi oladi, demak parolni ham faqat u belgilaydi. (Avval parol ro'yxatdan
+    /// o'tishda yozilardi va tasdiqlanmagan hisobga begona odam o'z parolini
+    /// qo'yib ulgurishi mumkin edi.)
+    /// </remarks>
+    public async Task<AuthResult> VerifyEmailAsync(string email, string code, string? password)
     {
+        var passwordError = CheckPassword(password ?? "");
+        if (passwordError is not null) return passwordError;
+
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == NormalizeEmail(email ?? ""));
         if (user is null) return AuthResult.Fail("code.wrong");
 
         var failure = await ConsumeCodeAsync(user, EmailCodePurpose.Verify, code);
         if (failure is not null) return failure;
 
+        if (user.EmailVerifiedAtUtc is null)
+        {
+            user.PasswordHash = _hasher.HashPassword(user, password!);
+            // Tasdiqlanmagan paytda ochilgan sessiyalar (bo'lsa) — bekor.
+            _db.Sessions.RemoveRange(await _db.Sessions.Where(x => x.UserId == user.Id).ToListAsync());
+        }
         user.EmailVerifiedAtUtc ??= DateTime.UtcNow;
         var token = AddSession(user.Id);
         await _db.SaveChangesAsync();
@@ -260,6 +288,9 @@ public class AuthService
     /// </summary>
     private async Task<AuthResult?> SendCodeAsync(User user, EmailCodePurpose purpose, string lang, bool quietCooldown)
     {
+        // Demo hisobning manzili yo'q (".invalid") — xat yuborilmaydi.
+        if (DemoAccount.IsDemo(user.Email)) return null;
+
         var now = DateTime.UtcNow;
         var recent = await _db.EmailCodes
             .Where(c => c.UserId == user.Id && c.CreatedAtUtc > now.AddHours(-1))
@@ -301,7 +332,12 @@ public class AuthService
         }
     }
 
-    /// <summary>Oxirgi kodni tekshiradi; noto'g'ri bo'lsa urinishni hisoblaydi. null — kod to'g'ri va ishlatildi.</summary>
+    /// <summary>
+    /// Oxirgi kodni tekshiradi. null — kod to'g'ri va ishlatildi.
+    /// Urinish kodni solishtirishdan OLDIN bazada atomar band qilinadi
+    /// ("Attempts &lt; 5" sharti bilan bitta UPDATE): bir vaqtda yuborilgan
+    /// yuzlab so'rov ham 5 tadan ortiq taxmin qila olmaydi.
+    /// </summary>
     private async Task<AuthResult?> ConsumeCodeAsync(User user, EmailCodePurpose purpose, string code)
     {
         var now = DateTime.UtcNow;
@@ -310,20 +346,26 @@ public class AuthService
             .OrderByDescending(c => c.CreatedAtUtc)
             .FirstOrDefaultAsync();
 
-        var result = EmailCodeRules.Check(latest, user.Id, code, now);
-        if (result == CodeCheck.Ok)
+        var pre = EmailCodeRules.Precheck(latest, now);
+        if (pre is not null) return AuthResult.Fail(EmailCodeRules.KeyFor(pre.Value));
+
+        var id = latest!.Id;
+        var reserved = await _db.EmailCodes
+            .Where(c => c.Id == id && c.UsedAtUtc == null && c.Attempts < EmailCodeRules.MaxAttempts)
+            .ExecuteUpdateAsync(set => set.SetProperty(c => c.Attempts, c => c.Attempts + 1));
+        if (reserved == 0) return AuthResult.Fail("code.too_many");
+        var attempts = latest.Attempts + 1;
+
+        if (EmailCodeRules.Matches(latest, user.Id, code))
         {
-            latest!.UsedAtUtc = now;
-            return null;
+            // Ikki parallel to'g'ri so'rovdan faqat bittasi ishlatadi.
+            var used = await _db.EmailCodes
+                .Where(c => c.Id == id && c.UsedAtUtc == null)
+                .ExecuteUpdateAsync(set => set.SetProperty(c => c.UsedAtUtc, now));
+            return used == 1 ? null : AuthResult.Fail(EmailCodeRules.KeyFor(CodeCheck.NotFound));
         }
-        if (result == CodeCheck.Wrong && latest is not null)
-        {
-            latest.Attempts++;
-            await _db.SaveChangesAsync();
-            var left = EmailCodeRules.MaxAttempts - latest.Attempts;
-            return left > 0 ? AuthResult.Fail("code.wrong_left", left) : AuthResult.Fail("code.too_many");
-        }
-        return AuthResult.Fail(EmailCodeRules.KeyFor(result));
+        var left = EmailCodeRules.MaxAttempts - attempts;
+        return left > 0 ? AuthResult.Fail("code.wrong_left", left) : AuthResult.Fail("code.too_many");
     }
 
     public async Task LogoutAsync(HttpRequest request)
@@ -366,7 +408,48 @@ public class AuthService
     public async Task<Guid?> GetCurrentUserIdAsync(HttpRequest request) =>
         (await GetCurrentUserAsync(request))?.Id;
 
-    private string AddSession(Guid userId)
+    /// <summary>
+    /// Demo hisob: yangi vaqtinchalik foydalanuvchi + tayyor ma'lumotlar (DemoSeed),
+    /// sessiya 24 soat. Parol yo'q — faqat shu token bilan kiriladi.
+    /// </summary>
+    public async Task<AuthResult> CreateDemoAsync(int tzOffsetMinutes)
+    {
+        var now = DateTime.UtcNow;
+        tzOffsetMinutes = Math.Clamp(tzOffsetMinutes, -14 * 60, 12 * 60);
+
+        // Muddati o'tgan demo hisoblar (cron ishlamay qolgan bo'lsa ham) — shu yerda tozalanadi.
+        await Maintenance.DeleteExpiredDemosAsync(_db, now);
+
+        var email = DemoAccount.NewEmail();
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = email,
+            PasswordHash = "",
+            CreatedAtUtc = now,
+            EmailVerifiedAtUtc = now,
+            // Taxalluslar noyob — har bir demo hisobga o'ziniki ("Demo 3fa9").
+            DisplayName = "Demo " + email[5..9],
+            Level = "B1",
+            ShowOnLeaderboard = false,
+            Goal = "ielts",
+            TargetScore = "6.5",
+            ExamDate = ReviewScheduler.ToLocalDate(now, tzOffsetMinutes).AddDays(45),
+            DailyMinutes = 20,
+            OnboardedAtUtc = now,
+        };
+        _db.Users.Add(user);
+        var seed = DemoSeed.Build(user.Id, now, tzOffsetMinutes);
+        _db.Activities.AddRange(seed.Activities);
+        _db.ReviewCards.AddRange(seed.Cards);
+        _db.ReviewLogs.AddRange(seed.Logs);
+        var token = AddSession(user.Id, DemoAccount.Lifetime);
+        await _db.SaveChangesAsync();
+        _logger.LogInformation("Demo hisob yaratildi: {UserId}", user.Id);
+        return new AuthResult(token, user.Email, null);
+    }
+
+    private string AddSession(Guid userId, TimeSpan? lifetime = null)
     {
         var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
         _db.Sessions.Add(new Session
@@ -375,7 +458,7 @@ public class AuthService
             UserId = userId,
             TokenHash = HashToken(token),
             CreatedAtUtc = DateTime.UtcNow,
-            ExpiresAtUtc = DateTime.UtcNow.Add(SessionLifetime),
+            ExpiresAtUtc = DateTime.UtcNow.Add(lifetime ?? SessionLifetime),
         });
         return token;
     }

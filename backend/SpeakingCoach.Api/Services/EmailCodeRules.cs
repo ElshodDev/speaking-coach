@@ -38,23 +38,31 @@ public static class EmailCodeRules
     public static string Normalize(string? input) => new((input ?? "").Where(char.IsAsciiDigit).ToArray());
 
     /// <summary>
-    /// Eng oxirgi (ishlatilmagan) kodni tekshiradi. Noto'g'ri bo'lsa, chaqiruvchi
-    /// Attempts'ni oshirib saqlashi kerak. Taqqoslash doimiy vaqtda
-    /// (FixedTimeEquals) — javob vaqtidan kodni taxmin qilib bo'lmaydi.
+    /// Solishtirishdan oldingi shartlar: kod bor, ishlatilmagan, muddati
+    /// o'tmagan, urinish qolgan. null — solishtirish mumkin.
     /// </summary>
-    public static CodeCheck Check(EmailCode? latest, Guid userId, string? input, DateTime now)
+    public static CodeCheck? Precheck(EmailCode? latest, DateTime now)
     {
         if (latest is null || latest.UsedAtUtc is not null) return CodeCheck.NotFound;
         if (latest.ExpiresAtUtc <= now) return CodeCheck.Expired;
         if (latest.Attempts >= MaxAttempts) return CodeCheck.TooManyAttempts;
-
-        var code = Normalize(input);
-        if (code.Length != 6) return CodeCheck.Wrong;
-
-        var expected = Encoding.ASCII.GetBytes(latest.CodeHash);
-        var actual = Encoding.ASCII.GetBytes(Hash(userId, code));
-        return CryptographicOperations.FixedTimeEquals(expected, actual) ? CodeCheck.Ok : CodeCheck.Wrong;
+        return null;
     }
+
+    /// <summary>
+    /// Kod mos keladimi. Taqqoslash doimiy vaqtda (FixedTimeEquals) — javob
+    /// vaqtidan kodni taxmin qilib bo'lmaydi.
+    /// </summary>
+    public static bool Matches(EmailCode code, Guid userId, string? input)
+    {
+        var normalized = Normalize(input);
+        if (normalized.Length != 6) return false;
+        return CryptographicOperations.FixedTimeEquals(Encoding.ASCII.GetBytes(code.CodeHash), Encoding.ASCII.GetBytes(Hash(userId, normalized)));
+    }
+
+    /// <summary>Eng oxirgi (ishlatilmagan) kodni to'liq tekshiradi (Precheck + Matches).</summary>
+    public static CodeCheck Check(EmailCode? latest, Guid userId, string? input, DateTime now) =>
+        Precheck(latest, now) ?? (Matches(latest!, userId, input) ? CodeCheck.Ok : CodeCheck.Wrong);
 
     /// <summary>
     /// Yangi xat yuborish mumkinmi (cooldown va soatlik chegara). Mumkin

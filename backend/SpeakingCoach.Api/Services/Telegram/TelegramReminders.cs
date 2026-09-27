@@ -31,13 +31,24 @@ public class TelegramReminders
 
     public async Task<ReminderRun> RunAsync(DateTime nowUtc, CancellationToken ct = default)
     {
-        var accounts = await _db.TelegramAccounts.Where(a => a.ReminderHour != null).ToListAsync(ct);
+        var accounts = await _db.TelegramAccounts.AsNoTracking().Where(a => a.ReminderHour != null).ToListAsync(ct);
         int sent = 0, goalDone = 0, disabled = 0, checkedCount = 0;
+
+        // Boshlangan ish oxirigacha bajariladi (cron so'rovi uzilsa ham) —
+        // aks holda yarim yo'lda to'xtab, keyingi chaqiruvda takror yuborilardi.
+        ct = CancellationToken.None;
 
         foreach (var a in accounts.Where(a => BotLogic.ShouldRemind(a.ReminderHour, a.LastReminderDate, nowUtc, a.TzOffsetMinutes)))
         {
+            // Avval "bugun yuborildi" deb belgilaymiz (atomar): ikki cron parallel
+            // ishlasa ham (curl --retry) bitta foydalanuvchiga faqat bittasi yozadi.
+            var today = (DateOnly?)BotLogic.LocalToday(nowUtc, a.TzOffsetMinutes);
+            var claimed = await _db.TelegramAccounts
+                .Where(x => x.ChatId == a.ChatId && x.ReminderHour != null && (x.LastReminderDate == null || x.LastReminderDate != today))
+                .ExecuteUpdateAsync(set => set.SetProperty(x => x.LastReminderDate, today), ct);
+            if (claimed == 0) continue;
+
             checkedCount++;
-            a.LastReminderDate = BotLogic.LocalToday(nowUtc, a.TzOffsetMinutes);
             try
             {
                 var s = await _reviews.GetStatsAsync(a.UserId, a.TzOffsetMinutes);
@@ -68,7 +79,8 @@ public class TelegramReminders
             catch (TelegramApiException ex) when (ex.ChatGone)
             {
                 // Foydalanuvchi botni bloklagan — eslatmalarni o'chiramiz, boshqa urinmaymiz.
-                a.ReminderHour = null;
+                await _db.TelegramAccounts.Where(x => x.ChatId == a.ChatId)
+                    .ExecuteUpdateAsync(set => set.SetProperty(x => x.ReminderHour, (int?)null), ct);
                 disabled++;
             }
             catch (Exception ex)
@@ -77,7 +89,6 @@ public class TelegramReminders
             }
         }
 
-        await _db.SaveChangesAsync(ct);
         return new ReminderRun(checkedCount, sent, goalDone, disabled);
     }
 }

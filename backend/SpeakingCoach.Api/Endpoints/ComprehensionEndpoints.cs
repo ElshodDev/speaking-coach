@@ -119,7 +119,16 @@ public static class ComprehensionEndpoints
                 }
 
                 // O'chirish va (bo'lsa) tarixga yozish — bitta tranzaksiyada.
-                await db.SaveChangesAsync();
+                try
+                {
+                    await db.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    // Ikki marta yuborildi (tugma ikki marta bosildi): birinchisi
+                    // allaqachon saqlandi — ikkinchisi XP/kartalarni takrorlamasin.
+                    return Results.Conflict(request.Error("exercise.not_found"));
+                }
 
                 return Results.Ok(new
                 {

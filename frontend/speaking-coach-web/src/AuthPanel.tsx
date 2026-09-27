@@ -3,6 +3,7 @@ import { apiFetch, apiJson, postJson, setToken } from './api';
 import { common, useLang, useT } from './i18n';
 import { authMsg } from './locales/auth';
 import { GoogleButton } from './GoogleButton';
+import { inTelegram } from './tgApp';
 
 /** Server javobi: yo token (kirildi), yo "kodni kiriting", yo shunchaki ok. */
 interface AuthResponse {
@@ -111,7 +112,8 @@ export function AuthPanel({
         }
         finish(data);
       } else if (mode === 'verify') {
-        finish(await postJson<AuthResponse>('/api/auth/verify', { email: formEmail, code }));
+        // Parol kod bilan birga yuboriladi — server uni faqat to'g'ri kodda o'rnatadi (hisobni egallab olishdan himoya).
+        finish(await postJson<AuthResponse>('/api/auth/verify', { email: formEmail, code, password }));
       } else if (mode === 'forgot') {
         await postJson('/api/auth/forgot', { email: formEmail });
         go('reset');
@@ -193,6 +195,19 @@ export function AuthPanel({
           {verify ? t.verifyText(formEmail) : t.resetText(formEmail)}
         </p>
         {codeInput}
+        {verify && password.length < 8 && (
+          <input
+            className="input"
+            type="password"
+            placeholder={t.newPassword}
+            aria-label={t.newPassword}
+            autoComplete="new-password"
+            required
+            minLength={8}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        )}
         {!verify && (
           <input
             className="input"
@@ -260,7 +275,8 @@ export function AuthPanel({
           {t.benefits.map((b) => <li key={b}>{b}</li>)}
         </ul>
       )}
-      {googleClientId && (
+      {/* Telegram ichidagi brauzerda Google kirish oynasi ishlamaydi (Google o'zi bloklaydi). */}
+      {googleClientId && !inTelegram() && (
         <>
           <GoogleButton clientId={googleClientId} onCredential={google} />
           <div className="divider">

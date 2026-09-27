@@ -135,12 +135,14 @@ public class AiQuotaService
         }
 
         var usage = await _db.AiUsages.FirstOrDefaultAsync(u => u.UserId == user.Id && u.Day == day);
+        // Demo hisob — mehmon limitlari bilan (bepul Gemini kvotasi haqiqiy foydalanuvchilarga qolsin).
+        var demo = DemoAccount.IsDemo(user.Email);
         return new QuotaStatus(
-            new QuotaCounter(usage?.Exercises ?? 0, _options.Exercises),
-            new QuotaCounter(usage?.Words ?? 0, _options.Words),
+            new QuotaCounter(usage?.Exercises ?? 0, demo ? _options.GuestExercises : _options.Exercises),
+            new QuotaCounter(usage?.Words ?? 0, demo ? _options.GuestWords : _options.Words),
             Unlimited: _admins.IsAdmin(user),
             Guest: false,
-            new QuotaCounter(usage?.Shadowing ?? 0, _options.Shadowing));
+            new QuotaCounter(usage?.Shadowing ?? 0, demo ? _options.GuestShadowing : _options.Shadowing));
     }
 
     /// <summary>null — ruxsat; aks holda xabar kaliti (Texts) va parametrlari.</summary>

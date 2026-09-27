@@ -1683,3 +1683,23 @@ table.data td {
 .bot-promo .spread .btn {
   flex: none;
 }
+
+/* Demo hisob banneri: tepada, yumshoq ogohlantiruvchi rangda. */
+.demo-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--warning-soft);
+  border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+.demo-banner .btn-link {
+  font-weight: 600;
+  padding: 0;
+}

@@ -269,14 +269,13 @@ public partial class TelegramBot
     {
         var emails = _admins.Emails.ToList();
         var ids = _options.AdminIds.ToList();
-        var usernames = _options.AdminUsernames.ToList();
         var byEmail = emails.Count == 0 ? [] : await (from u in _db.Users
                             join a in _db.TelegramAccounts on u.Id equals a.UserId
                             where emails.Contains(u.Email)
                             select new { a.ChatId, a.Lang }).ToListAsync(ct);
         // Shaxsiy chatda chat ID = Telegram foydalanuvchi ID.
-        var byTelegram = ids.Count == 0 && usernames.Count == 0 ? [] : await _db.TelegramAccounts
-            .Where(a => ids.Contains(a.ChatId) || (a.Username != null && usernames.Contains(a.Username.ToLower())))
+        var byTelegram = ids.Count == 0 ? [] : await _db.TelegramAccounts
+            .Where(a => ids.Contains(a.ChatId))
             .Select(a => new { a.ChatId, a.Lang })
             .ToListAsync(ct);
         var admins = byEmail.Concat(byTelegram).DistinctBy(a => a.ChatId).Where(a => a.ChatId != c.ChatId).ToList();

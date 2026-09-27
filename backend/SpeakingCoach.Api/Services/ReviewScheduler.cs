@@ -97,6 +97,12 @@ public static class ReviewScheduler
         return streak;
     }
 
+    /// <summary>Takroriy baho oynasi: shu vaqt ichidagi ikkinchi baho — ikki marta bosish.</summary>
+    public static readonly TimeSpan DuplicateGradeWindow = TimeSpan.FromSeconds(5);
+
+    public static bool IsDuplicateGrade(DateTime? lastReviewedUtc, DateTime nowUtc) =>
+        lastReviewedUtc is { } last && nowUtc - last >= TimeSpan.Zero && nowUtc - last < DuplicateGradeWindow;
+
     public static DateOnly ToLocalDate(DateTime utc, int tzOffsetMinutes) =>
         DateOnly.FromDateTime(utc.AddMinutes(-tzOffsetMinutes));
 }

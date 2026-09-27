@@ -2,7 +2,10 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { LangProvider } from './i18n';
+import { installChunkReload } from './ErrorBoundary';
 import './styles.css';
+
+installChunkReload();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

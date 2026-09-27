@@ -90,25 +90,25 @@ public class TelegramOptions
         PublicUrl = (Blank(config["Telegram:PublicUrl"]) ?? Blank(config["RENDER_EXTERNAL_URL"]))?.TrimEnd('/');
         CronSecret = Blank(config["Telegram:CronSecret"]);
         FrontendUrl = (Blank(config["FrontendOrigin"]) ?? "http://localhost:5173").TrimEnd('/');
-        var admins = (config["Telegram:Admins"] ?? "")
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(a => a.TrimStart('@'))
-            .Where(a => a.Length > 0)
-            .ToList();
-        AdminIds = admins.Where(a => a.All(char.IsDigit) && long.TryParse(a, out _)).Select(long.Parse).ToHashSet();
-        AdminUsernames = admins.Where(a => !a.All(char.IsDigit)).Select(a => a.ToLowerInvariant()).ToHashSet();
+        AdminIds = ParseAdminIds(config["Telegram:Admins"]);
     }
 
     /// <summary>
-    /// Telegram:Admins — botdagi adminlar (vergul bilan): Telegram ID (raqam,
-    /// o'zgarmaydi — tavsiya) yoki @username. Sayt emaili (Admin:Emails) bilan
-    /// bir qatorda ishlaydi: bot admini testlarni chop etadi va tasdiqlaydi.
+    /// Telegram:Admins — botdagi adminlar: Telegram ID'lari (raqam, vergul bilan).
+    /// Faqat ID: @username o'zgartirilishi va boshqa odamga o'tishi mumkin, ID esa
+    /// hech qachon o'zgarmaydi. O'z ID'ingizni botda /id buyrug'i ko'rsatadi.
+    /// Username yoki xato yozilgan qiymatlar e'tiborsiz qoldiriladi.
     /// </summary>
     public IReadOnlySet<long> AdminIds { get; }
-    public IReadOnlySet<string> AdminUsernames { get; }
 
-    public bool IsAdmin(TgUser? user) =>
-        user is not null && (AdminIds.Contains(user.Id) || (user.Username is { } u && AdminUsernames.Contains(u.ToLowerInvariant())));
+    public static IReadOnlySet<long> ParseAdminIds(string? raw) =>
+        (raw ?? "")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(a => long.TryParse(a, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var id) ? id : 0)
+            .Where(id => id > 0)
+            .ToHashSet();
+
+    public bool IsAdmin(TgUser? user) => user is not null && AdminIds.Contains(user.Id);
 
     public bool Enabled => Token is not null;
 

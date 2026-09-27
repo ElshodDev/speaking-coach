@@ -60,30 +60,66 @@ public class GeminiClient
     /// </summary>
     public async Task<HttpResponseMessage> SendWithFallbackAsync(object requestBody, CancellationToken ct = default)
     {
+        // JSON bir marta yoziladi (audio base64 bilan bir necha MB bo'lishi mumkin) —
+        // har bir urinish/model uchun qayta serializatsiya qilinmaydi.
+        var body = JsonSerializer.SerializeToUtf8Bytes(requestBody, requestBody.GetType(), RequestJson);
+
+        // Katta so'rovlar (audio, PDF) bir vaqtda ko'pi bilan ikkitadan —
+        // server xotirasi (Render: 512 MB) to'lib qolmasin.
+        var big = body.Length > BigPayloadBytes;
+        if (big) await BigPayloads.WaitAsync(ct);
+        try
+        {
+            return await SendCoreAsync(body, ct);
+        }
+        finally
+        {
+            if (big) BigPayloads.Release();
+        }
+    }
+
+    // PostAsJsonAsync bilan bir xil (camelCase) — so'rov shakli o'zgarmaydi.
+    private static readonly JsonSerializerOptions RequestJson = new(JsonSerializerDefaults.Web);
+
+    private const int BigPayloadBytes = 2 * 1024 * 1024;
+    private static readonly SemaphoreSlim BigPayloads = new(2, 2);
+
+    private async Task<HttpResponseMessage> SendCoreAsync(byte[] body, CancellationToken ct)
+    {
         string? lastErrorBody = null;
         System.Net.HttpStatusCode? lastStatus = null;
 
         foreach (var model in ModelsInPriorityOrder)
         {
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={_apiKey}";
+            // Kalit URL'da emas, sarlavhada: URL'lar loglarga (HttpClient,
+            // proksi) yozilib qolishi mumkin.
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent";
 
             for (var attempt = 0; attempt <= RetryDelaysMs.Length; attempt++)
             {
-                var response = await _http.PostAsJsonAsync(url, requestBody, ct);
+                using var request = new HttpRequestMessage(HttpMethod.Post, url);
+                request.Headers.Add("x-goog-api-key", _apiKey);
+                request.Content = new ByteArrayContent(body);
+                request.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+
+                var response = await _http.SendAsync(request, ct);
 
                 if (response.IsSuccessStatusCode)
                 {
                     return response;
                 }
 
-                lastErrorBody = await response.Content.ReadAsStringAsync(ct);
-                lastStatus = response.StatusCode;
-                var isRetryable = response.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable
-                    || response.StatusCode == System.Net.HttpStatusCode.TooManyRequests;
+                using (response)
+                {
+                    lastErrorBody = Truncate(await response.Content.ReadAsStringAsync(ct), 2000);
+                    lastStatus = response.StatusCode;
+                }
+                var isRetryable = lastStatus == System.Net.HttpStatusCode.ServiceUnavailable
+                    || lastStatus == System.Net.HttpStatusCode.TooManyRequests;
 
                 if (!isRetryable)
                 {
-                    throw new InvalidOperationException($"Gemini API xatosi ({response.StatusCode}): {lastErrorBody}");
+                    throw new InvalidOperationException($"Gemini API xatosi ({lastStatus}): {lastErrorBody}");
                 }
 
                 if (attempt < RetryDelaysMs.Length)
@@ -99,6 +135,8 @@ public class GeminiClient
             $"Barcha modellar band ({lastStatus}), {ModelsInPriorityOrder.Length} ta model, "
             + $"har biri {RetryDelaysMs.Length + 1} marta sinaldi. Oxirgi xato: {lastErrorBody}");
     }
+
+    private static string Truncate(string s, int max) => s.Length <= max ? s : s[..max] + "…";
 
     /// <summary>
     /// Gemini JSON'ini C# record'larga aylantirishning QAT'IY sozlamalari.
@@ -148,6 +186,8 @@ public class GeminiClient
     /// </summary>
     public static async Task<string> ExtractTextAsync(HttpResponseMessage response, CancellationToken ct = default)
     {
+        // Javob bu yerda to'liq o'qiladi — ulanish darhol bo'shatiladi.
+        using var _ = response;
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStreamAsync(ct));
         return doc.RootElement
             .GetProperty("candidates")[0]

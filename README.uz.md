@@ -163,9 +163,31 @@ Tizimga kirgan foydalanuvchining har bir urinishi va kartalari ma'lumotlar
 bazasida saqlanadi va faqat o'ziga ko'rinadi. Kirmasdan ham barcha mashqlar
 ishlaydi — faqat natija tarixga yozilmaydi.
 
-**Live demo**: https://speaking-coach-theta.vercel.app
-(Backend bepul tarifda ishlaydi — 15 daqiqa foydalanilmasa "uxlaydi",
-birinchi so'rov ~30-60 soniya uyg'onish vaqtini olishi mumkin.)
+**Sayt**: https://speaking-coach-theta.vercel.app ·
+**[▶ Demo — ro'yxatdan o'tmasdan](https://speaking-coach-theta.vercel.app/#/demo)**
+(tayyor tarix, kartalar va seriyali shaxsiy demo hisob; 24 soatdan keyin
+o'chadi). Backend bepul tarifda ishlaydi — 15 daqiqa foydalanilmasa
+"uxlaydi", birinchi so'rov ~30-60 soniya uyg'onish vaqtini olishi mumkin.
+
+Loyiha qanday qurilgani va yo'lda qanday muammolar chiqqani:
+[case study (ingliz tilida)](docs/case-study.md).
+
+<p align="center"><img src="docs/demo.gif" width="320" alt="Demo: demo hisob, takrorlash kartasi, shadowing"></p>
+
+### Demo hisob
+
+Bir bosishda (yoki `#/demo` havolasi) alohida vaqtinchalik hisob ochiladi:
+bir haftalik tarix (3 ta speaking, 2 ta writing, reading/listening natijasi,
+shadowing darsi), saqlangan so'zlar, kartalar (bir qismi hozir navbatda),
+6 kunlik seriya va yarim bajarilgan bugungi reja. Har bir tashrif —
+o'z hisobi (boshqalarniki ko'rinmaydi). Cheklovlar: manzil `.invalid`
+domenida (RFC 2606 — xat yuborib bo'lmaydi), parol yo'q, AI limiti
+mehmonnikidek, Telegram ulash va musobaqa yopiq, admin statistikasiga
+kirmaydi, bitta IP'dan kuniga 5 ta; 24 soatdan keyin barcha ma'lumotlari
+bilan o'chiriladi (soatlik cron + bazadagi cascade). Ma'lumotlar sof
+funksiya `DemoSeed` da — haqiqiy endpoint'lar ishlatadigan record'lar va
+karta yasovchi bilan, shuning uchun hamma ekran ularni odatdagidek
+ko'rsatadi. O'chirish: Render'da `Demo__Enabled=false`.
 
 ## Interfeys
 
@@ -182,9 +204,17 @@ birinchi so'rov ~30-60 soniya uyg'onish vaqtini olishi mumkin.)
 - **Tungi rejim** — telefon sozlamasiga avtomatik moslashadi. Barcha
   ranglar `src/styles.css`dagi CSS o'zgaruvchilarida.
 
-| Bosh sahifa | Takrorlash | Yozish natijasi | Tungi rejim |
+| Bugungi reja | Takrorlash | Yozish natijasi | Tungi rejim |
 |---|---|---|---|
 | ![](docs/screenshots/home-user.png) | ![](docs/screenshots/review.png) | ![](docs/screenshots/writing-result.png) | ![](docs/screenshots/review-dark.png) |
+
+| IELTS Reading mock | To'liq mock natijasi | CEFR Listening (xarita) | O'qituvchi: natijalar |
+|---|---|---|---|
+| ![](docs/screenshots/mock-reading.png) | ![](docs/screenshots/mock-result.png) | ![](docs/screenshots/cefr-map.png) | ![](docs/screenshots/teacher.png) |
+
+| Shadowing | Shadowing: AI tekshiruvi | Demo hisob | |
+|---|---|---|---|
+| ![](docs/screenshots/shadowing.png) | ![](docs/screenshots/shadowing-check.png) | ![](docs/screenshots/demo.png) | |
 
 | Natijalar | Lug'at | So'zni bosish | Admin panel |
 |---|---|---|---|
@@ -192,30 +222,45 @@ birinchi so'rov ~30-60 soniya uyg'onish vaqtini olishi mumkin.)
 
 ## Arxitektura
 
+Sxema (GitHub o'zi chizadi — Mermaid):
+
+```mermaid
+flowchart LR
+    subgraph Client["Brauzer / telefon"]
+        SPA["React 19 + TypeScript PWA<br/>(Vercel)"]
+        MINI["Xuddi shu sayt —<br/>Telegram Mini App"]
+    end
+
+    subgraph API["ASP.NET Core 10 Minimal API — Render, Docker"]
+        EP["Endpoints<br/>auth · mashqlar · takrorlash · lug'at<br/>mock imtihon · shadowing · guruhlar · admin"]
+        SVC["Services<br/>GeminiClient (fallback, retry, qat'iy JSON)<br/>ReviewScheduler (SM-2) · ProgressCalculator<br/>IELTS/CEFR ballari · validatorlar"]
+        BOT["Telegram bot<br/>(webhook, kutubxonasiz)"]
+        RL["Rate limiting<br/>foydalanuvchi · IP · AI uchun umumiy"]
+    end
+
+    DB[("PostgreSQL — Neon<br/>EF Core, jsonb natijalar")]
+    GEM["Google Gemini<br/>audio baholash · test yaratish"]
+    TG["Telegram Bot API"]
+    BREVO["Brevo<br/>tasdiqlash xatlari"]
+    GOOGLE["Google Identity<br/>kirish (JWT serverda tekshiriladi)"]
+    GH["GitHub Actions<br/>CI + soatlik eslatma cron"]
+
+    SPA -- "Bearer token (bazada xesh)" --> RL --> EP
+    MINI -- "initData (HMAC-SHA256)" --> RL
+    EP --> SVC --> DB
+    SVC --> GEM
+    TG -- "webhook + maxfiy sarlavha" --> BOT --> SVC
+    BOT --> TG
+    SVC --> BREVO
+    SPA --> GOOGLE
+    GH -- "POST /api/telegram/cron" --> EP
 ```
-Brauzer (React + TypeScript, Vercel)
-   │  Authorization: Bearer <token>  (kirgan bo'lsa)
-   ▼
-Backend (ASP.NET Core Minimal API, Render, Docker)
-   │  Endpoints/   — auth, speaking/writing, reading/listening, review
-   │  Services/    — GeminiClient (fallback + retry + qat'iy JSON),
-   │                 baholash/yaratish servislari, AuthService,
-   │                 ReviewScheduler (SM-2), ReviewCardFactory
-   │  Rate limiting (IP bo'yicha), /health
-   ▼
-Google Gemini
-   - Speaking: audio → transkripsiya + baholash (bitta so'rov)
-   - Writing:  matn → baholash
-   - Reading/Listening: matn + savollar + to'g'ri javoblarni YARATISH
-   │
-   ▼
-PostgreSQL (Neon)
-   Activities       — barcha urinishlar (Type + UserId bo'yicha)
-   Users, Sessions  — hisoblar va kirish sessiyalari
-   PendingExercises — javob kutayotgan Reading/Listening mashqlari
-   ReviewCards      — takrorlash kartalari (keyingi takrorlash vaqti bilan)
-   ReviewLogs       — har bir takrorlash (kunlik maqsad va streak uchun)
-```
+
+Asosiy jadvallar: `Activities` (barcha urinishlar, natija `jsonb`da),
+`Users`/`Sessions`, `PendingExercises` (javob kutayotgan Reading/Listening —
+to'g'ri javoblar faqat serverda), `ReviewCards`/`ReviewLogs` (takrorlash),
+`MockTests` (umumiy test banki), `Groups`/`GroupMembers`/`Assignments`,
+`TelegramAccounts`, `AiUsages`, `EmailCodes`.
 
 Nega bitta so'rov (Speaking uchun): Gemini audio faylni to'g'ridan-to'g'ri
 qabul qiladi, shuning uchun alohida Speech-to-Text (masalan Whisper)
@@ -458,9 +503,10 @@ Sozlash: Render'da `Telegram__BotToken` (BotFather'dan) va
 `Telegram__CronSecret` (tasodifiy uzun qator); GitHub → Settings → Secrets →
 Actions: `API_URL` (Render manzili) va `CRON_SECRET` (xuddi o'sha qator).
 Ixtiyoriy: `Telegram__Admins` — botda testlarni chop etadigan va
-tasdiqlaydigan adminlar (Telegram ID yoki @username, vergul bilan; ID
-ishonchliroq — u oʻzgarmaydi). `Admin__Emails` dagi sayt adminlari ham
-botda admin hisoblanadi.
+tasdiqlaydigan adminlar — faqat raqamli Telegram ID, vergul bilan
+(@username qabul qilinmaydi: u oʻzgartirilishi va boshqa odamga oʻtishi
+mumkin). Oʻz ID'ingizni botga `/id` yozib bilasiz. `Admin__Emails` dagi
+sayt adminlari ham botda admin hisoblanadi.
 Webhook server ishga tushganda o'zi o'rnatiladi (Render bergan
 `RENDER_EXTERNAL_URL` orqali).
 
@@ -551,11 +597,31 @@ unutilsa — boshidan boshlanadi. Bu Anki va Duolingo ishlatadigan g'oya.
   `npm audit --audit-level=high`) — CI qizil boʻladi.
 - **Dependabot** paketlar yangilanishini oʻzi tekshiradi va guruhlangan
   pull request ochadi (npm va NuGet — haftasiga, GitHub Actions — oyiga).
-- **Rate limiting** (ASP.NET Core'ning o'rnatilgan `RateLimiter`'i, har
-  bir IP uchun): kirish/ro'yxatdan o'tish — daqiqasiga 10 ta (parolni
-  taxmin qilishni sekinlashtiradi), Gemini'ga boradigan endpoint'lar —
-  daqiqasiga 30 ta (bepul kvotani bitta odam tugatib qo'ymasin). Render
-  proxy ortida bo'lgani uchun haqiqiy IP `X-Forwarded-For`dan olinadi.
+- **Rate limiting** (ASP.NET Core'ning o'rnatilgan `RateLimiter`'i):
+  kirish/ro'yxatdan o'tish — IP uchun daqiqasiga 10 ta (parolni taxmin
+  qilishni sekinlashtiradi); Gemini'ga boradigan endpoint'lar — kirgan
+  foydalanuvchi uchun (mehmonga — IP bo'yicha) daqiqasiga 30 ta, bir vaqtda
+  foydalanuvchiga 2 ta, IP'ga 8 ta, butun serverga 16 ta (qolganlari qisqa
+  navbatda kutadi) — bitta Wi-Fi ortidagi sinf bemalol ishlaydi, lekin
+  hech kim AI'ni "bosib" tashlay olmaydi. Test yaratish — foydalanuvchiga
+  bir vaqtda bitta, muvaffaqiyatsiz urinishlar ham sanaladi. Render proxy
+  ortida bo'lgani uchun haqiqiy IP `X-Forwarded-For`dan olinadi.
+- **Xavfsizlik (audit tuzatishlari)**: tasdiqlanmagan hisobga parol faqat
+  kod tasdiqlangach yoziladi (begona odam oldinroq ro'yxatdan o'tib parol
+  qo'ya olmaydi); kod urinishlari bazada atomar hisoblanadi; Gemini kaliti
+  URL'da emas, `x-goog-api-key` sarlavhasida (loglarga tushmaydi); Mini App
+  orqali avtomatik kirish faqat haqiqiy Telegram ichida va `initData` 1
+  soatdan eski bo'lmasa; bot adminlari faqat raqamli ID bo'yicha; Docker
+  obrazi root'siz ishlaydi; speaking audiosi diskka yozilmaydi; saytda
+  `nosniff`, qat'iy Referrer-Policy, faqat mikrofonga ruxsat va faqat
+  Telegram iframe qila oladi (`frame-ancestors`); guruh kodlari
+  kriptografik tasodifiy; eskirgan sessiya va kodlar har soatda tozalanadi.
+- **Barqarorlik**: Neon ulanishi uzilsa so'rov 3 martagacha qayta
+  bajariladi; eslatmalar "avval belgilab, keyin yuborish" — cron qayta
+  urinsa ham ikki marta kelmaydi; sahifa xatosi yoki yangi deploydan keyin
+  yuklanmagan bo'lak oq ekran emas, "Qayta yuklash" kartasini ko'rsatadi;
+  server uyg'onayotganda foydalanuvchi hisobdan chiqib ketmaydi (faqat 401
+  da); sahifadan chiqilganda mikrofon o'chadi.
 - **`/health`**: server tirikmi va bazaga ulana oladimi — monitoring
   (masalan UptimeRobot) uchun. Baza ishlamasa 503.
 

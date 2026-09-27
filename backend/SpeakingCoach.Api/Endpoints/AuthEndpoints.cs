@@ -6,11 +6,12 @@ using SpeakingCoach.Api.Services.Telegram;
 namespace SpeakingCoach.Api.Endpoints;
 
 public record AuthRequest(string Email, string Password);
-public record VerifyRequest(string Email, string Code);
+public record VerifyRequest(string Email, string Code, string? Password = null);
 public record EmailRequest(string Email);
 public record ResetRequest(string Email, string Code, string NewPassword);
 public record GoogleRequest(string Credential);
 public record TelegramAuthRequest(string InitData);
+public record DemoRequest(int TzOffsetMinutes = -300);
 
 public static class AuthEndpoints
 {
@@ -44,7 +45,7 @@ public static class AuthEndpoints
             .RequireRateLimiting("auth");
 
         app.MapPost("/api/auth/verify", async (VerifyRequest body, HttpRequest request, AuthService auth) =>
-            ToResult(request, await auth.VerifyEmailAsync(body.Email, body.Code)))
+            ToResult(request, await auth.VerifyEmailAsync(body.Email, body.Code, body.Password)))
             .RequireRateLimiting("auth");
 
         app.MapPost("/api/auth/resend", async (EmailRequest body, HttpRequest request, AuthService auth) =>
@@ -88,8 +89,22 @@ public static class AuthEndpoints
 
         // Frontend "Parolni unutdim" va "Google bilan kirish" tugmalarini faqat
         // tegishli xizmat sozlangan bo'lsa ko'rsatadi. Client ID maxfiy emas.
-        app.MapGet("/api/auth/config", (AuthService auth, IGoogleSignIn google) =>
-            Results.Ok(new { emailVerification = auth.VerificationRequired, googleClientId = google.ClientId }));
+        app.MapGet("/api/auth/config", (AuthService auth, IGoogleSignIn google, IConfiguration config) =>
+            Results.Ok(new { emailVerification = auth.VerificationRequired, googleClientId = google.ClientId, demo = DemoAccount.Enabled(config) }));
+
+        // Demo: ro'yxatdan o'tmasdan, tayyor ma'lumotli vaqtinchalik hisob (24 soat).
+        app.MapPost("/api/auth/demo", async (DemoRequest? body, HttpRequest request, AuthService auth, DemoGate gate, IConfiguration config) =>
+        {
+            if (!DemoAccount.Enabled(config)) return Results.NotFound();
+            if (!gate.TryTake(RateLimits.Ip(request.HttpContext)))
+            {
+                return Results.Json(request.Error("demo.limit"), statusCode: StatusCodes.Status429TooManyRequests);
+            }
+            var result = await auth.CreateDemoAsync(body?.TzOffsetMinutes ?? -300);
+            return result.Token is null
+                ? ToResult(request, result)
+                : Results.Ok(new { token = result.Token, email = result.Email, demo = true });
+        }).RequireRateLimiting("auth");
 
         app.MapPost("/api/auth/logout", async (HttpRequest request, AuthService auth) =>
         {

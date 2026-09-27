@@ -61,6 +61,10 @@ public static class ReviewEndpoints
                 return Results.BadRequest(request.Error("review.both_sides"));
             }
 
+            if (await reviews.IsFullAsync(userId.Value))
+            {
+                return Results.BadRequest(request.Error("review.limit", ReviewService.MaxCardsPerUser));
+            }
             var added = await reviews.AddCardsAsync(userId.Value, null, new[]
             {
                 new NewCard(ReviewCardKind.Manual, front, back, ReviewCardFactory.Clean(body.Note, ReviewCardFactory.MaxNoteLength)),

@@ -37,6 +37,22 @@ interface TelegramWebApp {
 declare global {
   interface Window {
     Telegram?: { WebApp?: TelegramWebApp };
+    TelegramWebviewProxy?: unknown;
+  }
+}
+
+/**
+ * Sahifa haqiqatan Telegram ilovasida ochilganmi: mobil va desktop klientlar
+ * `TelegramWebviewProxy` ni qo'shadi, web.telegram.org esa iframe ichida ochadi
+ * (boshqa saytlar iframe qila olmaydi — vercel.json'dagi frame-ancestors).
+ * Oddiy brauzerda "#tgWebAppData=..." li havola bilan birovning hisobiga
+ * avtomatik kiritib yuborish (login CSRF) shu tekshiruv bilan to'siladi.
+ */
+export function genuineTelegram(w: Pick<Window, 'parent' | 'TelegramWebviewProxy'> = window): boolean {
+  try {
+    return w.TelegramWebviewProxy !== undefined || w.parent !== (w as unknown);
+  } catch {
+    return false;
   }
 }
 

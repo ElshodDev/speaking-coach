@@ -33,10 +33,11 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-// So'rovlar sonini cheklash (rate limiting), har bir IP uchun alohida:
-// - "auth": daqiqasiga 10 ta — parolni ketma-ket taxmin qilishni sekinlashtiradi;
-// - "ai": daqiqasiga 30 ta — Gemini bepul kvotasini bitta odam tugatib
-//   qo'ymasligi uchun (barqarorlik testi 6 ta so'rov — bemalol sig'adi).
+// So'rovlar sonini cheklash (rate limiting):
+// - "auth": IP uchun daqiqasiga 10 ta — parolni ketma-ket taxmin qilishni sekinlashtiradi;
+// - "ai": foydalanuvchi (token) yoki mehmon (IP) uchun daqiqasiga 30 ta;
+// - GlobalLimiter: AI so'rovlari bir vaqtda nechta bo'lishi (foydalanuvchi,
+//   IP va butun server bo'yicha) — batafsil Services/RateLimits.cs da.
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -47,12 +48,18 @@ builder.Services.AddRateLimiter(options =>
     };
 
     options.AddPolicy("auth", http => RateLimitPartition.GetFixedWindowLimiter(
-        http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        RateLimits.Ip(http),
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
 
-    options.AddPolicy("ai", http => RateLimitPartition.GetFixedWindowLimiter(
-        http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+    options.AddPolicy(RateLimits.AiPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
+        RateLimits.User(http),
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromMinutes(1) }));
+
+    options.AddPolicy(RateLimits.JoinPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
+        RateLimits.Ip(http),
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 60, Window = TimeSpan.FromMinutes(1) }));
+
+    options.GlobalLimiter = RateLimits.AiGlobal();
 });
 
 builder.Services.AddHttpClient();
@@ -74,6 +81,7 @@ builder.Services.AddSingleton<IEmailSender, BrevoEmailSender>();
 builder.Services.AddSingleton<IGoogleSignIn, GoogleSignInService>();
 builder.Services.AddSingleton<AiQuotaOptions>();
 builder.Services.AddSingleton<GuestQuotaStore>();
+builder.Services.AddSingleton(new DemoGate());
 builder.Services.AddScoped<AiQuotaService>();
 
 // Telegram bot: token bo'lmasa — hammasi o'chiq, ilova avvalgidek ishlaydi.
@@ -96,6 +104,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ReviewService>();
 builder.Services.AddScoped<TodayService>();
 builder.Services.AddScoped<SpeakingCoach.Api.Services.Mock.MockSets>();
+builder.Services.AddSingleton(new SpeakingCoach.Api.Services.Mock.GenerationGate());
 builder.Services.AddScoped<SpeakingCoach.Api.Services.Mock.ShadowingService>();
 builder.Services.AddSingleton<SpeakingCoach.Api.Services.Mock.IShadowingCoach, SpeakingCoach.Api.Services.Mock.GeminiShadowingCoach>();
 builder.Services.AddScoped<ProgressService>();
@@ -105,21 +114,32 @@ builder.Services.AddScoped<AdminService>();
 // bo'yicha "ConnectionStrings:Default" nomi bilan o'qiladi. Lokalda:
 // dotnet user-secrets set "ConnectionStrings:Default" "...".
 // Render'da: ConnectionStrings__Default environment variable.
-var connectionString = builder.Configuration.GetConnectionString("Default")
+var connectionString = DbConnection.Normalize(builder.Configuration.GetConnectionString("Default")
     ?? throw new InvalidOperationException(
         "ConnectionStrings:Default sozlanmagan. Lokalda: dotnet user-secrets set " +
-        "\"ConnectionStrings:Default\" \"<Neon'dan olingan connection string>\".");
-builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
+        "\"ConnectionStrings:Default\" \"<Neon'dan olingan connection string>\"."));
+// Neon (serverless) ba'zan ulanishni uzib qo'yadi yoki "uyg'onayotgan" bo'ladi —
+// vaqtinchalik xatolarda so'rov 3 martagacha qayta bajariladi.
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(connectionString, npgsql => npgsql.EnableRetryOnFailure(3)));
 
 var app = builder.Build();
 
 // Tartib muhim: avval haqiqiy IP aniqlanadi, keyin CORS, keyin cheklov.
 app.UseForwardedHeaders();
+// API faqat JSON qaytaradi: brauzer turini "taxmin qilmasin", manzil begona saytlarga sizmasin.
+app.Use((context, next) =>
+{
+    context.Response.Headers.XContentTypeOptions = "nosniff";
+    context.Response.Headers["Referrer-Policy"] = "no-referrer";
+    return next(context);
+});
 app.UseCors("AllowFrontend");
 app.UseRateLimiter();
 
+// Eski versiyalar speaking audiolarini shu papkaga yozgan; endi yozilmaydi,
+// faqat hisob o'chirilganda qolgan eski fayllar tozalanadi.
 var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "uploads");
-Directory.CreateDirectory(uploadsPath);
 
 app.MapGet("/", () => Results.Ok(new { status = "SpeakingCoach.Api ishlayapti" }));
 
@@ -137,7 +157,7 @@ app.MapGet("/health", async (AppDbContext db) =>
 // Endpoint'lar mavzu bo'yicha alohida fayllarda (Endpoints/ papkasi) —
 // Program.cs faqat sozlash va ulash bilan shug'ullanadi.
 app.MapAuthEndpoints();
-app.MapSpeakingWritingEndpoints(uploadsPath);
+app.MapSpeakingWritingEndpoints();
 app.MapComprehensionEndpoints();
 app.MapReviewEndpoints();
 app.MapProfileEndpoints();

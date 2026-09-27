@@ -43,7 +43,10 @@ public static class TelegramEndpoints
 
             try
             {
-                await bot.HandleAsync(update, request.HttpContext.RequestAborted);
+                // Telegram ulanishni uzsa ham (u javobni ~60 s kutadi) boshlangan
+                // ish yarim yo'lda qolmasin — o'z vaqt chegarasi bilan tugatiladi.
+                using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+                await bot.HandleAsync(update, cts.Token);
             }
             catch (Exception ex)
             {
@@ -53,11 +56,13 @@ public static class TelegramEndpoints
         });
 
         // GitHub Actions har soatda chaqiradi (.github/workflows/telegram-reminders.yml).
-        app.MapPost("/api/telegram/cron", async (HttpRequest request, TelegramOptions options, TelegramReminders reminders) =>
+        app.MapPost("/api/telegram/cron", async (HttpRequest request, TelegramOptions options, TelegramReminders reminders, AppDbContext db) =>
         {
             if (!options.Enabled || options.CronSecret is null) return Results.NotFound();
             if (!SecretEquals(request.Headers["X-Cron-Secret"].ToString(), options.CronSecret)) return Results.Unauthorized();
-            return Results.Ok(await reminders.RunAsync(DateTime.UtcNow, request.HttpContext.RequestAborted));
+            var run = await reminders.RunAsync(DateTime.UtcNow, CancellationToken.None);
+            var cleaned = await Maintenance.CleanupAsync(db, DateTime.UtcNow);
+            return Results.Ok(new { run.Checked, run.Sent, run.SkippedGoalDone, run.Disabled, cleaned });
         });
 
         // ---- Sayt uchun (Profil → Telegram) ----
@@ -86,6 +91,7 @@ public static class TelegramEndpoints
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return Unauthorized(request);
             if (!options.Enabled) return Results.NotFound();
+            if (DemoAccount.IsDemo(user.Email)) return Results.Json(request.Error("demo.not_allowed"), statusCode: StatusCodes.Status403Forbidden);
 
             var now = DateTime.UtcNow;
             db.TelegramLinkTokens.RemoveRange(await db.TelegramLinkTokens
