@@ -111,7 +111,7 @@ public partial class GeminiMockGenerator(GeminiClient gemini, ILogger<GeminiMock
     /// bo'lishi ehtimoli ancha yuqori). extra — qo'shimcha qismlar (masalan
     /// o'qituvchi yuborgan PDF yoki rasm).
     /// </summary>
-    private async Task<T> AskAsync<T>(string prompt, Action<T> validate, CancellationToken ct, int attempts = 2, object[]? extra = null)
+    private async Task<T> AskAsync<T>(string prompt, Action<T> validate, CancellationToken ct, int attempts = 2, object[]? extra = null, double temperature = 0.7)
     {
         string? lastError = null;
         for (var attempt = 1; ; attempt++)
@@ -126,7 +126,7 @@ public partial class GeminiMockGenerator(GeminiClient gemini, ILogger<GeminiMock
                 var body = new
                 {
                     contents = new[] { new { parts = parts.ToArray() } },
-                    generationConfig = new { temperature = 0.7, responseMimeType = "application/json" },
+                    generationConfig = new { temperature, responseMimeType = "application/json" },
                 };
                 var response = await gemini.SendWithFallbackAsync(body, ct);
                 var result = GeminiClient.DeserializeStrict<T>(await GeminiClient.ExtractTextAsync(response, ct));

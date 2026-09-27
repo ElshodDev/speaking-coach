@@ -314,7 +314,8 @@ public partial class TelegramBot
             .ToListAsync(ct);
         var list = mine.Select(t => (Row: t, Kind: BotAuthoring.KindOf(t))).Where(x => x.Kind is not null).ToList();
         await _api.SendMessageAsync(c.ChatId,
-            BotAuthoring.MineText(c.Lang, list.Select(x => (x.Kind!, x.Row.Title!, x.Row.Status))),
+            BotAuthoring.MineText(c.Lang, list.Select(x => (x.Kind!, x.Row.Title!, x.Row.Status)))
+                + "\n\n<i>" + c.T("bot.not_admin_hint", BotLogic.Html(BotLogic.MaskEmail(c.User.Email))) + "</i>",
             ViewButtons(c, list.Select(x => (x.Row.Id, x.Row.Title, x.Row.Module))), ct: ct);
     }
 

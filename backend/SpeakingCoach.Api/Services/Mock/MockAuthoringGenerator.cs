@@ -72,7 +72,7 @@ public partial class GeminiMockGenerator : IMockAuthoring
             ];
             var lesson = await AskAsync<ShadowingLesson>(
                 ShadowingRules.YouTubePrompt(clip, ShadowingRules.LevelIn(source.Text)),
-                l => ShadowingRules.Validate(Fix(l, clip)), ct, attempts: 3, video);
+                l => ShadowingRules.Validate(Fix(l, clip)), ct, attempts: 3, video, temperature: 0.2);
             return Fix(lesson, clip);
         }
 
@@ -95,7 +95,7 @@ public partial class GeminiMockGenerator : IMockAuthoring
             From = clip.From,
             To = clip.To,
             Characters = [],
-            Lines = ShadowingRules.NormalizeTimes(l.Lines, clip.From, clip.To),
+            Lines = ShadowingRules.CleanLines(ShadowingRules.NormalizeTimes(l.Lines, clip.From, clip.To)),
         };
 
     /// <summary>IELTS Reading: 3 matn, 13 + 13 + 14 = 40 savol.</summary>

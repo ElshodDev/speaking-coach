@@ -254,4 +254,25 @@ public class ShadowingTests
         // Oddiy turlar — avvalgidek
         Assert.Equal("bot.author_too_short", BotAuthoring.ReadInput(Msg("short"), false, AuthorKind.Parse("cefr:reading:")).Error);
     }
+
+    [Fact]
+    public void Stuck_transcripts_are_cleaned_or_rejected()
+    {
+        var stuck = new List<ShadowLine>
+        {
+            new("I mean, I'm a huge believer in dreams with purpose.", 1, 3),
+            new("I mean, I'm a huge believer in dreams with purpose.", 3.5, 5),
+            new("i mean — I'm a huge believer in dreams with purpose", 5.5, 7),
+            new("  ", 7, 8),
+            new("I'm all about it.", 8, 9),
+        };
+        var clean = ShadowingRules.CleanLines(stuck);
+        Assert.Equal(2, clean.Count);
+        Assert.Equal(1, clean[0].Start);
+        Assert.Equal("I'm all about it.", clean[1].Text);
+
+        // Takrorlar ketma-ket bo'lmasa ham ko'p bo'lsa — rad etiladi
+        var alternating = Enumerable.Range(0, 6).Select(i => new ShadowLine(i % 2 == 0 ? "Dreams with purpose." : "Something else " + i + ".", 61 + i * 2, 62 + i * 2)).ToArray();
+        Assert.Throws<InvalidOperationException>(() => ShadowingRules.Validate(Video(alternating)));
+    }
 }

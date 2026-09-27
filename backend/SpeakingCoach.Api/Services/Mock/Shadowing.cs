@@ -151,6 +151,26 @@ public static partial class ShadowingRules
         return lines.Select(l => l with { Start = Math.Round(l.Start!.Value + from, 2), End = Math.Round(l.End!.Value + from, 2) }).ToList();
     }
 
+    private static string Key(string text) => Regex.Replace(text.ToLowerInvariant(), @"[^a-z0-9']+", " ").Trim();
+
+    /// <summary>
+    /// AI ba'zan bir gapni ketma-ket bir necha marta yozib yuboradi (transkripsiya
+    /// "tiqilib qolishi"). Bo'sh gaplar olib tashlanadi, ketma-ket takrorlar
+    /// bittaga qisqaradi (birinchisining vaqti qoladi).
+    /// </summary>
+    public static List<ShadowLine> CleanLines(List<ShadowLine> lines)
+    {
+        var result = new List<ShadowLine>();
+        foreach (var l in lines)
+        {
+            var text = (l.Text ?? "").Trim();
+            if (text.Length == 0) continue;
+            if (result.Count > 0 && Key(result[^1].Text) == Key(text)) continue;
+            result.Add(l with { Text = text });
+        }
+        return result;
+    }
+
     public static int Words(string text) => text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
 
     private static void Require(bool ok, string message)
@@ -170,6 +190,10 @@ public static partial class ShadowingRules
             Require(!string.IsNullOrWhiteSpace(line.Text), $"{i}-gap bo'sh");
             Require(Words(line.Text) <= MaxLineWords && line.Text.Length <= 220, $"{i}-gap juda uzun ({Words(line.Text)} so'z) — {MaxLineWords} so'zgacha bo'lsin");
         }
+
+        // Bir xil gap ko'p marta — ishonchsiz transkripsiya belgisi.
+        var repeats = l.Lines.GroupBy(x => Key(x.Text)).Max(g => g.Count());
+        Require(repeats <= Math.Max(2, l.Lines.Count / 5), $"bir xil gap {repeats} marta takrorlangan — videoni qayta, diqqat bilan tinglab yozing");
 
         if (l.Kind == YouTube)
         {
