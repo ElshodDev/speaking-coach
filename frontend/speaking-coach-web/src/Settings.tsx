@@ -8,7 +8,7 @@ import { settingsMsg } from './locales/settings';
  * foydalanuvchida esa taxallus va musobaqada qatnashish ham bor, hammasi
  * serverdagi profilga yoziladi.
  */
-export function Settings({ profile, onSaved }: { profile: Profile | null; onSaved: (p: Profile) => void }) {
+export function Settings({ profile, onSaved, bare = false }: { profile: Profile | null; onSaved: (p: Profile) => void; bare?: boolean }) {
   const [level, setLevelState] = useState(profile?.level ?? getLevel());
   const [name, setName] = useState(profile?.displayName ?? '');
   const [optIn, setOptIn] = useState(profile?.showOnLeaderboard ?? false);
@@ -51,8 +51,8 @@ export function Settings({ profile, onSaved }: { profile: Profile | null; onSave
   }
 
   return (
-    <form className="card stack" onSubmit={save}>
-      <h3>{t.title}</h3>
+    <form className={bare ? 'stack' : 'card stack'} style={bare ? { marginTop: 12 } : undefined} onSubmit={save}>
+      {!bare && <h3>{t.title}</h3>}
 
       <label style={{ display: 'block' }}>
         <span className="small" style={{ display: 'block', fontWeight: 600, marginBottom: 6 }}>

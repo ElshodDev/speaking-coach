@@ -24,8 +24,20 @@ const RESEND_SECONDS = 60;
  * Shunday qilib bazada faqat haqiqatan mavjud va egasi qo'lidagi emaillar
  * qoladi. "Parolni unutdim" ham xuddi shu kod orqali ishlaydi.
  */
-export function AuthPanel({ email, onChange }: { email: string | null; onChange: (email: string | null) => void }) {
-  const [mode, setMode] = useState<Mode>('register');
+export function AuthPanel({
+  email,
+  onChange,
+  initialMode = 'login',
+}: {
+  email: string | null;
+  onChange: (email: string | null) => void;
+  /** Tepadagi "Kirish" → login; "Hisob ochish" → register. */
+  initialMode?: 'login' | 'register';
+}) {
+  const [mode, setMode] = useState<Mode>(initialMode);
+  // Kod oynasidan "Orqaga" — qaysi formadan kelgan bo'lsa, o'shanga.
+  const [cameFrom, setCameFrom] = useState<'login' | 'register'>(initialMode);
+  const [showPassword, setShowPassword] = useState(false);
   const [formEmail, setFormEmail] = useState('');
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
@@ -92,6 +104,7 @@ export function AuthPanel({ email, onChange }: { email: string | null; onChange:
         const data = await postJson<AuthResponse>(`/api/auth/${mode}`, { email: formEmail, password });
         if (data.needsVerification) {
           if (data.email) setFormEmail(data.email);
+          setCameFrom(mode);
           go('verify');
           setResendIn(RESEND_SECONDS);
           return;
@@ -166,7 +179,7 @@ export function AuthPanel({ email, onChange }: { email: string | null; onChange:
   );
 
   const resendButton = (
-    <button type="button" className="btn-link small" onClick={resend} disabled={busy || resendIn > 0}>
+    <button type="button" className="btn-link small" style={{ whiteSpace: 'nowrap' }} onClick={resend} disabled={busy || resendIn > 0}>
       {resendIn > 0 ? t.resendIn(resendIn) : t.resend}
     </button>
   );
@@ -198,8 +211,8 @@ export function AuthPanel({ email, onChange }: { email: string | null; onChange:
           {busy ? t.wait : verify ? t.confirm : t.savePassword}
         </button>
         <div className="spread">
-          <button type="button" className="btn-link small" onClick={() => go('login')}>
-            {t.back}
+          <button type="button" className="btn-link small" style={{ whiteSpace: 'nowrap' }} onClick={() => go(verify ? cameFrom : 'login')}>
+            {verify ? t.changeEmail : t.back}
           </button>
           {resendButton}
         </div>
@@ -235,17 +248,18 @@ export function AuthPanel({ email, onChange }: { email: string | null; onChange:
     );
   }
 
+  const register = mode === 'register';
   return (
-    <form className="card stack" onSubmit={submit}>
-      <div className="segmented" role="group" aria-label={t.modeGroup}>
-        <button type="button" aria-pressed={mode === 'register'} onClick={() => go('register')}>
-          {t.register}
-        </button>
-        <button type="button" aria-pressed={mode === 'login'} onClick={() => go('login')}>
-          {t.login}
-        </button>
+    <form className="card stack" onSubmit={submit} data-testid="auth-form">
+      <div>
+        <h2 style={{ margin: 0 }}>{register ? t.registerTitle : t.loginTitle}</h2>
+        <p className="muted small" style={{ margin: '6px 0 0' }}>{register ? t.registerHint : t.loginHint}</p>
       </div>
-      <p className="muted small">{mode === 'register' ? t.registerHint : t.loginHint}</p>
+      {register && (
+        <ul className="small" style={{ margin: 0, paddingLeft: 0, listStyle: 'none', display: 'grid', gap: 4 }} data-testid="auth-benefits">
+          {t.benefits.map((b) => <li key={b}>{b}</li>)}
+        </ul>
+      )}
       {googleClientId && (
         <>
           <GoogleButton clientId={googleClientId} onCredential={google} />
@@ -254,42 +268,68 @@ export function AuthPanel({ email, onChange }: { email: string | null; onChange:
           </div>
         </>
       )}
-      <input
-        className="input"
-        type="email"
-        placeholder={t.email}
-        aria-label={t.email}
-        autoComplete="email"
-        required
-        value={formEmail}
-        onChange={(e) => setFormEmail(e.target.value)}
-      />
-      <input
-        className="input"
-        type="password"
-        placeholder={mode === 'register' ? t.newPassword : t.password}
-        aria-label={mode === 'register' ? t.newPassword : t.password}
-        autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
-        required
-        minLength={mode === 'register' ? 8 : undefined}
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+      <div className="small field">
+        <label htmlFor="auth-email">{t.email}</label>
+        <input
+          id="auth-email"
+          className="input"
+          type="email"
+          placeholder={t.emailPlaceholder}
+          autoComplete="email"
+          inputMode="email"
+          required
+          value={formEmail}
+          onChange={(e) => setFormEmail(e.target.value)}
+        />
+      </div>
+      <div className="small field">
+        <label htmlFor="auth-password">{t.password}</label>
+        <span className="password-field">
+          <input
+            id="auth-password"
+            className="input"
+            type={showPassword ? 'text' : 'password'}
+            autoComplete={register ? 'new-password' : 'current-password'}
+            aria-describedby={register ? 'auth-password-hint' : undefined}
+            required
+            minLength={register ? 8 : undefined}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button
+            type="button"
+            className="password-toggle"
+            aria-label={showPassword ? t.hidePassword : t.showPassword}
+            aria-pressed={showPassword}
+            onClick={() => setShowPassword((v) => !v)}
+          >
+            <span aria-hidden="true">{showPassword ? '🙈' : '👁'}</span>
+          </button>
+        </span>
+        {register && <span id="auth-password-hint" className="muted tiny">{t.passwordHint}</span>}
+      </div>
       {messages}
       <button type="submit" className="btn btn-primary block" disabled={busy}>
-        {busy ? t.wait : mode === 'login' ? t.login : t.createAccount}
+        {busy ? t.wait : register ? t.createAccount : t.login}
       </button>
-      {mode === 'register' && (
+      {register && canReset && <p className="muted tiny" style={{ margin: 0 }}>{t.nextStep}</p>}
+      {register && (
         <p className="muted tiny" style={{ margin: 0 }}>
           {t.consent} <a href={`/privacy.html#${lang}`}>{t.privacyLink}</a>
           {t.consentEnd === '.' ? '.' : ` ${t.consentEnd}`}
         </p>
       )}
-      {mode === 'login' && canReset && (
-        <button type="button" className="btn-link small" onClick={() => go('forgot')}>
+      {!register && canReset && (
+        <button type="button" className="btn-link small" style={{ alignSelf: 'flex-start' }} onClick={() => go('forgot')}>
           {t.forgot}
         </button>
       )}
+      <p className="small" style={{ margin: 0, paddingTop: 12, borderTop: '1px solid var(--border)', textAlign: 'center' }}>
+        {register ? t.haveAccount : t.noAccount}{' '}
+        <button type="button" className="btn-link" onClick={() => go(register ? 'login' : 'register')} data-testid="auth-switch">
+          {register ? t.toLogin : t.toRegister}
+        </button>
+      </p>
     </form>
   );
 }

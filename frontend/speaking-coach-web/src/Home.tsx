@@ -62,7 +62,7 @@ export function Home({
             <button className="btn btn-primary" onClick={() => open('speaking')}>
               {t.tryIt}
             </button>
-            <button className="btn-link" style={{ color: '#fff' }} onClick={() => go('profile')}>
+            <button className="btn-link" style={{ color: '#fff' }} onClick={() => go('register')}>
               {t.createAccount}
             </button>
           </div>
@@ -85,7 +85,7 @@ export function Home({
           </div>
         </div>
 
-        <WordOfDay loggedIn={false} onLogin={() => go('profile')} />
+        <WordOfDay loggedIn={false} onLogin={() => go('login')} />
         <QuizTile go={go} />
 
         <h2 style={{ marginTop: 24 }}>{t.practice}</h2>

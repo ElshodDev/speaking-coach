@@ -150,7 +150,7 @@ function App() {
   // key: kirish/chiqishda mashq ekranlari qaytadan yaratiladi — tarix
   // yangi foydalanuvchi uchun qayta yuklanadi, eski natijalar ko'rinmaydi.
   const userKey = email ?? 'guest';
-  const toLogin = () => go('profile');
+  const toLogin = () => go('login');
 
   let page;
   if (section === 'review' && sub === 'vocab') {
@@ -246,10 +246,11 @@ function App() {
     page = <Progress key={userKey} loggedIn={loggedIn} onLogin={toLogin} go={go} />;
   } else if (section === 'admin' && profile?.isAdmin) {
     page = <Admin />;
-  } else if (section === 'profile' || section === 'admin') {
+  } else if (section === 'profile' || section === 'admin' || section === 'login' || section === 'register') {
     page = (
       <Profile
-        key={userKey}
+        key={`${userKey}-${loggedIn ? '' : section}`}
+        authMode={section === 'register' ? 'register' : 'login'}
         email={email}
         profile={profile}
         onAuthChange={onAuthChange}
@@ -262,7 +263,7 @@ function App() {
   }
 
   // Profil va Admin menyuda yo'q — ularda menyuning hech biri belgilanmaydi.
-  const onProfile = section === 'profile' || section === 'admin' || section === 'teacher';
+  const onProfile = section === 'profile' || section === 'admin' || section === 'teacher' || section === 'login' || section === 'register';
   const activeNav = onProfile
     ? null
     : section === 'review' && sub === 'vocab'
@@ -334,7 +335,9 @@ function Profile({
   onAuthChange,
   onProfileSaved,
   go,
+  authMode = 'login',
 }: {
+  authMode?: 'login' | 'register';
   email: string | null;
   profile: ProfileData | null;
   onAuthChange: (email: string | null) => void;
@@ -353,6 +356,21 @@ function Profile({
         profile.dailyMinutes ? tp.perDay(profile.dailyMinutes) : null,
       ].filter(Boolean).join(' · ')
     : tp.goalNone;
+  // Mehmon: faqat kirish / ro'yxatdan o'tish formasi — boshqa kartalar chalg'itmasin.
+  if (!email) {
+    return (
+      <div style={{ marginTop: 16 }}>
+        <AuthPanel email={null} onChange={onAuthChange} initialMode={authMode} />
+        <details className="card" style={{ padding: '12px 18px' }} data-testid="guest-settings">
+          <summary className="small" style={{ cursor: 'pointer' }}>{t.guestSettings}</summary>
+          <Settings key="guest" profile={null} onSaved={onProfileSaved} bare />
+        </details>
+        <p className="small" style={{ marginTop: 16 }}>
+          <a href={`/privacy.html#${lang}`}>{t.privacy}</a>
+        </p>
+      </div>
+    );
+  }
   return (
     <>
       <PageHeader title={t.profile} />

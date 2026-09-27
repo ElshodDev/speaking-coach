@@ -14,6 +14,7 @@ export const appMsg = defineMessages(
     adminText: 'Foydalanuvchilar, faollik va grafiklar',
     open: 'Ochish',
     installTitle: '📱 Telefonga oʻrnatish',
+    guestSettings: '⚙️ Kirmasdan foydalanish sozlamalari (til va daraja)',
     installText:
       'Ilovani bosh ekranga qoʻshsangiz, u alohida ilova kabi ochiladi va sekin internetda ham tez yuklanadi.',
     installAndroid: 'Android (Chrome):',
@@ -36,6 +37,7 @@ export const appMsg = defineMessages(
       adminText: 'Пользователи, активность и графики',
       open: 'Открыть',
       installTitle: '📱 Установить на телефон',
+      guestSettings: '⚙️ Настройки без входа (язык и уровень)',
       installText:
         'Добавьте приложение на главный экран — оно будет открываться как отдельное приложение и быстро загружаться даже при слабом интернете.',
       installAndroid: 'Android (Chrome):',
@@ -57,6 +59,7 @@ export const appMsg = defineMessages(
       adminText: 'Users, activity and charts',
       open: 'Open',
       installTitle: '📱 Install on your phone',
+      guestSettings: '⚙️ Settings without an account (language and level)',
       installText:
         'Add the app to your home screen: it opens like a separate app and loads quickly even on a slow connection.',
       installAndroid: 'Android (Chrome):',
