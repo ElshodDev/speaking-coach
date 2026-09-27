@@ -86,7 +86,25 @@ public class TelegramOptions
         PublicUrl = (Blank(config["Telegram:PublicUrl"]) ?? Blank(config["RENDER_EXTERNAL_URL"]))?.TrimEnd('/');
         CronSecret = Blank(config["Telegram:CronSecret"]);
         FrontendUrl = (Blank(config["FrontendOrigin"]) ?? "http://localhost:5173").TrimEnd('/');
+        var admins = (config["Telegram:Admins"] ?? "")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(a => a.TrimStart('@'))
+            .Where(a => a.Length > 0)
+            .ToList();
+        AdminIds = admins.Where(a => a.All(char.IsDigit) && long.TryParse(a, out _)).Select(long.Parse).ToHashSet();
+        AdminUsernames = admins.Where(a => !a.All(char.IsDigit)).Select(a => a.ToLowerInvariant()).ToHashSet();
     }
+
+    /// <summary>
+    /// Telegram:Admins — botdagi adminlar (vergul bilan): Telegram ID (raqam,
+    /// o'zgarmaydi — tavsiya) yoki @username. Sayt emaili (Admin:Emails) bilan
+    /// bir qatorda ishlaydi: bot admini testlarni chop etadi va tasdiqlaydi.
+    /// </summary>
+    public IReadOnlySet<long> AdminIds { get; }
+    public IReadOnlySet<string> AdminUsernames { get; }
+
+    public bool IsAdmin(TgUser? user) =>
+        user is not null && (AdminIds.Contains(user.Id) || (user.Username is { } u && AdminUsernames.Contains(u.ToLowerInvariant())));
 
     public bool Enabled => Token is not null;
 

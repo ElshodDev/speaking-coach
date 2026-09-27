@@ -436,6 +436,10 @@ foydalanuvchiga eslatma o'chadi.
 Sozlash: Render'da `Telegram__BotToken` (BotFather'dan) va
 `Telegram__CronSecret` (tasodifiy uzun qator); GitHub → Settings → Secrets →
 Actions: `API_URL` (Render manzili) va `CRON_SECRET` (xuddi o'sha qator).
+Ixtiyoriy: `Telegram__Admins` — botda testlarni chop etadigan va
+tasdiqlaydigan adminlar (Telegram ID yoki @username, vergul bilan; ID
+ishonchliroq — u oʻzgarmaydi). `Admin__Emails` dagi sayt adminlari ham
+botda admin hisoblanadi.
 Webhook server ishga tushganda o'zi o'rnatiladi (Render bergan
 `RENDER_EXTERNAL_URL` orqali).
 

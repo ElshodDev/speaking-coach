@@ -14,7 +14,8 @@ public partial class TelegramBot
     /// <summary>Fondagi ish uchun hamma narsa (webhook scope'i tugagandan keyin ham).</summary>
     private sealed record AuthorJob(long ChatId, Guid UserId, string Lang, bool IsAdmin, AuthorKind Kind, AuthorInput Input);
 
-    private bool IsAdmin(Ctx c) => _admins.IsAdmin(c.User);
+    /// <summary>Admin: sayt emaili (Admin:Emails) yoki Telegram hisobi (Telegram:Admins — ID yoki @username).</summary>
+    private bool IsAdmin(Ctx c) => _admins.IsAdmin(c.User) || _options.IsAdmin(c.From);
 
     /// <summary>Test qo'sha oladi: admin yoki kamida bitta guruhi bor o'qituvchi.</summary>
     private async Task<bool> CanAuthorAsync(Ctx c, CancellationToken ct) =>
@@ -267,11 +268,18 @@ public partial class TelegramBot
     private async Task NotifyAdminsAsync(Ctx c, MockTest row, AuthorKind kind, CancellationToken ct)
     {
         var emails = _admins.Emails.ToList();
-        if (emails.Count == 0) return;
-        var admins = await (from u in _db.Users
+        var ids = _options.AdminIds.ToList();
+        var usernames = _options.AdminUsernames.ToList();
+        var byEmail = emails.Count == 0 ? [] : await (from u in _db.Users
                             join a in _db.TelegramAccounts on u.Id equals a.UserId
                             where emails.Contains(u.Email)
                             select new { a.ChatId, a.Lang }).ToListAsync(ct);
+        // Shaxsiy chatda chat ID = Telegram foydalanuvchi ID.
+        var byTelegram = ids.Count == 0 && usernames.Count == 0 ? [] : await _db.TelegramAccounts
+            .Where(a => ids.Contains(a.ChatId) || (a.Username != null && usernames.Contains(a.Username.ToLower())))
+            .Select(a => new { a.ChatId, a.Lang })
+            .ToListAsync(ct);
+        var admins = byEmail.Concat(byTelegram).DistinctBy(a => a.ChatId).Where(a => a.ChatId != c.ChatId).ToList();
         foreach (var admin in admins)
         {
             var html = BotAuthoring.ReviewMessage(admin.Lang, c.User!.Email, kind, row.Title ?? kind.Label, MockAuthoringRules.Summary(kind, row.Payload));
@@ -315,7 +323,7 @@ public partial class TelegramBot
         var list = mine.Select(t => (Row: t, Kind: BotAuthoring.KindOf(t))).Where(x => x.Kind is not null).ToList();
         await _api.SendMessageAsync(c.ChatId,
             BotAuthoring.MineText(c.Lang, list.Select(x => (x.Kind!, x.Row.Title!, x.Row.Status)))
-                + "\n\n<i>" + c.T("bot.not_admin_hint", BotLogic.Html(BotLogic.MaskEmail(c.User.Email))) + "</i>",
+                + "\n\n<i>" + c.T("bot.not_admin_hint", BotLogic.Html(BotLogic.MaskEmail(c.User.Email)), c.From.Id) + "</i>",
             ViewButtons(c, list.Select(x => (x.Row.Id, x.Row.Title, x.Row.Module))), ct: ct);
     }
 

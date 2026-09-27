@@ -372,9 +372,9 @@ public static class Texts
         ["bot.bank_pending"] = new("📥 Tekshiruvni kutmoqda: {0} ta", "📥 Ждут проверки: {0}", "📥 Waiting for review: {0}"),
         ["bot.bank_mine"] = new("📚 <b>Mening testlarim</b>", "📚 <b>Мои тесты</b>", "📚 <b>My tests</b>"),
         ["bot.not_admin_hint"] = new(
-            "Bot ulangan hisob: {0} (admin emas). Admin boʻlsangiz, Render’dagi Admin__Emails aynan shu hisob emaili boʻlishi kerak; boshqa hisob boʻlsa — saytga admin hisob bilan kirib, Telegramni qayta ulang.",
-            "Бот привязан к аккаунту: {0} (не админ). Если вы админ, в Render Admin__Emails должен быть email именно этого аккаунта; если аккаунт другой — войдите на сайт под админом и заново привяжите Telegram.",
-            "The bot is linked to: {0} (not an admin). If you are the admin, Admin__Emails on Render must be this account's email; if it's another account, sign in to the site as the admin and link Telegram again."),
+            "Bot ulangan hisob: {0}, Telegram ID: <code>{1}</code> (admin emas). Admin boʻlish uchun Render’da Admin__Emails ga shu hisob emailini yoki Telegram__Admins ga shu ID ni yozing.",
+            "Бот привязан к аккаунту: {0}, Telegram ID: <code>{1}</code> (не админ). Чтобы стать админом, укажите в Render email этого аккаунта в Admin__Emails или этот ID в Telegram__Admins.",
+            "The bot is linked to: {0}, Telegram ID: <code>{1}</code> (not an admin). To become the admin, put this account's email in Admin__Emails or this ID in Telegram__Admins on Render."),
         ["bot.bank_empty"] = new("Hali test qoʻshmagansiz. /add bilan boshlang.", "Вы ещё не добавляли тестов. Начните с /add.", "You haven't added any tests yet. Start with /add."),
         ["bot.status_published"] = new("chop etilgan", "опубликован", "published"),
         ["bot.status_draft"] = new("qoralama", "черновик", "draft"),

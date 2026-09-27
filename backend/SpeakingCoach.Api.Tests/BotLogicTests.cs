@@ -186,4 +186,20 @@ public class BotLogicTests
         Assert.False(o.Enabled);
         Assert.Null(o.WebhookSecret);
     }
+
+    [Fact]
+    public void Telegram_admins_are_matched_by_id_or_username()
+    {
+        var o = new TelegramOptions(new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Telegram:Admins"] = " @Elshod_Developer , 123456789,, @ ",
+        }).Build());
+
+        Assert.True(o.IsAdmin(new TgUser(1, "E", "elshod_developer", "uz")));
+        Assert.True(o.IsAdmin(new TgUser(123456789, "X", null, "uz")));
+        Assert.False(o.IsAdmin(new TgUser(2, "Y", "someone", "uz")));
+        Assert.False(o.IsAdmin(new TgUser(3, "Z", null, "uz")));
+        Assert.False(o.IsAdmin(null));
+        Assert.False(new TelegramOptions(new ConfigurationBuilder().Build()).IsAdmin(new TgUser(1, "E", "elshod_developer", "uz")));
+    }
 }

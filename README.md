@@ -136,7 +136,7 @@ cd frontend/speaking-coach-web && npm test
 
 ## Deploy
 
-- **Render** (backend): root directory `backend/SpeakingCoach.Api`, Docker; env vars `Gemini__ApiKey`, `ConnectionStrings__Default`, `FrontendOrigin` (the Vercel URL, for CORS), optionally `Admin__Emails` (comma-separated) and, to turn on email verification, `Email__BrevoApiKey` + `Email__FromAddress` (a sender verified in [Brevo](https://www.brevo.com); free plan: 300 emails/day), and `Google__ClientId` for Google sign-in (a Web OAuth client with the Vercel URL as an authorized JavaScript origin), and `Telegram__BotToken` + `Telegram__CronSecret` for the bot (plus GitHub secrets `API_URL` and `CRON_SECRET` for the reminder workflow).
+- **Render** (backend): root directory `backend/SpeakingCoach.Api`, Docker; env vars `Gemini__ApiKey`, `ConnectionStrings__Default`, `FrontendOrigin` (the Vercel URL, for CORS), optionally `Admin__Emails` (comma-separated) and, to turn on email verification, `Email__BrevoApiKey` + `Email__FromAddress` (a sender verified in [Brevo](https://www.brevo.com); free plan: 300 emails/day), and `Google__ClientId` for Google sign-in (a Web OAuth client with the Vercel URL as an authorized JavaScript origin), and `Telegram__BotToken` + `Telegram__CronSecret` for the bot (optionally `Telegram__Admins` — Telegram IDs or @usernames that may publish and approve tests in the bot) (plus GitHub secrets `API_URL` and `CRON_SECRET` for the reminder workflow).
 - **Vercel** (frontend): root directory `frontend/speaking-coach-web`; env var `VITE_API_URL` (the Render URL).
 - **Migrations** are applied with `dotnet ef database update` before pushing code that depends on them (Render does not run them).
 
