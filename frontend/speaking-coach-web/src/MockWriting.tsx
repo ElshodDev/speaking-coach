@@ -31,7 +31,10 @@ export function MockWriting({
   go,
   sessionId,
   onSubmitted,
+  setId,
 }: {
+  /** Ro'yxatdan tanlangan variant (qoralama boshqa variantniki bo'lsa, e'tiborsiz). */
+  setId?: string;
   variant: 'academic' | 'general';
   go: (route: string) => void;
   sessionId?: string;
@@ -53,9 +56,10 @@ export function MockWriting({
 
   useEffect(() => {
     const saved = readDraft();
-    const resume = saved && saved.variant === variant ? saved : null;
+    const resume = saved && saved.variant === variant && (!setId || saved.setId === setId) ? saved : null;
     const q = new URLSearchParams({ variant });
-    if (resume) q.set('setId', resume.setId);
+    if (setId) q.set('setId', setId);
+    else if (resume) q.set('setId', resume.setId);
     apiJson<{ set: WritingSet; timing: Timing }>(`/api/mock/ielts/writing/new?${q}`)
       .then((data) => {
         setSet(data.set);
@@ -73,7 +77,7 @@ export function MockWriting({
         setError(e instanceof Error ? e.message : String(e));
         setStatus('error');
       });
-  }, [variant]);
+  }, [variant, setId]);
 
   // Qoralamani saqlash (har o'zgarishda — matn kichik, localStorage tez).
   useEffect(() => {

@@ -64,6 +64,22 @@ public static class MockEndpoints
             }).ToList();
         }
 
+        // Bitta imtihon/bo'lim bo'yicha urinishlar (natija bilan) — ro'yxatda ✓ va oxirgi ball uchun.
+        async Task<List<CatalogAttempt>> AttemptsAsync(AppDbContext db, Guid userId, string exam, string module)
+        {
+            var rows = await db.Activities
+                .Where(a => a.UserId == userId && a.Type == ActivityType.MockExam)
+                .OrderByDescending(a => a.CreatedAtUtc)
+                .Take(300)
+                .Select(a => new { a.CreatedAtUtc, a.PromptData, a.ResponseData })
+                .ToListAsync();
+            return rows
+                .Select(r => (P: ParsePrompt(r.PromptData), r.CreatedAtUtc, r.ResponseData))
+                .Where(x => x.P.Exam == exam && x.P.Module == module)
+                .Select(x => new CatalogAttempt(x.P.SetId, x.CreatedAtUtc, ReadOverall(x.ResponseData)))
+                .ToList();
+        }
+
         // null — ruxsat; aks holda 429 javobi (qachon yana mumkinligi bilan).
         async Task<IResult?> LimitAsync(HttpRequest request, AppDbContext db, User user, AdminOptions admins, IConfiguration config)
         {
@@ -90,12 +106,13 @@ public static class MockEndpoints
             return Results.Ok(new { perDay, remaining = (int?)Math.Max(0, perDay - used), retryAtUtc = retryAt });
         });
 
-        app.MapGet("/api/mock/ielts/speaking/new", async (HttpRequest request, AuthService auth, AppDbContext db, MockSets sets) =>
+        // setId — foydalanuvchi ro'yxatdan tanlagan variant (bo'lmasa — hali ishlanmagani).
+        app.MapGet("/api/mock/ielts/speaking/new", async (HttpRequest request, AuthService auth, AppDbContext db, MockSets sets, string? setId) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return LoginFirst(request);
             var recent = (await RecentAsync(db, user.Id)).Where(r => r.Module == "speaking").Select(r => r.SetId).ToList();
-            var set = IeltsBank.PickFresh(await sets.IeltsSpeakingAsync(), s => s.Id, recent, Random.Shared);
+            var set = await sets.FindIeltsSpeakingAsync(setId) ?? IeltsBank.PickFresh(await sets.IeltsSpeakingAsync(), s => s.Id, recent, Random.Shared);
             return Results.Ok(new
             {
                 set,
@@ -208,12 +225,53 @@ public static class MockEndpoints
             }
         }).RequireRateLimiting("ai");
 
+        // ---- Ro'yxat: barcha testlar/variantlar, qaysi biri ishlangan va oxirgi natija ----
+        // Foydalanuvchi o'zi tanlaydi (to'liq imtihon esa avtomatik — hali ishlanmaganini oladi).
+        app.MapGet("/api/mock/{exam}/{module}/bank", async (
+            string exam, string module, HttpRequest request, AuthService auth, AppDbContext db, MockSets sets,
+            IServiceScopeFactory scopes, ILogger<Program> logger, string? variant) =>
+        {
+            if (exam is not ("ielts" or "cefr") || module is not ("listening" or "reading" or "speaking" or "writing")) return Results.NotFound();
+            var user = await auth.GetCurrentUserAsync(request);
+            if (user is null) return LoginFirst(request);
+
+            var latest = MockCatalog.Latest(await AttemptsAsync(db, user.Id, exam, module));
+            var general = variant == IeltsBank.General;
+            List<CatalogEntry> items;
+            if (module is "listening" or "reading")
+            {
+                await BuiltInMocks.EnsureSeededAsync(scopes, logger);
+                var v = exam == "ielts" && module == "reading" ? (general ? IeltsBank.General : IeltsBank.Academic) : "";
+                var rows = await db.MockTests
+                    .Where(t => t.Exam == exam && t.Module == module && t.Variant == v && t.Status == MockTestStatus.Published)
+                    .OrderBy(t => t.CreatedAtUtc)
+                    .Select(t => new { t.Id, t.Title, t.Payload })
+                    .ToListAsync();
+                items = rows.Select((r, i) => MockCatalog.Entry(
+                    r.Id.ToString(), i + 1,
+                    // Tayyor testlar "Test N" deb ko'rsatiladi; bot orqali qo'shilganlarning o'z nomi bor.
+                    BuiltInMocks.IsBuiltIn(r.Id) ? null : r.Title,
+                    MockCatalog.Topics(module, r.Payload), r.Title is null, latest)).ToList();
+            }
+            else
+            {
+                items = (exam, module) switch
+                {
+                    ("ielts", "speaking") => (await sets.IeltsSpeakingAsync()).Select((s, i) => MockCatalog.Entry(s.Id, i + 1, null, MockCatalog.Topics(s), false, latest)).ToList(),
+                    ("ielts", _) => (await sets.IeltsWritingAsync(general ? IeltsBank.General : IeltsBank.Academic)).Select((s, i) => MockCatalog.Entry(s.Id, i + 1, null, MockCatalog.Topics(s), false, latest)).ToList(),
+                    ("cefr", "speaking") => (await sets.CefrSpeakingAsync()).Select((s, i) => MockCatalog.Entry(s.Id, i + 1, null, MockCatalog.Topics(s), false, latest)).ToList(),
+                    _ => (await sets.CefrWritingAsync()).Select((s, i) => MockCatalog.Entry(s.Id, i + 1, null, MockCatalog.Topics(s), false, latest)).ToList(),
+                };
+            }
+            return Results.Ok(new { items, done = items.Count(x => x.Done), total = items.Count });
+        });
+
         // ---- Listening va Reading: test bankdan (bo'lmasa — AI yaratadi) ----
         // IELTS va CEFR uchun bitta yo'l: /api/mock/{ielts|cefr}/{listening|reading}/new
         // (/api/mock/cefr/speaking/new kabi aniq yo'llar ustun turadi).
         app.MapGet("/api/mock/{exam}/{module}/new", async (
             string exam, string module, HttpRequest request, AuthService auth, AppDbContext db, AdminOptions admins, IConfiguration config,
-            IMockGenerator generator, GenerationGate gate, IServiceScopeFactory scopes, ILogger<Program> logger, string? variant, string? source) =>
+            IMockGenerator generator, GenerationGate gate, IServiceScopeFactory scopes, ILogger<Program> logger, string? variant, string? source, string? testId) =>
         {
             if (exam is not ("ielts" or "cefr") || module is not ("listening" or "reading")) return Results.NotFound();
             var user = await auth.GetCurrentUserAsync(request);
@@ -238,6 +296,11 @@ public static class MockEndpoints
             // Manbani foydalanuvchi tanlaydi: "bank" (standart) — tayyor testlar,
             // "repeat" — hammasi ishlangan bo'lsa, eng eskisini qayta, "ai" — Gemini yangisini yaratadi.
             var src = (source ?? "bank").ToLowerInvariant();
+
+            // Foydalanuvchi ro'yxatdan aniq testni tanladi.
+            if (src != "ai" && Guid.TryParse(testId, out var picked) && candidates.Contains(picked))
+                return Results.Ok(new { test = ClientPayload(module, picked, await PayloadOf(picked)), repeated = done.Contains(picked.ToString()), source = "bank" });
+
             if (src != "ai")
             {
                 if (freshId is { } fid)
@@ -357,12 +420,12 @@ public static class MockEndpoints
         });
 
         // ---- CEFR (Multilevel): Speaking va Writing ----
-        app.MapGet("/api/mock/cefr/speaking/new", async (HttpRequest request, AuthService auth, AppDbContext db, MockSets sets) =>
+        app.MapGet("/api/mock/cefr/speaking/new", async (HttpRequest request, AuthService auth, AppDbContext db, MockSets sets, string? setId) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return LoginFirst(request);
             var recent = (await RecentAsync(db, user.Id)).Where(r => r.Module == "speaking").Select(r => r.SetId).ToList();
-            var set = IeltsBank.PickFresh(await sets.CefrSpeakingAsync(), s => s.Id, recent, Random.Shared);
+            var set = await sets.FindCefrSpeakingAsync(setId) ?? IeltsBank.PickFresh(await sets.CefrSpeakingAsync(), s => s.Id, recent, Random.Shared);
             return Results.Ok(new
             {
                 set,

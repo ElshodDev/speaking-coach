@@ -8,7 +8,8 @@ namespace SpeakingCoach.Api.Endpoints;
 
 public record ComprehensionSubmitRequest(Guid ExerciseId, List<int> Answers);
 /// <summary>Source: "bank" — ilovaning tayyor mashqi (AI limiti sarflanmaydi), "ai" (yoki bo'sh) — Gemini yangisini yaratadi. Seen — mehmon ko'rgan tayyor mashqlar (brauzerda saqlanadi).</summary>
-public record ComprehensionGenerateRequest(string? Level, string? Source = null, List<string>? Seen = null);
+/// <summary>BankId — ro'yxatdan tanlangan aniq tayyor mashq.</summary>
+public record ComprehensionGenerateRequest(string? Level, string? Source = null, List<string>? Seen = null, string? BankId = null);
 
 public static class ComprehensionEndpoints
 {
@@ -72,7 +73,7 @@ public static class ComprehensionEndpoints
                     var done = userId is null
                         ? (body?.Seen ?? []).Take(200).Select(id => PracticeLibrary.Find(type, id)?.Exercise.Title).OfType<string>().ToList()
                         : await DoneTitlesAsync(db, userId.Value, type);
-                    var item = PracticeLibrary.Next(type, level, done);
+                    var item = PracticeLibrary.Find(type, body?.BankId) ?? PracticeLibrary.Next(type, level, done);
                     if (item is null) return Results.NotFound(request.Error("exercise.not_found"));
                     var (doneCount, total) = PracticeLibrary.Progress(type, item.Level, done);
                     return await Serve(item.Exercise, new { id = item.Id, level = item.Level, done = doneCount, total, repeated = done.Contains(item.Exercise.Title) });
@@ -96,14 +97,16 @@ public static class ComprehensionEndpoints
                 }
             }).RequireRateLimiting("ai");
 
-            // Tayyor mashqlar holati: darajalar bo'yicha nechtasi bajarilgan (kirish sahifasi uchun).
+            // Tayyor mashqlar: tanlangan darajada nechtasi bajarilgan va barcha darajalardagi ro'yxat
+            // (foydalanuvchi o'zi tanlaydi). Mehmon ishlaganlari brauzerda saqlanadi.
             app.MapGet($"/api/{path}/bank", async (HttpRequest request, AppDbContext db, AuthService auth, string? level) =>
             {
                 var userId = await auth.GetCurrentUserIdAsync(request);
                 var done = userId is null ? [] : await DoneTitlesAsync(db, userId.Value, type);
                 var lv = LearnerLevel.Normalize(level);
                 var (doneCount, total) = PracticeLibrary.Progress(type, lv, done);
-                return Results.Ok(new { level = lv, done = doneCount, total });
+                var items = PracticeLibrary.For(type).Select(x => new { id = x.Id, level = x.Level, title = x.Exercise.Title, done = done.Contains(x.Exercise.Title) });
+                return Results.Ok(new { level = lv, done = doneCount, total, items });
             });
 
             app.MapPost($"/api/{path}/submit", async (

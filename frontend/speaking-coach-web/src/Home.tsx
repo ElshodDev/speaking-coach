@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { ReviewStats } from './Review';
 import { useT } from './i18n';
 import { homeMsg } from './locales/home';
@@ -25,7 +26,7 @@ export function ExerciseTiles({ onOpen }: { onOpen: (kind: ExerciseKind) => void
   return (
     <div className="tiles">
       {EXERCISES.map((e) => (
-        <button key={e.kind} className="tile" onClick={() => onOpen(e.kind)}>
+        <button key={e.kind} className="tile" data-kind={e.kind} onClick={() => onOpen(e.kind)}>
           <span className="emoji" aria-hidden>
             {e.emoji}
           </span>
@@ -132,9 +133,21 @@ export function Home({
   const goal = stats ? Math.min(100, Math.round((stats.reviewedToday / stats.dailyGoal) * 100)) : 0;
 
   const header = (
-    <div className="page-header">
-      <h1>{t.hello(name)}</h1>
-      <p>{stats && stats.reviewedToday >= stats.dailyGoal ? t.goalDone : t.goalTodo}</p>
+    <div className="page-header hero">
+      <div>
+        <h1>{t.hello(name)}</h1>
+        <p>{stats && stats.reviewedToday >= stats.dailyGoal ? t.goalDone : t.goalTodo}</p>
+      </div>
+      {stats && (
+        <div
+          className="goal-ring"
+          style={{ '--p': goal } as CSSProperties}
+          role="img"
+          aria-label={`${t.goalLabel}: ${Math.min(stats.reviewedToday, stats.dailyGoal)}/${stats.dailyGoal}`}
+        >
+          <span>{goal}%</span>
+        </div>
+      )}
     </div>
   );
   const plan = (

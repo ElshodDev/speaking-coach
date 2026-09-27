@@ -66,7 +66,18 @@ function saveDraft(d: Draft | null) {
  * xat, 1.2 — rasmiy xat, 2 — onlayn muhokama posti. 60 daqiqa, so'z
  * oraliqlari, qoralama shu qurilmada, vaqt tugasa avtomatik topshiriladi.
  */
-export function CefrWriting({ go, sessionId, onSubmitted }: { go: (route: string) => void; sessionId?: string; onSubmitted?: (id: string) => void }) {
+export function CefrWriting({
+  go,
+  sessionId,
+  onSubmitted,
+  setId,
+}: {
+  go: (route: string) => void;
+  sessionId?: string;
+  onSubmitted?: (id: string) => void;
+  /** Ro'yxatdan tanlangan variant. */
+  setId?: string;
+}) {
   const t = useT(cefrMsg);
   const tm = useT(mockMsg);
   const [set, setSet] = useState<CefrWritingSet | null>(null);
@@ -82,8 +93,10 @@ export function CefrWriting({ go, sessionId, onSubmitted }: { go: (route: string
   const autoRef = useRef(false);
 
   useEffect(() => {
-    const d = loadDraft();
-    const q = d ? `?setId=${encodeURIComponent(d.setId)}` : '';
+    const saved = loadDraft();
+    const d = saved && (!setId || saved.setId === setId) ? saved : null;
+    const wanted = setId ?? d?.setId;
+    const q = wanted ? `?setId=${encodeURIComponent(wanted)}` : '';
     apiJson<{ set: CefrWritingSet; timing: Timing }>(`/api/mock/cefr/writing/new${q}`)
       .then((data) => {
         setSet(data.set);
@@ -100,7 +113,7 @@ export function CefrWriting({ go, sessionId, onSubmitted }: { go: (route: string
         setError(e instanceof Error ? e.message : String(e));
         setStatus('error');
       });
-  }, []);
+  }, [setId]);
 
   useEffect(() => {
     if (status === 'exam' && set) saveDraft({ setId: set.id, startedAt, texts });

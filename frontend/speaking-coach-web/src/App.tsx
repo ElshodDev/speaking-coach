@@ -9,6 +9,8 @@ import { JoinByCode, JoinGroup, TasksPage } from './StudentTasks';
 import { savePendingJoin, takePendingJoin } from './groupLogic';
 import { teacherMsg } from './locales/teacher';
 import { mockMsg } from './locales/mock';
+import { mockPickMsg, type MockPickTitle } from './locales/mockPick';
+import { MockPicker } from './MockPicker';
 import { shadowingMsg } from './locales/shadowing';
 import { learnMsg } from './locales/learn';
 import { PageHeader } from './ui';
@@ -92,6 +94,7 @@ function App() {
   const tMock = useT(mockMsg);
   const tShadow = useT(shadowingMsg);
   const tLearn = useT(learnMsg);
+  const tMockPick = useT(mockPickMsg);
   const c = useT(common);
   const [route, go] = useRoute();
   const [email, setEmail] = useState<string | null>(null);
@@ -318,22 +321,21 @@ function App() {
     page = <MockFullStart go={go} />;
   } else if (section === 'mock' && sub === 'cefr-full' && loggedIn) {
     page = <MockFullStart go={go} exam="cefr" />;
-  } else if (section === 'mock' && sub === 'cefr-listening' && loggedIn) {
-    page = <MockListening key={`cl-${userKey}-${third ?? ''}`} exam="cefr" go={go} source={third === 'ai' ? 'ai' : 'bank'} />;
-  } else if (section === 'mock' && sub === 'cefr-reading' && loggedIn) {
-    page = <MockReading key={`cr-${userKey}-${third ?? ''}`} exam="cefr" variant="academic" go={go} source={third === 'ai' ? 'ai' : 'bank'} />;
-  } else if (section === 'mock' && sub === 'listening' && loggedIn) {
-    page = <MockListening key={`ml-${userKey}-${third ?? ''}`} go={go} source={third === 'ai' ? 'ai' : 'bank'} />;
-  } else if (section === 'mock' && (sub === 'reading-academic' || sub === 'reading-general') && loggedIn) {
-    page = <MockReading key={`${sub}-${userKey}-${third ?? ''}`} variant={sub === 'reading-general' ? 'general' : 'academic'} go={go} source={third === 'ai' ? 'ai' : 'bank'} />;
-  } else if (section === 'mock' && sub === 'cefr-speaking' && loggedIn) {
-    page = <MockSpeaking key={`cs-${userKey}`} exam="cefr" go={go} />;
-  } else if (section === 'mock' && sub === 'cefr-writing' && loggedIn) {
-    page = <CefrWriting key={`cw-${userKey}`} go={go} />;
-  } else if (section === 'mock' && sub === 'speaking' && loggedIn) {
-    page = <MockSpeaking key={`ms-${userKey}`} go={go} />;
-  } else if (section === 'mock' && (sub === 'writing-academic' || sub === 'writing-general') && loggedIn) {
-    page = <MockWriting key={`${sub}-${userKey}`} variant={sub === 'writing-general' ? 'general' : 'academic'} go={go} />;
+  } else if (section === 'mock' && loggedIn && sub && MOCK_PICK[sub] && (!third || (third === 't' && !fourth))) {
+    // Bo'lim sahifasi: 10+ tayyor test/variant ro'yxati — foydalanuvchi o'zi tanlaydi.
+    const m = MOCK_PICK[sub];
+    page = <MockPicker key={`pick-${sub}-${userKey}`} exam={m.exam} module={m.module} variant={m.variant} allowAi={m.module === 'listening' || m.module === 'reading'} base={`mock/${sub}`} title={tMockPick[m.title]} go={go} />;
+  } else if (section === 'mock' && loggedIn && sub && MOCK_PICK[sub]) {
+    // third: "t" + id — tanlangan test; "ai" — AI yangisini tuzadi; "next" — keyingi ishlanmagan.
+    const m = MOCK_PICK[sub];
+    const picked = third === 't' && fourth ? decodeURIComponent(fourth) : undefined;
+    const source = third === 'ai' ? 'ai' : 'bank';
+    const k = `${sub}-${userKey}-${third ?? ''}-${fourth ?? ''}`;
+    if (m.module === 'listening') page = <MockListening key={k} exam={m.exam} go={go} source={source} testId={picked} />;
+    else if (m.module === 'reading') page = <MockReading key={k} exam={m.exam} variant={m.variant ?? 'academic'} go={go} source={source} testId={picked} />;
+    else if (m.module === 'speaking') page = <MockSpeaking key={k} exam={m.exam} go={go} setId={picked} />;
+    else if (m.exam === 'cefr') page = <CefrWriting key={k} go={go} setId={picked} />;
+    else page = <MockWriting key={k} variant={m.variant ?? 'academic'} go={go} setId={picked} />;
   } else if (section === 'mock') {
     page = <MockHub key={userKey} loggedIn={loggedIn} go={go} onLogin={toLogin} />;
   } else if (section === 'progress') {
@@ -420,7 +422,7 @@ function App() {
           </div>
         </nav>
 
-        <main className={pageWidth(section, sub)}>
+        <main className={pageWidth(section, sub, third)}>
           {isDemoEmail(email) && section !== 'demo' && <DemoBanner onRegister={leaveDemo} />}
           <ErrorBoundary resetKey={route} onHome={() => go('home')}>
             <Suspense fallback={<p className="muted" role="status" style={{ marginTop: 24 }}>⏳</p>}>{page}</Suspense>
@@ -436,8 +438,24 @@ const NARROW = new Set(['login', 'register', 'welcome', 'demo', 'join', 'quiz'])
 /** O'rtacha kenglik: ketma-ket oqim (speaking, listening) va natijalar — satrlar juda uzun bo'lmasin. */
 const MEDIUM_MOCK = /^(speaking|cefr-speaking|listening|cefr-listening|result|session)$/;
 
-function pageWidth(section: string, sub?: string): string {
+/** Mock bo'limlari: marshrut → imtihon, bo'lim va sarlavha (ro'yxat sahifasi va tanlangan test uchun). */
+const MOCK_PICK: Record<string, { exam: 'ielts' | 'cefr'; module: 'listening' | 'reading' | 'speaking' | 'writing'; variant?: 'academic' | 'general'; title: MockPickTitle }> = {
+  listening: { exam: 'ielts', module: 'listening', title: 'ieltsListening' },
+  'reading-academic': { exam: 'ielts', module: 'reading', variant: 'academic', title: 'ieltsReadingA' },
+  'reading-general': { exam: 'ielts', module: 'reading', variant: 'general', title: 'ieltsReadingG' },
+  speaking: { exam: 'ielts', module: 'speaking', title: 'ieltsSpeaking' },
+  'writing-academic': { exam: 'ielts', module: 'writing', variant: 'academic', title: 'ieltsWritingA' },
+  'writing-general': { exam: 'ielts', module: 'writing', variant: 'general', title: 'ieltsWritingG' },
+  'cefr-listening': { exam: 'cefr', module: 'listening', title: 'cefrListening' },
+  'cefr-reading': { exam: 'cefr', module: 'reading', title: 'cefrReading' },
+  'cefr-speaking': { exam: 'cefr', module: 'speaking', title: 'cefrSpeaking' },
+  'cefr-writing': { exam: 'cefr', module: 'writing', title: 'cefrWriting' },
+};
+
+function pageWidth(section: string, sub?: string, third?: string): string {
   if (NARROW.has(section)) return 'page-narrow';
+  // Testlar ro'yxati — keng ekranda bir necha ustun.
+  if (section === 'mock' && sub && MOCK_PICK[sub] && !third) return 'page-wide';
   if (section === 'mock' && sub && MEDIUM_MOCK.test(sub)) return 'page-medium';
   return 'page-wide';
 }

@@ -146,4 +146,34 @@ public class EmailCodeTests
         Assert.NotEqual(verify.Subject, reset.Subject);
         Assert.Contains("reset", reset.Subject);
     }
+
+    [Theory]
+    [InlineData("uz", "kirish")]
+    [InlineData("ru", "входа")]
+    [InlineData("en", "sign-in")]
+    public void Login_code_email_says_it_is_for_signing_in(string lang, string word)
+    {
+        var login = EmailTemplates.Code(lang, EmailCodePurpose.Login, "123456");
+        var verify = EmailTemplates.Code(lang, EmailCodePurpose.Verify, "123456");
+        Assert.Contains(word, login.Subject);
+        Assert.NotEqual(verify.Subject, login.Subject);
+        Assert.Contains("123456", login.Html);
+    }
+
+    [Theory]
+    [InlineData("aziza@mail.com", true)]
+    [InlineData("a.b@school.uz", true)]
+    [InlineData("no-at-sign.com", false)]
+    [InlineData("aziza@localhost", false)]
+    [InlineData("Aziza <aziza@mail.com>", false)]
+    public void Email_addresses_are_checked_before_a_code_is_sent(string email, bool valid)
+    {
+        Assert.Equal(valid, AuthService.IsValidEmail(AuthService.NormalizeEmail(email)));
+    }
+
+    [Fact]
+    public void Demo_addresses_cannot_request_a_code()
+    {
+        Assert.False(AuthService.IsValidEmail(DemoAccount.NewEmail()));
+    }
 }

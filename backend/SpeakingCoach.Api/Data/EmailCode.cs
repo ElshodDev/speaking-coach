@@ -7,6 +7,10 @@ public enum EmailCodePurpose
 
     /// <summary>Parolni tiklash ("Parolni unutdim").</summary>
     ResetPassword = 1,
+
+    /// <summary>Parolsiz kirish: emailga kelgan kod bilan (telefonda parol yozish noqulay).</summary>
+    /// <remarks>Bazada matn sifatida saqlanadi (HasConversion&lt;string&gt;, 20 belgi) — migratsiya kerak emas.</remarks>
+    Login = 2,
 }
 
 /// <summary>

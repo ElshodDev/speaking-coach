@@ -1,15 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { GRAMMAR } from './grammar';
+import { ALL_GRAMMAR as GRAMMAR, ALL_VOCAB_TOPICS as VOCAB_TOPICS } from './index';
 import { SPEAKING_TOPICS_BANK, WRITING_TOPICS_BANK } from './topics';
 import { LEVELS, type L3 } from './types';
-import { VOCAB_TOPICS } from './vocabTopics';
 
 const filled = (t: L3) => t.uz.trim().length > 0 && t.ru.trim().length > 0 && t.en.trim().length > 0;
 const unique = <T,>(xs: T[]) => new Set(xs).size === xs.length;
 
 describe('grammar lessons', () => {
   it('cover every level with complete, trilingual lessons', () => {
-    for (const lv of LEVELS) expect(GRAMMAR.filter((g) => g.level === lv).length, lv).toBeGreaterThanOrEqual(4);
+    for (const lv of LEVELS) expect(GRAMMAR.filter((g) => g.level === lv).length, lv).toBeGreaterThanOrEqual(8);
     expect(unique(GRAMMAR.map((g) => g.id))).toBe(true);
     for (const g of GRAMMAR) {
       expect(filled(g.title) && filled(g.summary), g.id).toBe(true);
@@ -35,7 +34,7 @@ describe('grammar lessons', () => {
 
 describe('topic vocabulary', () => {
   it('has complete words with translations', () => {
-    expect(VOCAB_TOPICS.length).toBeGreaterThanOrEqual(10);
+    expect(VOCAB_TOPICS.length).toBeGreaterThanOrEqual(20);
     expect(unique(VOCAB_TOPICS.map((t) => t.id))).toBe(true);
     for (const t of VOCAB_TOPICS) {
       expect(filled(t.title), t.id).toBe(true);

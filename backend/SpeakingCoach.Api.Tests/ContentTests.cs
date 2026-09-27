@@ -9,7 +9,7 @@ namespace SpeakingCoach.Api.Tests;
 /// <summary>Ilova bilan keladigan tayyor materiallar Gemini yaratganlari bilan bir xil qat'iy qoidalardan o'tadi.</summary>
 public class ContentTests
 {
-    public const int PerLevel = 5;
+    public const int PerLevel = 11;
 
     private static int Words(string s) => s.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
 
@@ -54,30 +54,65 @@ public class ContentTests
         Assert.Equal((items.Count, items.Count), PracticeLibrary.Progress(ActivityType.Reading, level, done));
     }
 
+    /// <summary>
+    /// Har bir tayyor mock test — AI testlari bilan bir xil validatorlardan. Xato bo'lsa,
+    /// xabarda test nomi va sababi (masalan "IELTS Listening — Test 7: …") ko'rinadi.
+    /// </summary>
     [Fact]
-    public void Built_in_ielts_tests_pass_the_generator_validators()
+    public void Built_in_mocks_pass_the_generator_validators()
     {
-        var l = BuiltInIelts.Listening1;
-        Assert.Equal(4, l.Parts.Count);
-        for (var i = 0; i < 4; i++) GeminiMockGenerator.ValidatePart(l.Parts[i], i + 1);
-
-        var r = BuiltInIelts.ReadingAcademic1;
-        Assert.Equal(IeltsBank.Academic, r.Variant);
-        Assert.Equal(3, r.Passages.Count);
-        (int First, int Count)[] layout = [(1, 13), (14, 13), (27, 14)];
-        for (var i = 0; i < 3; i++) GeminiMockGenerator.ValidatePassage(r.Passages[i], layout[i].First, layout[i].Count);
+        var errors = new List<string>();
+        foreach (var m in BuiltInMocks.All)
+        {
+            try
+            {
+                switch (m.Exam, m.Module)
+                {
+                    case ("ielts", "listening"):
+                        var il = (ListeningTest)m.Content;
+                        Assert.Equal(4, il.Parts.Count);
+                        for (var i = 0; i < 4; i++) GeminiMockGenerator.ValidatePart(il.Parts[i], i + 1);
+                        break;
+                    case ("ielts", "reading"):
+                        var ir = (ReadingTest)m.Content;
+                        Assert.Equal(IeltsBank.Academic, ir.Variant);
+                        Assert.Equal(3, ir.Passages.Count);
+                        (int First, int Count)[] layout = [(1, 13), (14, 13), (27, 14)];
+                        for (var i = 0; i < 3; i++) GeminiMockGenerator.ValidatePassage(ir.Passages[i], layout[i].First, layout[i].Count);
+                        break;
+                    case ("cefr", "listening"):
+                        var cl = (ListeningTest)m.Content;
+                        Assert.Equal(6, cl.Parts.Count);
+                        for (var i = 0; i < 6; i++) CefrObjective.ValidateListening(cl.Parts[i], i + 1);
+                        break;
+                    case ("cefr", "reading"):
+                        var cr = (ReadingTest)m.Content;
+                        Assert.Equal(5, cr.Passages.Count);
+                        for (var i = 0; i < 5; i++) CefrObjective.ValidateReading(cr.Passages[i], i + 1);
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                errors.Add($"{m.Title}: {ex.Message}");
+            }
+        }
+        Assert.True(errors.Count == 0, string.Join(" || ", errors));
     }
 
-    [Fact]
-    public void Built_in_cefr_tests_pass_the_generator_validators()
+    [Theory]
+    [InlineData("ielts", "listening")]
+    [InlineData("ielts", "reading")]
+    [InlineData("cefr", "listening")]
+    [InlineData("cefr", "reading")]
+    public void Each_mock_kind_has_more_than_ten_built_in_tests(string exam, string module)
     {
-        var l = BuiltInCefr.Listening1;
-        Assert.Equal(6, l.Parts.Count);
-        for (var i = 0; i < 6; i++) CefrObjective.ValidateListening(l.Parts[i], i + 1);
-
-        var r = BuiltInCefr.Reading1;
-        Assert.Equal(5, r.Passages.Count);
-        for (var i = 0; i < 5; i++) CefrObjective.ValidateReading(r.Passages[i], i + 1);
+        var n = BuiltInMocks.All.Count(m => m.Exam == exam && m.Module == module);
+        Assert.True(n > 10, $"{exam} {module}: {n} ta tayyor test");
+        // Matnlar takrorlanmasin (bir testni ikki marta ko'chirib qo'yish xatosi).
+        var texts = BuiltInMocks.All.Where(m => m.Exam == exam && m.Module == module)
+            .Select(m => m.Content is ReadingTest r ? r.Passages[0].Title : ((ListeningTest)m.Content).Parts[0].Context).ToList();
+        Assert.Equal(texts.Count, texts.Distinct().Count());
     }
 
     [Fact]
@@ -115,5 +150,16 @@ public class ContentTests
         Assert.Throws<InvalidOperationException>(() => ContentAi.ValidateQuiz(new GrammarQuiz([.. good.Questions.Take(5), Q("A ___ b.", 3, "a", "b", "c")])));
         Assert.Throws<InvalidOperationException>(() => ContentAi.ValidateQuiz(new GrammarQuiz([.. good.Questions.Take(5), Q("A ___ b.", 0, "a", "a", "c")])));
         Assert.Contains("Russian", ContentAi.QuizPrompt("Passive voice", "B2", "ru"));
+    }
+
+    [Fact]
+    public void Speaking_and_writing_mock_banks_offer_more_than_ten_choices()
+    {
+        Assert.True(IeltsBank.Speaking.Length > 10, $"IELTS Speaking: {IeltsBank.Speaking.Length}");
+        Assert.True(IeltsBank.Writing.Count(w => w.Variant == IeltsBank.Academic) > 10, "IELTS Writing Academic");
+        Assert.True(IeltsBank.Writing.Count(w => w.Variant == IeltsBank.General) > 10, "IELTS Writing General");
+        Assert.True(CefrBank.Speaking.Length > 10, "CEFR Speaking");
+        Assert.True(CefrBank.Writing.Length > 10, "CEFR Writing");
+        Assert.Equal(IeltsBank.Writing.Length, IeltsBank.Writing.Select(w => w.Id).Distinct().Count());
     }
 }

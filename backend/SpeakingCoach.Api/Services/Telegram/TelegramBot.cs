@@ -33,11 +33,13 @@ public partial class TelegramBot
     private readonly ILogger<TelegramBot> _logger;
     private readonly AdminOptions _admins;
     private readonly AuthoringRunner _runner;
+    private readonly AdminService _adminStats;
 
     public TelegramBot(AppDbContext db, ITelegramApi api, TelegramOptions options, ReviewService reviews,
         IWordService words, AiQuotaService quotas, TodayService today, ILogger<TelegramBot> logger,
-        AdminOptions admins, AuthoringRunner runner)
+        AdminOptions admins, AuthoringRunner runner, AdminService adminStats)
     {
+        _adminStats = adminStats;
         _admins = admins;
         _runner = runner;
         _today = today;
@@ -120,6 +122,20 @@ public partial class TelegramBot
             {
                 // Faqat o'zining ID'si — admin sozlash (Telegram__Admins) uchun.
                 await _api.SendMessageAsync(c.ChatId, c.T("bot.your_id", c.From.Id), ct: ct);
+                return;
+            }
+
+            // Nechta foydalanuvchi ro'yxatdan o'tgan — faqat adminlarga (raqamli ID yoki admin email bilan ulangan hisob).
+            if (BotLogic.IsCommand(text, "/admin") || BotLogic.IsCommand(text, "/users"))
+            {
+                if (!IsAdmin(c))
+                {
+                    await _api.SendMessageAsync(c.ChatId, c.T("bot.admin_only"), ct: ct);
+                    return;
+                }
+                var o = await _adminStats.GetOverviewAsync(c.Account?.TzOffsetMinutes ?? -300);
+                await _api.SendMessageAsync(c.ChatId, c.T("bot.admin_stats",
+                    o.VerifiedUsers, o.TotalUsers, o.NewUsersToday, o.NewUsers7d, o.ActiveToday, o.Active7d, o.Active30d), ct: ct);
                 return;
             }
 

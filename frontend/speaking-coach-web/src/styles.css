@@ -400,6 +400,8 @@ select.input {
   width: 100%;
   padding: 0.7rem 0.8rem;
   font: inherit;
+  /* iPhone 16px dan kichik maydonga bosilganda sahifani kattalashtirib yuboradi. */
+  font-size: max(1rem, 1em);
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--border);
@@ -2010,5 +2012,473 @@ kbd {
   .learn-lesson > aside {
     position: sticky;
     top: var(--sticky-top);
+  }
+}
+
+/* ---- Mock testni ro'yxatdan tanlash ---- */
+.pick-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+}
+.pick-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 180px;
+  flex: 1 1 200px;
+  max-width: 360px;
+}
+.pick-progress-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.pick-progress-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--primary), var(--teal));
+  transition: width 0.4s ease;
+}
+.pick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.pick-grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.pick-card {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+.pick-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+.pick-card:focus-visible {
+  outline: 3px solid var(--primary-soft);
+  border-color: var(--primary);
+}
+.pick-card.done {
+  border-left: 4px solid var(--success);
+}
+.pick-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pick-num {
+  font-weight: 700;
+  font-size: 1.02rem;
+  margin-right: auto;
+}
+.badge.badge-done {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.pick-topics {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.84rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+.pick-topics span::before {
+  content: '• ';
+  color: var(--axis);
+}
+.pick-go {
+  margin-top: auto;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+/* Reading/Listening: tayyor mashqni ro'yxatdan tanlash */
+.practice-pick-list {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 6px;
+}
+.practice-pick-list button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  cursor: pointer;
+}
+.practice-pick-list button:hover:not(:disabled) {
+  border-color: var(--primary);
+}
+.practice-pick-list .lvl {
+  flex: none;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-soft);
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+.practice-pick-list .ttl {
+  flex: 1;
+  min-width: 0;
+}
+.practice-pick-list .ok {
+  color: var(--success);
+  font-weight: 700;
+}
+.practice-pick-list button.done .ttl {
+  color: var(--muted);
+}
+
+/* Ilova ichidagi brauzer haqida ogohlantirish (Google kirish bloklanadi) */
+.inapp-note {
+  border: 1px solid var(--warning);
+  background: var(--warning-soft);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}
+.btn.btn-sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+/* =====================================================================
+   Vizual yangilanish: shrift, chuqurlik, rangli bo'limlar, silliq harakat.
+   Oldingi qoidalar ustiga yoziladi — tuzilish (layout) o'zgarmaydi.
+   ===================================================================== */
+
+:root {
+  --font: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --bg: #f3f5fa;
+  --border: #e3e8f1;
+  --radius: 18px;
+  --radius-sm: 12px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px -8px rgba(16, 24, 40, 0.1);
+  --shadow-lift: 0 2px 4px rgba(16, 24, 40, 0.05), 0 16px 32px -12px rgba(37, 99, 235, 0.25);
+  --accent: #7c3aed;
+  --grad: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  /* Bo'limlar ranglari (plitkalar): gapirish, yozish, o'qish, tinglash */
+  --k-speaking: #2563eb;
+  --k-speaking-soft: #e8efff;
+  --k-writing: #ea580c;
+  --k-writing-soft: #fff0e6;
+  --k-reading: #059669;
+  --k-reading-soft: #e3f7ee;
+  --k-listening: #9333ea;
+  --k-listening-soft: #f3e8ff;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0a0f1c;
+    --border: #243049;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 28px -10px rgba(0, 0, 0, 0.55);
+    --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.35), 0 16px 32px -12px rgba(107, 150, 255, 0.3);
+    --accent: #a78bfa;
+    --grad: linear-gradient(135deg, #3b6fe8 0%, #7c4ddb 100%);
+    --k-speaking: #7aa2ff;
+    --k-speaking-soft: #1a2a4d;
+    --k-writing: #fb923c;
+    --k-writing-soft: #3a2212;
+    --k-reading: #34d399;
+    --k-reading-soft: #0f2e22;
+    --k-listening: #c084fc;
+    --k-listening-soft: #2c1a44;
+  }
+  /* Gradient to'q — oq matn o'qiladi (to'q matn yomon ko'rinardi). */
+  .btn-primary,
+  .btn-primary:hover:not(:disabled) {
+    color: #fff;
+  }
+}
+
+html,
+body {
+  font-family: var(--font);
+  font-feature-settings: 'cv11', 'ss03';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+h1,
+h2,
+h3 {
+  letter-spacing: -0.015em;
+}
+h1 {
+  font-weight: 750;
+}
+
+/* Kartalar va tugmalar */
+.card {
+  border-color: var(--border);
+}
+.btn {
+  border-radius: var(--radius-sm);
+  transition: transform 0.12s ease, background 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.btn-primary {
+  background: var(--grad);
+  box-shadow: 0 6px 16px -8px rgba(37, 99, 235, 0.6);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--grad);
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+.btn-outline {
+  border-width: 1.5px;
+}
+.btn-outline:hover:not(:disabled) {
+  background: var(--primary-soft);
+}
+.hero .btn-primary {
+  background: #fff;
+  box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.4);
+}
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary) 45%, transparent);
+  outline-offset: 2px;
+}
+
+.cta {
+  background: linear-gradient(135deg, var(--primary-soft) 0%, color-mix(in srgb, var(--primary-soft) 60%, var(--surface)) 100%);
+  border: 1px solid color-mix(in srgb, var(--primary) 14%, transparent);
+}
+button.card.cta:hover {
+  border-color: var(--primary);
+}
+
+/* Mashq plitkalari: har bo'limning o'z rangi, belgisi doira ichida */
+.tile {
+  --k: var(--primary);
+  --k-soft: var(--primary-soft);
+  position: relative;
+  overflow: hidden;
+  gap: 4px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.tile[data-kind='speaking'] { --k: var(--k-speaking); --k-soft: var(--k-speaking-soft); }
+.tile[data-kind='writing'] { --k: var(--k-writing); --k-soft: var(--k-writing-soft); }
+.tile[data-kind='reading'] { --k: var(--k-reading); --k-soft: var(--k-reading-soft); }
+.tile[data-kind='listening'] { --k: var(--k-listening); --k-soft: var(--k-listening-soft); }
+.tile::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  background: var(--k);
+  opacity: 0.85;
+}
+.tile .emoji {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: var(--k-soft);
+  font-size: 1.45rem;
+  margin-bottom: 10px;
+}
+.tile strong {
+  color: var(--text);
+  font-size: 1.02rem;
+}
+.tile:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--k) 45%, var(--border));
+  box-shadow: var(--shadow-lift);
+}
+
+/* Statistika: raqamlar yirikroq va rangli */
+.stat .value {
+  font-size: 1.65rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+.progress {
+  height: 10px;
+  border-radius: 999px;
+}
+.progress > div {
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--success), #22c55e);
+}
+
+/* Bosh sahifa: salomlashuv banneri va kunlik maqsad halqasi */
+.page-header.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 8px 0 4px;
+  padding: 22px 22px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lift);
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgba(255, 255, 255, 0.18) 0%, transparent 55%),
+    var(--grad);
+}
+.page-header.hero h1 {
+  font-size: 1.55rem;
+  margin: 0 0 4px;
+}
+.page-header.hero p {
+  color: #fff;
+  opacity: 0.9;
+  margin: 0;
+}
+.goal-ring {
+  --p: 0;
+  flex: none;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(#fff calc(var(--p) * 1%), rgba(255, 255, 255, 0.22) 0);
+}
+.goal-ring span {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: color-mix(in srgb, #2d3fd9 70%, #6d3fe0);
+  font-weight: 750;
+  font-size: 0.95rem;
+}
+
+/* Menyu: faol bo'lim — "tabletka" */
+.nav button {
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.nav button[aria-current='page'] .icon {
+  transform: translateY(-1px);
+}
+@media (max-width: 759px) {
+  .nav {
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 -6px 20px -12px rgba(16, 24, 40, 0.25);
+  }
+  .nav button[aria-current='page']::before {
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    width: 52px;
+    height: 30px;
+    transform: translateX(-50%);
+    border-radius: 999px;
+    background: var(--primary-soft);
+    z-index: -1;
+  }
+  .nav button {
+    z-index: 0;
+  }
+  .page-header.hero {
+    padding: 18px;
+  }
+  .page-header.hero h1 {
+    font-size: 1.35rem;
+  }
+  .goal-ring {
+    width: 62px;
+    height: 62px;
+  }
+  .goal-ring span {
+    width: 48px;
+    height: 48px;
+    font-size: 0.85rem;
+  }
+}
+@media (min-width: 1024px) {
+  .nav button[aria-current='page'] {
+    position: relative;
+    background: var(--primary-soft);
+    font-weight: 650;
+  }
+  .nav button[aria-current='page']::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 4px;
+    border-radius: 0 4px 4px 0;
+    background: var(--grad);
+  }
+  .nav-brand {
+    font-size: 1.1rem;
+  }
+  .page-header h1 {
+    font-size: 1.9rem;
+  }
+  .page-header.hero h1 {
+    font-size: 1.75rem;
+  }
+}
+
+/* Sahifa almashganda — yengil paydo bo'lish */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+main > * {
+  animation: rise-in 0.28s ease both;
+}
+main > *:nth-child(2) { animation-delay: 0.03s; }
+main > *:nth-child(3) { animation-delay: 0.06s; }
+main > *:nth-child(4) { animation-delay: 0.09s; }
+@media (prefers-reduced-motion: reduce) {
+  main > *,
+  .tile,
+  .btn,
+  .pick-card {
+    animation: none !important;
+    transition: none !important;
   }
 }

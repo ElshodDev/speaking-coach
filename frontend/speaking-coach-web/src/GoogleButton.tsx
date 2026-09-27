@@ -39,15 +39,30 @@ export function loadGoogleScript(): Promise<void> {
  * ochiladi va imzolangan ID token (credential) qaytadi — uni serverga
  * yuboramiz, server imzoni o'zi tekshiradi. Tugma matni interfeys tilida.
  */
-export function GoogleButton({ clientId, onCredential }: { clientId: string; onCredential: (credential: string) => void }) {
+export function GoogleButton({
+  clientId,
+  onCredential,
+  onUnavailable,
+}: {
+  clientId: string;
+  onCredential: (credential: string) => void;
+  /** Skript yuklanmadi yoki tugma chizilmadi (bloklangan, internet sekin) — email kodi taklif qilinadi. */
+  onUnavailable?: () => void;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const { lang } = useLang();
   // callback har renderda yangilanadi, Google esa birinchisini eslab qoladi — ref orqali eng yangisini chaqiramiz.
   const callbackRef = useRef(onCredential);
   callbackRef.current = onCredential;
+  const unavailableRef = useRef(onUnavailable);
+  unavailableRef.current = onUnavailable;
 
   useEffect(() => {
     let cancelled = false;
+    // 10 soniyada tugma paydo bo'lmasa — foydalanuvchi kutib qolmasin.
+    const timer = setTimeout(() => {
+      if (!cancelled && !ref.current?.childElementCount) unavailableRef.current?.();
+    }, 10_000);
     loadGoogleScript()
       .then(() => {
         const api = window.google?.accounts?.id;
@@ -64,9 +79,13 @@ export function GoogleButton({ clientId, onCredential }: { clientId: string; onC
           width: Math.min(360, ref.current.clientWidth || 320),
         });
       })
-      .catch(() => undefined); // Google bloklangan bo'lsa ham email/parol bilan kirish ishlaydi
+      // Google bloklangan bo'lsa ham email bilan kirish ishlaydi.
+      .catch(() => {
+        if (!cancelled) unavailableRef.current?.();
+      });
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
   }, [clientId, lang]);
 

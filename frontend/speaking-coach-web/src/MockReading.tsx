@@ -57,7 +57,10 @@ export function MockReading({
   onSubmitted,
   exam = 'ielts',
   source: initialSource = 'bank',
+  testId,
 }: {
+  /** Ro'yxatdan tanlangan aniq test. */
+  testId?: string;
   variant: 'academic' | 'general';
   go: (route: string) => void;
   sessionId?: string;
@@ -87,7 +90,9 @@ export function MockReading({
 
   useEffect(() => {
     setStatus('loading');
-    apiJson<NewTestResponse<ReadingClient>>(withSource(exam === 'cefr' ? '/api/mock/cefr/reading/new' : `/api/mock/ielts/reading/new?variant=${variant}`, src))
+    const base = exam === 'cefr' ? '/api/mock/cefr/reading/new' : `/api/mock/ielts/reading/new?variant=${variant}`;
+    const url = testId && src === 'bank' ? `${base}${base.includes('?') ? '&' : '?'}testId=${encodeURIComponent(testId)}` : base;
+    apiJson<NewTestResponse<ReadingClient>>(withSource(url, src))
       .then(({ test, repeated, exhausted, bankCount: n, source: from }) => {
         if (!test || exhausted) {
           setBankCount(n ?? 0);
@@ -110,7 +115,7 @@ export function MockReading({
         setError(e instanceof Error ? e.message : String(e));
         setStatus('error');
       });
-  }, [variant, exam, src]);
+  }, [variant, exam, src, testId]);
 
   useEffect(() => {
     if (status === 'exam' && test) saveDraft(exam, { testId: test.id, startedAt, answers });

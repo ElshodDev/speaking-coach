@@ -10,6 +10,7 @@ interface AdminOverview {
   totalUsers: number;
   verifiedUsers: number;
   newUsers7d: number;
+  newUsersToday?: number;
   activeToday: number;
   active7d: number;
   active30d: number;
@@ -54,7 +55,7 @@ export function Admin() {
   if (!data) return <p className="muted" style={{ marginTop: 24 }}>{cm.loading}</p>;
 
   const tiles = [
-    { label: t.totalUsers, value: data.totalUsers, sub: t.newThisWeek(data.newUsers7d) },
+    { label: t.totalUsers, value: data.totalUsers, sub: `${t.newToday(data.newUsersToday ?? 0)} · ${t.newThisWeek(data.newUsers7d)}` },
     { label: t.verifiedUsers, value: data.verifiedUsers, sub: t.verifiedShare(data.totalUsers ? Math.round((data.verifiedUsers / data.totalUsers) * 100) : 0) },
     { label: t.activeToday, value: data.activeToday },
     { label: t.active7d, value: data.active7d },

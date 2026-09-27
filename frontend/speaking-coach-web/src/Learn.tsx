@@ -3,9 +3,8 @@
 // foydalanuvchi xohlasa, AI qo'shimcha savollar tuzadi.
 import { useMemo, useState } from 'react';
 import { ApiError, getLevel, postJson } from './api';
-import { GRAMMAR } from './content/grammar';
+import { ALL_GRAMMAR as GRAMMAR, ALL_VOCAB_TOPICS as VOCAB_TOPICS } from './content';
 import { LEVELS, type GrammarLesson, type L3, type Level, type TopicWord } from './content/types';
-import { VOCAB_TOPICS } from './content/vocabTopics';
 import { useLang, useT } from './i18n';
 import { learnMsg } from './locales/learn';
 import { isSpeechSupported, speakAsync, stopSpeaking } from './speech';

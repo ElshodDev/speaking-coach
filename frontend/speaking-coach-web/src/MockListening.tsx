@@ -67,6 +67,7 @@ export function MockListening({
   onSubmitted,
   exam = 'ielts',
   source: initialSource = 'bank',
+  testId,
 }: {
   go: (route: string) => void;
   sessionId?: string;
@@ -74,6 +75,8 @@ export function MockListening({
   exam?: 'ielts' | 'cefr';
   /** "ai" — marshrutdan: foydalanuvchi AI yangi test tanlagan. */
   source?: MockSource;
+  /** Ro'yxatdan tanlangan aniq test. */
+  testId?: string;
 }) {
   const t = useT(mockObjMsg);
   const tm = useT(mockMsg);
@@ -98,7 +101,8 @@ export function MockListening({
   useEffect(() => {
     cancelled.current = false;
     setPhase('loading');
-    apiJson<NewTestResponse<ListeningClient>>(withSource(`/api/mock/${exam}/listening/new`, src))
+    const url = testId && src === 'bank' ? `/api/mock/${exam}/listening/new?testId=${encodeURIComponent(testId)}` : `/api/mock/${exam}/listening/new`;
+    apiJson<NewTestResponse<ListeningClient>>(withSource(url, src))
       .then(({ test, repeated, exhausted, bankCount: n, source: from }) => {
         if (!test || exhausted) {
           setBankCount(n ?? 0);
@@ -118,7 +122,7 @@ export function MockListening({
       cancelled.current = true;
       stopSpeaking();
     };
-  }, [exam, src]);
+  }, [exam, src, testId]);
 
   useEffect(() => {
     if (phase === 'loading' || phase === 'intro' || phase === 'error') return;

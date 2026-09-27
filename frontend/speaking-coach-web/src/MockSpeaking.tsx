@@ -93,8 +93,11 @@ export function MockSpeaking({
   sessionId,
   onSubmitted,
   exam = 'ielts',
+  setId,
 }: {
   exam?: 'ielts' | 'cefr';
+  /** Ro'yxatdan tanlangan variant. */
+  setId?: string;
   go: (route: string) => void;
   sessionId?: string;
   onSubmitted?: (id: string) => void;
@@ -117,10 +120,11 @@ export function MockSpeaking({
   const cancelledRef = useRef(false);
 
   useEffect(() => {
+    const q = setId ? `?setId=${encodeURIComponent(setId)}` : '';
     const load =
       exam === 'cefr'
-        ? apiJson<{ set: CefrSpeakingSet; timing: CefrSpeakingTiming }>('/api/mock/cefr/speaking/new').then((d) => ({ set: d.set, steps: cefrSpeakingSteps(d.set, d.timing) }))
-        : apiJson<{ set: SpeakingSet; timing: SpeakingTiming }>('/api/mock/ielts/speaking/new').then((d) => ({ set: d.set, steps: speakingSteps(d.set, d.timing) }));
+        ? apiJson<{ set: CefrSpeakingSet; timing: CefrSpeakingTiming }>(`/api/mock/cefr/speaking/new${q}`).then((d) => ({ set: d.set, steps: cefrSpeakingSteps(d.set, d.timing) }))
+        : apiJson<{ set: SpeakingSet; timing: SpeakingTiming }>(`/api/mock/ielts/speaking/new${q}`).then((d) => ({ set: d.set, steps: speakingSteps(d.set, d.timing) }));
     load
       .then((data) => {
         setSet(data.set);
@@ -137,7 +141,7 @@ export function MockSpeaking({
       if (recorderRef.current?.state === 'recording') recorderRef.current.stop();
       streamRef.current?.getTracks().forEach((tr) => tr.stop());
     };
-  }, [exam]);
+  }, [exam, setId]);
 
   // Imtihon davomida sahifani yopmoqchi bo'lsa — ogohlantiramiz.
   useEffect(() => {

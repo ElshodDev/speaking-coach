@@ -60,6 +60,16 @@ public static class AuthEndpoints
             ToResult(request, await auth.ResetPasswordAsync(body.Email, body.Code, body.NewPassword)))
             .RequireRateLimiting("auth");
 
+        // Parolsiz kirish (telefonda qulay): emailga 6 xonali kod → kod bilan kirish.
+        // Hisob bo'lmasa, birinchi kodda ochiladi — alohida "ro'yxatdan o'tish" qadami yo'q.
+        app.MapPost("/api/auth/code/request", async (EmailRequest body, HttpRequest request, AuthService auth) =>
+            ToResult(request, await auth.RequestLoginCodeAsync(body.Email, Texts.LangOf(request))))
+            .RequireRateLimiting("auth");
+
+        app.MapPost("/api/auth/code/verify", async (VerifyRequest body, HttpRequest request, AuthService auth) =>
+            ToResult(request, await auth.LoginWithCodeAsync(body.Email, body.Code)))
+            .RequireRateLimiting("auth");
+
         // Brauzer Google'dan olgan ID token'ni yuboradi; server uni o'zi tekshiradi.
         app.MapPost("/api/auth/google", async (GoogleRequest body, HttpRequest request, IGoogleSignIn google, AuthService auth) =>
         {

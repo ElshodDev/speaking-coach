@@ -59,8 +59,7 @@ public class AuthService
     public async Task<AuthResult> RegisterAsync(string email, string password, string lang = Texts.DefaultLang)
     {
         var normalized = NormalizeEmail(email ?? "");
-        if (normalized.Length > 256 || !System.Net.Mail.MailAddress.TryCreate(normalized, out _) || !normalized.Contains('.')
-            || DemoAccount.IsDemo(normalized))
+        if (!IsValidEmail(normalized))
         {
             return AuthResult.Fail("auth.invalid_email");
         }
@@ -239,6 +238,58 @@ public class AuthService
         if (purpose == EmailCodePurpose.Verify && user.EmailVerifiedAtUtc is not null) return AuthResult.Done();
         return await SendCodeAsync(user, purpose, lang, quietCooldown: false) ?? AuthResult.Done();
     }
+
+    /// <summary>
+    /// Parolsiz kirish, 1-qadam: emailga kirish kodi. Hisob bo'lmasa — shu yerda
+    /// ochiladi (parolsiz, tasdiqlanmagan), shuning uchun mavjud va yangi email
+    /// uchun javob bir xil: kimdir bu yo'l bilan qaysi emaillar ro'yxatdan
+    /// o'tganini bila olmaydi. Hisobga faqat kodni olgan email egasi kiradi.
+    /// </summary>
+    public async Task<AuthResult> RequestLoginCodeAsync(string email, string lang)
+    {
+        if (!VerificationRequired) return AuthResult.FailWith(StatusCodes.Status503ServiceUnavailable, "email.unavailable");
+        var normalized = NormalizeEmail(email ?? "");
+        if (!IsValidEmail(normalized)) return AuthResult.Fail("auth.invalid_email");
+
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            user = new User { Id = Guid.NewGuid(), Email = normalized, CreatedAtUtc = DateTime.UtcNow, PasswordHash = "" };
+            _db.Users.Add(user);
+            await _db.SaveChangesAsync();
+        }
+        return await SendCodeAsync(user, EmailCodePurpose.Login, lang, quietCooldown: false) ?? AuthResult.Done(user.Email);
+    }
+
+    /// <summary>
+    /// Parolsiz kirish, 2-qadam: kod to'g'ri bo'lsa — sessiya. Kod emailga
+    /// kelgani uchun email tasdiqlangan hisoblanadi. Hisob avval tasdiqlanmagan
+    /// bo'lsa (parolni begona odam qo'ygan bo'lishi mumkin) — Google'dagidek,
+    /// o'sha parol va eski sessiyalar bekor qilinadi.
+    /// </summary>
+    public async Task<AuthResult> LoginWithCodeAsync(string email, string code)
+    {
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == NormalizeEmail(email ?? ""));
+        if (user is null || DemoAccount.IsDemo(user.Email)) return AuthResult.Fail("code.wrong");
+
+        var failure = await ConsumeCodeAsync(user, EmailCodePurpose.Login, code);
+        if (failure is not null) return failure;
+
+        if (user.EmailVerifiedAtUtc is null)
+        {
+            user.PasswordHash = "";
+            _db.Sessions.RemoveRange(await _db.Sessions.Where(x => x.UserId == user.Id).ToListAsync());
+            user.EmailVerifiedAtUtc = DateTime.UtcNow;
+        }
+        var token = AddSession(user.Id);
+        await _db.SaveChangesAsync();
+        return new AuthResult(token, user.Email, null);
+    }
+
+    /// <summary>Ro'yxatdan o'tish va kod bilan kirish uchun umumiy tekshiruv (demo manzillar ham rad etiladi).</summary>
+    public static bool IsValidEmail(string normalized) =>
+        normalized.Length <= 256 && System.Net.Mail.MailAddress.TryCreate(normalized, out var parsed)
+        && parsed.Address == normalized && normalized.Contains('.') && !DemoAccount.IsDemo(normalized);
 
     /// <summary>"Parolni unutdim": parolni tiklash kodini yuboradi.</summary>
     public Task<AuthResult> ForgotPasswordAsync(string email, string lang) =>

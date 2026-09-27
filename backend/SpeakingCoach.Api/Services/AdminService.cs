@@ -43,7 +43,8 @@ public record AdminOverview(
     int Reviews7d,
     int TotalCards,
     List<DailyPoint> Daily,
-    List<RecentUser> RecentUsers);
+    List<RecentUser> RecentUsers,
+    int NewUsersToday = 0);
 
 /// <summary>
 /// Admin panel uchun umumiy statistika. Faqat SONLAR va niqoblangan
@@ -141,6 +142,7 @@ public class AdminService
             recentReviews.Count(r => r.ReviewedAtUtc >= since7),
             await _db.ReviewCards.CountAsync(_ => true),
             daily,
-            recentUsers);
+            recentUsers,
+            users.Count(u => Local(u.CreatedAtUtc) == today));
     }
 }

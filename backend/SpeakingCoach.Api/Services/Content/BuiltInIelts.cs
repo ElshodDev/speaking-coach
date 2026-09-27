@@ -4,7 +4,7 @@ namespace SpeakingCoach.Api.Services.Content;
 
 // Tayyor IELTS testlari. Original matn va savollar (haqiqiy imtihondan ko'chirilmagan),
 // tuzilishi rasmiy formatga mos: Listening 4 qism × 10 savol, Reading 3 matn (13 + 13 + 14).
-public static class BuiltInIelts
+public static partial class BuiltInIelts
 {
     public static readonly ListeningTest Listening1 = new([ListeningPart1(), ListeningPart2(), ListeningPart3(), ListeningPart4()]);
 

@@ -56,3 +56,9 @@ Root directory: `frontend/speaking-coach-web`; environment: `VITE_API_URL` (Rend
 ## Migratsiyalar
 
 Render ularni o'zi bajarmaydi: sxemaga bog'liq kodni push qilishdan oldin lokalda `dotnet ef database update` bajariladi.
+
+## Nechta foydalanuvchi ro'yxatdan o'tgan
+
+- **Sayt:** `Admin__Emails` dagi email bilan kiring → Profil → **Admin panel** (`#/admin`). U yerda: jami va email tasdiqlangan foydalanuvchilar, bugun va shu haftadagi yangilar, bugun/7/30 kunda faollar, kunlik grafik. Demo hisoblar hisobga kirmaydi.
+- **Telegram:** botga `/admin` yozing (faqat `Telegram__Admins` dagi raqamli ID yoki admin emaili bilan ulangan hisob). Bot o'sha sonlarni qisqa xabarda yuboradi.
+- "Ro'yxatdan o'tgan" deb **email tasdiqlanganlar** soniga qarang: parolsiz kirishda kod so'rab, uni kiritmagan odam ham bazada tasdiqlanmagan yozuv bo'lib qoladi.

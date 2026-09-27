@@ -87,22 +87,51 @@ public static class EmailTemplates
     public static EmailMessage Code(string lang, EmailCodePurpose purpose, string code)
     {
         var minutes = (int)EmailCodeRules.Lifetime.TotalMinutes;
-        var verify = purpose == EmailCodePurpose.Verify;
         var (subject, intro, validity, ignore) = lang switch
         {
             "ru" => (
-                verify ? $"{code} — код подтверждения Speaking Coach" : $"{code} — код для сброса пароля Speaking Coach",
-                verify ? "Ваш код для подтверждения email:" : "Ваш код для сброса пароля:",
+                purpose switch
+                {
+                    EmailCodePurpose.Verify => $"{code} — код подтверждения Speaking Coach",
+                    EmailCodePurpose.Login => $"{code} — код для входа в Speaking Coach",
+                    _ => $"{code} — код для сброса пароля Speaking Coach",
+                },
+                purpose switch
+                {
+                    EmailCodePurpose.Verify => "Ваш код для подтверждения email:",
+                    EmailCodePurpose.Login => "Ваш код для входа:",
+                    _ => "Ваш код для сброса пароля:",
+                },
                 $"Код действует {minutes} минут.",
                 "Если это были не вы, просто проигнорируйте это письмо."),
             "en" => (
-                verify ? $"{code} is your Speaking Coach verification code" : $"{code} is your Speaking Coach password reset code",
-                verify ? "Your code to confirm your email:" : "Your code to reset your password:",
+                purpose switch
+                {
+                    EmailCodePurpose.Verify => $"{code} is your Speaking Coach verification code",
+                    EmailCodePurpose.Login => $"{code} is your Speaking Coach sign-in code",
+                    _ => $"{code} is your Speaking Coach password reset code",
+                },
+                purpose switch
+                {
+                    EmailCodePurpose.Verify => "Your code to confirm your email:",
+                    EmailCodePurpose.Login => "Your sign-in code:",
+                    _ => "Your code to reset your password:",
+                },
                 $"The code is valid for {minutes} minutes.",
                 "If this wasn't you, just ignore this email."),
             _ => (
-                verify ? $"{code} — Speaking Coach tasdiqlash kodi" : $"{code} — Speaking Coach parolni tiklash kodi",
-                verify ? "Emailingizni tasdiqlash uchun kod:" : "Parolni tiklash uchun kod:",
+                purpose switch
+                {
+                    EmailCodePurpose.Verify => $"{code} — Speaking Coach tasdiqlash kodi",
+                    EmailCodePurpose.Login => $"{code} — Speaking Coach'ga kirish kodi",
+                    _ => $"{code} — Speaking Coach parolni tiklash kodi",
+                },
+                purpose switch
+                {
+                    EmailCodePurpose.Verify => "Emailingizni tasdiqlash uchun kod:",
+                    EmailCodePurpose.Login => "Kirish uchun kod:",
+                    _ => "Parolni tiklash uchun kod:",
+                },
                 $"Kod {minutes} daqiqa amal qiladi.",
                 "Agar bu siz boʻlmasangiz, xatga eʼtibor bermang."),
         };

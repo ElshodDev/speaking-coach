@@ -36,6 +36,15 @@ interface Exercise {
 
 type Source = 'bank' | 'ai';
 
+interface BankItem {
+  id: string;
+  level: string;
+  title: string;
+  done: boolean;
+}
+
+const LEVELS = ['A2', 'B1', 'B2', 'C1'];
+
 // Mehmon ko'rgan tayyor mashqlar (hisob bo'lmasa, server bilmaydi) — takrorlanmasin.
 const seenKey = (mode: Mode) => `speakingCoach.seen.${mode}`;
 function readSeen(mode: Mode): string[] {
@@ -98,16 +107,23 @@ export function Comprehension({
   }, [mode]);
 
   const [bank, setBank] = useState<{ level: string; done: number; total: number } | null>(null);
+  const [items, setItems] = useState<BankItem[]>([]);
+  const [showList, setShowList] = useState(false);
+  const [listLevel, setListLevel] = useState<string | null>(() => (LEVELS.includes(getLevel()) ? getLevel() : null));
 
-  // Tayyor mashqlar holati (kirgan foydalanuvchi uchun — server hisoblaydi).
+  // Tayyor mashqlar holati va ro'yxati. Kirgan foydalanuvchida "bajarilgan"ni server biladi,
+  // mehmonda — shu brauzerda ko'rilganlar.
   useEffect(() => {
-    if (!loggedIn) return;
-    apiJson<{ level: string; done: number; total: number }>(`/api/${mode}/bank?level=${getLevel()}`)
-      .then(setBank)
+    apiJson<{ level: string; done: number; total: number; items?: BankItem[] }>(`/api/${mode}/bank?level=${getLevel()}`)
+      .then((d) => {
+        const seen = loggedIn ? [] : readSeen(mode);
+        setItems((d.items ?? []).map((x) => ({ ...x, done: x.done || seen.includes(x.id) })));
+        if (loggedIn) setBank({ level: d.level, done: d.done, total: d.total });
+      })
       .catch(() => setBank(null));
   }, [mode, loggedIn, result]);
 
-  async function generate(source: Source = 'bank') {
+  async function generate(source: Source = 'bank', bankId?: string) {
     setBusy(true);
     setIsError(false);
     setMessage(source === 'ai' ? t.preparing : '');
@@ -118,7 +134,9 @@ export function Comprehension({
         level: getLevel(),
         source,
         seen: !loggedIn && source === 'bank' ? readSeen(mode) : undefined,
+        bankId,
       });
+      setShowList(false);
       setExercise(data);
       setAnswers(data.questions.map(() => null));
       if (data.bank) {
@@ -184,6 +202,37 @@ export function Comprehension({
             {bank && `${t.bankProgress(bank.level, bank.done, bank.total)} · `}
             {t.aiNote}
           </p>
+          {items.length > 0 && (
+            <button className="btn-link small" style={{ marginTop: 10 }} onClick={() => setShowList((v) => !v)} aria-expanded={showList} data-testid="practice-pick-toggle">
+              {showList ? t.pickClose : t.pickOpen(items.length)}
+            </button>
+          )}
+          {showList && (
+            <div data-testid="practice-pick" style={{ marginTop: 8 }}>
+              <div className="chips" role="group">
+                <button aria-pressed={listLevel === null} onClick={() => setListLevel(null)}>{t.pickAll}</button>
+                {LEVELS.map((l) => (
+                  <button key={l} aria-pressed={listLevel === l} onClick={() => setListLevel(l)}>
+                    {l}
+                    <span className="n"> {items.filter((x) => x.level === l && x.done).length}/{items.filter((x) => x.level === l).length}</span>
+                  </button>
+                ))}
+              </div>
+              <ul className="practice-pick-list">
+                {items
+                  .filter((x) => !listLevel || x.level === listLevel)
+                  .map((x) => (
+                    <li key={x.id}>
+                      <button className={x.done ? 'done' : ''} onClick={() => generate('bank', x.id)} disabled={busy}>
+                        <span className="lvl">{x.level}</span>
+                        <span className="ttl">{x.title}</span>
+                        {x.done && <span className="ok" aria-label="✓">✓</span>}
+                      </button>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
 

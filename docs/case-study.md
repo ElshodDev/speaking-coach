@@ -2,7 +2,7 @@
 
 **Project:** [AI Speaking Coach](https://speaking-coach-theta.vercel.app) · [try the demo](https://speaking-coach-theta.vercel.app/#/demo) · [source](https://github.com/ElshodDev/speaking-coach)
 **Stack:** ASP.NET Core 10 Minimal API, EF Core + PostgreSQL (Neon), React 19 + TypeScript (Vite, PWA), Google Gemini, Telegram Bot API
-**Size:** about 13 000 lines of C# and 15 000 lines of TypeScript; 533 backend unit tests, 121 frontend unit tests, 24 Playwright end-to-end suites
+**Size:** about 27 000 lines of C# (a large share of it built-in exam content) and 22 000 lines of TypeScript; 552 backend unit tests, 125 frontend unit tests, 25 Playwright end-to-end suites
 
 ---
 
@@ -53,11 +53,11 @@ The frontend follows the same idea: while the API is waking up, the app retries 
 
 ### Ship the content, not just the AI
 
-The first versions asked Gemini for everything: every reading passage, every listening script, every mock test. That made the app slow on the first click, dependent on a shared free quota, and empty whenever the model was busy. The app now ships its own original material: 40 graded reading and listening exercises, full IELTS and CEFR mock tests, 50 speaking and writing mock sets, 92 practice topics, 16 grammar lessons explained in three languages and 196 topic words. Wherever material could come from either source, the learner chooses between "📚 ready-made" and "✨ new by AI". The built-in content passes exactly the same validators as AI output, and unit tests fail the build if a passage is the wrong length for its level or a gap answer is missing from its text.
+The first versions asked Gemini for everything: every reading passage, every listening script, every mock test. That made the app slow on the first click, dependent on a shared free quota, and empty whenever the model was busy. The app now ships its own original material: 88 graded reading and listening exercises, 44 full IELTS and CEFR Listening and Reading mock tests, 60 speaking and writing mock sets, 92 practice topics, 32 grammar lessons explained in three languages and 326 topic words. Every section lists its tests with a ✓ and the last score, so the learner picks what to do instead of getting whatever comes next. Wherever material could come from either source, the learner chooses between "📚 ready-made" and "✨ new by AI". The built-in content passes exactly the same validators as AI output, and unit tests fail the build if a passage is the wrong length for its level or a gap answer is missing from its text.
 
 ### Keep the core logic pure
 
-The spaced-repetition scheduler (SM-2), the card factory, IELTS band rounding, the CEFR 0–36 → 75 conversion, XP and badges, reminder timing and Telegram callback parsing never touch the database or HTTP. That is why 533 backend tests run in seconds and why most bugs could be reproduced as a failing unit test first.
+The spaced-repetition scheduler (SM-2), the card factory, IELTS band rounding, the CEFR 0–36 → 75 conversion, XP and badges, reminder timing and Telegram callback parsing never touch the database or HTTP. That is why 552 backend tests run in seconds and why most bugs could be reproduced as a failing unit test first.
 
 XP is a good example. It is never stored: levels, badges and the weekly leaderboard are computed from `Activities` and `ReviewLogs`. There is no counter to drift out of sync, and when I changed the XP rules, all history was re-scored automatically.
 
@@ -86,6 +86,12 @@ None of these needed a new framework. Each fix was a few lines plus a test that 
 ### Scope creep, managed
 
 The project grew from "grade my speaking" to mock IELTS and CEFR exams, teacher groups, a Telegram bot that can turn a PDF into a validated test, and a shadowing trainer with animated characters. What kept it manageable was a small set of shared building blocks: one `Activities` table with `jsonb` results for every exercise type, one card factory, one Gemini client and one validation style. A new feature usually meant a new prompt, a validator and a screen, not a new subsystem.
+
+### Sign-in on a phone
+
+User feedback said signing in on a phone was hard, and three separate causes turned up. Links shared in Telegram or Instagram open in the app's built-in browser, where Google refuses to show its sign-in window, so the button simply did nothing. Form fields inherited a font smaller than 16 px from their labels, so iPhones zoomed the page on every tap. And registration meant inventing a password on a phone keyboard, then typing a code.
+
+The fix was mostly subtraction. The default is now passwordless: email, then the 6-digit code, which phones offer to fill in from the letter and which submits itself on the sixth digit. The account is created by the first confirmed code, so there is no separate "register" step. The app detects in-app browsers and replaces the Google button with an explanation, an "Open in Chrome" link on Android and a copy-link button. Inputs are at least 16 px. The security model did not change: it reuses the same hashed, rate-limited codes, and a code sign-in into an unverified account wipes any password set before it, exactly like Google sign-in.
 
 ## A demo that can't be abused
 

@@ -1,8 +1,9 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { apiFetch, apiJson, postJson, setToken } from './api';
 import { common, useLang, useT } from './i18n';
 import { authMsg } from './locales/auth';
 import { GoogleButton } from './GoogleButton';
+import { chromeIntent, currentInApp, isAndroid, isIos } from './inApp';
 import { inTelegram } from './tgApp';
 
 /** Server javobi: yo token (kirildi), yo "kodni kiriting", yo shunchaki ok. */
@@ -13,15 +14,18 @@ interface AuthResponse {
   ok?: boolean;
 }
 
-type Mode = 'register' | 'login' | 'verify' | 'forgot' | 'reset';
+/** code / code-verify — parolsiz kirish (emailga kod); qolganlari — parol bilan. */
+type Mode = 'code' | 'code-verify' | 'register' | 'login' | 'verify' | 'forgot' | 'reset';
 
 const RESEND_SECONDS = 60;
 
 /**
  * Kirish / ro'yxatdan o'tish formasi yoki (kirgan bo'lsa) hisob kartasi.
  *
- * Email tasdiqlash yoqilgan bo'lsa (serverda xat yuborish sozlangan):
- * ro'yxatdan o'tish → emailga 6 xonali kod → kodni kiritish → hisob ochiladi.
+ * Email yuborish sozlangan bo'lsa, asosiy yo'l — parolsiz: email → 6 xonali
+ * kod → kirildi (hisob bo'lmasa, o'zi ochiladi). Telefonda parol o'ylab topish
+ * va yozish shart emas. Parol bilan kirish ham qoladi ("🔑 Parol bilan kirish").
+ * Parol bilan ro'yxatdan o'tish → emailga 6 xonali kod → kodni kiritish → hisob ochiladi.
  * Shunday qilib bazada faqat haqiqatan mavjud va egasi qo'lidagi emaillar
  * qoladi. "Parolni unutdim" ham xuddi shu kod orqali ishlaydi.
  */
@@ -35,7 +39,8 @@ export function AuthPanel({
   /** Tepadagi "Kirish" → login; "Hisob ochish" → register. */
   initialMode?: 'login' | 'register';
 }) {
-  const [mode, setMode] = useState<Mode>(initialMode);
+  // Sozlama kelguncha parolsiz forma; xat yuborish o'chiq bo'lsa — parol bilan.
+  const [mode, setMode] = useState<Mode>('code');
   // Kod oynasidan "Orqaga" — qaysi formadan kelgan bo'lsa, o'shanga.
   const [cameFrom, setCameFrom] = useState<'login' | 'register'>(initialMode);
   const [showPassword, setShowPassword] = useState(false);
@@ -48,6 +53,11 @@ export function AuthPanel({
   const [resendIn, setResendIn] = useState(0);
   const [canReset, setCanReset] = useState(false);
   const [googleClientId, setGoogleClientId] = useState<string | null>(null);
+  const [googleBroken, setGoogleBroken] = useState(false);
+  const [copied, setCopied] = useState(false);
+  // Avtomatik yuborilgan oxirgi kod — bir xil kod ikki marta yuborilmasin.
+  const lastTried = useRef('');
+  const inApp = currentInApp();
   const t = useT(authMsg);
   const cm = useT(common);
   const { lang } = useLang();
@@ -58,9 +68,13 @@ export function AuthPanel({
       .then((c) => {
         setCanReset(c.emailVerification);
         setGoogleClientId(c.googleClientId ?? null);
+        if (!c.emailVerification) setMode((m) => (m === 'code' ? initialMode : m));
       })
-      .catch(() => setCanReset(false));
-  }, []);
+      .catch(() => {
+        setCanReset(false);
+        setMode((m) => (m === 'code' ? initialMode : m));
+      });
+  }, [initialMode]);
 
   // "Qayta yuborish" tugmasi uchun teskari sanoq (server ham 60 s cheklaydi).
   useEffect(() => {
@@ -74,6 +88,7 @@ export function AuthPanel({
     setError('');
     setInfo('');
     setCode('');
+    lastTried.current = '';
   }
 
   function finish(data: AuthResponse) {
@@ -98,8 +113,23 @@ export function AuthPanel({
     }
   }
 
+  function sendLoginCode() {
+    run(async () => {
+      const data = await postJson<AuthResponse>('/api/auth/code/request', { email: formEmail });
+      if (data.email) setFormEmail(data.email);
+      go('code-verify');
+      setResendIn(RESEND_SECONDS);
+    });
+  }
+
+  function verifyLoginCode(value: string) {
+    run(async () => finish(await postJson<AuthResponse>('/api/auth/code/verify', { email: formEmail, code: value })));
+  }
+
   function submit(e: FormEvent) {
     e.preventDefault();
+    if (mode === 'code') return sendLoginCode();
+    if (mode === 'code-verify') return verifyLoginCode(code);
     run(async () => {
       if (mode === 'register' || mode === 'login') {
         const data = await postJson<AuthResponse>(`/api/auth/${mode}`, { email: formEmail, password });
@@ -130,7 +160,7 @@ export function AuthPanel({
 
   function resend() {
     run(async () => {
-      await postJson(mode === 'reset' ? '/api/auth/forgot' : '/api/auth/resend', { email: formEmail });
+      await postJson(mode === 'reset' ? '/api/auth/forgot' : mode === 'code-verify' ? '/api/auth/code/request' : '/api/auth/resend', { email: formEmail });
       setResendIn(RESEND_SECONDS);
       setInfo(t.resent);
     });
@@ -176,7 +206,16 @@ export function AuthPanel({
       maxLength={7}
       required
       value={code}
-      onChange={(e) => setCode(e.target.value.replace(/[^\d ]/g, ''))}
+      onChange={(e) => {
+        const v = e.target.value.replace(/[^\d ]/g, '');
+        setCode(v);
+        // Parolsiz kirishda 6-raqam kiritilishi bilan — tugmasiz (SMS/xatdan avtomatik to'ldirilganda ham).
+        const digits = v.replace(/\D/g, '');
+        if (mode === 'code-verify' && !busy && digits.length === 6 && digits !== lastTried.current) {
+          lastTried.current = digits;
+          verifyLoginCode(v);
+        }
+      }}
     />
   );
 
@@ -185,6 +224,121 @@ export function AuthPanel({
       {resendIn > 0 ? t.resendIn(resendIn) : t.resend}
     </button>
   );
+
+  function copyLink() {
+    const url = window.location.origin + window.location.pathname;
+    navigator.clipboard?.writeText(url).then(
+      () => setCopied(true),
+      () => window.prompt(t.copyLink, url),
+    );
+  }
+
+  const ua = typeof navigator === 'undefined' ? '' : navigator.userAgent;
+  // Ilova ichidagi brauzer (Instagram, Telegram…): Google bloklaydi — tushuntiramiz va tashqi brauzerni taklif qilamiz.
+  const googleBlock =
+    inApp || inTelegram() ? (
+      googleClientId ? (
+        <div className="inapp-note" data-testid="inapp-note">
+          <strong className="small">{t.inAppTitle(inApp ?? 'Telegram')}</strong>
+          <p className="muted tiny" style={{ margin: '4px 0 8px' }}>{t.inAppText}</p>
+          <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+            {isAndroid(ua) && (
+              <a className="btn btn-outline btn-sm" href={chromeIntent(window.location)}>
+                {t.openChrome}
+              </a>
+            )}
+            <button type="button" className="btn btn-outline btn-sm" onClick={copyLink}>
+              {copied ? t.copied : t.copyLink}
+            </button>
+          </div>
+          {isIos(ua) && <p className="muted tiny" style={{ margin: '8px 0 0' }}>{t.iosHint}</p>}
+        </div>
+      ) : null
+    ) : googleClientId && !googleBroken ? (
+      <>
+        <GoogleButton clientId={googleClientId} onCredential={google} onUnavailable={() => setGoogleBroken(true)} />
+        <div className="divider">
+          <span>{t.or}</span>
+        </div>
+      </>
+    ) : googleClientId && googleBroken ? (
+      <p className="muted tiny" style={{ margin: 0 }} data-testid="google-failed">{t.googleFailed}</p>
+    ) : null;
+
+  const emailField = (
+    <div className="small field">
+      <label htmlFor="auth-email">{t.email}</label>
+      <input
+        id="auth-email"
+        className="input"
+        type="email"
+        placeholder={t.emailPlaceholder}
+        autoComplete="email"
+        inputMode="email"
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        enterKeyHint={mode === 'code' ? 'send' : 'next'}
+        required
+        value={formEmail}
+        onChange={(e) => setFormEmail(e.target.value)}
+      />
+    </div>
+  );
+
+  if (mode === 'code-verify') {
+    return (
+      <form className="card stack" onSubmit={submit} data-testid="code-verify">
+        <h3>{t.codeTitle}</h3>
+        <p className="muted small" style={{ margin: 0 }}>
+          {t.codeSent(formEmail)}
+        </p>
+        {codeInput}
+        {messages}
+        <button type="submit" className="btn btn-primary block" disabled={busy || code.replace(/\D/g, '').length !== 6}>
+          {busy ? t.wait : t.signIn}
+        </button>
+        <div className="spread">
+          <button type="button" className="btn-link small" style={{ whiteSpace: 'nowrap' }} onClick={() => go('code')}>
+            {t.changeEmail}
+          </button>
+          {resendButton}
+        </div>
+      </form>
+    );
+  }
+
+  if (mode === 'code') {
+    const register = initialMode === 'register';
+    return (
+      <form className="card stack" onSubmit={submit} data-testid="auth-form">
+        <div>
+          <h2 style={{ margin: 0 }}>{register ? t.registerTitle : t.loginTitle}</h2>
+          <p className="muted small" style={{ margin: '6px 0 0' }}>{t.codeHint}</p>
+        </div>
+        {register && (
+          <ul className="small" style={{ margin: 0, paddingLeft: 0, listStyle: 'none', display: 'grid', gap: 4 }} data-testid="auth-benefits">
+            {t.benefits.map((b) => <li key={b}>{b}</li>)}
+          </ul>
+        )}
+        {googleBlock}
+        {emailField}
+        {messages}
+        <button type="submit" className="btn btn-primary block" disabled={busy} data-testid="send-code">
+          {busy ? t.wait : t.sendLoginCode}
+        </button>
+        <p className="muted tiny" style={{ margin: 0 }}>
+          {t.consent} <a href={`/privacy.html#${lang}`}>{t.privacyLink}</a>
+          {t.consentEnd === '.' ? '.' : ` ${t.consentEnd}`}
+        </p>
+        <p className="small" style={{ margin: 0, paddingTop: 12, borderTop: '1px solid var(--border)', textAlign: 'center' }}>
+          <button type="button" className="btn-link" onClick={() => go(initialMode)} data-testid="with-password">
+            {t.withPassword}
+          </button>
+        </p>
+      </form>
+    );
+  }
 
   if (mode === 'verify' || mode === 'reset') {
     const verify = mode === 'verify';
@@ -275,29 +429,9 @@ export function AuthPanel({
           {t.benefits.map((b) => <li key={b}>{b}</li>)}
         </ul>
       )}
-      {/* Telegram ichidagi brauzerda Google kirish oynasi ishlamaydi (Google o'zi bloklaydi). */}
-      {googleClientId && !inTelegram() && (
-        <>
-          <GoogleButton clientId={googleClientId} onCredential={google} />
-          <div className="divider">
-            <span>{t.or}</span>
-          </div>
-        </>
-      )}
-      <div className="small field">
-        <label htmlFor="auth-email">{t.email}</label>
-        <input
-          id="auth-email"
-          className="input"
-          type="email"
-          placeholder={t.emailPlaceholder}
-          autoComplete="email"
-          inputMode="email"
-          required
-          value={formEmail}
-          onChange={(e) => setFormEmail(e.target.value)}
-        />
-      </div>
+      {/* Ilova ichidagi brauzerda (Telegram, Instagram…) Google kirish oynasi ishlamaydi (Google o'zi bloklaydi). */}
+      {googleBlock}
+      {emailField}
       <div className="small field">
         <label htmlFor="auth-password">{t.password}</label>
         <span className="password-field">
@@ -346,6 +480,11 @@ export function AuthPanel({
           {register ? t.toLogin : t.toRegister}
         </button>
       </p>
+      {canReset && (
+        <button type="button" className="btn-link small" style={{ alignSelf: 'center' }} onClick={() => go('code')} data-testid="with-code">
+          {t.withCode}
+        </button>
+      )}
     </form>
   );
 }

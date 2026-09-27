@@ -6,7 +6,7 @@ namespace SpeakingCoach.Api.Services.Content;
 // Tayyor CEFR (Multilevel) testlari. Original; tuzilishi agentlik formatiga mos:
 // Listening 6 qism (8 + 6 + 4 + 5 + 6 + 6), Reading 5 qism (6 + 8 + 6 + 9 + 6).
 // Matn va savollar mualliflik ishi — haqiqiy imtihon materiallaridan ko'chirilmagan.
-public static class BuiltInCefr
+public static partial class BuiltInCefr
 {
     public static readonly ListeningTest Listening1 = new([ListeningPart1(), ListeningPart2(), ListeningPart3(), ListeningPart4(), ListeningPart5(), ListeningPart6()]);
 
