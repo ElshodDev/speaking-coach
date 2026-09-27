@@ -79,7 +79,7 @@ public static partial class CefrObjective
     public const string R5Gap = "Read the text. Complete the summary (30–33). Write no more than ONE WORD and / or A NUMBER for each answer.";
     public const string R5Mcq = "For questions 34–35, choose the correct answer A, B, C or D.";
 
-    private const string Shape = """
+    internal const string Shape = """
         Question groups use exactly this JSON shape:
         {"type": "mcq" | "tfng" | "gap" | "match" | "map",
          "instructions": "<copy the instruction given below exactly>",
@@ -96,9 +96,11 @@ public static partial class CefrObjective
         Return ONLY valid JSON, no markdown fences.
         """;
 
-    private const string Level = "The test is the Uzbekistan national Multilevel English exam (CEFR B1–C1): difficulty rises from B1 in the first questions to C1 in the last ones. Write ORIGINAL material; do not copy published tests.";
+    private const string LevelBase = "The test is the Uzbekistan national Multilevel English exam (CEFR B1–C1): difficulty rises from B1 in the first questions to C1 in the last ones.";
 
-    public static string ListeningPrompt(int part, string topic)
+    private static string Level(string? source) => source is null ? $"{LevelBase} Write ORIGINAL material; do not copy published tests." : $"{LevelBase}\n{source}";
+
+    public static string ListeningPrompt(int part, string topic, string? source = null)
     {
         var body = part switch
         {
@@ -137,7 +139,7 @@ public static partial class CefrObjective
         var layout = ListeningLayout[part - 1];
         return $"""
             You are an experienced item writer for English listening exams. Create Listening Part {part} of a mock test.
-            {Level}
+            {Level(source)}
             {body}
             Questions are numbered {layout.First} to {layout.First + layout.Count - 1}.
             Return: {"{"}"part": {part}, "context": "<one sentence the candidate reads before listening>",
@@ -147,7 +149,7 @@ public static partial class CefrObjective
             """;
     }
 
-    public static string ReadingPrompt(int part, string topic)
+    public static string ReadingPrompt(int part, string topic, string? source = null)
     {
         var body = part switch
         {
@@ -182,7 +184,7 @@ public static partial class CefrObjective
         };
         return $"""
             You are an experienced item writer for English reading exams. Create Reading Part {part} of a mock test.
-            {Level}
+            {Level(source)}
             {body}
             Return: {"{"}"title": "<short title>", "text": "<the text; separate paragraphs with a blank line>", "groups": [<question groups>]{"}"}
             {Shape}

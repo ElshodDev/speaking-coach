@@ -3,6 +3,7 @@ import { apiJson, postJson } from './api';
 import { ASSIGNMENT_KINDS, joinUrl, localInputToUtc, type AssignmentStatus, formatDue } from './groupLogic';
 import { localeOf, useLang, useT } from './i18n';
 import { teacherMsg } from './locales/teacher';
+import type { TelegramStatus } from './TelegramCard';
 import { PageHeader } from './ui';
 
 interface GroupSummary {
@@ -27,6 +28,11 @@ export function TeacherHome({ go }: { go: (route: string) => void }) {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [bot, setBot] = useState<TelegramStatus | null>(null);
+
+  useEffect(() => {
+    apiJson<TelegramStatus>('/api/telegram/status').then(setBot).catch(() => setBot(null));
+  }, []);
 
   const load = useCallback(() => {
     apiJson<GroupSummary[]>('/api/teacher/groups')
@@ -66,6 +72,15 @@ export function TeacherHome({ go }: { go: (route: string) => void }) {
           <div className="muted small">{t.members(g.members)} · {t.assignmentsCount(g.assignments)}</div>
         </button>
       ))}
+      {groups && groups.length > 0 && (
+        <div className="card stack" data-testid="bot-tests-hint">
+          <strong>{t.botTestsTitle}</strong>
+          <p className="muted small" style={{ margin: 0 }}>{t.botTestsText}</p>
+          {bot?.enabled && bot.botUsername && (
+            <a className="btn btn-outline" href={`https://t.me/${bot.botUsername}`} target="_blank" rel="noreferrer">{t.botTestsOpen}</a>
+          )}
+        </div>
+      )}
     </>
   );
 }

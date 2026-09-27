@@ -44,6 +44,9 @@ public class GeminiClient
                 "Gemini:ApiKey sozlanmagan. Lokalda: dotnet user-secrets set \"Gemini:ApiKey\" \"...\". " +
                 "Railway/Render'da: Gemini__ApiKey environment variable (qo'sh pastki chiziq).");
         _http = httpClientFactory.CreateClient();
+        // Butun testni (masalan PDF'dan Reading) o'girish 100 soniyadan uzoq
+        // davom etishi mumkin; odatiy so'rovlar baribir ancha tez tugaydi.
+        _http.Timeout = TimeSpan.FromMinutes(3);
     }
 
     /// <summary>

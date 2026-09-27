@@ -158,9 +158,9 @@ public static class Texts
             "Для этого сначала подключите аккаунт на сайте.",
             "Please connect your website account first."),
         ["bot.help"] = new(
-            "<b>Bot nima qila oladi</b>\n\n📚 Inglizcha soʻz yuboring — maʼnosi, misol va “Lugʻatga qoʻshish” tugmasi.\n🌟 /word — kunlik soʻz.\n📋 <b>Bugun</b> — bugungi reja, imtihongacha kunlar va oʻqituvchi vazifalari.\n🔁 <b>Takrorlash</b> — navbatdagi kartalar: javobni koʻrasiz va qanchalik eslaganingizni belgilaysiz.\n📊 <b>Natijalar</b> — seriya, bugungi maqsad va kartalar.\n⚙️ <b>Sozlamalar</b> — eslatma vaqti, til, hisobni uzish.\n\nHammasi saytdagi hisobingiz bilan bir xil: bu yerda takrorlagan kartangiz saytda ham takrorlangan boʻladi.",
-            "<b>Что умеет бот</b>\n\n📚 Пришлите английское слово — значение, пример и кнопка «Добавить в словарь».\n🌟 /word — слово дня.\n📋 <b>Сегодня</b> — план на день, дни до экзамена и задания учителя.\n🔁 <b>Повторение</b> — карточки на сегодня: смотрите ответ и отмечаете, насколько хорошо вспомнили.\n📊 <b>Прогресс</b> — серия, цель на сегодня и карточки.\n⚙️ <b>Настройки</b> — время напоминания, язык, отключение аккаунта.\n\nВсё синхронизировано с сайтом: карточка, повторённая здесь, повторена и на сайте.",
-            "<b>What the bot can do</b>\n\n📚 Send an English word — meaning, an example and an “Add to vocabulary” button.\n🌟 /word — word of the day.\n📋 <b>Today</b> — today's plan, days to your exam and teacher assignments.\n🔁 <b>Review</b> — your due cards: see the answer and rate how well you remembered.\n📊 <b>Progress</b> — streak, today's goal and cards.\n⚙️ <b>Settings</b> — reminder time, language, disconnect.\n\nEverything is synced with the website: a card reviewed here is reviewed there too."),
+            "<b>Bot nima qila oladi</b>\n\n📚 Inglizcha soʻz yuboring — maʼnosi, misol va “Lugʻatga qoʻshish” tugmasi.\n🌟 /word — kunlik soʻz.\n📋 <b>Bugun</b> — bugungi reja, imtihongacha kunlar va oʻqituvchi vazifalari.\n🔁 <b>Takrorlash</b> — navbatdagi kartalar: javobni koʻrasiz va qanchalik eslaganingizni belgilaysiz.\n📊 <b>Natijalar</b> — seriya, bugungi maqsad va kartalar.\n⚙️ <b>Sozlamalar</b> — eslatma vaqti, til, hisobni uzish.\n📝 /add — test qoʻshish (oʻqituvchi va admin), /bank — testlar roʻyxati.\n\nHammasi saytdagi hisobingiz bilan bir xil: bu yerda takrorlagan kartangiz saytda ham takrorlangan boʻladi.",
+            "<b>Что умеет бот</b>\n\n📚 Пришлите английское слово — значение, пример и кнопка «Добавить в словарь».\n🌟 /word — слово дня.\n📋 <b>Сегодня</b> — план на день, дни до экзамена и задания учителя.\n🔁 <b>Повторение</b> — карточки на сегодня: смотрите ответ и отмечаете, насколько хорошо вспомнили.\n📊 <b>Прогресс</b> — серия, цель на сегодня и карточки.\n⚙️ <b>Настройки</b> — время напоминания, язык, отключение аккаунта.\n📝 /add — добавить тест (учитель и админ), /bank — список тестов.\n\nВсё синхронизировано с сайтом: карточка, повторённая здесь, повторена и на сайте.",
+            "<b>What the bot can do</b>\n\n📚 Send an English word — meaning, an example and an “Add to vocabulary” button.\n🌟 /word — word of the day.\n📋 <b>Today</b> — today's plan, days to your exam and teacher assignments.\n🔁 <b>Review</b> — your due cards: see the answer and rate how well you remembered.\n📊 <b>Progress</b> — streak, today's goal and cards.\n⚙️ <b>Settings</b> — reminder time, language, disconnect.\n📝 /add — add a test (teachers and admin), /bank — list of tests.\n\nEverything is synced with the website: a card reviewed here is reviewed there too."),
         ["bot.no_cards"] = new(
             "🗂 Hali kartalar yoʻq. Saytda mashq qiling yoki menga inglizcha soʻz yuboring — ular shu yerga tushadi.",
             "🗂 Карточек пока нет. Позанимайтесь на сайте или пришлите мне английское слово — они появятся здесь.",
@@ -229,6 +229,123 @@ public static class Texts
             "Nimadir xato ketdi. Birozdan soʻng qayta urinib koʻring.",
             "Что-то пошло не так. Попробуйте немного позже.",
             "Something went wrong. Please try again shortly."),
+        // ---- Bot: test qo'shish (/add) ----
+        ["bot.cmd_add"] = new("Test qoʻshish (oʻqituvchi va admin)", "Добавить тест (учитель и админ)", "Add a test (teachers and admin)"),
+        ["bot.cmd_bank"] = new("Test banki va mening testlarim", "Банк тестов и мои тесты", "Test bank and my tests"),
+        ["bot.author_denied"] = new(
+            "Test qoʻshish oʻqituvchilar va admin uchun. Saytdagi <b>Oʻqituvchi</b> boʻlimida guruh oching — shundan soʻng /add ishlaydi.",
+            "Добавлять тесты могут учителя и админ. Создайте группу в разделе <b>Учитель</b> на сайте — после этого /add заработает.",
+            "Adding tests is for teachers and the admin. Create a group in the <b>Teacher</b> section of the website, then /add will work."),
+        ["bot.author_pick_exam"] = new(
+            "📝 <b>Test qoʻshish</b>\n\nQaysi imtihon uchun?\n\n<i>Faqat oʻzingiz yozgan yoki foydalanish huquqingiz bor materiallarni yuboring. Test tekshirilgach, ilovadagi mock imtihonlarda chiqadi.</i>",
+            "📝 <b>Добавление теста</b>\n\nДля какого экзамена?\n\n<i>Присылайте только свои материалы или те, на которые у вас есть права. После проверки тест появится в пробных экзаменах приложения.</i>",
+            "📝 <b>Add a test</b>\n\nWhich exam is it for?\n\n<i>Only send material you wrote yourself or have the right to use. Once reviewed, the test appears in the app's mock exams.</i>"),
+        ["bot.author_pick_kind"] = new("{0}: qaysi boʻlim?", "{0}: какой раздел?", "{0}: which section?"),
+        ["bot.author_pick_mode"] = new(
+            "<b>{0}</b>\n\nMaterialingiz bormi yoki Gemini yangi test yaratsinmi?",
+            "<b>{0}</b>\n\nУ вас есть материал или Gemini создаст новый тест?",
+            "<b>{0}</b>\n\nDo you have material, or should Gemini write a new test?"),
+        ["bot.author_mode_src"] = new("📎 Materialim bor (matn, PDF, rasm)", "📎 Есть материал (текст, PDF, фото)", "📎 I have material (text, PDF, photo)"),
+        ["bot.author_mode_gen"] = new("✨ Mavzu yozaman — Gemini yaratsin", "✨ Напишу тему — пусть создаст Gemini", "✨ I'll give a topic — Gemini writes it"),
+        ["bot.author_cancel_button"] = new("✖️ Bekor qilish", "✖️ Отмена", "✖️ Cancel"),
+        ["bot.author_send_topic"] = new(
+            "<b>{0}</b>\n\nMavzuni bitta xabarda yozing, masalan: <i>Environment</i> yoki <i>Technology in education</i>.\nBekor qilish: /cancel",
+            "<b>{0}</b>\n\nНапишите тему одним сообщением, например: <i>Environment</i> или <i>Technology in education</i>.\nОтмена: /cancel",
+            "<b>{0}</b>\n\nSend the topic in one message, e.g. <i>Environment</i> or <i>Technology in education</i>.\nCancel: /cancel"),
+        ["bot.author_send_src"] = new(
+            "<b>{0}</b>\n\nMaterialni yuboring: matn xabar, PDF yoki rasm (5 MB gacha). Savollar va toʻgʻri javoblar boʻlsa — saqlanadi; yetishmaganini Gemini toʻldiradi va ilova formatiga keltiradi.\nBekor qilish: /cancel",
+            "<b>{0}</b>\n\nПришлите материал: текстом, PDF или фото (до 5 МБ). Вопросы и правильные ответы сохранятся; недостающее Gemini допишет и приведёт к формату приложения.\nОтмена: /cancel",
+            "<b>{0}</b>\n\nSend the material: a text message, a PDF or a photo (up to 5 MB). Existing questions and answers are kept; Gemini fills in anything missing and converts it to the app's format.\nCancel: /cancel"),
+        ["bot.author_listening_note"] = new(
+            "🎧 Listening uchun audio emas, <b>matn (skript)</b> yuboring — ilova uni ovoz bilan oʻqib beradi.",
+            "🎧 Для Listening пришлите не аудио, а <b>текст (скрипт)</b> — приложение озвучит его.",
+            "🎧 For Listening, send the <b>script (text)</b>, not audio — the app reads it aloud."),
+        ["bot.author_working"] = new(
+            "⏳ Tayyorlanmoqda… Bu 1–3 daqiqa olishi mumkin. Tayyor boʻlgach shu yerga yuboraman.",
+            "⏳ Готовлю… Это может занять 1–3 минуты. Пришлю сюда, когда будет готово.",
+            "⏳ Working on it… This can take 1–3 minutes. I'll send it here when it's ready."),
+        ["bot.author_busy"] = new(
+            "⏳ Oldingi test hali tayyorlanmoqda — tugashini kuting.",
+            "⏳ Предыдущий тест ещё готовится — дождитесь его.",
+            "⏳ Your previous test is still being prepared — please wait for it."),
+        ["bot.author_limit"] = new(
+            "Bugungi limit tugadi: sutkasiga {0} ta test. Ertaga davom etamiz.",
+            "Лимит на сегодня исчерпан: {0} тестов в сутки. Продолжим завтра.",
+            "Today's limit is reached: {0} tests per day. Let's continue tomorrow."),
+        ["bot.author_bad_file"] = new(
+            "Bu fayl turini oʻqiy olmayman. PDF, JPG/PNG rasm yoki .txt yuboring.",
+            "Не могу прочитать этот тип файла. Пришлите PDF, фото JPG/PNG или .txt.",
+            "I can't read this file type. Send a PDF, a JPG/PNG photo or a .txt file."),
+        ["bot.author_too_big"] = new("Fayl juda katta (koʻpi bilan {0} MB).", "Файл слишком большой (не более {0} МБ).", "The file is too large (max {0} MB)."),
+        ["bot.author_too_short"] = new(
+            "Matn juda qisqa. Toʻliq materialni yuboring yoki /cancel.",
+            "Текст слишком короткий. Пришлите материал полностью или /cancel.",
+            "The text is too short. Send the full material or /cancel."),
+        ["bot.author_topic_bad"] = new(
+            "Mavzu 3–{0} belgidan iborat matn boʻlsin (fayl emas).",
+            "Тема — текст длиной 3–{0} символов (не файл).",
+            "The topic should be text of 3–{0} characters (not a file)."),
+        ["bot.author_failed"] = new(
+            "❌ Testni tayyorlab boʻlmadi: materialdan toʻliq test chiqmadi yoki AI band. Boshqa material yoki mavzu bilan qayta urinib koʻring (yoki /cancel).",
+            "❌ Не удалось подготовить тест: из материала не получился полный тест или AI занят. Попробуйте другой материал или тему (или /cancel).",
+            "❌ Couldn't prepare the test: the material didn't make a complete test or the AI is busy. Try other material or a topic (or /cancel)."),
+        ["bot.author_ready"] = new("✅ <b>{0}</b> — qoralama tayyor.", "✅ <b>{0}</b> — черновик готов.", "✅ <b>{0}</b> — draft ready."),
+        ["bot.author_ready_admin"] = new(
+            "Toʻliq matn (javoblar bilan) — fayl sifatida quyida. Tekshirib, <b>Chop etish</b>ni bosing — test darhol bankka qoʻshiladi.",
+            "Полный текст (с ответами) — файлом ниже. Проверьте и нажмите <b>Опубликовать</b> — тест сразу попадёт в банк.",
+            "The full text (with answers) is in the file below. Check it and tap <b>Publish</b> — the test goes straight into the bank."),
+        ["bot.author_ready_teacher"] = new(
+            "Toʻliq matn (javoblar bilan) — fayl sifatida quyida. Tekshirib, <b>Adminga yuborish</b>ni bosing — tasdiqlangach bankka qoʻshiladi.",
+            "Полный текст (с ответами) — файлом ниже. Проверьте и нажмите <b>Отправить админу</b> — после одобрения тест попадёт в банк.",
+            "The full text (with answers) is in the file below. Check it and tap <b>Send to admin</b> — it joins the bank once approved."),
+        ["bot.author_publish"] = new("✅ Chop etish", "✅ Опубликовать", "✅ Publish"),
+        ["bot.author_submit"] = new("📨 Adminga yuborish", "📨 Отправить админу", "📨 Send to admin"),
+        ["bot.author_delete"] = new("🗑 Oʻchirish", "🗑 Удалить", "🗑 Delete"),
+        ["bot.author_approve"] = new("✅ Tasdiqlash", "✅ Одобрить", "✅ Approve"),
+        ["bot.author_reject"] = new("❌ Rad etish", "❌ Отклонить", "❌ Reject"),
+        ["bot.author_view"] = new("👁 Koʻrish", "👁 Открыть", "👁 View"),
+        ["bot.author_cancelled"] = new("Bekor qilindi.", "Отменено.", "Cancelled."),
+        ["bot.author_published"] = new(
+            "✅ Chop etildi — test endi mock imtihonlarda chiqadi.",
+            "✅ Опубликовано — тест теперь появляется в пробных экзаменах.",
+            "✅ Published — the test now appears in mock exams."),
+        ["bot.author_submitted"] = new(
+            "📨 Adminga yuborildi. Tasdiqlansa, shu yerda xabar beraman.",
+            "📨 Отправлено админу. Сообщу здесь, когда тест одобрят.",
+            "📨 Sent to the admin. I'll let you know here once it's approved."),
+        ["bot.author_deleted"] = new("🗑 Oʻchirildi.", "🗑 Удалено.", "🗑 Deleted."),
+        ["bot.author_rejected"] = new("❌ Rad etildi, muallifga xabar berildi.", "❌ Отклонено, автор уведомлён.", "❌ Rejected, the author has been notified."),
+        ["bot.author_not_allowed"] = new(
+            "Bu amalni bajarib boʻlmaydi (holat oʻzgargan yoki ruxsat yoʻq).",
+            "Это действие недоступно (статус изменился или нет прав).",
+            "This action isn't available (the status changed or you lack permission)."),
+        ["bot.author_review"] = new(
+            "📥 <b>Tekshiruvga yangi test keldi</b>\nMuallif: {0}",
+            "📥 <b>Новый тест на проверку</b>\nАвтор: {0}",
+            "📥 <b>A new test is waiting for review</b>\nAuthor: {0}"),
+        ["bot.author_approved_note"] = new(
+            "🎉 Testingiz tasdiqlandi va bankka qoʻshildi: <b>{0}</b>",
+            "🎉 Ваш тест одобрен и добавлен в банк: <b>{0}</b>",
+            "🎉 Your test was approved and added to the bank: <b>{0}</b>"),
+        ["bot.author_rejected_note"] = new(
+            "Testingiz rad etildi: <b>{0}</b>. Materialni tuzatib, /add bilan qayta yuborishingiz mumkin.",
+            "Ваш тест отклонён: <b>{0}</b>. Можно исправить материал и отправить снова через /add.",
+            "Your test was rejected: <b>{0}</b>. You can fix the material and send it again with /add."),
+        ["bot.bank_title"] = new(
+            "📚 <b>Test banki</b> — chop etilgan (tekshiruvda)",
+            "📚 <b>Банк тестов</b> — опубликовано (на проверке)",
+            "📚 <b>Test bank</b> — published (in review)"),
+        ["bot.bank_static"] = new(
+            "Speaking va Writing uchun ilovada yana tayyor variantlar bor.",
+            "Для Speaking и Writing в приложении есть ещё встроенные варианты.",
+            "Speaking and Writing also have built-in sets in the app."),
+        ["bot.bank_pending"] = new("📥 Tekshiruvni kutmoqda: {0} ta", "📥 Ждут проверки: {0}", "📥 Waiting for review: {0}"),
+        ["bot.bank_mine"] = new("📚 <b>Mening testlarim</b>", "📚 <b>Мои тесты</b>", "📚 <b>My tests</b>"),
+        ["bot.bank_empty"] = new("Hali test qoʻshmagansiz. /add bilan boshlang.", "Вы ещё не добавляли тестов. Начните с /add.", "You haven't added any tests yet. Start with /add."),
+        ["bot.status_published"] = new("chop etilgan", "опубликован", "published"),
+        ["bot.status_draft"] = new("qoralama", "черновик", "draft"),
+        ["bot.status_pending"] = new("tekshiruvda", "на проверке", "in review"),
+        ["bot.status_rejected"] = new("rad etilgan", "отклонён", "rejected"),
         ["login.required"] = new("Tizimga kiring.", "Войдите в систему.", "Please log in."),
         ["group.not_found"] = new("Guruh yoki vazifa topilmadi.", "Группа или задание не найдены.", "Group or assignment not found."),
         ["group.name_invalid"] = new("Guruh nomi 2–80 belgidan iborat boʻlsin.", "Название группы — от 2 до 80 символов.", "The group name must be 2–80 characters."),

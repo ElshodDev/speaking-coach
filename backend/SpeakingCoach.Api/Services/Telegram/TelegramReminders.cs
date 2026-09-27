@@ -122,6 +122,8 @@ public class TelegramStartup : BackgroundService
                         ("review", Texts.Get(lang, "bot.cmd_review")),
                         ("stats", Texts.Get(lang, "bot.cmd_stats")),
                         ("settings", Texts.Get(lang, "bot.cmd_settings")),
+                        ("add", Texts.Get(lang, "bot.cmd_add")),
+                        ("bank", Texts.Get(lang, "bot.cmd_bank")),
                         ("help", Texts.Get(lang, "bot.cmd_help")),
                     };
                     // O'zbekcha — standart (language_code yo'q), rus va ingliz — o'z tilida.

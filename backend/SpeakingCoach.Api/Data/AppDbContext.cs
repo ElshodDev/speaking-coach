@@ -69,6 +69,7 @@ public class AppDbContext : DbContext
             entity.Property(t => t.ChatId).ValueGeneratedNever();
             entity.Property(t => t.Username).HasMaxLength(64);
             entity.Property(t => t.Lang).HasMaxLength(2);
+            entity.Property(t => t.BotState).HasMaxLength(100);
             entity.HasIndex(t => t.UserId).IsUnique();
             entity.HasOne<User>().WithMany().HasForeignKey(t => t.UserId).OnDelete(DeleteBehavior.Cascade);
         });
@@ -141,6 +142,9 @@ public class AppDbContext : DbContext
             entity.Property(t => t.Module).HasMaxLength(20);
             entity.Property(t => t.Variant).HasMaxLength(20);
             entity.Property(t => t.Payload).HasColumnType("jsonb");
+            // Mavjud testlar migratsiyada "published" bo'lib qoladi.
+            entity.Property(t => t.Status).HasMaxLength(16).HasDefaultValue(MockTestStatus.Published);
+            entity.Property(t => t.Title).HasMaxLength(200);
             // "Shu turdagi testlar" so'rovi: WHERE Exam = ? AND Module = ? AND Variant = ?.
             entity.HasIndex(t => new { t.Exam, t.Module, t.Variant, t.CreatedAtUtc });
             // Foydalanuvchi o'chirilsa, test bankda qoladi (boshqalar ishlatadi) — faqat bog'lanish uziladi.

@@ -271,7 +271,7 @@ npm run dev
 ### 7. Avtomatik testlar
 
 ```bash
-dotnet test backend/SpeakingCoach.Api.Tests   # backend: 403 ta unit test
+dotnet test backend/SpeakingCoach.Api.Tests   # backend: 462 ta unit test
 cd frontend/speaking-coach-web && npm test     # frontend: 92 ta vitest testi
 ```
 
@@ -394,6 +394,20 @@ bilan bir xil — botda takrorlangan karta saytda ham takrorlangan.
   boʻlsa yozilmaydi.
 - **Yangi vazifa**: oʻqituvchi vazifa berishi bilan botni ulagan
   oʻquvchilarga xabar boradi ("▶️ Bajarish" tugmasi bilan).
+- **📝 Test qoʻshish** (`/add`, oʻqituvchi va admin uchun) — IELTS yoki CEFR,
+  boʻlim (Speaking, Writing Academic/GT, Reading Academic/GT, Listening) va
+  usul: **material yuborish** (matn, PDF yoki rasm — savol va javoblar
+  saqlanadi, yetishmagani toʻldiriladi; Listening uchun skript) yoki **faqat
+  mavzu** (Gemini yangi test yozadi). Natija oʻsha qatʼiy tekshiruvlardan
+  oʻtadi (savollar soni, raqamlash, javob turlari) va **qoralama** boʻlib
+  keladi: qisqa mazmun + toʻliq matn javoblari bilan `.txt` faylda. Admin
+  **✅ Chop etish**ni bosadi; oʻqituvchi **📨 Adminga yuboradi**, admin
+  tasdiqlaydi yoki rad etadi, muallifga xabar boradi. Chop etilgan test mock
+  imtihonlar bankiga qoʻshiladi (Speaking/Writing — koddagi tayyor
+  variantlar bilan birga). `/bank` — admin: har tur boʻyicha testlar soni va
+  tekshiruvni kutayotganlar; oʻqituvchi: oʻz testlari va holati. Oʻqituvchiga
+  sutkasiga 10 ta; tayyorlash fonda ishlaydi (1–3 daqiqa), `/cancel` bekor
+  qiladi.
 
 Qanday ishlaydi: Telegram webhook orqali serverga yozadi (uxlab yotgan Render
 uyg'onadi), so'rov `X-Telegram-Bot-Api-Secret-Token` sarlavhasi bilan

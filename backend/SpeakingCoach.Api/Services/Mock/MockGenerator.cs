@@ -59,7 +59,7 @@ public partial class GeminiMockGenerator(GeminiClient gemini, ILogger<GeminiMock
         Return ONLY valid JSON, no markdown fences.
         """;
 
-    public static string ReadingPrompt(string variant, int passageNo, int first, int count, string topic)
+    public static string ReadingPrompt(string variant, int passageNo, int first, int count, string topic, string? source = null)
     {
         var (kind, types) = (variant, passageNo) switch
         {
@@ -72,8 +72,8 @@ public partial class GeminiMockGenerator(GeminiClient gemini, ILogger<GeminiMock
         };
         var variantName = variant == "general" ? "General Training" : "Academic";
         return $"""
-            You are an experienced IELTS item writer. Create Reading Passage {passageNo} of an original IELTS {variantName} Reading mock test.
-            The passage is {kind}, topic: {topic}. Length: 750-900 words. Use a clear title. Write original text; do not copy published tests.
+            You are an experienced IELTS item writer. Create Reading Passage {passageNo} of an {(source is null ? "original " : "")}IELTS {variantName} Reading mock test.
+            The passage is {kind}, topic: {topic}. Length: 750-900 words. Use a clear title. {source ?? "Write original text; do not copy published tests."}
             Then write exactly {count} questions numbered {first} to {first + count - 1}, split into 2 or 3 groups using the types {types}.
             Difficulty should rise slightly from the first to the last question, matching real IELTS level (bands 5-8).
             Return: {"{"}"title": "...", "text": "<passage; separate paragraphs with a blank line>", "groups": [<question groups>]{"}"}
@@ -81,7 +81,7 @@ public partial class GeminiMockGenerator(GeminiClient gemini, ILogger<GeminiMock
             """;
     }
 
-    public static string ListeningPrompt(int part, int first, string topic)
+    public static string ListeningPrompt(int part, int first, string topic, string? source = null)
     {
         var (setting, speakers, types) = part switch
         {
@@ -94,7 +94,7 @@ public partial class GeminiMockGenerator(GeminiClient gemini, ILogger<GeminiMock
             _ => ($"a university lecture on: {topic}", "one lecturer", "one gap group (note completion, maxWords 1), 10 questions"),
         };
         return $"""
-            You are an experienced IELTS item writer. Create Part {part} of an original IELTS Listening mock test.
+            You are an experienced IELTS item writer. Create Part {part} of an {(source is null ? "original " : "")}IELTS Listening mock test.{(source is null ? "" : "\n" + source)}
             The recording is {setting}, with {speakers}. Script length: 500-700 words of natural spoken English
             (include realistic features: a speaker correcting themselves, a spelled name or a number said aloud, distractors that are mentioned then rejected).
             Questions: exactly 10, numbered {first} to {first + 9}: {types}. Answers appear in the script in question order.
@@ -105,15 +105,27 @@ public partial class GeminiMockGenerator(GeminiClient gemini, ILogger<GeminiMock
             """;
     }
 
-    private async Task<T> AskAsync<T>(string prompt, Action<T> validate, CancellationToken ct, int attempts = 2)
+    /// <summary>
+    /// Gemini'dan JSON so'raydi va qat'iy tekshiradi. Yaroqsiz bo'lsa — qayta
+    /// so'raydi va tekshiruv xatosini ham aytadi (keyingi javob tuzatilgan
+    /// bo'lishi ehtimoli ancha yuqori). extra — qo'shimcha qismlar (masalan
+    /// o'qituvchi yuborgan PDF yoki rasm).
+    /// </summary>
+    private async Task<T> AskAsync<T>(string prompt, Action<T> validate, CancellationToken ct, int attempts = 2, object[]? extra = null)
     {
+        string? lastError = null;
         for (var attempt = 1; ; attempt++)
         {
             try
             {
+                var text = lastError is null
+                    ? prompt
+                    : $"{prompt}\n\nYour previous answer was rejected by the validator: {lastError}\nReturn a corrected, complete answer.";
+                var parts = new List<object> { new { text } };
+                if (extra is not null) parts.AddRange(extra);
                 var body = new
                 {
-                    contents = new[] { new { parts = new object[] { new { text = prompt } } } },
+                    contents = new[] { new { parts = parts.ToArray() } },
                     generationConfig = new { temperature = 0.7, responseMimeType = "application/json" },
                 };
                 var response = await gemini.SendWithFallbackAsync(body, ct);
@@ -123,7 +135,8 @@ public partial class GeminiMockGenerator(GeminiClient gemini, ILogger<GeminiMock
             }
             catch (InvalidOperationException ex) when (attempt < attempts)
             {
-                logger.LogWarning("Mock bo'lagi yaroqsiz, qayta yaratilmoqda: {Error}", ex.Message);
+                lastError = ex.Message.Length > 300 ? ex.Message[..300] : ex.Message;
+                logger.LogWarning("Mock bo'lagi yaroqsiz, qayta so'ralmoqda: {Error}", ex.Message);
             }
         }
     }

@@ -30,6 +30,13 @@ public class TelegramAccount
     public DateOnly? LastReminderDate { get; set; }
 
     public DateTime LinkedAtUtc { get; set; }
+
+    /// <summary>
+    /// Bot "nima kutyapti" (admin/o'qituvchi test qo'shayotganda), masalan
+    /// "au:ielts:reading:academic:src" — keyingi xabar (matn/fayl) shu turga
+    /// test sifatida qabul qilinadi. null — oddiy holat.
+    /// </summary>
+    public string? BotState { get; set; }
 }
 
 /// <summary>

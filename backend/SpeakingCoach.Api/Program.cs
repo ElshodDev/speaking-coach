@@ -66,6 +66,8 @@ builder.Services.AddSingleton<IComprehensionService, GeminiComprehensionService>
 builder.Services.AddSingleton<IWordService, GeminiWordService>();
 builder.Services.AddSingleton<SpeakingCoach.Api.Services.Mock.IIeltsEvaluator, SpeakingCoach.Api.Services.Mock.GeminiIeltsEvaluator>();
 builder.Services.AddSingleton<SpeakingCoach.Api.Services.Mock.IMockGenerator, SpeakingCoach.Api.Services.Mock.GeminiMockGenerator>();
+// Bot orqali test qo'shish — o'sha generator (bitta nusxa, ikki interfeys).
+builder.Services.AddSingleton<SpeakingCoach.Api.Services.Mock.IMockAuthoring>(sp => (SpeakingCoach.Api.Services.Mock.GeminiMockGenerator)sp.GetRequiredService<SpeakingCoach.Api.Services.Mock.IMockGenerator>());
 builder.Services.AddSingleton<SpeakingCoach.Api.Services.Mock.ICefrEvaluator, SpeakingCoach.Api.Services.Mock.GeminiCefrEvaluator>();
 builder.Services.AddSingleton<AdminOptions>();
 builder.Services.AddSingleton<IEmailSender, BrevoEmailSender>();
@@ -78,6 +80,7 @@ builder.Services.AddScoped<AiQuotaService>();
 builder.Services.AddSingleton<SpeakingCoach.Api.Services.Telegram.TelegramOptions>();
 builder.Services.AddSingleton<SpeakingCoach.Api.Services.Telegram.ITelegramApi, SpeakingCoach.Api.Services.Telegram.TelegramApi>();
 builder.Services.AddScoped<SpeakingCoach.Api.Services.Telegram.TelegramBot>();
+builder.Services.AddSingleton<SpeakingCoach.Api.Services.Telegram.AuthoringRunner>();
 builder.Services.AddScoped<SpeakingCoach.Api.Services.Telegram.TelegramReminders>();
 builder.Services.AddScoped<SpeakingCoach.Api.Services.Telegram.AssignmentNotifier>();
 builder.Services.AddHostedService<SpeakingCoach.Api.Services.Telegram.TelegramStartup>();
@@ -92,6 +95,7 @@ builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ReviewService>();
 builder.Services.AddScoped<TodayService>();
+builder.Services.AddScoped<SpeakingCoach.Api.Services.Mock.MockSets>();
 builder.Services.AddScoped<ProgressService>();
 builder.Services.AddScoped<AdminService>();
 

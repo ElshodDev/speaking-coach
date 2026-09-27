@@ -11,7 +11,7 @@ namespace SpeakingCoach.Api.Services.Telegram;
 /// ReviewService). Xatolar foydalanuvchiga tushunarli xabar bilan qaytadi va
 /// hech qachon webhook'ni yiqitmaydi.
 /// </summary>
-public class TelegramBot
+public partial class TelegramBot
 {
     // Telegram javobni kutib qolsa, xuddi shu yangilanishni qayta yuborishi
     // mumkin — oxirgi ID'larni eslab, ikki marta ishlamaymiz.
@@ -31,10 +31,15 @@ public class TelegramBot
     private readonly AiQuotaService _quotas;
     private readonly TodayService _today;
     private readonly ILogger<TelegramBot> _logger;
+    private readonly AdminOptions _admins;
+    private readonly AuthoringRunner _runner;
 
     public TelegramBot(AppDbContext db, ITelegramApi api, TelegramOptions options, ReviewService reviews,
-        IWordService words, AiQuotaService quotas, TodayService today, ILogger<TelegramBot> logger)
+        IWordService words, AiQuotaService quotas, TodayService today, ILogger<TelegramBot> logger,
+        AdminOptions admins, AuthoringRunner runner)
     {
+        _admins = admins;
+        _runner = runner;
         _today = today;
         _db = db;
         _api = api;
@@ -101,6 +106,23 @@ public class TelegramBot
                 return;
             }
 
+            // ---- Test qo'shish ----
+            if (BotLogic.IsCommand(text, "/add"))
+            {
+                await StartAuthoringAsync(c, ct);
+                return;
+            }
+            if (BotLogic.IsCommand(text, "/bank"))
+            {
+                await SendBankAsync(c, ct);
+                return;
+            }
+            if (BotLogic.IsCommand(text, "/cancel"))
+            {
+                await CancelAuthoringAsync(c, null, ct);
+                return;
+            }
+
             switch (BotLogic.ParseMenu(text))
             {
                 case MenuAction.Today:
@@ -118,6 +140,13 @@ public class TelegramBot
                 case MenuAction.Help:
                     await _api.SendMessageAsync(c.ChatId, c.T("bot.help"), replyKeyboard: c.User is null ? null : BotLogic.MainMenu(c.Lang), ct: ct);
                     return;
+            }
+
+            // /add dan keyin kutilayotgan material yoki mavzu (menyu va buyruqlardan keyin tekshiriladi).
+            if (!text.StartsWith('/') && BotAuthoring.ParseState(c.Account?.BotState) is { } state)
+            {
+                await ReceiveAuthorInputAsync(c, msg, state.Kind, state.Generate, ct);
+                return;
             }
 
             if (BotLogic.IsLookupWord(text))
@@ -432,6 +461,10 @@ public class TelegramBot
                     await _api.SendMessageAsync(chatId, nc.T("bot.saved"), replyKeyboard: BotLogic.MainMenu(nc.Lang), ct: ct);
                     break;
                 }
+
+                case BotCallback.AuthorExam or BotCallback.AuthorKindPick or BotCallback.AuthorModePick or BotCallback.AuthorCancel or BotCallback.TestCmd:
+                    toast = await HandleAuthorCallbackAsync(c, action, messageId, ct);
+                    break;
 
                 case BotCallback.Unlink:
                     _db.TelegramAccounts.Remove(c.Account!);

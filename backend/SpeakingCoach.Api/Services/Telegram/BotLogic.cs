@@ -26,6 +26,13 @@ public abstract record BotCallback
     public sealed record SetReminder(int? Hour) : BotCallback;
     public sealed record SetLang(string Lang) : BotCallback;
     public sealed record Unlink : BotCallback;
+
+    // ---- Test qo'shish (/add) ----
+    public sealed record AuthorExam(string Exam) : BotCallback;
+    public sealed record AuthorKindPick(string Key) : BotCallback;
+    public sealed record AuthorModePick(string Key, bool Generate) : BotCallback;
+    public sealed record AuthorCancel : BotCallback;
+    public sealed record TestCmd(TestAction Action, Guid Id) : BotCallback;
 }
 
 /// <summary>
@@ -48,6 +55,11 @@ public static partial class BotLogic
         BotCallback.SetReminder r => $"set:h:{(r.Hour is int h ? h.ToString() : "off")}",
         BotCallback.SetLang l => $"set:l:{l.Lang}",
         BotCallback.Unlink => "unlink",
+        BotCallback.AuthorExam e => $"au:e:{e.Exam}",
+        BotCallback.AuthorKindPick k => $"au:k:{k.Key}",
+        BotCallback.AuthorModePick m => $"au:m:{m.Key}:{(m.Generate ? "g" : "s")}",
+        BotCallback.AuthorCancel => "au:x",
+        BotCallback.TestCmd t => $"au:{BotAuthoring.Code(t.Action)}:{t.Id:N}",
         _ => throw new ArgumentOutOfRangeException(nameof(cb)),
     };
 
@@ -68,6 +80,11 @@ public static partial class BotLogic
             ["set", "h", var h] when int.TryParse(h, out var hour) && hour is >= 0 and <= 23 => new BotCallback.SetReminder(hour),
             ["set", "l", var l] when Texts.Langs.Contains(l) => new BotCallback.SetLang(l),
             ["unlink"] => new BotCallback.Unlink(),
+            ["au", "e", var e] when BotAuthoring.Exams.Contains(e) => new BotCallback.AuthorExam(e),
+            ["au", "k", var e, var m, var v] when Mock.AuthorKind.Parse($"{e}:{m}:{v}") is { } k => new BotCallback.AuthorKindPick(k.Key),
+            ["au", "m", var e, var m, var v, "g" or "s"] when Mock.AuthorKind.Parse($"{e}:{m}:{v}") is { } k => new BotCallback.AuthorModePick(k.Key, p[5] == "g"),
+            ["au", "x"] => new BotCallback.AuthorCancel(),
+            ["au", var code, var id] when BotAuthoring.FromCode(code) is { } a && Guid.TryParseExact(id, "N", out var g) => new BotCallback.TestCmd(a, g),
             _ => null,
         };
     }

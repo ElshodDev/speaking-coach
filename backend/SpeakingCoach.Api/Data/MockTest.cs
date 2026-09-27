@@ -26,4 +26,26 @@ public class MockTest
     public Guid? CreatedByUserId { get; set; }
 
     public DateTime CreatedAtUtc { get; set; }
+
+    /// <summary>
+    /// Holat: "published" — foydalanuvchilarga beriladi; "draft" — botda
+    /// qo'shilgan, muallif hali ko'rib chiqmoqda; "pending" — o'qituvchi
+    /// yubordi, admin tasdig'ini kutmoqda; "rejected" — rad etilgan; "deleted" — o'chirilgan.
+    /// AI avtomatik yaratgan testlar darhol "published".
+    /// </summary>
+    public string Status { get; set; } = MockTestStatus.Published;
+
+    /// <summary>Qisqa nom (bot ro'yxati va ko'rib chiqish uchun). Ixtiyoriy.</summary>
+    public string? Title { get; set; }
+}
+
+public static class MockTestStatus
+{
+    public const string Published = "published";
+    public const string Draft = "draft";
+    public const string Pending = "pending";
+    public const string Rejected = "rejected";
+
+    /// <summary>O'chirilgan (yumshoq): o'tgan natijalar tarixi buzilmasin va kunlik limit to'g'ri hisoblansin.</summary>
+    public const string Deleted = "deleted";
 }

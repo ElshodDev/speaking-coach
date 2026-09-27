@@ -89,12 +89,12 @@ public static class MockEndpoints
             return Results.Ok(new { perDay, remaining = (int?)Math.Max(0, perDay - used), retryAtUtc = retryAt });
         });
 
-        app.MapGet("/api/mock/ielts/speaking/new", async (HttpRequest request, AuthService auth, AppDbContext db) =>
+        app.MapGet("/api/mock/ielts/speaking/new", async (HttpRequest request, AuthService auth, AppDbContext db, MockSets sets) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return LoginFirst(request);
             var recent = (await RecentAsync(db, user.Id)).Where(r => r.Module == "speaking").Select(r => r.SetId).ToList();
-            var set = IeltsBank.PickFresh(IeltsBank.Speaking, s => s.Id, recent, Random.Shared);
+            var set = IeltsBank.PickFresh(await sets.IeltsSpeakingAsync(), s => s.Id, recent, Random.Shared);
             return Results.Ok(new
             {
                 set,
@@ -109,16 +109,16 @@ public static class MockEndpoints
         });
 
         // setId — sahifa yangilanganda boshlangan imtihonni davom ettirish uchun.
-        app.MapGet("/api/mock/ielts/writing/new", async (HttpRequest request, AuthService auth, AppDbContext db, string? variant, string? setId) =>
+        app.MapGet("/api/mock/ielts/writing/new", async (HttpRequest request, AuthService auth, AppDbContext db, MockSets sets, string? variant, string? setId) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return LoginFirst(request);
             var v = variant == IeltsBank.General ? IeltsBank.General : IeltsBank.Academic;
-            var resumed = IeltsBank.FindWriting(setId);
+            var resumed = await sets.FindIeltsWritingAsync(setId);
             var recent = (await RecentAsync(db, user.Id)).Where(r => r.Module == "writing").Select(r => r.SetId).ToList();
             var set = resumed is not null && resumed.Variant == v
                 ? resumed
-                : IeltsBank.PickFresh(IeltsBank.Writing.Where(w => w.Variant == v).ToList(), w => w.Id, recent, Random.Shared);
+                : IeltsBank.PickFresh(await sets.IeltsWritingAsync(v), w => w.Id, recent, Random.Shared);
             return Results.Ok(new
             {
                 set,
@@ -129,14 +129,14 @@ public static class MockEndpoints
         // Speaking: multipart — setId, har bir javob "a{index}" fayli va "s{index}" (soniya).
         app.MapPost("/api/mock/ielts/speaking", async (
             HttpRequest request, AuthService auth, AppDbContext db, AdminOptions admins, IConfiguration config,
-            IIeltsEvaluator evaluator, ReviewService reviews, ILogger<Program> logger) =>
+            IIeltsEvaluator evaluator, ReviewService reviews, MockSets sets, ILogger<Program> logger) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return LoginFirst(request);
             if (!request.HasFormContentType) return Results.BadRequest(request.Error("speaking.multipart"));
 
             var form = await request.ReadFormAsync();
-            var set = IeltsBank.FindSpeaking(form["setId"].ToString());
+            var set = await sets.FindIeltsSpeakingAsync(form["setId"].ToString());
             if (set is null) return Results.BadRequest(request.Error("mock.bad_set"));
 
             if (form.Files.Sum(f => f.Length) > MaxAudioMb * 1024L * 1024L)
@@ -177,11 +177,11 @@ public static class MockEndpoints
 
         app.MapPost("/api/mock/ielts/writing", async (
             WritingMockRequest body, HttpRequest request, AuthService auth, AppDbContext db, AdminOptions admins,
-            IConfiguration config, IIeltsEvaluator evaluator, ReviewService reviews, ILogger<Program> logger) =>
+            IConfiguration config, IIeltsEvaluator evaluator, ReviewService reviews, MockSets sets, ILogger<Program> logger) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return LoginFirst(request);
-            var set = IeltsBank.FindWriting(body.SetId);
+            var set = await sets.FindIeltsWritingAsync(body.SetId);
             if (set is null) return Results.BadRequest(request.Error("mock.bad_set"));
 
             var t1 = (body.Task1 ?? "").Trim();
@@ -221,7 +221,7 @@ public static class MockEndpoints
 
             var done = (await RecentAsync(db, user.Id)).Where(r => r.Module == module).Select(r => r.SetId).ToHashSet();
             var candidates = await db.MockTests
-                .Where(t => t.Exam == exam && t.Module == module && t.Variant == v)
+                .Where(t => t.Exam == exam && t.Module == module && t.Variant == v && t.Status == MockTestStatus.Published)
                 .OrderBy(t => t.CreatedAtUtc)
                 .Select(t => new { t.Id, t.Payload })
                 .ToListAsync();
@@ -239,7 +239,7 @@ public static class MockEndpoints
                 if (!admins.IsAdmin(user))
                 {
                     var since = DateTime.UtcNow.AddHours(-24);
-                    var made = await db.MockTests.CountAsync(t => t.CreatedByUserId == user.Id && t.CreatedAtUtc > since);
+                    var made = await db.MockTests.CountAsync(t => t.CreatedByUserId == user.Id && t.CreatedAtUtc > since && t.Title == null);
                     if (made >= MockLimit.GeneratePerDay(config))
                     {
                         if (candidates.Count == 0) return Results.Json(request.Error("mock.generate_limit"), statusCode: StatusCodes.Status429TooManyRequests);
@@ -284,7 +284,7 @@ public static class MockEndpoints
             if (exam is not ("ielts" or "cefr") || module is not ("listening" or "reading")) return Results.NotFound();
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return LoginFirst(request);
-            var test = await db.MockTests.FirstOrDefaultAsync(t => t.Id == body.TestId && t.Module == module && t.Exam == exam);
+            var test = await db.MockTests.FirstOrDefaultAsync(t => t.Id == body.TestId && t.Module == module && t.Exam == exam && t.Status == MockTestStatus.Published);
             if (test is null) return Results.BadRequest(request.Error("mock.bad_set"));
 
             var answers = (body.Answers ?? new())
@@ -334,12 +334,12 @@ public static class MockEndpoints
         });
 
         // ---- CEFR (Multilevel): Speaking va Writing ----
-        app.MapGet("/api/mock/cefr/speaking/new", async (HttpRequest request, AuthService auth, AppDbContext db) =>
+        app.MapGet("/api/mock/cefr/speaking/new", async (HttpRequest request, AuthService auth, AppDbContext db, MockSets sets) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return LoginFirst(request);
             var recent = (await RecentAsync(db, user.Id)).Where(r => r.Module == "speaking").Select(r => r.SetId).ToList();
-            var set = IeltsBank.PickFresh(CefrBank.Speaking, s => s.Id, recent, Random.Shared);
+            var set = IeltsBank.PickFresh(await sets.CefrSpeakingAsync(), s => s.Id, recent, Random.Shared);
             return Results.Ok(new
             {
                 set,
@@ -352,12 +352,12 @@ public static class MockEndpoints
             });
         });
 
-        app.MapGet("/api/mock/cefr/writing/new", async (HttpRequest request, AuthService auth, AppDbContext db, string? setId) =>
+        app.MapGet("/api/mock/cefr/writing/new", async (HttpRequest request, AuthService auth, AppDbContext db, MockSets sets, string? setId) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return LoginFirst(request);
             var recent = (await RecentAsync(db, user.Id)).Where(r => r.Module == "writing").Select(r => r.SetId).ToList();
-            var set = CefrBank.FindWriting(setId) ?? IeltsBank.PickFresh(CefrBank.Writing, w => w.Id, recent, Random.Shared);
+            var set = await sets.FindCefrWritingAsync(setId) ?? IeltsBank.PickFresh(await sets.CefrWritingAsync(), w => w.Id, recent, Random.Shared);
             return Results.Ok(new
             {
                 set,
@@ -373,13 +373,13 @@ public static class MockEndpoints
 
         app.MapPost("/api/mock/cefr/speaking", async (
             HttpRequest request, AuthService auth, AppDbContext db, AdminOptions admins, IConfiguration config,
-            ICefrEvaluator evaluator, ReviewService reviews, ILogger<Program> logger) =>
+            ICefrEvaluator evaluator, ReviewService reviews, MockSets sets, ILogger<Program> logger) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return LoginFirst(request);
             if (!request.HasFormContentType) return Results.BadRequest(request.Error("speaking.multipart"));
             var form = await request.ReadFormAsync();
-            var set = CefrBank.FindSpeaking(form["setId"].ToString());
+            var set = await sets.FindCefrSpeakingAsync(form["setId"].ToString());
             if (set is null) return Results.BadRequest(request.Error("mock.bad_set"));
             if (form.Files.Sum(f => f.Length) > MaxAudioMb * 1024L * 1024L)
                 return Results.BadRequest(request.Error("mock.too_big", MaxAudioMb));
@@ -403,11 +403,11 @@ public static class MockEndpoints
 
         app.MapPost("/api/mock/cefr/writing", async (
             CefrWritingRequest body, HttpRequest request, AuthService auth, AppDbContext db, AdminOptions admins,
-            IConfiguration config, ICefrEvaluator evaluator, ReviewService reviews, ILogger<Program> logger) =>
+            IConfiguration config, ICefrEvaluator evaluator, ReviewService reviews, MockSets sets, ILogger<Program> logger) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return LoginFirst(request);
-            var set = CefrBank.FindWriting(body.SetId);
+            var set = await sets.FindCefrWritingAsync(body.SetId);
             if (set is null) return Results.BadRequest(request.Error("mock.bad_set"));
             string[] texts = [(body.Task11 ?? "").Trim(), (body.Task12 ?? "").Trim(), (body.Task2 ?? "").Trim()];
             if (texts.All(t => t.Length == 0)) return Results.BadRequest(request.Error("mock.empty_text"));
