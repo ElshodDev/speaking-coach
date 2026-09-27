@@ -372,6 +372,7 @@ export function MockHub({ loggedIn, go, onLogin }: { loggedIn: boolean; go: (rou
         </p>
       )}
 
+      <p className="muted small" style={{ margin: '8px 0 0' }}>{to.sourceNote}</p>
       <div className="card-grid">
       <div className="card stack" style={{ borderColor: 'var(--primary)' }}>
         <h3 style={{ margin: 0 }}>{to.fullTitle}</h3>
@@ -384,9 +385,14 @@ export function MockHub({ loggedIn, go, onLogin }: { loggedIn: boolean; go: (rou
       <div className="card stack">
         <h3 style={{ margin: 0 }}>{to.listeningTitle}</h3>
         <p className="muted small" style={{ margin: 0 }}>{to.listeningText}</p>
-        <button className="btn btn-primary" disabled={!loggedIn} onClick={() => go('mock/listening')}>
-          {t.start}
-        </button>
+        <div className="row">
+          <button className="btn btn-primary" disabled={!loggedIn} onClick={() => go('mock/listening')}>
+            {t.start}
+          </button>
+          <button className="btn-link small" disabled={!loggedIn} onClick={() => go('mock/listening/ai')} data-testid="ai-listening">
+            {to.aiShort}
+          </button>
+        </div>
       </div>
 
       <div className="card stack">
@@ -398,6 +404,9 @@ export function MockHub({ loggedIn, go, onLogin }: { loggedIn: boolean; go: (rou
           </button>
           <button className="btn btn-outline" disabled={!loggedIn} onClick={() => go('mock/reading-general')}>
             {t.general}
+          </button>
+          <button className="btn-link small" disabled={!loggedIn} onClick={() => go('mock/reading-academic/ai')} data-testid="ai-reading">
+            {to.aiShort}
           </button>
         </div>
       </div>
@@ -440,10 +449,12 @@ export function MockHub({ loggedIn, go, onLogin }: { loggedIn: boolean; go: (rou
           </div>
           <div>
             <button className="btn btn-primary" disabled={!loggedIn} onClick={() => go('mock/cefr-listening')}>{tc.listening}</button>
+            <button className="btn-link small" style={{ marginLeft: 10 }} disabled={!loggedIn} onClick={() => go('mock/cefr-listening/ai')}>{to.aiShort}</button>
             <div className="muted tiny" style={{ marginTop: 4 }}>{tc.listeningText}</div>
           </div>
           <div>
             <button className="btn btn-primary" disabled={!loggedIn} onClick={() => go('mock/cefr-reading')}>{tc.reading}</button>
+            <button className="btn-link small" style={{ marginLeft: 10 }} disabled={!loggedIn} onClick={() => go('mock/cefr-reading/ai')}>{to.aiShort}</button>
             <div className="muted tiny" style={{ marginTop: 4 }}>{tc.readingText}</div>
           </div>
           <div>

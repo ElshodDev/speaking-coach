@@ -1,19 +1,14 @@
 import { useEffect, useState } from 'react';
 import { STABILITY_RUNS, StabilityTable, computeStats, runSequentially, type DimensionStats } from './Stability';
 import { getLevel, loadHistory as fetchHistory, postJson, type HistoryItem } from './api';
+import { initialTopic, TopicPicker, type PickedTopic } from './TopicPicker';
 import { cardsMessage } from './cards';
 import { useT } from './i18n';
 import { stabilityMsg } from './locales/stability';
 import { writingMsg } from './locales/writing';
 import { Corrections, Feedback, GuestNote, HistoryList, ScoreBar, type CorrectionItem, type ScoreWithReasoning } from './ui';
 
-export const WRITING_TOPICS = [
-  'Do you think social media has a positive or negative effect on society? Explain your view.',
-  'Describe a piece of technology that has changed your daily life.',
-  'Should university education be free for everyone? Give your opinion with reasons.',
-  'Is it better to live in a big city or in the countryside?',
-  'Describe a problem in your town and suggest a solution.',
-];
+// Mavzular endi ilovaning tayyor bankida (content/topics.ts) — TopicPicker orqali.
 
 const MIN_CHARS = 20;
 const MAX_CHARS = 5000;
@@ -55,8 +50,8 @@ export function WritingCoach({
   const ts = useT(stabilityMsg);
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
-  const [topicIndex, setTopicIndex] = useState(0);
-  const topic = WRITING_TOPICS[topicIndex];
+  const [picked, setPicked] = useState<PickedTopic>(() => initialTopic('writing', getLevel()));
+  const topic = picked.text;
   const [text, setText] = useState('');
   const [result, setResult] = useState<SubmitResponse | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -150,13 +145,8 @@ export function WritingCoach({
   return (
     <div className="practice-split">
       <div className="card">
-        <div className="spread">
-          <span className="muted small">{t.topic}</span>
-          <button className="btn-link small" disabled={isBusy} onClick={() => setTopicIndex((i) => (i + 1) % WRITING_TOPICS.length)}>
-            {t.otherTopic}
-          </button>
-        </div>
-        <p style={{ fontSize: '1.1rem', fontWeight: 600, margin: '6px 0 14px' }}>{topic}</p>
+        <span className="muted small">{t.topic}</span>
+        <TopicPicker kind="writing" level={getLevel()} value={picked} onChange={setPicked} disabled={isBusy} />
 
         <textarea
           className="input"

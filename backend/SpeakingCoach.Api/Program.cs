@@ -82,6 +82,7 @@ builder.Services.AddSingleton<IGoogleSignIn, GoogleSignInService>();
 builder.Services.AddSingleton<AiQuotaOptions>();
 builder.Services.AddSingleton<GuestQuotaStore>();
 builder.Services.AddSingleton(new DemoGate());
+builder.Services.AddSingleton<SpeakingCoach.Api.Services.Content.ContentAi>();
 builder.Services.AddScoped<AiQuotaService>();
 
 // Telegram bot: token bo'lmasa — hammasi o'chiq, ilova avvalgidek ishlaydi.
@@ -168,6 +169,7 @@ app.MapMockEndpoints();
 app.MapGroupEndpoints();
 app.MapFunEndpoints();
 app.MapShadowingEndpoints();
+app.MapContentEndpoints();
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 app.Run($"http://0.0.0.0:{port}");

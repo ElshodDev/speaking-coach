@@ -2,11 +2,13 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using SpeakingCoach.Api.Data;
 using SpeakingCoach.Api.Services;
+using SpeakingCoach.Api.Services.Content;
 
 namespace SpeakingCoach.Api.Endpoints;
 
 public record ComprehensionSubmitRequest(Guid ExerciseId, List<int> Answers);
-public record ComprehensionGenerateRequest(string? Level);
+/// <summary>Source: "bank" — ilovaning tayyor mashqi (AI limiti sarflanmaydi), "ai" (yoki bo'sh) — Gemini yangisini yaratadi. Seen — mehmon ko'rgan tayyor mashqlar (brauzerda saqlanadi).</summary>
+public record ComprehensionGenerateRequest(string? Level, string? Source = null, List<string>? Seen = null);
 
 public static class ComprehensionEndpoints
 {
@@ -26,12 +28,11 @@ public static class ComprehensionEndpoints
                 HttpRequest request,
                 IComprehensionService service,
                 AppDbContext db,
+                AuthService auth,
                 AiQuotaService quotas,
                 ILogger<Program> logger) =>
             {
-                // Kunlik AI limiti: yangi matn yaratish Gemini'ga murojaat.
-                var limited = await quotas.CheckAsync(request, AiKind.Exercise);
-                if (limited is not null) return limited;
+                var level = LearnerLevel.Normalize(body?.Level);
 
                 // Javob berilmay tashlab ketilgan eski mashqlarni tozalaymiz —
                 // alohida fon vazifasi (background job) o'rniga shu yerda,
@@ -39,9 +40,8 @@ public static class ComprehensionEndpoints
                 var cutoff = DateTime.UtcNow.AddDays(-1);
                 await db.PendingExercises.Where(p => p.CreatedAtUtc < cutoff).ExecuteDeleteAsync();
 
-                try
+                async Task<IResult> Serve(ComprehensionExercise exercise, object? bank)
                 {
-                    var exercise = await service.GenerateAsync(type, LearnerLevel.Normalize(body?.Level));
                     var pending = new PendingExercise
                     {
                         Id = Guid.NewGuid(),
@@ -51,7 +51,6 @@ public static class ComprehensionEndpoints
                     };
                     db.PendingExercises.Add(pending);
                     await db.SaveChangesAsync();
-                    await quotas.RecordAsync(request, AiKind.Exercise);
 
                     // Brauzerga to'g'ri javoblar (correctIndex) va izohlar
                     // YUBORILMAYDI — faqat savol va variantlar.
@@ -61,7 +60,34 @@ public static class ComprehensionEndpoints
                         title = exercise.Title,
                         passage = exercise.Passage,
                         questions = exercise.Questions.Select(q => new { question = q.Question, options = q.Options }),
+                        source = bank is null ? "ai" : "bank",
+                        bank,
                     });
+                }
+
+                // ---- Tayyor mashq (ilovaning o'z kutubxonasi) ----
+                if (string.Equals(body?.Source, "bank", StringComparison.OrdinalIgnoreCase))
+                {
+                    var userId = await auth.GetCurrentUserIdAsync(request);
+                    var done = userId is null
+                        ? (body?.Seen ?? []).Take(200).Select(id => PracticeLibrary.Find(type, id)?.Exercise.Title).OfType<string>().ToList()
+                        : await DoneTitlesAsync(db, userId.Value, type);
+                    var item = PracticeLibrary.Next(type, level, done);
+                    if (item is null) return Results.NotFound(request.Error("exercise.not_found"));
+                    var (doneCount, total) = PracticeLibrary.Progress(type, item.Level, done);
+                    return await Serve(item.Exercise, new { id = item.Id, level = item.Level, done = doneCount, total, repeated = done.Contains(item.Exercise.Title) });
+                }
+
+                // ---- AI yangi mashq yaratadi (kunlik limit bilan) ----
+                var limited = await quotas.CheckAsync(request, AiKind.Exercise);
+                if (limited is not null) return limited;
+
+                try
+                {
+                    var exercise = await service.GenerateAsync(type, level);
+                    var result = await Serve(exercise, null);
+                    await quotas.RecordAsync(request, AiKind.Exercise);
+                    return result;
                 }
                 catch (Exception ex)
                 {
@@ -69,6 +95,16 @@ public static class ComprehensionEndpoints
                     return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);
                 }
             }).RequireRateLimiting("ai");
+
+            // Tayyor mashqlar holati: darajalar bo'yicha nechtasi bajarilgan (kirish sahifasi uchun).
+            app.MapGet($"/api/{path}/bank", async (HttpRequest request, AppDbContext db, AuthService auth, string? level) =>
+            {
+                var userId = await auth.GetCurrentUserIdAsync(request);
+                var done = userId is null ? [] : await DoneTitlesAsync(db, userId.Value, type);
+                var lv = LearnerLevel.Normalize(level);
+                var (doneCount, total) = PracticeLibrary.Progress(type, lv, done);
+                return Results.Ok(new { level = lv, done = doneCount, total });
+            });
 
             app.MapPost($"/api/{path}/submit", async (
                 ComprehensionSubmitRequest body,
@@ -145,5 +181,31 @@ public static class ComprehensionEndpoints
             app.MapGet($"/api/{path}/history", (HttpRequest request, AppDbContext db, AuthService auth) =>
                 HistoryQueries.GetHistoryAsync(type, request, db, auth));
         }
+    }
+
+    /// <summary>Foydalanuvchi bajargan mashqlar sarlavhalari (eng yangisi birinchi) — tayyor mashqlardan hali ishlanmaganini tanlash uchun.</summary>
+    private static async Task<List<string>> DoneTitlesAsync(AppDbContext db, Guid userId, ActivityType type)
+    {
+        var prompts = await db.Activities
+            .Where(a => a.UserId == userId && a.Type == type)
+            .OrderByDescending(a => a.CreatedAtUtc)
+            .Take(300)
+            .Select(a => a.PromptData)
+            .ToListAsync();
+        var titles = new List<string>();
+        foreach (var p in prompts)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(p);
+                if (doc.RootElement.ValueKind == JsonValueKind.Object && doc.RootElement.TryGetProperty("title", out var t) && t.ValueKind == JsonValueKind.String)
+                    titles.Add(t.GetString()!);
+            }
+            catch (JsonException)
+            {
+                // eski yoki buzilgan yozuv — o'tkazib yuboramiz
+            }
+        }
+        return titles;
     }
 }

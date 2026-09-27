@@ -2,7 +2,7 @@
 
 **Project:** [AI Speaking Coach](https://speaking-coach-theta.vercel.app) · [try the demo](https://speaking-coach-theta.vercel.app/#/demo) · [source](https://github.com/ElshodDev/speaking-coach)
 **Stack:** ASP.NET Core 10 Minimal API, EF Core + PostgreSQL (Neon), React 19 + TypeScript (Vite, PWA), Google Gemini, Telegram Bot API
-**Size:** about 13 000 lines of C# and 15 000 lines of TypeScript; 525 backend unit tests, 118 frontend unit tests, 23 Playwright end-to-end suites
+**Size:** about 13 000 lines of C# and 15 000 lines of TypeScript; 533 backend unit tests, 121 frontend unit tests, 24 Playwright end-to-end suites
 
 ---
 
@@ -51,9 +51,13 @@ A sleeping server can't run timers, which is a problem for daily reminders. The 
 
 The frontend follows the same idea: while the API is waking up, the app retries instead of logging the user out, and the demo page warns that the first request can take up to a minute.
 
+### Ship the content, not just the AI
+
+The first versions asked Gemini for everything: every reading passage, every listening script, every mock test. That made the app slow on the first click, dependent on a shared free quota, and empty whenever the model was busy. The app now ships its own original material: 40 graded reading and listening exercises, full IELTS and CEFR mock tests, 50 speaking and writing mock sets, 92 practice topics, 16 grammar lessons explained in three languages and 196 topic words. Wherever material could come from either source, the learner chooses between "📚 ready-made" and "✨ new by AI". The built-in content passes exactly the same validators as AI output, and unit tests fail the build if a passage is the wrong length for its level or a gap answer is missing from its text.
+
 ### Keep the core logic pure
 
-The spaced-repetition scheduler (SM-2), the card factory, IELTS band rounding, the CEFR 0–36 → 75 conversion, XP and badges, reminder timing and Telegram callback parsing never touch the database or HTTP. That is why 525 backend tests run in seconds and why most bugs could be reproduced as a failing unit test first.
+The spaced-repetition scheduler (SM-2), the card factory, IELTS band rounding, the CEFR 0–36 → 75 conversion, XP and badges, reminder timing and Telegram callback parsing never touch the database or HTTP. That is why 533 backend tests run in seconds and why most bugs could be reproduced as a failing unit test first.
 
 XP is a good example. It is never stored: levels, badges and the weekly leaderboard are computed from `Activities` and `ReviewLogs`. There is no counter to drift out of sync, and when I changed the XP rules, all history was re-scored automatically.
 

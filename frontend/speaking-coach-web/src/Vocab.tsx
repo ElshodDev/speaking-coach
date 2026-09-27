@@ -5,6 +5,7 @@ import { PageHeader } from './ui';
 import { WordSheet } from './WordSheet';
 import { common, msg, useT } from './i18n';
 import { vocabMsg } from './locales/vocab';
+import { learnMsg } from './locales/learn';
 
 export type VocabStatus = 'New' | 'Learning' | 'Known';
 
@@ -76,6 +77,7 @@ export function Vocab({
   go: (route: string) => void;
 }) {
   const t = useT(vocabMsg);
+  const tl = useT(learnMsg);
   const c = useT(common);
   const [data, setData] = useState<VocabData | null>(null);
   const [error, setError] = useState('');
@@ -150,11 +152,23 @@ export function Vocab({
     </form>
   );
 
+  // Ilovaning o'z mavzuli lug'ati (Darslar bo'limi).
+  const topicsLink = (
+    <button className="card cta" style={{ width: '100%', font: 'inherit', color: 'inherit', textAlign: 'left', cursor: 'pointer' }} onClick={() => go('learn/words')} data-testid="vocab-topics-link">
+      <div>
+        <strong>🗂 {tl.words}</strong>
+        <div className="muted small">{tl.tileText}</div>
+      </div>
+      <span aria-hidden>→</span>
+    </button>
+  );
+
   if (!loggedIn) {
     return (
       <>
         <PageHeader title={t.title} subtitle={t.guestSubtitle} />
         {searchForm}
+        {topicsLink}
         <div className="card">
           <div className="steps">
             <div className="step">
@@ -200,6 +214,7 @@ export function Vocab({
     <>
       <PageHeader title={t.title} subtitle={data ? t.subtitle(data.total, data.known) : undefined} />
       {searchForm}
+      {topicsLink}
       {error && <p className="error small">{error}</p>}
 
       {data && data.total > 0 && (

@@ -5,17 +5,11 @@ import { cardsMessage } from './cards';
 import { useT } from './i18n';
 import { speakingMsg } from './locales/speaking';
 import { audioExt } from './shadowLogic';
+import { initialTopic, TopicPicker, type PickedTopic } from './TopicPicker';
 import { stabilityMsg } from './locales/stability';
 import { Corrections, Feedback, GuestNote, HistoryList, ScoreBar, type CorrectionItem, type ScoreWithReasoning } from './ui';
 
-export const SPEAKING_TOPICS = [
-  'Describe your favorite city and why you like it.',
-  'Talk about a skill you would like to learn.',
-  'Describe a memorable trip you took.',
-  'What do you usually do at the weekend?',
-  'Talk about a person who inspires you.',
-  'Describe your ideal job.',
-];
+// Mavzular endi ilovaning tayyor bankida (content/topics.ts) — TopicPicker orqali.
 
 type Status = 'idle' | 'recording' | 'uploading' | 'done' | 'error';
 
@@ -49,8 +43,8 @@ export function Recorder({
   const ts = useT(stabilityMsg);
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
-  const [topicIndex, setTopicIndex] = useState(0);
-  const topic = SPEAKING_TOPICS[topicIndex];
+  const [picked, setPicked] = useState<PickedTopic>(() => initialTopic('speaking', getLevel()));
+  const topic = picked.text;
   const [result, setResult] = useState<SubmitResponse | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [seconds, setSeconds] = useState(0);
@@ -210,17 +204,8 @@ export function Recorder({
   return (
     <div className="practice-split">
       <div className="card">
-        <div className="spread">
-          <span className="muted small">{t.topic}</span>
-          <button
-            className="btn-link small"
-            disabled={isRecording || isBusy}
-            onClick={() => setTopicIndex((i) => (i + 1) % SPEAKING_TOPICS.length)}
-          >
-            {t.otherTopic}
-          </button>
-        </div>
-        <p style={{ fontSize: '1.15rem', fontWeight: 600, margin: '6px 0 14px' }}>{topic}</p>
+        <span className="muted small">{t.topic}</span>
+        <TopicPicker kind="speaking" level={getLevel()} value={picked} onChange={setPicked} disabled={isRecording || isBusy} />
 
         <button
           className={`btn block ${isRecording ? 'btn-danger' : 'btn-primary'}`}

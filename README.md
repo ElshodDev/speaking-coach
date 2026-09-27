@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/ElshodDev/speaking-coach/actions/workflows/ci.yml/badge.svg)](https://github.com/ElshodDev/speaking-coach/actions/workflows/ci.yml)
 
-An English-practice app for Uzbek- and Russian-speaking learners (A2–C1) preparing for IELTS, the national CEFR Multilevel exam or everyday English. You **speak, write, read and listen**; an AI (Google Gemini) grades each attempt against a rubric and names concrete mistakes, and **every mistake becomes a flashcard** that comes back just before you would forget it. The interface works in Uzbek, Russian and English, on a phone, a laptop or inside Telegram.
+An English-practice app for Uzbek- and Russian-speaking learners (A2–C1) preparing for IELTS, the national CEFR Multilevel exam or everyday English. You **speak, write, read and listen**; an AI (Google Gemini) grades each attempt against a rubric and names concrete mistakes, and **every mistake becomes a flashcard** that comes back just before you would forget it. The learning material itself is **built into the app** — exercises, full mock tests, topics, grammar lessons and topic vocabulary — and AI writes new material only when the learner asks for it. The interface works in Uzbek, Russian and English, on a phone, a laptop or inside Telegram.
 
 **[Open the app](https://speaking-coach-theta.vercel.app)** · **[▶ Try the demo — no sign-up](https://speaking-coach-theta.vercel.app/#/demo)** · **[Case study: how it was built](docs/case-study.md)**
 
@@ -44,11 +44,13 @@ The whole screen is used: a sidebar menu, two-column pages, and in mock exams th
 |---|---|
 | 🎙 **Speaking** | Record an answer to a topic. One multimodal Gemini call transcribes the audio and grades fluency, grammar and vocabulary. |
 | ✍️ **Writing** | Write an essay; it is graded on an IELTS-style rubric (task, coherence, grammar, vocabulary) with exact corrections. |
-| 📖 🎧 **Reading & Listening** | A fresh passage (or a script read aloud by the browser) with four questions. The server grades the answers; the key never reaches the browser. Tap any word in a passage for its meaning in context. |
+| 📖 🎧 **Reading & Listening** | A passage (or a script read aloud by the browser) with four questions. The learner chooses: **📚 a ready-made exercise** from the app's library (40 original texts, A2–C1, unlimited) or **✨ a new one written by AI** (daily limit). The server grades the answers; the key never reaches the browser. Tap any word in a passage for its meaning in context. |
 | 🔁 **Spaced repetition** | Corrections and wrong answers become flashcards scheduled with SM-2, with a daily goal, a streak and a hands-free **commute mode** for earphones. |
 | 📚 **Vocabulary** | Saved words with search, *New / Learning / Known* filters and a quick quiz. A new word of the day, the same for everyone. |
-| 🎓 **Mock exams** | **IELTS**: Listening, Reading, Writing, Speaking and a full exam with the official band rounding. **CEFR Multilevel**: all four sections following the official format and scoring tables. Listening and Reading tests are generated once, strictly validated and kept in a shared bank; Speaking and Writing are scored on the official criteria. Every score is labelled as an estimate. |
+| 🎓 **Mock exams** | **IELTS**: Listening, Reading, Writing, Speaking and a full exam with the official band rounding. **CEFR Multilevel**: all four sections following the official format and scoring tables. The app ships with full original Listening and Reading tests and 50 Speaking/Writing sets; learners get a test they haven't taken, and when the bank is used up they choose to retake one or let AI write a new test, which is strictly validated and added to the shared bank. Speaking and Writing are scored by AI on the official criteria. Every score is labelled as an estimate. |
 | 🎬 **Shadowing** | Hear a line, repeat it straight away. Two series: YouTube clips with karaoke captions, and dialogues voiced by the app's own animated characters. Normal, auto and hands-free modes, speed and loop controls, translations, and an optional AI pronunciation check. |
+| 📘 **Lessons** | 16 grammar lessons (A2–C1) with rules, examples, the typical mistakes of Uzbek and Russian speakers and a 6-question practice, explained in Uzbek, Russian and English; AI can add 6 more questions on request. 12 topic vocabulary sets (196 words with translations, definitions, examples and audio) with a quick self-test and one-tap "add to my vocabulary". |
+| 🗂 **Topics** | 92 ready-made Speaking and Writing topics by level and type (everyday, IELTS Part 1–3, CEFR, paragraphs, essays, letters) with suggested word counts; **✨ AI topic** suggests a new one. |
 | 🧭 **Daily plan** | A short onboarding (goal, level, target score, exam date, minutes per day) turns into a plan for each day that ticks itself off, with an exam countdown. |
 | 👩‍🏫 **Teacher groups** | A teacher shares a join code, sets assignments (practice, mock sections, "review N cards") with deadlines, and sees a results matrix. Assignments count as done automatically, with no separate submission. |
 | 📈 **Progress** | XP, levels, badges, an activity calendar, score trends and an opt-in weekly leaderboard under a nickname. |
@@ -109,10 +111,11 @@ Everything runs on free tiers.
 
 - **One Gemini call for speaking.** Gemini accepts audio directly, so there is no separate speech-to-text service: half the API calls and one less thing to break.
 - **Model output is untrusted input.** Replies are parsed with `RespectRequiredConstructorParameters` and `RespectNullableAnnotations`, then range-checked. By default, `System.Text.Json` turned a missing `score` into `0` and saved it; this project hit that bug and fixed it at the root.
+- **Content first, AI on request.** Everything a learner needs to practise is part of the app, so it works instantly, costs nothing and keeps working when the AI quota runs out. Wherever material can come from either place, the learner picks: "📚 ready-made" or "✨ new by AI". Built-in content goes through the same strict validators as AI output (word counts per level, question formats, answers present in the text), enforced by unit tests.
 - **The model writes the test, code grades it.** Wherever an answer key exists, grading is deterministic C#. Mock tests are generated once, checked by strict validators (numbering, answer types, gap answers must appear in the text, map options) and reused from a shared bank, so AI quota is spent only when the bank runs out.
 - **Measured grading stability.** A built-in test re-grades the same recording or essay five times and shows the spread per criterion, which makes the AI grader's uncertainty visible.
 - **Designed for a sleeping server.** The bot uses a webhook, so a message wakes the API. Reminders come from an hourly GitHub Actions cron. Each account is claimed atomically before its message is sent, so a delayed or repeated cron run never sends a duplicate.
-- **Pure core logic.** The SM-2 scheduler, IELTS band rounding, the CEFR score tables, XP and badges, reminder timing and the demo seed never touch the database or HTTP. That is why 525 tests run in seconds.
+- **Pure core logic.** The SM-2 scheduler, IELTS band rounding, the CEFR score tables, XP and badges, reminder timing and the demo seed never touch the database or HTTP. That is why 533 tests run in seconds.
 - **XP is derived, not stored.** Levels, badges and the leaderboard are computed from the history, so nothing drifts out of sync and rule changes re-score the past automatically.
 - **Type-safe translations without a library.** Each screen declares its texts once in Uzbek, and the Russian and English versions must have the same shape, so a missing translation fails the build.
 - **One layout, three screen sizes.** Phone first, with bottom navigation. On a tablet the menu moves to the top. On a laptop the app switches to a sidebar with two-column pages and split-screen exams, and keyboard shortcuts appear: Space to reveal or play, 1–4 to grade, ← → to move between lines, R to record.
@@ -127,9 +130,9 @@ Everything runs on free tiers.
 
 ## Quality
 
-- **525 backend unit tests** (xUnit) cover scheduling, scoring tables, validators, strict parsing, the security rules, bot logic, localisation (every message in all three languages with matching placeholders) and the demo seed.
-- **118 frontend unit tests** (Vitest) cover charts, text handling, shadowing logic and the Telegram launch check.
-- **23 Playwright end-to-end suites** drive the real frontend against a mocked API on phone, tablet and laptop screens. The screenshots above come from these runs.
+- **533 backend unit tests** (xUnit) cover scheduling, scoring tables, validators, strict parsing, the security rules, bot logic, localisation (every message in all three languages with matching placeholders), the demo seed and every piece of built-in content (mock tests, exercises).
+- **121 frontend unit tests** (Vitest) cover charts, text handling, shadowing logic, the Telegram launch check and the built-in lessons, vocabulary and topics.
+- **24 Playwright end-to-end suites** drive the real frontend against a mocked API on phone, tablet and laptop screens. The screenshots above come from these runs.
 - **CI** builds and tests both halves on every push and fails on known vulnerable packages.
 
 ## Known limitations and next steps

@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/ElshodDev/speaking-coach/actions/workflows/ci.yml/badge.svg)](https://github.com/ElshodDev/speaking-coach/actions/workflows/ci.yml)
 
-IELTS, milliy CEFR (Multilevel) imtihoniga yoki shunchaki kundalik ingliz tiliga tayyorlanayotgan o'zbek va rus tilli o'quvchilar (A2–C1) uchun ilova. Siz **gapirasiz, yozasiz, o'qiysiz va tinglaysiz**. Sun'iy intellekt (Google Gemini) har bir urinishni rubrika bo'yicha baholab, aniq xatolarni ko'rsatadi. **Har bir xato esa kartaga aylanadi** va uni unutish arafasida qaytadan ko'rasiz. Interfeys o'zbek, rus va ingliz tillarida; telefonda, noutbukda va Telegram ichida ishlaydi.
+IELTS, milliy CEFR (Multilevel) imtihoniga yoki shunchaki kundalik ingliz tiliga tayyorlanayotgan o'zbek va rus tilli o'quvchilar (A2–C1) uchun ilova. Siz **gapirasiz, yozasiz, o'qiysiz va tinglaysiz**. Sun'iy intellekt (Google Gemini) har bir urinishni rubrika bo'yicha baholab, aniq xatolarni ko'rsatadi. **Har bir xato esa kartaga aylanadi** va uni unutish arafasida qaytadan ko'rasiz. O'quv materiallari **ilovaning o'zida**: mashqlar, to'liq mock testlar, mavzular, grammatika darslari va mavzuli lug'at. Sun'iy intellekt yangi material faqat foydalanuvchi so'raganda yozadi. Interfeys o'zbek, rus va ingliz tillarida; telefonda, noutbukda va Telegram ichida ishlaydi.
 
 **[Ilovani ochish](https://speaking-coach-theta.vercel.app)** · **[▶ Demo — ro'yxatdan o'tmasdan](https://speaking-coach-theta.vercel.app/#/demo)** · **[Case study: loyiha qanday qurilgan (ingliz tilida)](docs/case-study.md)**
 
@@ -44,11 +44,13 @@ Ekran to'liq ishlatiladi: chapda menyu, sahifalar ikki ustunda. Mock imtihonda e
 |---|---|
 | 🎙 **Gapirish** | Mavzu bo'yicha javobingizni yozib olasiz. Gemini bitta so'rovda ovozni matnga aylantiradi va ravonlik, grammatika, so'z boyligini baholaydi. |
 | ✍️ **Yozish** | Insho yozasiz. U IELTS uslubidagi rubrika (vazifa, bog'liqlik, grammatika, lug'at) bo'yicha baholanadi va aniq tuzatishlar beriladi. |
-| 📖 🎧 **O'qish va tinglash** | Har safar yangi matn (yoki brauzer ovoz chiqarib o'qiydigan nutq) va to'rtta savol. Javoblarni server tekshiradi, to'g'ri javoblar brauzerga umuman bormaydi. Matndagi istalgan so'zni bossangiz, ma'nosi aynan shu gap ichida tushuntiriladi. |
+| 📖 🎧 **O'qish va tinglash** | Matn (yoki brauzer ovoz chiqarib o'qiydigan nutq) va to'rtta savol. Foydalanuvchi o'zi tanlaydi: **📚 tayyor mashq** — ilovadagi 40 ta original matndan (A2–C1, cheksiz) yoki **✨ AI yozgan yangi mashq** (kunlik limit bilan). Javoblarni server tekshiradi, to'g'ri javoblar brauzerga umuman bormaydi. Matndagi istalgan so'zni bossangiz, ma'nosi aynan shu gap ichida tushuntiriladi. |
 | 🔁 **Takrorlash** | Tuzatishlar va xato javoblar kartaga aylanadi va SM-2 algoritmi bo'yicha qaytadi. Kunlik maqsad, seriya (🔥) va quloqchin bilan qo'l tegizmasdan ishlaydigan **yo'lda rejimi** bor. |
 | 📚 **Lug'at** | Saqlangan so'zlar: qidirish, *Yangi / O'rganilmoqda / Yodlangan* filtri va tezkor viktorina. Har kuni bitta yangi so'z, hamma uchun bir xil. |
-| 🎓 **Mock imtihonlar** | **IELTS**: Listening, Reading, Writing, Speaking va rasmiy yaxlitlash qoidasi bilan to'liq imtihon. **CEFR Multilevel**: to'rtala bo'lim rasmiy format va baholash jadvallari asosida. Listening va Reading testlari bir marta yaratiladi, qat'iy tekshiriladi va umumiy bankda saqlanadi. Speaking va Writing rasmiy mezonlar bo'yicha baholanadi. Har bir ball "taxminiy" deb belgilangan. |
+| 🎓 **Mock imtihonlar** | **IELTS**: Listening, Reading, Writing, Speaking va rasmiy yaxlitlash qoidasi bilan to'liq imtihon. **CEFR Multilevel**: to'rtala bo'lim rasmiy format va baholash jadvallari asosida. Ilova bilan birga to'liq original Listening va Reading testlari hamda 50 ta Speaking/Writing variantlari keladi. Foydalanuvchi hali ishlamagan testni oladi; bank tugasa, o'zi tanlaydi: birini qayta ishlaydi yoki AI yangi test tuzadi — u qat'iy tekshirilib, umumiy bankka qo'shiladi. Speaking va Writing'ni AI rasmiy mezonlar bo'yicha baholaydi. Har bir ball "taxminiy" deb belgilangan. |
 | 🎬 **Shadowing** | Gapni eshitasiz va darhol takrorlaysiz. Ikki seriya bor: karaoke taglavhali YouTube videolari va ilovaning o'z multfilm qahramonlari gapiradigan suhbatlar. Oddiy, avto va qo'l tegizmasdan rejimlari, tezlik va takror, tarjima hamda ixtiyoriy AI talaffuz tekshiruvi mavjud. |
+| 📘 **Darslar** | 16 ta grammatika darsi (A2–C1): qoida, misollar, o'zbek va rus tilida so'zlashuvchilarning tipik xatolari va 6 ta savolli mashq — tushuntirishlar uch tilda; xohlasangiz, AI yana 6 ta savol tuzadi. 12 ta mavzuli lug'at (196 so'z: tarjima, ta'rif, misol, talaffuz), o'zini tekshirish testi va bir bosishda lug'atga qo'shish. |
+| 🗂 **Mavzular** | Speaking va Writing uchun daraja va tur bo'yicha 92 ta tayyor mavzu (kundalik, IELTS 1–3-qism, CEFR, xatboshi, insho, xat), tavsiya etilgan so'z soni bilan; **✨ AI mavzu** tugmasi yangisini taklif qiladi. |
 | 🧭 **Bugungi reja** | Qisqa tanishtiruvda maqsad, daraja, maqsad ball, imtihon sanasi va kunlik vaqt so'raladi. Shundan har kunlik reja tuziladi: bajarilgani o'zi belgilanadi, imtihongacha qolgan kunlar ko'rinib turadi. |
 | 👩‍🏫 **O'qituvchi guruhlari** | O'qituvchi taklif kodini ulashadi, vazifa beradi (mashq, mock bo'limi, "N ta karta takrorlash") va muddat qo'yadi. Natijalarni jadvalda ko'radi. Vazifa alohida topshirilmaydi: o'quvchi mashqni bajarsa, o'zi belgilanadi. |
 | 📈 **Natijalar** | XP, darajalar, nishonlar, faollik kalendari va ballar grafigi. Taxallus bilan ixtiyoriy haftalik musobaqa ham bor. |
@@ -109,10 +111,11 @@ Hammasi bepul tariflarda ishlaydi.
 
 - **Speaking uchun bitta Gemini so'rovi.** Gemini ovozni to'g'ridan-to'g'ri qabul qiladi, shuning uchun alohida "nutqni matnga aylantirish" xizmati kerak emas. So'rovlar ikki baravar kam, buziladigan qism ham bittaga kam.
 - **Model javobi — ishonchsiz ma'lumot.** Javoblar `RespectRequiredConstructorParameters` va `RespectNullableAnnotations` bilan o'qiladi, keyin ballar chegarasi tekshiriladi. Odatiy `System.Text.Json` yo'q `score` maydonini jimgina `0` qilib saqlab qo'yardi. Loyihada shu xato haqiqatan chiqqan va ildizidan tuzatilgan.
+- **Avval ilovaning o'z materiali, AI — so'ralganda.** Mashq qilish uchun kerak bo'lgan hamma narsa ilovaning ichida: darhol ochiladi, pul turmaydi va AI limiti tugaganda ham ishlayveradi. Material ikkala manbadan kelishi mumkin bo'lgan joyda foydalanuvchi tanlaydi: "📚 tayyor" yoki "✨ AI yangisini yozsin". Tayyor materiallar ham AI javobi bilan bir xil qat'iy validatorlardan o'tadi (darajaga mos so'z soni, savol formatlari, javob matnda borligi) — buni unit testlar kafolatlaydi.
 - **Testni model yozadi, kod baholaydi.** To'g'ri javobi ma'lum joyda baholashni C# kodi qiladi. Mock testlar bir marta yaratiladi va qat'iy validatorlardan o'tadi: raqamlash, javob turlari, bo'sh joy javobi matnda borligi, xarita variantlari. Keyin umumiy bankdan qayta ishlatiladi. AI limiti faqat bank tugaganda sarflanadi.
 - **Baholash barqarorligi o'lchanadi.** Ichki test bir xil yozuv yoki inshoni besh marta qayta baholaydi va har bir mezon bo'yicha tarqoqlikni ko'rsatadi. Shunda AI baholovchining noaniqligi ko'zga ko'rinadi.
 - **Uxlaydigan serverga moslangan.** Bot webhook bilan ishlaydi: kelgan xabar serverni uyg'otadi. Eslatmalarni GitHub Actions har soatda ishga tushiradi. Har bir hisob xabar yuborilishidan oldin atomar "band qilinadi", shuning uchun kechikkan yoki takrorlangan cron ikki marta yozmaydi.
-- **Asosiy mantiq sof funksiyalarda.** SM-2, IELTS ballini yaxlitlash, CEFR jadvallari, XP va nishonlar, eslatma vaqti va demo ma'lumotlari bazaga ham, HTTP'ga ham tegmaydi. 525 ta test bir necha soniyada o'tishining sababi shu.
+- **Asosiy mantiq sof funksiyalarda.** SM-2, IELTS ballini yaxlitlash, CEFR jadvallari, XP va nishonlar, eslatma vaqti va demo ma'lumotlari bazaga ham, HTTP'ga ham tegmaydi. 533 ta test bir necha soniyada o'tishining sababi shu.
 - **XP saqlanmaydi, hisoblanadi.** Daraja, nishon va musobaqa tarixdan hisoblanadi. Shuning uchun hech narsa "sinxrondan chiqmaydi", qoida o'zgarsa eski natijalar ham o'zi qayta hisoblanadi.
 - **Kutubxonasiz, tipga qat'iy tarjimalar.** Har bir sahifa matnlarini bir marta o'zbekcha yozadi, rus va ingliz variantlari esa aynan shu shaklda bo'lishi shart. Bitta tarjima tushib qolsa, build yiqiladi.
 - **Bitta dizayn, uch xil ekran.** Asosiy loyiha telefon uchun, menyu pastda. Planshetda menyu tepaga chiqadi. Noutbukda chap menyu, ikki ustunli sahifalar va yonma-yon imtihon paydo bo'ladi, klaviatura tugmalari ham ishlaydi: Probel — javob yoki tinglash, 1–4 — baho, ← → — gaplar orasida yurish, R — yozish.
@@ -127,9 +130,9 @@ Hammasi bepul tariflarda ishlaydi.
 
 ## Sifat
 
-- **Backend'da 525 ta unit test** (xUnit). Ular takrorlash jadvali, baholash jadvallari, validatorlar, qat'iy o'qish, xavfsizlik qoidalari, bot mantiqi, tarjimalar (har bir xabar uch tilda, bir xil parametrlar bilan) va demo ma'lumotlarini tekshiradi.
-- **Frontend'da 118 ta unit test** (Vitest): grafiklar, matn bilan ishlash, shadowing mantiqi va Telegram'dan ochilishni tekshirish.
-- **23 ta Playwright end-to-end to'plami** haqiqiy frontend'ni soxta API bilan telefon, planshet va noutbuk ekranlarida sinaydi. Yuqoridagi skrinshotlar ham shu testlardan olingan.
+- **Backend'da 533 ta unit test** (xUnit). Ular takrorlash jadvali, baholash jadvallari, validatorlar, qat'iy o'qish, xavfsizlik qoidalari, bot mantiqi, tarjimalar (har bir xabar uch tilda, bir xil parametrlar bilan), demo ma'lumotlari va ilovadagi har bir tayyor materialni (mock testlar, mashqlar) tekshiradi.
+- **Frontend'da 121 ta unit test** (Vitest): grafiklar, matn bilan ishlash, shadowing mantiqi, Telegram'dan ochilishni tekshirish va ilovadagi darslar, lug'at va mavzular.
+- **24 ta Playwright end-to-end to'plami** haqiqiy frontend'ni soxta API bilan telefon, planshet va noutbuk ekranlarida sinaydi. Yuqoridagi skrinshotlar ham shu testlardan olingan.
 - **CI** har bir push'da ikkala qismni build qilib testlaydi, ma'lum zaifligi bor paket bo'lsa yiqiladi.
 
 ## Cheklovlar va keyingi qadamlar

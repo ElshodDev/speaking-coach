@@ -8,6 +8,7 @@ import { formatClock } from './mockLogic';
 import { answeredCount, ObjectiveQuestions, QuestionMap, questionNumbers, type Answers, type ClientGroup } from './ObjectiveQuestions';
 import { PageHeader } from './ui';
 import { useWide } from './layout';
+import { BankExhausted, withSource, type MockSource, type NewTestResponse } from './MockSource';
 
 interface ReadingClient {
   id: string;
@@ -55,12 +56,15 @@ export function MockReading({
   sessionId,
   onSubmitted,
   exam = 'ielts',
+  source: initialSource = 'bank',
 }: {
   variant: 'academic' | 'general';
   go: (route: string) => void;
   sessionId?: string;
   onSubmitted?: (id: string) => void;
   exam?: 'ielts' | 'cefr';
+  /** "ai" — marshrutdan: foydalanuvchi AI yangi test tanlagan. */
+  source?: MockSource;
 }) {
   const t = useT(mockObjMsg);
   const tm = useT(mockMsg);
@@ -73,16 +77,26 @@ export function MockReading({
   const [passage, setPassage] = useState(0);
   const [view, setView] = useState<'text' | 'questions'>('text');
   const wide = useWide();
-  const [status, setStatus] = useState<'loading' | 'exam' | 'submitting' | 'error'>('loading');
+  const [status, setStatus] = useState<'loading' | 'exam' | 'submitting' | 'error' | 'exhausted'>('loading');
+  const [src, setSrc] = useState<MockSource>(initialSource);
+  const [bankCount, setBankCount] = useState(0);
+  const [fromAi, setFromAi] = useState(false);
   const [error, setError] = useState('');
   const submittedRef = useRef(false);
   const autoRef = useRef(false);
 
   useEffect(() => {
-    apiJson<{ test: ReadingClient; repeated: boolean }>(exam === 'cefr' ? '/api/mock/cefr/reading/new' : `/api/mock/ielts/reading/new?variant=${variant}`)
-      .then(({ test, repeated }) => {
+    setStatus('loading');
+    apiJson<NewTestResponse<ReadingClient>>(withSource(exam === 'cefr' ? '/api/mock/cefr/reading/new' : `/api/mock/ielts/reading/new?variant=${variant}`, src))
+      .then(({ test, repeated, exhausted, bankCount: n, source: from }) => {
+        if (!test || exhausted) {
+          setBankCount(n ?? 0);
+          setStatus('exhausted');
+          return;
+        }
         setTest(test);
-        setRepeated(repeated);
+        setRepeated(!!repeated);
+        setFromAi(from === 'ai');
         const d = loadDraft(exam);
         if (d && d.testId === test.id && Date.now() < d.startedAt + (MINUTES + 5) * 60_000) {
           setAnswers(d.answers);
@@ -96,7 +110,7 @@ export function MockReading({
         setError(e instanceof Error ? e.message : String(e));
         setStatus('error');
       });
-  }, [variant, exam]);
+  }, [variant, exam, src]);
 
   useEffect(() => {
     if (status === 'exam' && test) saveDraft(exam, { testId: test.id, startedAt, answers });
@@ -153,7 +167,15 @@ export function MockReading({
     return (
       <>
         <PageHeader title={title} onBack={back} backLabel={tm.title} />
-        <p className="muted" role="status">⏳ {t.preparing}</p>
+        <p className="muted" role="status">⏳ {src === 'ai' ? t.aiPreparing : t.preparing}</p>
+      </>
+    );
+  }
+  if (status === 'exhausted') {
+    return (
+      <>
+        <PageHeader title={title} onBack={back} backLabel={tm.title} />
+        <BankExhausted bankCount={bankCount} onPick={setSrc} />
       </>
     );
   }
@@ -203,6 +225,7 @@ export function MockReading({
     <>
       <PageHeader title={title} onBack={back} backLabel={tm.title} />
       {repeated && <p className="muted small">{t.repeated}</p>}
+      {fromAi && <p className="muted small" data-testid="from-ai">{t.fromAi}</p>}
 
       <div className="card" style={{ position: 'sticky', top: 'var(--sticky-top)', zIndex: 5, padding: '10px 14px' }}>
         <div className="spread" style={{ alignItems: 'center' }}>

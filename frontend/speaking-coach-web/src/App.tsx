@@ -10,6 +10,7 @@ import { savePendingJoin, takePendingJoin } from './groupLogic';
 import { teacherMsg } from './locales/teacher';
 import { mockMsg } from './locales/mock';
 import { shadowingMsg } from './locales/shadowing';
+import { learnMsg } from './locales/learn';
 import { PageHeader } from './ui';
 import { Settings } from './Settings';
 import { Vocab } from './Vocab';
@@ -46,6 +47,9 @@ const TeacherGroup = lazy(() => import('./Teacher').then((m) => ({ default: m.Te
 const Progress = lazy(() => import('./Progress').then((m) => ({ default: m.Progress })));
 const Admin = lazy(() => import('./Admin').then((m) => ({ default: m.Admin })));
 const Quiz = lazy(() => import('./Quiz').then((m) => ({ default: m.Quiz })));
+const LearnHub = lazy(() => import('./Learn').then((m) => ({ default: m.LearnHub })));
+const GrammarLessonPage = lazy(() => import('./Learn').then((m) => ({ default: m.GrammarLessonPage })));
+const VocabTopicPage = lazy(() => import('./Learn').then((m) => ({ default: m.VocabTopicPage })));
 
 /**
  * Oddiy "hash" marshrutlash: manzil #/review, #/practice/writing kabi.
@@ -87,6 +91,7 @@ function App() {
   const tHome = useT(homeMsg);
   const tMock = useT(mockMsg);
   const tShadow = useT(shadowingMsg);
+  const tLearn = useT(learnMsg);
   const c = useT(common);
   const [route, go] = useRoute();
   const [email, setEmail] = useState<string | null>(null);
@@ -212,6 +217,12 @@ function App() {
   let page;
   if (section === 'demo') {
     page = <DemoStart email={email} onStarted={onDemoStarted} go={go} />;
+  } else if (section === 'learn' && sub === 'grammar' && third) {
+    page = <GrammarLessonPage key={third} id={third} go={go} />;
+  } else if (section === 'learn' && sub === 'words' && third) {
+    page = <VocabTopicPage key={`${third}-${userKey}`} id={third} go={go} loggedIn={loggedIn} onLogin={toLogin} />;
+  } else if (section === 'learn') {
+    page = <LearnHub tab={sub === 'words' ? 'words' : 'grammar'} go={go} />;
   } else if (section === 'review' && sub === 'vocab') {
     page = (
       <Review
@@ -251,6 +262,15 @@ function App() {
         <UsageNote userKey={userKey} />
         <ExerciseTiles onOpen={(kind: ExerciseKind) => go(`practice/${kind}`)} />
         <div className="card-grid">
+        <div className="card cta" style={{ marginTop: 16 }} data-testid="learn-entry">
+          <div>
+            <strong>{tLearn.tile}</strong>
+            <div className="muted small">{tLearn.tileText}</div>
+          </div>
+          <button className="btn btn-primary" onClick={() => go('learn')}>
+            {t.open}
+          </button>
+        </div>
         <div className="card cta" style={{ marginTop: 16 }} data-testid="shadowing-entry">
           <div>
             <strong>{tShadow.tile}</strong>
@@ -299,13 +319,13 @@ function App() {
   } else if (section === 'mock' && sub === 'cefr-full' && loggedIn) {
     page = <MockFullStart go={go} exam="cefr" />;
   } else if (section === 'mock' && sub === 'cefr-listening' && loggedIn) {
-    page = <MockListening key={`cl-${userKey}`} exam="cefr" go={go} />;
+    page = <MockListening key={`cl-${userKey}-${third ?? ''}`} exam="cefr" go={go} source={third === 'ai' ? 'ai' : 'bank'} />;
   } else if (section === 'mock' && sub === 'cefr-reading' && loggedIn) {
-    page = <MockReading key={`cr-${userKey}`} exam="cefr" variant="academic" go={go} />;
+    page = <MockReading key={`cr-${userKey}-${third ?? ''}`} exam="cefr" variant="academic" go={go} source={third === 'ai' ? 'ai' : 'bank'} />;
   } else if (section === 'mock' && sub === 'listening' && loggedIn) {
-    page = <MockListening key={`ml-${userKey}`} go={go} />;
+    page = <MockListening key={`ml-${userKey}-${third ?? ''}`} go={go} source={third === 'ai' ? 'ai' : 'bank'} />;
   } else if (section === 'mock' && (sub === 'reading-academic' || sub === 'reading-general') && loggedIn) {
-    page = <MockReading key={`${sub}-${userKey}`} variant={sub === 'reading-general' ? 'general' : 'academic'} go={go} />;
+    page = <MockReading key={`${sub}-${userKey}-${third ?? ''}`} variant={sub === 'reading-general' ? 'general' : 'academic'} go={go} source={third === 'ai' ? 'ai' : 'bank'} />;
   } else if (section === 'mock' && sub === 'cefr-speaking' && loggedIn) {
     page = <MockSpeaking key={`cs-${userKey}`} exam="cefr" go={go} />;
   } else if (section === 'mock' && sub === 'cefr-writing' && loggedIn) {
@@ -342,7 +362,7 @@ function App() {
     ? null
     : section === 'review' && sub === 'vocab'
       ? 'vocab'
-      : section === 'mock' || section === 'shadowing'
+      : section === 'mock' || section === 'shadowing' || section === 'learn'
         ? 'practice'
       : NAV.some((n) => n.id === section)
         ? section

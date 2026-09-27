@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getLevel, loadHistory as fetchHistory, postJson, type HistoryItem } from './api';
+import { apiJson, getLevel, loadHistory as fetchHistory, postJson, type HistoryItem } from './api';
 import { cardsMessage } from './cards';
 import { useT } from './i18n';
 import { comprehensionMsg } from './locales/comprehension';
@@ -16,11 +16,42 @@ interface Question {
   options: string[];
 }
 
+interface BankInfo {
+  id: string;
+  level: string;
+  done: number;
+  total: number;
+  repeated: boolean;
+}
+
 interface Exercise {
   exerciseId: string;
   title: string;
   passage: string;
   questions: Question[];
+  /** "bank" — ilovaning tayyor mashqi, "ai" — Gemini yangisini yozgan. */
+  source?: 'bank' | 'ai';
+  bank?: BankInfo | null;
+}
+
+type Source = 'bank' | 'ai';
+
+// Mehmon ko'rgan tayyor mashqlar (hisob bo'lmasa, server bilmaydi) — takrorlanmasin.
+const seenKey = (mode: Mode) => `speakingCoach.seen.${mode}`;
+function readSeen(mode: Mode): string[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(seenKey(mode)) ?? '[]');
+    return Array.isArray(v) ? v.filter((x) => typeof x === 'string').slice(0, 200) : [];
+  } catch {
+    return [];
+  }
+}
+function addSeen(mode: Mode, id: string) {
+  try {
+    localStorage.setItem(seenKey(mode), JSON.stringify([id, ...readSeen(mode).filter((x) => x !== id)].slice(0, 200)));
+  } catch {
+    /* saqlab bo'lmadi — muhim emas */
+  }
 }
 
 interface QuestionResult {
@@ -66,17 +97,35 @@ export function Comprehension({
     fetchHistory(mode).then(setHistory);
   }, [mode]);
 
-  async function generate() {
+  const [bank, setBank] = useState<{ level: string; done: number; total: number } | null>(null);
+
+  // Tayyor mashqlar holati (kirgan foydalanuvchi uchun — server hisoblaydi).
+  useEffect(() => {
+    if (!loggedIn) return;
+    apiJson<{ level: string; done: number; total: number }>(`/api/${mode}/bank?level=${getLevel()}`)
+      .then(setBank)
+      .catch(() => setBank(null));
+  }, [mode, loggedIn, result]);
+
+  async function generate(source: Source = 'bank') {
     setBusy(true);
     setIsError(false);
-    setMessage(t.preparing);
+    setMessage(source === 'ai' ? t.preparing : '');
     setExercise(null);
     setResult(null);
     try {
-      const data = await postJson<Exercise>(`/api/${mode}/generate`, { level: getLevel() });
+      const data = await postJson<Exercise>(`/api/${mode}/generate`, {
+        level: getLevel(),
+        source,
+        seen: !loggedIn && source === 'bank' ? readSeen(mode) : undefined,
+      });
       setExercise(data);
       setAnswers(data.questions.map(() => null));
-      setMessage('');
+      if (data.bank) {
+        if (!loggedIn) addSeen(mode, data.bank.id);
+        setBank({ level: data.bank.level, done: data.bank.done, total: data.bank.total });
+      }
+      setMessage(data.bank?.repeated ? t.bankRepeated : '');
     } catch (err) {
       setIsError(true);
       setMessage(err instanceof Error ? err.message : t.generateFailed);
@@ -123,9 +172,18 @@ export function Comprehension({
           <p>
             {mode === 'reading' ? t.introReading : t.introListening}
           </p>
-          <button className="btn btn-primary block" onClick={generate} disabled={busy}>
-            {mode === 'reading' ? t.startReading : t.startListening}
-          </button>
+          <div className="source-choice">
+            <button className="btn btn-primary" onClick={() => generate('bank')} disabled={busy} data-testid="source-bank">
+              {mode === 'reading' ? t.startReading : t.startListening}
+            </button>
+            <button className="btn btn-outline" onClick={() => generate('ai')} disabled={busy} data-testid="source-ai">
+              {t.startAi}
+            </button>
+          </div>
+          <p className="muted tiny" style={{ margin: '8px 0 0' }}>
+            {bank && `${t.bankProgress(bank.level, bank.done, bank.total)} · `}
+            {t.aiNote}
+          </p>
         </div>
       )}
 
@@ -135,7 +193,10 @@ export function Comprehension({
         <div className="card">
           <div className="spread">
             <h2 style={{ margin: 0 }}>{exercise.title}</h2>
-            <span className="badge">{mode === 'reading' ? t.badgeReading : t.badgeListening}</span>
+            <span className="row" style={{ gap: 6 }}>
+              <span className="badge" data-testid="exercise-source">{exercise.source === 'ai' ? t.fromAi : t.fromBank}</span>
+              <span className="badge">{mode === 'reading' ? t.badgeReading : t.badgeListening}</span>
+            </span>
           </div>
 
           {mode === 'listening' && <Speaker text={exercise.passage} />}
@@ -208,9 +269,14 @@ export function Comprehension({
                 {result.score}/{result.total}
                 {result.score === result.total ? ' 🎉' : ''}
               </div>
-              <button className="btn btn-primary" onClick={generate} disabled={busy} style={{ marginTop: 8 }}>
-                {t.next}
-              </button>
+              <div className="source-choice" style={{ marginTop: 8, justifyContent: 'center' }}>
+                <button className="btn btn-primary" onClick={() => generate('bank')} disabled={busy}>
+                  {t.nextBank}
+                </button>
+                <button className="btn btn-outline" onClick={() => generate('ai')} disabled={busy}>
+                  {t.nextAi}
+                </button>
+              </div>
             </div>
           )}
           </div>

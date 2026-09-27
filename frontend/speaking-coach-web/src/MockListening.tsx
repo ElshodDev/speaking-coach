@@ -8,6 +8,7 @@ import { formatClock } from './mockLogic';
 import { answeredCount, ObjectiveQuestions, QuestionMap, questionNumbers, type Answers, type ClientGroup } from './ObjectiveQuestions';
 import { isSpeechSupported, pickVoices, sleep, splitSentences, stopSpeaking } from './speech';
 import { PageHeader } from './ui';
+import { BankExhausted, withSource, type MockSource, type NewTestResponse } from './MockSource';
 
 interface ScriptLine {
   speaker: string;
@@ -41,7 +42,7 @@ function speakOne(text: string, voice: SpeechSynthesisVoice | undefined, pitch: 
   });
 }
 
-type Phase = 'loading' | 'intro' | 'read' | 'play' | 'review' | 'submitting' | 'error';
+type Phase = 'loading' | 'intro' | 'read' | 'play' | 'review' | 'submitting' | 'error' | 'exhausted';
 
 /**
  * Tinglash tartibi. IELTS: har yozuv BIR marta. CEFR (Multilevel): har yozuv
@@ -65,11 +66,14 @@ export function MockListening({
   sessionId,
   onSubmitted,
   exam = 'ielts',
+  source: initialSource = 'bank',
 }: {
   go: (route: string) => void;
   sessionId?: string;
   onSubmitted?: (id: string) => void;
   exam?: 'ielts' | 'cefr';
+  /** "ai" — marshrutdan: foydalanuvchi AI yangi test tanlagan. */
+  source?: MockSource;
 }) {
   const t = useT(mockObjMsg);
   const tm = useT(mockMsg);
@@ -77,6 +81,9 @@ export function MockListening({
   const [test, setTest] = useState<ListeningClient | null>(null);
   const [repeated, setRepeated] = useState(false);
   const [phase, setPhase] = useState<Phase>('loading');
+  const [src, setSrc] = useState<MockSource>(initialSource);
+  const [bankCount, setBankCount] = useState(0);
+  const [fromAi, setFromAi] = useState(false);
   const [part, setPart] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
   const [countdown, setCountdown] = useState(0);
@@ -89,10 +96,18 @@ export function MockListening({
   answersRef.current = answers;
 
   useEffect(() => {
-    apiJson<{ test: ListeningClient; repeated: boolean }>(`/api/mock/${exam}/listening/new`)
-      .then(({ test, repeated }) => {
+    cancelled.current = false;
+    setPhase('loading');
+    apiJson<NewTestResponse<ListeningClient>>(withSource(`/api/mock/${exam}/listening/new`, src))
+      .then(({ test, repeated, exhausted, bankCount: n, source: from }) => {
+        if (!test || exhausted) {
+          setBankCount(n ?? 0);
+          setPhase('exhausted');
+          return;
+        }
         setTest(test);
-        setRepeated(repeated);
+        setRepeated(!!repeated);
+        setFromAi(from === 'ai');
         setPhase('intro');
       })
       .catch((e) => {
@@ -103,7 +118,7 @@ export function MockListening({
       cancelled.current = true;
       stopSpeaking();
     };
-  }, [exam]);
+  }, [exam, src]);
 
   useEffect(() => {
     if (phase === 'loading' || phase === 'intro' || phase === 'error') return;
@@ -193,9 +208,10 @@ export function MockListening({
 
   const back = sessionId ? undefined : () => go('mock');
   const title = exam === 'cefr' ? tc.listeningTitle : t.listeningTitle;
-  const header = <PageHeader title={title} onBack={phase === 'intro' || phase === 'error' || phase === 'loading' ? back : undefined} backLabel={tm.title} />;
+  const header = <PageHeader title={title} onBack={phase === 'intro' || phase === 'error' || phase === 'loading' || phase === 'exhausted' ? back : undefined} backLabel={tm.title} />;
 
-  if (phase === 'loading') return <>{header}<p className="muted" role="status">⏳ {t.preparing}</p></>;
+  if (phase === 'loading') return <>{header}<p className="muted" role="status">⏳ {src === 'ai' ? t.aiPreparing : t.preparing}</p></>;
+  if (phase === 'exhausted') return <>{header}<BankExhausted bankCount={bankCount} onPick={setSrc} /></>;
   if (phase === 'error' || !test) return <>{header}<div className="card"><p className="error" role="alert">{error}</p></div></>;
 
   if (!isSpeechSupported()) {
@@ -207,6 +223,7 @@ export function MockListening({
       <>
         {header}
         {repeated && <p className="muted small">{t.repeated}</p>}
+        {fromAi && <p className="muted small" data-testid="from-ai">{t.fromAi}</p>}
         <div className="card stack">
           <h3 style={{ margin: 0 }}>{t.soundCheck}</h3>
           <p className="small" style={{ margin: 0 }}>{t.soundCheckText}</p>

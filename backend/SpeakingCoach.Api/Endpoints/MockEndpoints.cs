@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SpeakingCoach.Api.Data;
 using SpeakingCoach.Api.Services;
 using SpeakingCoach.Api.Services.Mock;
+using SpeakingCoach.Api.Services.Content;
 
 namespace SpeakingCoach.Api.Endpoints;
 
@@ -212,12 +213,15 @@ public static class MockEndpoints
         // (/api/mock/cefr/speaking/new kabi aniq yo'llar ustun turadi).
         app.MapGet("/api/mock/{exam}/{module}/new", async (
             string exam, string module, HttpRequest request, AuthService auth, AppDbContext db, AdminOptions admins, IConfiguration config,
-            IMockGenerator generator, GenerationGate gate, ILogger<Program> logger, string? variant) =>
+            IMockGenerator generator, GenerationGate gate, IServiceScopeFactory scopes, ILogger<Program> logger, string? variant, string? source) =>
         {
             if (exam is not ("ielts" or "cefr") || module is not ("listening" or "reading")) return Results.NotFound();
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return LoginFirst(request);
             var v = exam == "ielts" && module == "reading" ? (variant == IeltsBank.General ? IeltsBank.General : IeltsBank.Academic) : "";
+
+            // Ilova bilan keladigan tayyor testlar bankda bo'lsin (bir marta).
+            await BuiltInMocks.EnsureSeededAsync(scopes, logger);
 
             var done = (await RecentAsync(db, user.Id)).Where(r => r.Module == module).Select(r => r.SetId).ToHashSet();
             // Avval faqat Id'lar (yengil), keyin tanlangan bitta testning matni.
@@ -231,25 +235,32 @@ public static class MockEndpoints
             async Task<string> PayloadOf(Guid testId) =>
                 await db.MockTests.Where(t => t.Id == testId).Select(t => t.Payload).FirstAsync();
 
-            if (freshId is { } fid)
+            // Manbani foydalanuvchi tanlaydi: "bank" (standart) — tayyor testlar,
+            // "repeat" — hammasi ishlangan bo'lsa, eng eskisini qayta, "ai" — Gemini yangisini yaratadi.
+            var src = (source ?? "bank").ToLowerInvariant();
+            if (src != "ai")
             {
-                return Results.Ok(new { test = ClientPayload(module, fid, await PayloadOf(fid)), repeated = false });
+                if (freshId is { } fid)
+                    return Results.Ok(new { test = ClientPayload(module, fid, await PayloadOf(fid)), repeated = false, source = "bank" });
+                if (src == "repeat" && candidates.Count > 0)
+                {
+                    // Eng uzoq vaqt oldin ishlangani (RecentAsync — eng yangisi birinchi).
+                    var order = (await RecentAsync(db, user.Id)).Where(r => r.Module == module).Select(r => r.SetId).ToList();
+                    var oldest = candidates.OrderByDescending(id => order.IndexOf(id.ToString())).First();
+                    return Results.Ok(new { test = ClientPayload(module, oldest, await PayloadOf(oldest)), repeated = true, source = "bank" });
+                }
+                // Bankdagi hammasi ishlangan (yoki bank bo'sh) — foydalanuvchi tanlaydi: qayta yoki AI.
+                return Results.Ok(new { test = (object?)null, exhausted = true, bankCount = candidates.Count });
             }
 
-            // Bankda yangi test yo'q — yaratamiz (sutkalik limit bilan).
+            // ---- AI yangi test yaratadi (sutkalik limit bilan) ----
             var isAdmin = admins.IsAdmin(user);
             var perDay = MockLimit.GeneratePerDay(config);
             if (!isAdmin)
             {
                 var since = DateTime.UtcNow.AddHours(-24);
                 var made = await db.MockTests.CountAsync(t => t.CreatedByUserId == user.Id && t.CreatedAtUtc > since && t.Title == null);
-                if (made >= perDay)
-                {
-                    if (candidates.Count == 0) return Results.Json(request.Error("mock.generate_limit"), statusCode: StatusCodes.Status429TooManyRequests);
-                    // Hammasini ishlagan — eng eskisini qayta beramiz.
-                    var oldest = candidates[0];
-                    return Results.Ok(new { test = ClientPayload(module, oldest, await PayloadOf(oldest)), repeated = true });
-                }
+                if (made >= perDay) return Results.Json(request.Error("mock.generate_limit"), statusCode: StatusCodes.Status429TooManyRequests);
             }
 
             // Parallel so'rovlar va muvaffaqiyatsiz urinishlar ham hisobda.
@@ -280,7 +291,7 @@ public static class MockEndpoints
                     });
                     await db.SaveChangesAsync(CancellationToken.None);
                     logger.LogInformation("Yangi {Exam} {Module} testi yaratildi: {Id}", exam, module, id);
-                    return Results.Ok(new { test = ClientPayload(module, id, payload), repeated = false });
+                    return Results.Ok(new { test = ClientPayload(module, id, payload), repeated = false, source = "ai" });
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException || !request.HttpContext.RequestAborted.IsCancellationRequested)
                 {
