@@ -408,4 +408,30 @@ public class BotAuthoringTests
             .Concat(CefrBank.Speaking.Select(s => s.Id)).Concat(CefrBank.Writing.Select(w => w.Id));
         Assert.All(builtIn, b => Assert.False(Guid.TryParseExact(b, "N", out _)));
     }
+
+    [Fact]
+    public void Failure_reason_is_short_and_never_leaks_the_api_key()
+    {
+        var gemini = new InvalidOperationException("Gemini API xatosi (TooManyRequests): {\"error\": {\"code\": 429, \"message\": \"You exceeded your current quota, please check your plan.\", \"status\": \"RESOURCE_EXHAUSTED\"}}");
+        Assert.Equal("Gemini API xatosi (TooManyRequests): You exceeded your current quota, please check your plan.", MockAuthoringRules.FailureReason(gemini));
+
+        var leak = new HttpRequestException("Failed https://generativelanguage.googleapis.com/v1beta/models/x:generateContent?key=AIzaSECRET123 timeout key=AIzaOTHER");
+        var r = MockAuthoringRules.FailureReason(leak);
+        Assert.DoesNotContain("SECRET", r);
+        Assert.DoesNotContain("OTHER", r);
+        Assert.DoesNotContain("googleapis", r);
+
+        Assert.Equal("timeout", MockAuthoringRules.FailureReason(new TaskCanceledException("The request was canceled")));
+        Assert.Equal("Matn uzunligi mos emas: 420 so'z", MockAuthoringRules.FailureReason(new AggregateException(new InvalidOperationException("Matn uzunligi mos emas: 420 so'z"))));
+        Assert.True(MockAuthoringRules.FailureReason(new Exception(new string('x', 1000))).Length <= 300);
+    }
+
+    [Fact]
+    public void Teacher_passages_may_differ_in_length_from_generated_ones()
+    {
+        var text = string.Join(" ", Enumerable.Repeat("word", 400)) + " main gate";
+        var p = new ReadingPassage("T", text, [new QuestionGroup("gap", "ONE WORD", 2, [new ObjQuestion(1, "Meet at the ___", null, ["main gate"], "x")])]);
+        Assert.Throws<InvalidOperationException>(() => GeminiMockGenerator.ValidatePassage(p, 1, 1));
+        GeminiMockGenerator.ValidatePassage(p, 1, 1, 250, 1500);
+    }
 }

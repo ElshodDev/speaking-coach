@@ -15,7 +15,9 @@ public partial class GeminiMockGenerator : IMockAuthoring
         var extra = source.IsTopic ? null : MockAuthoringRules.SourceParts(source);
         if (!source.IsTopic && (extra is null || extra.Length == 0)) throw new InvalidOperationException("Material bo'sh");
         var topic = source.Topic ?? "the topic of the attached material";
-        const int attempts = 3;
+        // Material bilan — ko'proq urinish (asl savollarni formatga moslash qiyinroq) va kengroq matn uzunligi.
+        var attempts = source.IsTopic ? 3 : 4;
+        var (minWords, maxWords) = source.IsTopic ? (550, 1200) : (250, 1500);
 
         object content = (kind.Exam, kind.Module) switch
         {
@@ -25,7 +27,7 @@ public partial class GeminiMockGenerator : IMockAuthoring
             ("cefr", "writing") => await AskAsync<CefrWritingSet>(MockAuthoringRules.CefrWritingPrompt(source), MockAuthoringRules.ValidateCefrWriting, ct, attempts, extra),
             ("ielts", "reading") => new ReadingTest(kind.Variant, (await Task.WhenAll(IeltsReadingLayout.Select((l, i) => AskAsync<ReadingPassage>(
                 ReadingPrompt(kind.Variant, i + 1, l.First, l.Count, topic, source.IsTopic ? null : MockAuthoringRules.SourceNote($"Reading Passage {i + 1} (Section {i + 1})")),
-                p => ValidatePassage(p, l.First, l.Count), ct, attempts, extra)))).ToList()),
+                p => ValidatePassage(p, l.First, l.Count, minWords, maxWords), ct, attempts, extra)))).ToList()),
             ("ielts", "listening") => new ListeningTest((await Task.WhenAll(Enumerable.Range(1, 4).Select(part => AskAsync<ListeningPart>(
                 ListeningPrompt(part, (part - 1) * 10 + 1, topic, source.IsTopic ? null : MockAuthoringRules.SourceNote($"Part {part} (Section {part}, questions {(part - 1) * 10 + 1}-{part * 10})")),
                 p => ValidatePart(p, part), ct, attempts, extra)))).ToList()),

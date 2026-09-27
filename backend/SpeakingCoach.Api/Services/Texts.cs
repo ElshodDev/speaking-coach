@@ -293,6 +293,7 @@ public static class Texts
             "❌ Testni tayyorlab boʻlmadi: materialdan toʻliq test chiqmadi yoki AI band. Boshqa material yoki mavzu bilan qayta urinib koʻring (yoki /cancel).",
             "❌ Не удалось подготовить тест: из материала не получился полный тест или AI занят. Попробуйте другой материал или тему (или /cancel).",
             "❌ Couldn't prepare the test: the material didn't make a complete test or the AI is busy. Try other material or a topic (or /cancel)."),
+        ["bot.author_reason"] = new("Sabab: {0}", "Причина: {0}", "Reason: {0}"),
         ["bot.author_ready"] = new("✅ <b>{0}</b> — qoralama tayyor.", "✅ <b>{0}</b> — черновик готов.", "✅ <b>{0}</b> — draft ready."),
         ["bot.author_ready_admin"] = new(
             "Toʻliq matn (javoblar bilan) — fayl sifatida quyida. Tekshirib, <b>Chop etish</b>ni bosing — test darhol bankka qoʻshiladi.",

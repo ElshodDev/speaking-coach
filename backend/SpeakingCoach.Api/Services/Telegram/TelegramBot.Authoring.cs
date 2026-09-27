@@ -114,7 +114,7 @@ public partial class TelegramBot
         {
             // Holat saqlanadi — boshqa material yoki mavzu yuborish mumkin.
             _logger.LogWarning(ex, "Botda test tayyorlab bo'lmadi: {Kind}, chat {Chat}", job.Kind.Key, job.ChatId);
-            await TrySendAsync(job.ChatId, T("bot.author_failed"), CancellationToken.None);
+            await TrySendAsync(job.ChatId, $"{T("bot.author_failed")}\n\n<i>{BotLogic.Html(T("bot.author_reason", MockAuthoringRules.FailureReason(ex)))}</i>", CancellationToken.None);
             return;
         }
 

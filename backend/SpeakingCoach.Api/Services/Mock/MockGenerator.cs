@@ -141,10 +141,11 @@ public partial class GeminiMockGenerator(GeminiClient gemini, ILogger<GeminiMock
         }
     }
 
-    public static void ValidatePassage(ReadingPassage p, int first, int count)
+    /// <summary>minWords/maxWords: AI yozgan matn uchun 550–1200; o'qituvchi materiali (asl matn saqlanadi) uchun kengroq.</summary>
+    public static void ValidatePassage(ReadingPassage p, int first, int count, int minWords = 550, int maxWords = 1200)
     {
         var words = ObjectiveValidator.Words(p.Text);
-        if (words is < 550 or > 1200) throw new InvalidOperationException($"Matn uzunligi mos emas: {words} so'z");
+        if (words < minWords || words > maxWords) throw new InvalidOperationException($"Matn uzunligi mos emas: {words} so'z");
         if (string.IsNullOrWhiteSpace(p.Title)) throw new InvalidOperationException("Sarlavha yo'q");
         ObjectiveValidator.ValidateGroups(p.Groups, first, count, p.Text, allowYesNo: true);
     }

@@ -89,7 +89,12 @@ public static class MockAuthoringRules
     public static string SourceNote(string partLabel) =>
         $"""
         SOURCE MATERIAL: a teacher attached exam material (text, a PDF or a photo) after this prompt. Use its {partLabel} as the basis:
-        keep the original texts, script, questions and correct answers exactly where they exist (fix only obvious typos and OCR errors).
+        keep the original passage or script word for word (fix only obvious typos and OCR errors; do not shorten or rewrite it, even if its length differs from the target below),
+        and keep the original questions and correct answers wherever the format below allows.
+        Number the questions exactly as required below, even if the material numbers them differently.
+        Only the question types listed below are supported. Convert any other type, testing the same information:
+        matching headings / matching information / matching features / sentence endings / pick-from-a-list → mcq (3-5 options, one correct letter) or TRUE/FALSE/NOT GIVEN statements;
+        summary, note, table, flow-chart or diagram completion (including ones with a word box) → gap questions whose answers are words copied exactly from the passage or script.
         If the material has no {partLabel} or it is incomplete (for example answers or some questions are missing), write the missing content yourself in the same style and level.
         Ignore the other parts of the material. The instructions below describe the REQUIRED output format — follow them even if the material is laid out differently.
         """;
@@ -239,6 +244,25 @@ public static class MockAuthoringRules
         Require(Filled(w.Task11, 600) && w.Task11.Contains("50"), "task11: \"about 50 words\" bo'lishi kerak");
         Require(Filled(w.Task12, 600) && w.Task12.Contains("120"), "task12: \"120-150 words\" bo'lishi kerak");
         Require(Filled(w.Task2, 800) && w.Task2.Contains("180"), "task2: \"180-200 words\" bo'lishi kerak");
+    }
+
+    // ---------------- Xato sababi (botda ko'rsatish uchun) ----------------
+
+    /// <summary>
+    /// Qisqa, xavfsiz sabab: Gemini xato JSON'idan faqat "message", API kaliti
+    /// va URL'lar olib tashlanadi, 300 belgigacha. Muallif nima o'zgartirishni
+    /// bilsin (masalan, "Matn uzunligi mos emas: 420 so'z" yoki "quota").
+    /// </summary>
+    public static string FailureReason(Exception ex)
+    {
+        var e = ex is AggregateException { InnerException: { } inner } ? inner : ex;
+        var msg = e is TaskCanceledException or OperationCanceledException ? "timeout" : e.Message;
+        var m = System.Text.RegularExpressions.Regex.Match(msg, "\"message\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"");
+        if (m.Success) msg = $"{msg.Split(':')[0]}: {m.Groups[1].Value}";
+        msg = System.Text.RegularExpressions.Regex.Replace(msg, "key=[^&\\s\"]+", "key=***");
+        msg = System.Text.RegularExpressions.Regex.Replace(msg, "https?://\\S+", "…");
+        msg = System.Text.RegularExpressions.Regex.Replace(msg, "\\s+", " ").Trim();
+        return msg.Length > 300 ? msg[..299] + "…" : msg;
     }
 
     // ---------------- Nom va ko'rib chiqish ----------------
