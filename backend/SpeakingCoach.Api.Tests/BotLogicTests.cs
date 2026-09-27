@@ -202,4 +202,18 @@ public class BotLogicTests
         Assert.False(o.IsAdmin(null));
         Assert.False(new TelegramOptions(new ConfigurationBuilder().Build()).IsAdmin(new TgUser(1, "E", "elshod_developer", "uz")));
     }
+
+    [Fact]
+    public void Language_picker_offers_three_languages_and_round_trips()
+    {
+        var row = Assert.Single(BotLogic.LangButtons("ru"));
+        Assert.Equal(["🇺🇿 Oʻzbekcha", "✓ 🇷🇺 Русский", "🇬🇧 English"], row.Select(b => b.Text).ToArray());
+        foreach (var l in Texts.Langs)
+        {
+            var data = BotLogic.Encode(new BotCallback.PickLang(l));
+            Assert.Equal(new BotCallback.PickLang(l), BotLogic.Decode(data));
+        }
+        Assert.Null(BotLogic.Decode("lang:de"));
+        Assert.Null(BotLogic.Decode("lang:"));
+    }
 }

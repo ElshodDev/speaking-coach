@@ -51,3 +51,17 @@ public class TelegramLinkToken
     public int TzOffsetMinutes { get; set; }
     public DateTime ExpiresAtUtc { get; set; }
 }
+
+/// <summary>
+/// Hisobi ulanmagan chatning bot tili (/lang). Ulangan chatda til
+/// TelegramAccount.Lang da; bu yerda — faqat ulanmaganlar uchun.
+/// </summary>
+public class TelegramChat
+{
+    public long ChatId { get; set; }
+
+    /// <summary>uz, ru yoki en.</summary>
+    public string Lang { get; set; } = "uz";
+
+    public DateTime UpdatedAtUtc { get; set; }
+}

@@ -122,6 +122,7 @@ public class TelegramStartup : BackgroundService
                         ("review", Texts.Get(lang, "bot.cmd_review")),
                         ("stats", Texts.Get(lang, "bot.cmd_stats")),
                         ("settings", Texts.Get(lang, "bot.cmd_settings")),
+                        ("lang", Texts.Get(lang, "bot.cmd_lang")),
                         ("add", Texts.Get(lang, "bot.cmd_add")),
                         ("bank", Texts.Get(lang, "bot.cmd_bank")),
                         ("help", Texts.Get(lang, "bot.cmd_help")),

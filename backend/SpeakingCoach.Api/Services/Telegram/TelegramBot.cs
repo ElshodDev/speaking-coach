@@ -81,7 +81,11 @@ public partial class TelegramBot
     {
         var account = await _db.TelegramAccounts.FirstOrDefaultAsync(a => a.ChatId == chatId, ct);
         var user = account is null ? null : await _db.Users.FirstOrDefaultAsync(u => u.Id == account.UserId, ct);
-        return new Ctx(chatId, from, account, user, account?.Lang ?? BotLogic.LangFromTelegram(from.LanguageCode));
+        // Til: ulangan hisobniki → /lang da tanlangani → Telegram ilovasi tili.
+        var lang = account?.Lang
+            ?? (await _db.TelegramChats.Where(t => t.ChatId == chatId).Select(t => t.Lang).FirstOrDefaultAsync(ct))
+            ?? BotLogic.LangFromTelegram(from.LanguageCode);
+        return new Ctx(chatId, from, account, user, lang);
     }
 
     // ---------------- Xabarlar ----------------
@@ -97,6 +101,12 @@ public partial class TelegramBot
             {
                 if (start.Length > 0) await LinkAsync(c, start, ct);
                 else await WelcomeAsync(c, ct);
+                return;
+            }
+
+            if (BotLogic.IsCommand(text, "/lang") || BotLogic.IsCommand(text, "/language"))
+            {
+                await _api.SendMessageAsync(c.ChatId, c.T("bot.lang_pick"), BotLogic.LangButtons(c.Lang), ct: ct);
                 return;
             }
 
@@ -182,7 +192,32 @@ public partial class TelegramBot
             await _api.SendMessageAsync(c.ChatId, c.T("bot.help"), replyKeyboard: BotLogic.MainMenu(c.Lang), ct: ct);
             return;
         }
-        await _api.SendMessageAsync(c.ChatId, c.T("bot.welcome"), LinkButton(c), ct: ct);
+        await _api.SendMessageAsync(c.ChatId, c.T("bot.welcome"), WelcomeButtons(c), ct: ct);
+    }
+
+    /// <summary>Ulanmagan foydalanuvchiga: hisobni ulash va til tanlash (birinchi xabardanoq).</summary>
+    private IReadOnlyList<IReadOnlyList<TgButton>> WelcomeButtons(Ctx c) => [.. LinkButton(c), .. BotLogic.LangButtons(c.Lang)];
+
+    /// <summary>/lang: tilni saqlaydi (ulangan — hisobga, ulanmagan — chatga) va yangi tilda javob beradi.</summary>
+    private async Task<string> PickLangAsync(Ctx c, string lang, long? messageId, CancellationToken ct)
+    {
+        if (c.Account is not null)
+        {
+            c.Account.Lang = lang;
+        }
+        else
+        {
+            var chat = await _db.TelegramChats.FirstOrDefaultAsync(t => t.ChatId == c.ChatId, ct);
+            if (chat is null) _db.TelegramChats.Add(chat = new TelegramChat { ChatId = c.ChatId });
+            chat.Lang = lang;
+            chat.UpdatedAtUtc = DateTime.UtcNow;
+        }
+        await _db.SaveChangesAsync(ct);
+        var nc = c with { Lang = lang };
+        if (messageId is not null) await _api.EditMessageAsync(c.ChatId, messageId.Value, nc.T("bot.lang_saved", BotLogic.LangName(lang)), ct: ct);
+        if (nc.User is not null) await _api.SendMessageAsync(c.ChatId, nc.T("bot.help"), replyKeyboard: BotLogic.MainMenu(lang), ct: ct);
+        else await _api.SendMessageAsync(c.ChatId, nc.T("bot.welcome"), LinkButton(nc), ct: ct);
+        return nc.T("bot.saved");
     }
 
     private IReadOnlyList<IReadOnlyList<TgButton>> LinkButton(Ctx c) =>
@@ -361,7 +396,7 @@ public partial class TelegramBot
                 .Select(h => new TgButton(Mark(current == h, $"{h:00}:00"), BotLogic.Encode(new BotCallback.SetReminder(h))))
                 .ToArray(),
             new[] { new TgButton(Mark(current is null, c.T("bot.reminder_off_button")), BotLogic.Encode(new BotCallback.SetReminder(null))) },
-            Texts.Langs.Select(l => new TgButton(Mark(c.Account.Lang == l, l.ToUpperInvariant()), BotLogic.Encode(new BotCallback.SetLang(l)))).ToArray(),
+            Texts.Langs.Select(l => new TgButton(Mark(c.Account.Lang == l, BotLogic.LangName(l).Split(' ')[0] + " " + l.ToUpperInvariant()), BotLogic.Encode(new BotCallback.SetLang(l)))).ToArray(),
             new[] { new TgButton(c.T("bot.unlink_button"), BotLogic.Encode(new BotCallback.Unlink())) },
         };
     }
@@ -378,6 +413,11 @@ public partial class TelegramBot
         {
             var action = BotLogic.Decode(cb.Data);
             if (action is null) return;
+            if (action is BotCallback.PickLang pick)
+            {
+                toast = await PickLangAsync(c, pick.Lang, messageId, ct);
+                return;
+            }
             if (c.User is null)
             {
                 await _api.SendMessageAsync(chatId, c.T("bot.need_link"), LinkButton(c), ct: ct);

@@ -298,7 +298,7 @@ npm run dev
 ### 7. Avtomatik testlar
 
 ```bash
-dotnet test backend/SpeakingCoach.Api.Tests   # backend: 502 ta unit test
+dotnet test backend/SpeakingCoach.Api.Tests   # backend: 503 ta unit test
 cd frontend/speaking-coach-web && npm test     # frontend: 113 ta vitest testi
 ```
 
@@ -419,6 +419,8 @@ bilan bir xil — botda takrorlangan karta saytda ham takrorlangan.
 - **Kechki eslatma** vazifalar (muddati oʻtganlari ham) va imtihongacha
   kunlarni ham aytadi; faqat bugungi maqsad bajarilgan va vazifa qolmagan
   boʻlsa yozilmaydi.
+- **🌐 Til** (`/lang`) — oʻzbek, rus yoki ingliz; hisob ulanmagan boʻlsa ham
+  ishlaydi (birinchi xabarda ham tanlash tugmalari bor), tanlov saqlanadi.
 - **Yangi vazifa**: oʻqituvchi vazifa berishi bilan botni ulagan
   oʻquvchilarga xabar boradi ("▶️ Bajarish" tugmasi bilan).
 - **📝 Test qoʻshish** (`/add`, oʻqituvchi va admin uchun) — IELTS yoki CEFR,

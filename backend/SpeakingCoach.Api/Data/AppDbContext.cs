@@ -18,6 +18,7 @@ public class AppDbContext : DbContext
     public DbSet<AiUsage> AiUsages => Set<AiUsage>();
     public DbSet<TelegramAccount> TelegramAccounts => Set<TelegramAccount>();
     public DbSet<TelegramLinkToken> TelegramLinkTokens => Set<TelegramLinkToken>();
+    public DbSet<TelegramChat> TelegramChats => Set<TelegramChat>();
     public DbSet<MockTest> MockTests => Set<MockTest>();
     public DbSet<Group> Groups => Set<Group>();
     public DbSet<GroupMember> GroupMembers => Set<GroupMember>();
@@ -72,6 +73,13 @@ public class AppDbContext : DbContext
             entity.Property(t => t.BotState).HasMaxLength(100);
             entity.HasIndex(t => t.UserId).IsUnique();
             entity.HasOne<User>().WithMany().HasForeignKey(t => t.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TelegramChat>(entity =>
+        {
+            entity.HasKey(t => t.ChatId);
+            entity.Property(t => t.ChatId).ValueGeneratedNever();
+            entity.Property(t => t.Lang).HasMaxLength(2);
         });
 
         modelBuilder.Entity<TelegramLinkToken>(entity =>
