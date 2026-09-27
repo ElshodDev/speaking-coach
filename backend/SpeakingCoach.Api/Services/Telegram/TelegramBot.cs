@@ -149,6 +149,13 @@ public partial class TelegramBot
                 return;
             }
 
+            // /add'siz yuborilgan fayl yoki rasm — test qo'shish yo'lini ko'rsatamiz.
+            if (msg.Document is not null || msg.Photo is { Length: > 0 })
+            {
+                await _api.SendMessageAsync(c.ChatId, c.T("bot.file_hint"), ct: ct);
+                return;
+            }
+
             if (BotLogic.IsLookupWord(text))
             {
                 await ExplainAsync(c, text.Trim(), ct);

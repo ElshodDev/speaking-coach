@@ -240,6 +240,10 @@ public static class Texts
             "📝 <b>Test qoʻshish</b>\n\nQaysi imtihon uchun?\n\n<i>Faqat oʻzingiz yozgan yoki foydalanish huquqingiz bor materiallarni yuboring. Test tekshirilgach, ilovadagi mock imtihonlarda chiqadi.</i>",
             "📝 <b>Добавление теста</b>\n\nДля какого экзамена?\n\n<i>Присылайте только свои материалы или те, на которые у вас есть права. После проверки тест появится в пробных экзаменах приложения.</i>",
             "📝 <b>Add a test</b>\n\nWhich exam is it for?\n\n<i>Only send material you wrote yourself or have the right to use. Once reviewed, the test appears in the app's mock exams.</i>"),
+        ["bot.file_hint"] = new(
+            "📎 Fayl oldim. Test qoʻshmoqchi boʻlsangiz, avval /add yozing: imtihon, boʻlim va “Materialim bor”ni tanlang — keyin faylni yuboring.",
+            "📎 Файл получен. Чтобы добавить тест, сначала напишите /add: выберите экзамен, раздел и «Есть материал» — затем пришлите файл.",
+            "📎 Got your file. To add a test, first send /add: pick the exam, the section and “I have material” — then send the file."),
         ["bot.author_pick_kind"] = new("{0}: qaysi boʻlim?", "{0}: какой раздел?", "{0}: which section?"),
         ["bot.author_pick_mode"] = new(
             "<b>{0}</b>\n\nMaterialingiz bormi yoki Gemini yangi test yaratsinmi?",
