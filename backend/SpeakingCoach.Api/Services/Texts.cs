@@ -128,6 +128,7 @@ public static class Texts
         ["bot.kind_speaking"] = new("🎙 Gapirish mashqi", "🎙 Упражнение: говорение", "🎙 Speaking practice"),
         ["bot.kind_writing"] = new("✍️ Yozish mashqi", "✍️ Упражнение: письмо", "✍️ Writing practice"),
         ["bot.kind_reading"] = new("📖 Oʻqish mashqi", "📖 Упражнение: чтение", "📖 Reading practice"),
+        ["bot.kind_shadowing"] = new("🎬 Shadowing: bitta dars", "🎬 Shadowing: один урок", "🎬 Shadowing: one lesson"),
         ["bot.kind_listening"] = new("🎧 Tinglash mashqi", "🎧 Упражнение: аудирование", "🎧 Listening practice"),
         ["bot.kind_mock"] = new("🏁 {0} {1} — mock imtihon", "🏁 {0} {1} — пробный экзамен", "🏁 {0} {1} mock exam"),
         ["bot.today_progress"] = new("{0}/{1} bajarildi", "выполнено {0} из {1}", "{0} of {1} done"),

@@ -30,6 +30,7 @@ public static class BotToday
     public static string KindLabel(string lang, string kind, int? target) => kind.Split(':') switch
     {
         ["review"] => Texts.Get(lang, "bot.kind_review", target ?? 0),
+        ["shadowing"] => Texts.Get(lang, "bot.kind_shadowing"),
         ["practice", var skill] => Texts.Get(lang, $"bot.kind_{skill}"),
         ["mock", var exam, var module] => Texts.Get(lang, "bot.kind_mock", ExamName(exam), Module(module)),
         _ => kind,

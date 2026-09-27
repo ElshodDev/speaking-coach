@@ -10,7 +10,7 @@ export const CEFR_TARGETS = ['B1', 'B2', 'C1'];
 
 export interface PlanItem {
   key: string;
-  kind: 'review' | 'practice' | 'mock';
+  kind: 'review' | 'practice' | 'mock' | 'shadowing';
   route: string;
   done: boolean;
   minutes: number;

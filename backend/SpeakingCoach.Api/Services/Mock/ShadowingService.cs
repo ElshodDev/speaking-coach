@@ -5,7 +5,10 @@ using SpeakingCoach.Api.Data;
 namespace SpeakingCoach.Api.Services.Mock;
 
 /// <summary>Ro'yxatdagi qisqa ma'lumot (gaplarsiz).</summary>
-public record ShadowingSummary(string Id, string Kind, string Title, string Level, string? VideoId, string[] Characters, int Lines, int Seconds);
+public record ShadowingSummary(string Id, string Kind, string Title, string Level, string? VideoId, string[] Characters, int Lines, int Seconds, int Episode = 0);
+
+/// <summary>Foydalanuvchining dars bo'yicha natijasi: necha marta yakunlagan va eng yaxshi o'rtacha AI bahosi.</summary>
+public record ShadowingProgress(string LessonId, int Times, int? Best);
 
 /// <summary>
 /// Shadowing darslari: koddagi tayyor darslar (ShadowingBank) + bot orqali
@@ -32,21 +35,53 @@ public class ShadowingService(AppDbContext db)
         }
     }
 
-    public static ShadowingSummary Summarize(ShadowingLesson l) =>
-        new(l.Id, l.Kind, l.Title, l.Level, l.VideoId, l.Characters, l.Lines.Count, ShadowingRules.Seconds(l));
+    public static ShadowingSummary Summarize(ShadowingLesson l, int episode = 0) =>
+        new(l.Id, l.Kind, l.Title, l.Level, l.VideoId, l.Characters, l.Lines.Count, ShadowingRules.Seconds(l), episode);
 
-    /// <summary>Hamma chop etilgan darslar: avval darajasi bo'yicha, keyin eng yangilari.</summary>
-    public async Task<List<ShadowingLesson>> LessonsAsync()
+    /// <summary>
+    /// Seriyalar: har tur (video / qahramonlar) — alohida seriya, darslar
+    /// qo'shilgan tartibda raqamlanadi (#1, #2...): avval tayyor darslar,
+    /// keyin bot orqali qo'shilganlar. Video seriyasi oldinda.
+    /// </summary>
+    public static List<ShadowingSummary> Number(IEnumerable<ShadowingLesson> lessonsInOrder) =>
+        lessonsInOrder
+            .GroupBy(l => l.Kind)
+            .OrderBy(g => g.Key == ShadowingRules.YouTube ? 0 : 1)
+            .SelectMany(g => g.Select((l, i) => Summarize(l, i + 1)))
+            .ToList();
+
+    /// <summary>Hamma chop etilgan darslar (seriya va raqami bilan).</summary>
+    public async Task<List<ShadowingSummary>> SummariesAsync()
     {
         var rows = await db.MockTests
             .Where(t => t.Exam == Exam && t.Status == MockTestStatus.Published)
-            .OrderByDescending(t => t.CreatedAtUtc)
+            .OrderBy(t => t.CreatedAtUtc)
             .Select(t => new { t.Id, t.Payload })
             .ToListAsync();
         var stored = rows.Select(r => Parse(r.Id, r.Payload)).OfType<ShadowingLesson>();
-        return stored.Concat(ShadowingBank.Lessons)
-            .OrderBy(l => Array.IndexOf(ShadowingRules.Levels, l.Level))
+        return Number(ShadowingBank.Lessons.Concat(stored));
+    }
+
+    /// <summary>Faoliyatlardan (prompt, javob JSON) dars bo'yicha natijalar.</summary>
+    public static List<ShadowingProgress> ProgressOf(IEnumerable<(string Prompt, string Response)> activities) =>
+        activities
+            .Select(a => (Id: Endpoints.ShadowingEndpoints.LessonIdOf(a.Prompt), Avg: AverageOf(a.Response)))
+            .Where(a => a.Id is not null)
+            .GroupBy(a => a.Id!)
+            .Select(g => new ShadowingProgress(g.Key, g.Count(), g.Max(x => x.Avg)))
             .ToList();
+
+    private static int? AverageOf(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            return doc.RootElement.TryGetProperty("average", out var v) && v.ValueKind == JsonValueKind.Number ? v.GetInt32() : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     public async Task<ShadowingLesson?> FindAsync(string? id)

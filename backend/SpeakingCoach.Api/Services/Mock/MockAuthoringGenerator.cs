@@ -82,7 +82,7 @@ public partial class GeminiMockGenerator : IMockAuthoring
             ShadowingRules.CharacterPrompt(source, pair, level),
             l => ShadowingRules.Validate(ShadowingRules.TrimCharacters(l with { Kind = ShadowingRules.Character, VideoId = null, From = null, To = null })),
             ct, attempts: 3, source.IsTopic ? null : extra);
-        return ShadowingRules.TrimCharacters(made with { Id = "new", Kind = ShadowingRules.Character, VideoId = null, From = null, To = null });
+        return ShadowingRules.TrimCharacters(made with { Id = "new", Kind = ShadowingRules.Character, VideoId = null, From = null, To = null, Lines = ShadowingRules.CleanLines(made.Lines) });
     }
 
     /// <summary>Video va oraliq — havoladan (AI emas); vaqtlar kerak bo'lsa suriladi.</summary>

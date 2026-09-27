@@ -14,11 +14,17 @@ namespace SpeakingCoach.Api.Services.Mock;
 // Bazada MockTests jadvalida saqlanadi (Exam = "shadowing") — bot orqali
 // qo'shish, admin tasdig'i va /bank o'sha oqimdan foydalanadi.
 
+/// <summary>
+/// Bitta gap. Tr — tarjimalar ("uz", "ru"); Keys — o'rganishga arziydigan
+/// 0–2 so'z (qatorda rang bilan ajratiladi). Ikkalasi ham ixtiyoriy.
+/// </summary>
 public record ShadowLine(
     [property: JsonPropertyName("text")] string Text,
     [property: JsonPropertyName("start")] double? Start = null,
     [property: JsonPropertyName("end")] double? End = null,
-    [property: JsonPropertyName("speaker")] int Speaker = 0);
+    [property: JsonPropertyName("speaker")] int Speaker = 0,
+    [property: JsonPropertyName("tr")] Dictionary<string, string>? Tr = null,
+    [property: JsonPropertyName("keys")] string[]? Keys = null);
 
 public record ShadowingLesson(
     [property: JsonPropertyName("id")] string Id,
@@ -166,9 +172,40 @@ public static partial class ShadowingRules
             var text = (l.Text ?? "").Trim();
             if (text.Length == 0) continue;
             if (result.Count > 0 && Key(result[^1].Text) == Key(text)) continue;
-            result.Add(l with { Text = text });
+            result.Add(Extras(l with { Text = text }));
         }
         return result;
+    }
+
+    public static readonly string[] TranslationLangs = ["uz", "ru"];
+
+    /// <summary>
+    /// Tarjima va kalit so'zlarni tartibga soladi: faqat uz/ru, 300 belgigacha;
+    /// kalit so'z — shu gapda haqiqatan bor so'z, ko'pi bilan 3 ta.
+    /// </summary>
+    public static ShadowLine Extras(ShadowLine l)
+    {
+        Dictionary<string, string>? tr = null;
+        if (l.Tr is { Count: > 0 })
+        {
+            tr = l.Tr
+                .Where(kv => TranslationLangs.Contains(kv.Key) && !string.IsNullOrWhiteSpace(kv.Value))
+                .ToDictionary(kv => kv.Key, kv => kv.Value.Trim().Length > 300 ? kv.Value.Trim()[..300] : kv.Value.Trim());
+            if (tr.Count == 0) tr = null;
+        }
+        string[]? keys = null;
+        if (l.Keys is { Length: > 0 })
+        {
+            var words = Tokens(l.Text).Select(Norm).ToHashSet();
+            keys = l.Keys
+                .Select(k => (k ?? "").Trim())
+                .Where(k => k.Length > 1 && words.Contains(Norm(k)))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(3)
+                .ToArray();
+            if (keys.Length == 0) keys = null;
+        }
+        return l with { Tr = tr, Keys = keys };
     }
 
     public static int Words(string text) => text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
@@ -299,9 +336,14 @@ public static partial class ShadowingRules
         Return exactly this JSON:
         {"id": "new", "kind": "youtube", "title": "<short English title for the clip, max 60 characters>", "level": "<A1|A2|B1|B2|C1>",
          "videoId": "{{{clip.VideoId}}}", "from": {{{clip.From.ToString(CultureInfo.InvariantCulture)}}}, "to": {{{clip.To.ToString(CultureInfo.InvariantCulture)}}}, "characters": [],
-         "lines": [{"text": "<line>", "start": <seconds>, "end": <seconds>, "speaker": 0}]}
+         "lines": [{"text": "<line>", "start": <seconds>, "end": <seconds>, "speaker": 0, {{{ExtrasShape}}}}]}
+        {{{ExtrasRule}}}
         Return ONLY valid JSON, no markdown fences.
         """;
+
+    private const string ExtrasShape = "\"tr\": {\"uz\": \"<natural Uzbek translation, Latin script with oʻ gʻ and ʼ>\", \"ru\": \"<natural Russian translation>\"}, \"keys\": [\"<0 to 2 words from this line worth learning>\"]";
+
+    private const string ExtrasRule = "Translations are natural and short, not word for word. \"keys\" are useful words for this level copied exactly from the line (skip very common words; an empty list is fine).";
 
     public static string CharacterPrompt(AuthorSource src, string[] characters, string level) => $$$"""
         You are writing a SHADOWING lesson for English learners at CEFR level {{{level}}}. Two friendly cartoon characters,
@@ -313,7 +355,8 @@ public static partial class ShadowingRules
         Return exactly this JSON:
         {"id": "new", "kind": "character", "title": "<short English title, max 60 characters>", "level": "{{{level}}}",
          "videoId": null, "from": null, "to": null, "characters": ["{{{characters[0]}}}", "{{{characters[1]}}}"],
-         "lines": [{"text": "<line>", "start": null, "end": null, "speaker": <0 or 1>}]}
+         "lines": [{"text": "<line>", "start": null, "end": null, "speaker": <0 or 1>, {{{ExtrasShape}}}}]}
+        {{{ExtrasRule}}}
         Return ONLY valid JSON, no markdown fences.
         """;
 
@@ -331,71 +374,75 @@ public static partial class ShadowingRules
 /// <summary>Ilovaning o'z darslari (qahramonlar) — bot orqali qo'shilganlarsiz ham bo'lim bo'sh qolmasin.</summary>
 public static class ShadowingBank
 {
-    private static ShadowingLesson Dialogue(string id, string title, string level, string a, string b, params string[] lines) =>
-        new(id, ShadowingRules.Character, title, level, null, null, null, [a, b],
-            lines.Select((t, i) => new ShadowLine(t, Speaker: i % 2)).ToList());
+    /// <summary>Gap: matn, o'zbekcha va ruscha tarjima, o'rganishga arziydigan so'zlar.</summary>
+    private static ShadowLine L(string text, string uz, string ru, params string[] keys) =>
+        new(text, Tr: new Dictionary<string, string> { ["uz"] = uz, ["ru"] = ru }, Keys: keys.Length == 0 ? null : keys);
 
-    private static ShadowingLesson Monologue(string id, string title, string level, string who, params string[] lines) =>
-        new(id, ShadowingRules.Character, title, level, null, null, null, [who], lines.Select(t => new ShadowLine(t)).ToList());
+    private static ShadowingLesson Dialogue(string id, string title, string level, string a, string b, params ShadowLine[] lines) =>
+        new(id, ShadowingRules.Character, title, level, null, null, null, [a, b],
+            lines.Select((l, i) => l with { Speaker = i % 2 }).ToList());
+
+    private static ShadowingLesson Monologue(string id, string title, string level, string who, params ShadowLine[] lines) =>
+        new(id, ShadowingRules.Character, title, level, null, null, null, [who], lines.ToList());
 
     public static readonly ShadowingLesson[] Lessons =
     [
         Dialogue("c-cafe", "At the café", "A2", "cat", "bear",
-            "Good morning! What would you like to drink?",
-            "Hi! Can I have a large hot chocolate, please?",
-            "Of course. Would you like some cream on top?",
-            "Yes, please. And a piece of honey cake.",
-            "Great choice. Is that for here or to go?",
-            "For here. I'm meeting a friend at ten.",
-            "No problem. That's six dollars, please.",
-            "Here you are. Thanks a lot!"),
+            L("Good morning! What would you like to drink?", "Xayrli tong! Nima ichishni xohlaysiz?", "Доброе утро! Что будете пить?"),
+            L("Hi! Can I have a large hot chocolate, please?", "Salom! Menga katta issiq shokolad bera olasizmi?", "Привет! Можно мне большой горячий шоколад?", "chocolate"),
+            L("Of course. Would you like some cream on top?", "Albatta. Ustiga qaymoq qoʻshaymi?", "Конечно. Добавить сверху сливки?", "cream"),
+            L("Yes, please. And a piece of honey cake.", "Ha, iltimos. Yana bir boʻlak asalli tort.", "Да, пожалуйста. И кусочек медового торта.", "piece", "honey"),
+            L("Great choice. Is that for here or to go?", "Zoʻr tanlov. Shu yerda yeysizmi yoki olib ketasizmi?", "Отличный выбор. Здесь или с собой?", "choice"),
+            L("For here. I'm meeting a friend at ten.", "Shu yerda. Soat oʻnda doʻstim bilan uchrashaman.", "Здесь. В десять я встречаюсь с другом.", "meeting"),
+            L("No problem. That's six dollars, please.", "Muammo yoʻq. Olti dollar boʻladi.", "Без проблем. С вас шесть долларов."),
+            L("Here you are. Thanks a lot!", "Mana, marhamat. Katta rahmat!", "Вот, пожалуйста. Большое спасибо!")),
         Dialogue("c-weekend", "Weekend plans", "A2", "fox", "penguin",
-            "What are you doing this weekend?",
-            "I'm going to the beach with my family.",
-            "Lucky you! Isn't it too cold for swimming?",
-            "Not for me. I love cold water!",
-            "I'm staying at home. I need to clean my room.",
-            "Why don't you come with us on Sunday?",
-            "Really? That sounds like fun.",
-            "Great. We're leaving at nine in the morning."),
+            L("What are you doing this weekend?", "Shu dam olish kunlari nima qilyapsan?", "Что ты делаешь на этих выходных?", "weekend"),
+            L("I'm going to the beach with my family.", "Oilam bilan dengiz boʻyiga boraman.", "Я еду на пляж с семьёй.", "beach"),
+            L("Lucky you! Isn't it too cold for swimming?", "Omading bor ekan! Suzish uchun juda sovuq emasmi?", "Везёт тебе! Не слишком холодно для купания?", "lucky"),
+            L("Not for me. I love cold water!", "Men uchun emas. Men sovuq suvni yaxshi koʻraman!", "Не для меня. Я обожаю холодную воду!"),
+            L("I'm staying at home. I need to clean my room.", "Men uyda qolaman. Xonamni yigʻishtirishim kerak.", "Я остаюсь дома. Мне нужно убраться в комнате.", "clean"),
+            L("Why don't you come with us on Sunday?", "Yakshanba kuni biz bilan bormaysanmi?", "Почему бы тебе не поехать с нами в воскресенье?"),
+            L("Really? That sounds like fun.", "Rostdanmi? Qiziq boʻlsa kerak.", "Правда? Звучит весело.", "sounds"),
+            L("Great. We're leaving at nine in the morning.", "Zoʻr. Ertalab soat toʻqqizda yoʻlga chiqamiz.", "Отлично. Мы выезжаем в девять утра.", "leaving")),
         Dialogue("c-interview", "A job interview", "B1", "owl", "robot",
-            "Thank you for coming in today. Please take a seat.",
-            "Thank you for inviting me. I'm really glad to be here.",
-            "Could you tell me a little about your experience?",
-            "I've worked in a busy library for three years.",
-            "Interesting. What did you enjoy most about that job?",
-            "Helping people find exactly what they were looking for.",
-            "And how do you usually deal with stress?",
-            "I make a list and focus on one task at a time.",
-            "That sounds sensible. Do you have any questions for us?",
-            "Yes. What would a typical day look like here?"),
+            L("Thank you for coming in today. Please take a seat.", "Bugun kelganingiz uchun rahmat. Marhamat, oʻtiring.", "Спасибо, что пришли сегодня. Присаживайтесь, пожалуйста.", "seat"),
+            L("Thank you for inviting me. I'm really glad to be here.", "Taklif qilganingiz uchun rahmat. Bu yerda boʻlganimdan juda xursandman.", "Спасибо за приглашение. Я очень рад быть здесь.", "inviting", "glad"),
+            L("Could you tell me a little about your experience?", "Tajribangiz haqida biroz gapirib bera olasizmi?", "Не могли бы вы немного рассказать о своём опыте?", "experience"),
+            L("I've worked in a busy library for three years.", "Men uch yil gavjum kutubxonada ishlaganman.", "Я три года работал в оживлённой библиотеке.", "busy", "library"),
+            L("Interesting. What did you enjoy most about that job?", "Qiziq. Oʻsha ishda sizga eng koʻp nima yoqardi?", "Интересно. Что вам больше всего нравилось в той работе?", "enjoy"),
+            L("Helping people find exactly what they were looking for.", "Odamlarga aynan izlagan narsasini topishda yordam berish.", "Помогать людям находить именно то, что они искали.", "exactly"),
+            L("And how do you usually deal with stress?", "Stressni odatda qanday yengasiz?", "А как вы обычно справляетесь со стрессом?", "deal", "stress"),
+            L("I make a list and focus on one task at a time.", "Roʻyxat tuzaman va har safar bitta vazifaga eʼtibor qarataman.", "Я составляю список и сосредотачиваюсь на одной задаче за раз.", "focus", "task"),
+            L("That sounds sensible. Do you have any questions for us?", "Oqilona fikr. Bizga savollaringiz bormi?", "Звучит разумно. У вас есть к нам вопросы?", "sensible"),
+            L("Yes. What would a typical day look like here?", "Ha. Bu yerda odatiy kun qanday oʻtadi?", "Да. Как здесь выглядит обычный рабочий день?", "typical")),
         Dialogue("c-directions", "Asking for directions", "B1", "penguin", "fox",
-            "Excuse me, could you help me? I think I'm lost.",
-            "Sure. Where are you trying to go?",
-            "I'm looking for the train station.",
-            "Go straight ahead and turn left at the traffic lights.",
-            "Is it far from here? My bags are really heavy.",
-            "It's about ten minutes on foot, or you could take the number five bus.",
-            "Where's the nearest bus stop?",
-            "Just across the road, in front of the bakery.",
-            "Thank you so much. You've saved my day!"),
+            L("Excuse me, could you help me? I think I'm lost.", "Kechirasiz, yordam bera olasizmi? Adashib qoldim shekilli.", "Извините, не могли бы вы помочь? Кажется, я заблудился.", "lost"),
+            L("Sure. Where are you trying to go?", "Albatta. Qayerga bormoqchisiz?", "Конечно. Куда вы хотите попасть?"),
+            L("I'm looking for the train station.", "Temir yoʻl vokzalini qidiryapman.", "Я ищу железнодорожный вокзал.", "station"),
+            L("Go straight ahead and turn left at the traffic lights.", "Toʻgʻriga yuring va svetoforda chapga buriling.", "Идите прямо и на светофоре поверните налево.", "straight", "traffic"),
+            L("Is it far from here? My bags are really heavy.", "Bu yerdan uzoqmi? Sumkalarim juda ogʻir.", "Это далеко отсюда? У меня очень тяжёлые сумки.", "heavy"),
+            L("It's about ten minutes on foot, or you could take the number five bus.", "Piyoda taxminan oʻn daqiqa, yoki beshinchi avtobusga chiqishingiz mumkin.", "Минут десять пешком, или можно сесть на пятый автобус.", "foot"),
+            L("Where's the nearest bus stop?", "Eng yaqin avtobus bekati qayerda?", "Где ближайшая автобусная остановка?", "nearest"),
+            L("Just across the road, in front of the bakery.", "Yoʻlning naryogʻida, novvoyxona oldida.", "Прямо через дорогу, напротив пекарни.", "across", "bakery"),
+            L("Thank you so much. You've saved my day!", "Katta rahmat. Meni qutqardingiz!", "Большое спасибо. Вы меня очень выручили!", "saved")),
         Dialogue("c-sleep", "Screens and sleep", "B2", "owl", "robot",
-            "You look exhausted. Did you stay up late again?",
-            "I did. I kept scrolling through videos until two in the morning.",
-            "Apparently, the light from screens makes it harder to fall asleep.",
-            "I've heard that, but it's become a habit I can't seem to break.",
-            "Why not leave your phone in another room overnight?",
-            "Then I'd need an old-fashioned alarm clock to wake me up.",
-            "That's a small price to pay for a decent night's sleep.",
-            "Fair point. I'll give it a try for a week and see what happens."),
+            L("You look exhausted. Did you stay up late again?", "Juda charchagan koʻrinasan. Yana kech yotdingmi?", "Ты выглядишь измотанным. Опять допоздна не спал?", "exhausted"),
+            L("I did. I kept scrolling through videos until two in the morning.", "Ha. Tungi soat ikkigacha videolarni varaqlab oʻtirdim.", "Да. Листал видео до двух часов ночи.", "scrolling"),
+            L("Apparently, the light from screens makes it harder to fall asleep.", "Aytishlaricha, ekran nuri uxlab qolishni qiyinlashtirar ekan.", "Говорят, свет от экранов мешает заснуть.", "apparently", "asleep"),
+            L("I've heard that, but it's become a habit I can't seem to break.", "Eshitganman, lekin bu tashlay olmayotgan odatimga aylanib qoldi.", "Я слышал, но это стало привычкой, от которой никак не избавиться.", "habit"),
+            L("Why not leave your phone in another room overnight?", "Telefoningni tunda boshqa xonada qoldirsang-chi?", "Почему бы не оставлять телефон на ночь в другой комнате?", "overnight"),
+            L("Then I'd need an old-fashioned alarm clock to wake me up.", "Unda meni uygʻotish uchun eski usuldagi budilnik kerak boʻladi.", "Тогда мне понадобится старомодный будильник.", "alarm"),
+            L("That's a small price to pay for a decent night's sleep.", "Yaxshi uyqu uchun bu arzimas narsa.", "Это небольшая плата за нормальный сон.", "price", "decent"),
+            L("Fair point. I'll give it a try for a week and see what happens.", "Toʻgʻri gap. Bir hafta sinab koʻraman, nima boʻlishini koʻramiz.", "Справедливо. Попробую неделю и посмотрю, что будет.", "fair")),
         Monologue("c-city", "Living in a big city", "B2", "bear",
-            "Living in a big city has its advantages, but it certainly isn't for everyone.",
-            "On the one hand, you have access to excellent jobs, museums and restaurants.",
-            "Public transport often means you don't even need a car.",
-            "On the other hand, rents are usually extremely high.",
-            "The noise and the crowds can also be quite overwhelming.",
-            "Personally, I think the best option is to live just outside the city.",
-            "That way, you get peace and quiet, and the city is still within reach."),
+            L("Living in a big city has its advantages, but it certainly isn't for everyone.", "Katta shaharda yashashning afzalliklari bor, lekin bu hamma uchun emas.", "У жизни в большом городе есть свои плюсы, но она точно подходит не всем.", "advantages", "certainly"),
+            L("On the one hand, you have access to excellent jobs, museums and restaurants.", "Bir tomondan, zoʻr ish joylari, muzeylar va restoranlar qoʻl ostingizda.", "С одной стороны, у вас есть доступ к отличной работе, музеям и ресторанам.", "access"),
+            L("Public transport often means you don't even need a car.", "Jamoat transporti tufayli koʻpincha mashina ham kerak boʻlmaydi.", "Благодаря общественному транспорту часто даже не нужна машина.", "transport"),
+            L("On the other hand, rents are usually extremely high.", "Boshqa tomondan, ijara narxlari odatda juda baland.", "С другой стороны, аренда обычно очень дорогая.", "rents", "extremely"),
+            L("The noise and the crowds can also be quite overwhelming.", "Shovqin va olomon ham ancha charchatishi mumkin.", "Шум и толпы тоже могут изрядно утомлять.", "crowds", "overwhelming"),
+            L("Personally, I think the best option is to live just outside the city.", "Menimcha, eng yaxshi yoʻl — shahar chetida yashash.", "Лично я считаю, что лучше всего жить недалеко от города.", "personally", "option"),
+            L("That way, you get peace and quiet, and the city is still within reach.", "Shunda ham tinchlik-osoyishtalik boʻladi, ham shahar yaqin boʻladi.", "Так у вас есть тишина и покой, а город всё равно рядом.", "peace", "reach")),
     ];
 
     public static ShadowingLesson? Find(string? id) => Lessons.FirstOrDefault(l => l.Id == id);

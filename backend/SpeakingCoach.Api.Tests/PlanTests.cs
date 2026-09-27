@@ -17,12 +17,13 @@ public class PlanTests
     public void Plan_has_review_skill_of_the_day_and_a_mock_for_exam_takers()
     {
         var p = PlanLogic.Build(In());
-        Assert.Equal(["review", "practice", "mock"], p.Items.Select(x => x.Kind).ToArray());
+        Assert.Equal(["review", "practice", "shadowing", "mock"], p.Items.Select(x => x.Kind).ToArray());
         Assert.Equal(0, p.Items[0].Progress);
         Assert.Equal(10, p.Items[0].Target);
         Assert.StartsWith("practice/", p.Items[1].Route);
-        Assert.Equal("mock:ielts:speaking", p.Items[2].Key);   // hali hech narsa topshirmagan — birinchi bo'lim
-        Assert.Equal("mock/speaking", p.Items[2].Route);
+        Assert.Equal("shadowing", p.Items[2].Route);
+        Assert.Equal("mock:ielts:speaking", p.Items[3].Key);   // hali hech narsa topshirmagan — birinchi bo'lim
+        Assert.Equal("mock/speaking", p.Items[3].Route);
         Assert.All(p.Items, x => Assert.False(x.Done));
     }
 
@@ -49,7 +50,7 @@ public class PlanTests
     public void Items_are_done_by_what_happened_today()
     {
         var skill = PlanLogic.Skills[Today.DayNumber % 4];
-        var p = PlanLogic.Build(In(reviewed: 10, practiced: [skill], mocked: ["reading"]));
+        var p = PlanLogic.Build(In(reviewed: 10, practiced: [skill, "shadowing"], mocked: ["reading"]));
         Assert.All(p.Items, x => Assert.True(x.Done));
         Assert.Equal("mock:ielts:reading", p.Items.Single(x => x.Kind == "mock").Key);   // bugun qilingani ko'rsatiladi
         // Takrorlanadigan karta qolmagan bo'lsa, 10 taga yetmasa ham bajarildi.
@@ -61,8 +62,8 @@ public class PlanTests
     public void No_review_item_without_cards_and_no_mock_for_general_english()
     {
         var p = PlanLogic.Build(In(goal: "general", total: 0, due: 0));
-        Assert.Equal(["practice"], p.Items.Select(x => x.Kind).ToArray());
-        Assert.Single(PlanLogic.Build(In(goal: null, total: 0, due: 0)).Items);
+        Assert.Equal(["practice", "shadowing"], p.Items.Select(x => x.Kind).ToArray());
+        Assert.Single(PlanLogic.Build(In(goal: null, minutes: 10, total: 0, due: 0)).Items);
     }
 
     [Fact]
@@ -133,4 +134,13 @@ public class PlanTests
     [InlineData(ActivityType.Listening, "listening")]
     [InlineData(ActivityType.MockExam, null)]
     public void Activity_to_skill(ActivityType type, string? skill) => Assert.Equal(skill, PlanLogic.SkillOf(type));
+
+    [Fact]
+    public void Shadowing_is_offered_from_20_minutes_and_done_by_a_shadowing_lesson()
+    {
+        Assert.DoesNotContain(PlanLogic.Build(In(minutes: 10)).Items, x => x.Kind == "shadowing");
+        Assert.Contains(PlanLogic.Build(In(minutes: null)).Items, x => x.Kind == "shadowing");   // sukut — 20 daqiqa
+        Assert.True(PlanLogic.Build(In(practiced: ["shadowing"])).Items.Single(x => x.Kind == "shadowing").Done);
+        Assert.Equal("shadowing", PlanLogic.SkillOf(ActivityType.Shadowing));
+    }
 }

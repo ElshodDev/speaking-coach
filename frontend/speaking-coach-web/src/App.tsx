@@ -216,7 +216,7 @@ function App() {
       </>
     );
   } else if (section === 'shadowing' && sub) {
-    page = <ShadowingLessonPage key={`${sub}-${userKey}`} id={sub} go={go} loggedIn={loggedIn} />;
+    page = <ShadowingLessonPage key={`${sub}-${userKey}`} id={sub} go={go} loggedIn={loggedIn} onLogin={toLogin} />;
   } else if (section === 'shadowing') {
     page = <ShadowingList go={go} />;
   } else if (section === 'mock' && sub === 'result' && third) {

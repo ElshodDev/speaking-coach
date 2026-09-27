@@ -32,8 +32,19 @@ public static class ShadowingEndpoints
 
     public static void MapShadowingEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/shadowing", async (ShadowingService lessons) =>
-            Results.Ok((await lessons.LessonsAsync()).Select(ShadowingService.Summarize)));
+        app.MapGet("/api/shadowing", async (ShadowingService lessons) => Results.Ok(await lessons.SummariesAsync()));
+
+        // Foydalanuvchining natijalari: qaysi darslar bajarilgan va eng yaxshi ball (mehmon — bo'sh).
+        app.MapGet("/api/shadowing/progress", async (HttpRequest request, AuthService auth, AppDbContext db) =>
+        {
+            var userId = await auth.GetCurrentUserIdAsync(request);
+            if (userId is null) return Results.Ok(Array.Empty<ShadowingProgress>());
+            var rows = await db.Activities
+                .Where(a => a.UserId == userId && a.Type == ActivityType.Shadowing)
+                .Select(a => new { a.PromptData, a.ResponseData })
+                .ToListAsync();
+            return Results.Ok(ShadowingService.ProgressOf(rows.Select(r => (r.PromptData, r.ResponseData))));
+        });
 
         app.MapGet("/api/shadowing/{id}", async (string id, HttpRequest request, ShadowingService lessons) =>
             await lessons.FindAsync(id) is { } l ? Results.Ok(l) : Results.NotFound(request.Error("shadowing.not_found")));

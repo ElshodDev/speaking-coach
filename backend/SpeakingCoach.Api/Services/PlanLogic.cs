@@ -77,6 +77,12 @@ public static class PlanLogic
             items.Add(new Item($"practice:{skill}", "practice", $"practice/{skill}", i.PracticedToday.Contains(skill), 10));
         }
 
+        // 2b) Shadowing — talaffuz uchun qisqa dars (kuniga 20 daqiqa va undan ko'p ajratganlarga).
+        if (minutes >= 20)
+        {
+            items.Add(new Item("shadowing", "shadowing", "shadowing", i.PracticedToday.Contains("shadowing"), 5));
+        }
+
         // 3) Mock — imtihonga tayyorlanayotganlar uchun.
         int? daysToExam = i.ExamDate is { } d && d >= i.Today ? d.DayNumber - i.Today.DayNumber : null;
         if (i.Goal is "ielts" or "cefr")
@@ -117,6 +123,7 @@ public static class PlanLogic
         ActivityType.Writing => "writing",
         ActivityType.Reading => "reading",
         ActivityType.Listening => "listening",
+        ActivityType.Shadowing => "shadowing",
         _ => null,
     };
 }

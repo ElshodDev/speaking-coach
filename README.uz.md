@@ -98,20 +98,32 @@ qolishga** yordam beradigan takrorlash tizimi:
   qurilmada saqlanadi, natijani Telegram yoki telefonning "Ulashish"
   oynasi orqali doʻstga yuborish mumkin.
 - **🎬 Shadowing** — gapma-gap tinglab, darhol takrorlash (Mashqlar →
-  Shadowing). Ikki xil dars: **YouTube video** (youtube-nocookie pleyerida;
-  har gap oʻz vaqtida oʻynab, toʻxtaydi, tagida yozuvi chiqadi) va
-  **qahramonlar** — ilovaning oʻz SVG qahramonlari (mushuk, boyoʻgʻli, robot,
-  tulki, ayiq, pingvin) brauzer ovozida navbatma-navbat gapiradi, gapirganda
-  ogʻzi qimirlaydi. Boshqaruv: qayta, oldingi/keyingi, takror (loop), tezlik
-  0.75×/1×/1.25× va **avto-shadowing** (har gapdan keyin takrorlash uchun
-  pauza, soʻng keyingi gap). Oʻquvchi ovozini yozib asl bilan solishtiradi;
-  **✅ AI tekshirish** — Gemini ball, har soʻz holati (xato soʻz qizil) va
-  bitta maslahat beradi (alohida kunlik limit: 60 ta, mehmonga 10 ta; yozuv
-  saqlanmaydi). Darsni tugatish — +15 XP va seriya. Tayyor 6 ta qahramonlar
-  darsi (A2–B2) bor; yangi darslarni oʻqituvchi/admin botda qoʻshadi:
-  `/add` → 🎬 Shadowing → YouTube havolasi (`https://youtu.be/ID 1:20-3:40`,
-  koʻpi bilan 5 daqiqa — Gemini videoni oʻzi tinglab, gaplarni vaqti bilan
-  yozadi) yoki qahramonlar uchun mavzu/matn.
+  Shadowing). Ikki seriya: **🎬 Jonli ingliz tili** — YouTube video
+  (youtube-nocookie pleyerida; har gap oʻz vaqtida oʻynab, toʻxtaydi) va
+  **🐾 Kundalik suhbatlar** — ilovaning oʻz SVG qahramonlari (mushuk,
+  boyoʻgʻli, robot, tulki, ayiq, pingvin) brauzer ovozida navbatma-navbat
+  gapiradi, gapirganda ogʻzi qimirlaydi. Darslar raqamlangan (#1, #2…),
+  roʻyxatda bajarilganlari ✓ va eng yaxshi ball bilan.
+  - Pleyer: video/qahramonlar telefonda tepada yopishib turadi, yozuv video
+    ustida **karaoke** usulida yonadi (brauzer soʻz chegaralari yoki vaqt
+    boʻyicha), boshqaruv paneli pastda: qayta, oldingi/keyingi, takror
+    (oʻchiq → 3× → ∞), tezlik 0.5×–1.5×.
+  - Rejimlar: **oddiy**, **avto** (har gapdan keyin takrorlash uchun pauza) va
+    **qoʻl tegizmasdan** (gap → siz takrorlaysiz, oʻzi yoziladi → ovozingiz
+    eshittiriladi → keyingi gap).
+  - Soʻz yordami: joriy qatordagi istalgan soʻzni bosib — maʼnosi va
+    lugʻatga qoʻshish; kalit soʻzlar rangli; **🌐 Tarjima** — har qatorning
+    oʻzbekcha/ruscha tarjimasi.
+  - Ovozingizni yozib asl bilan solishtirasiz; **✅ AI tekshirish** — ball,
+    har soʻz holati va bitta maslahat; yozilgan barcha gaplarni bir bosishda
+    tekshirish mumkin (alohida kunlik limit: 60 ta, mehmonga 10 ta; yozuv
+    saqlanmaydi). Darsni tugatish — +15 XP, seriya va **"Keyingi dars →"**.
+  - "Bugungi reja"da (kuniga 20 daqiqa va koʻproq) — bitta Shadowing darsi.
+  - Tayyor 6 ta qahramonlar darsi (A2–B2, tarjima va kalit soʻzlar bilan);
+    yangi darslarni oʻqituvchi/admin botda qoʻshadi: `/add` → 🎬 Shadowing →
+    YouTube havolasi (`https://youtu.be/ID 1:20-3:40`, koʻpi bilan 5 daqiqa —
+    Gemini videoni tinglab, gaplarni vaqti, tarjimasi va kalit soʻzlari bilan
+    yozadi) yoki qahramonlar uchun mavzu/matn.
 - **🧭 Tanishtiruv va "Bugungi reja"** — birinchi kirishda 4 ta qisqa savol:
   maqsad (IELTS, CEFR yoki umumiy ingliz tili), daraja ("bilmayman" → B1),
   maqsad ball va imtihon sanasi (umumiy ingliz tilida soʻralmaydi), kuniga
@@ -286,8 +298,8 @@ npm run dev
 ### 7. Avtomatik testlar
 
 ```bash
-dotnet test backend/SpeakingCoach.Api.Tests   # backend: 495 ta unit test
-cd frontend/speaking-coach-web && npm test     # frontend: 103 ta vitest testi
+dotnet test backend/SpeakingCoach.Api.Tests   # backend: 502 ta unit test
+cd frontend/speaking-coach-web && npm test     # frontend: 113 ta vitest testi
 ```
 
 Xuddi shu testlar har bir push'da GitHub Actions'da ham ishlaydi

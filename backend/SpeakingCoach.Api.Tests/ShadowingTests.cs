@@ -275,4 +275,58 @@ public class ShadowingTests
         var alternating = Enumerable.Range(0, 6).Select(i => new ShadowLine(i % 2 == 0 ? "Dreams with purpose." : "Something else " + i + ".", 61 + i * 2, 62 + i * 2)).ToArray();
         Assert.Throws<InvalidOperationException>(() => ShadowingRules.Validate(Video(alternating)));
     }
+
+    [Fact]
+    public void Translations_and_key_words_are_sanitized()
+    {
+        var l = ShadowingRules.Extras(new ShadowLine("Apparently, it's a habit.", Tr: new() { ["uz"] = "  Aytishlaricha, bu odat. ", ["ru"] = "", ["de"] = "x" },
+            Keys: ["habit", "Apparently", "nonsense", "habit", " "]));
+        Assert.Equal("Aytishlaricha, bu odat.", l.Tr!["uz"]);
+        Assert.False(l.Tr.ContainsKey("ru"));
+        Assert.False(l.Tr.ContainsKey("de"));
+        Assert.Equal(["habit", "Apparently"], l.Keys);
+        Assert.Null(ShadowingRules.Extras(new ShadowLine("Hi.", Tr: new() { ["de"] = "x" }, Keys: ["bye"])).Tr);
+        Assert.Null(ShadowingRules.Extras(new ShadowLine("Hi.", Keys: ["bye"])).Keys);
+        Assert.Equal(300, ShadowingRules.Extras(new ShadowLine("Hi.", Tr: new() { ["uz"] = new string('a', 400) })).Tr!["uz"].Length);
+    }
+
+    [Fact]
+    public void Built_in_lessons_have_uzbek_and_russian_translations_and_real_key_words()
+    {
+        foreach (var line in ShadowingBank.Lessons.SelectMany(l => l.Lines))
+        {
+            Assert.True(line.Tr is { } tr && tr.ContainsKey("uz") && tr.ContainsKey("ru"), line.Text);
+            Assert.DoesNotMatch(new System.Text.RegularExpressions.Regex("[oOgG]'"), line.Tr!["uz"]);
+            Assert.Equal(line, ShadowingRules.Extras(line) with { Tr = line.Tr, Keys = line.Keys });
+            Assert.Equal(line.Keys?.Length ?? 0, ShadowingRules.Extras(line).Keys?.Length ?? 0);
+        }
+    }
+
+    [Fact]
+    public void Lessons_are_numbered_per_series_videos_first()
+    {
+        var video = Video(new ShadowLine("A.", 61, 62)) with { Id = "v1" };
+        var list = ShadowingService.Number([.. ShadowingBank.Lessons, video, video with { Id = "v2" }]);
+        Assert.Equal(["v1", "v2"], list.Take(2).Select(x => x.Id).ToList());
+        Assert.Equal([1, 2], list.Take(2).Select(x => x.Episode).ToList());
+        Assert.Equal("c-cafe", list[2].Id);
+        Assert.Equal(1, list[2].Episode);
+        Assert.Equal(ShadowingBank.Lessons.Length, list.Last().Episode);
+    }
+
+    [Fact]
+    public void Progress_counts_lessons_and_keeps_the_best_average()
+    {
+        var p = ShadowingService.ProgressOf([
+            ("{\"lessonId\": \"c-cafe\"}", "{\"lines\": 8, \"average\": 70}"),
+            ("{\"lessonId\": \"c-cafe\"}", "{\"lines\": 8, \"average\": 85}"),
+            ("{\"lessonId\": \"c-city\"}", "{\"lines\": 5, \"average\": null}"),
+            ("{}", "{}"),
+        ]);
+        Assert.Equal(2, p.Count);
+        var cafe = p.Single(x => x.LessonId == "c-cafe");
+        Assert.Equal(2, cafe.Times);
+        Assert.Equal(85, cafe.Best);
+        Assert.Null(p.Single(x => x.LessonId == "c-city").Best);
+    }
 }
