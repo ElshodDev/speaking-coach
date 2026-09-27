@@ -27,7 +27,7 @@ public partial class TelegramBot
         if (await CanAuthorAsync(c, ct)) return true;
         await _api.SendMessageAsync(c.ChatId, c.T("bot.author_denied"), new[]
         {
-            new[] { new TgButton(c.T("bot.open_site"), Url: $"{_options.FrontendUrl}/#/teacher") },
+            new[] { _options.SiteButton(c.T("bot.open_site"), "teacher") },
         }, ct: ct);
         return false;
     }

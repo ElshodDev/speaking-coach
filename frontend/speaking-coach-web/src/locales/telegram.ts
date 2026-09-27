@@ -18,6 +18,14 @@ export const telegramMsg = defineMessages(
     promoTitle: '📲 Telegramda eslatma va takrorlash',
     promoText: 'Kuniga bitta xabar — seriya uzilmaydi. Yoʻlda kartalarni chatda takrorlaysiz.',
     promoButton: 'Ulash',
+    features: [
+      '📋 Bugungi reja va oʻqituvchi vazifalari — chatning oʻzida',
+      '🔁 Kartalarni takrorlash, 📚 soʻz yuborib tarjima olish',
+      '⏰ Kuniga bitta eslatma — seriya uzilmaydi',
+      '📱 Saytni Telegram ichida ochish — parolsiz kirish',
+      '🧭 /guide — saytning har bir boʻlimi bir bosishda',
+    ],
+    linkedHint: 'Botda /guide — saytning boʻlimlari Telegram ichida ochiladi; 📱 “Ilovani ochish” bilan parolsiz kirasiz.',
   },
   {
     ru: {
@@ -36,6 +44,14 @@ export const telegramMsg = defineMessages(
       promoTitle: '📲 Напоминания и повторение в Telegram',
       promoText: 'Одно сообщение в день — серия не прервётся. Повторяйте карточки в дороге прямо в чате.',
       promoButton: 'Подключить',
+      features: [
+        '📋 План на сегодня и задания учителя — прямо в чате',
+        '🔁 Повторение карточек, 📚 перевод любого слова',
+        '⏰ Одно напоминание в день — серия не прервётся',
+        '📱 Сайт внутри Telegram — вход без пароля',
+        '🧭 /guide — любой раздел сайта в одно касание',
+      ],
+      linkedHint: 'В боте /guide — разделы сайта открываются прямо в Telegram; через 📱 «Открыть приложение» вход без пароля.',
     },
     en: {
       title: '📲 Telegram bot',
@@ -53,6 +69,14 @@ export const telegramMsg = defineMessages(
       promoTitle: '📲 Reminders and review in Telegram',
       promoText: 'One message a day keeps your streak alive. Review your cards in the chat on the go.',
       promoButton: 'Connect',
+      features: [
+        '📋 Today’s plan and teacher assignments — right in the chat',
+        '🔁 Review your cards, 📚 translate any word',
+        '⏰ One reminder a day — keep your streak',
+        '📱 Open the website inside Telegram — no password',
+        '🧭 /guide — every section of the website in one tap',
+      ],
+      linkedHint: 'In the bot, /guide opens any section of the website inside Telegram; 📱 “Open the app” signs you in without a password.',
     },
   },
 );

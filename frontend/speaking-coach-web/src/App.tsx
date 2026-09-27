@@ -16,7 +16,8 @@ import { Vocab } from './Vocab';
 import { UsageNote } from './Usage';
 import { AccountData } from './AccountData';
 import { TelegramCard } from './TelegramCard';
-import { apiJson, getToken, setLevel, setToken, type Profile as ProfileData } from './api';
+import { cleanLaunchUrl, readyTelegram, telegramLaunch } from './tgApp';
+import { apiJson, getToken, postJson, setLevel, setToken, type Profile as ProfileData } from './api';
 import { common, LangSelect, useLang, useT } from './i18n';
 import { appMsg } from './locales/app';
 import { homeMsg } from './locales/home';
@@ -98,6 +99,25 @@ function App() {
     apiJson<{ email: string }>('/api/auth/me')
       .then((me) => setEmail(me.email))
       .catch(() => setToken(null));
+  }, []);
+
+  // Telegram ichida (Mini App): skript, bot ulangan hisob bo'lsa — parolsiz kirish, keyin kerakli bo'lim.
+  useEffect(() => {
+    const launch = telegramLaunch;
+    if (!launch) return;
+    (async () => {
+      await readyTelegram();
+      if (!getToken() && launch.initData) {
+        try {
+          const r = await postJson<{ token: string; email: string }>('/api/auth/telegram', { initData: launch.initData });
+          setToken(r.token);
+          setEmail(r.email);
+        } catch {
+          // Bu Telegram hali hisobga ulanmagan — mehmon sifatida davom etadi.
+        }
+      }
+      cleanLaunchUrl(launch.route);
+    })();
   }, []);
 
   const loggedIn = email !== null;

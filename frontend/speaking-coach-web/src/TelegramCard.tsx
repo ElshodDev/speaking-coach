@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiFetch, apiJson, postJson } from './api';
+import { openExternal } from './tgApp';
 import { common, useLang, useT } from './i18n';
 import { telegramMsg } from './locales/telegram';
 
@@ -65,7 +66,7 @@ export function TelegramCard() {
         tzOffsetMinutes: new Date().getTimezoneOffset(),
         lang,
       });
-      window.open(url, '_blank', 'noopener');
+      openExternal(url);
       setWaiting(true);
       // 2 daqiqa davomida har 3 soniyada tekshiramiz — START bosilgach o'zi yangilanadi.
       let tries = 0;
@@ -115,6 +116,7 @@ export function TelegramCard() {
           <p className="muted small" style={{ margin: 0 }}>
             {t.pitch}
           </p>
+          <BotFeatures />
           <button className="btn btn-primary" onClick={connect}>
             {t.connect}
           </button>
@@ -132,6 +134,7 @@ export function TelegramCard() {
           <p className="success small" style={{ margin: 0 }}>
             {t.linked(status.username)}
           </p>
+          <p className="muted small" style={{ margin: 0 }}>{t.linkedHint}</p>
           <label className="small" style={{ fontWeight: 600 }} htmlFor="tg-reminder">
             {t.reminder}
           </label>
@@ -153,7 +156,16 @@ export function TelegramCard() {
             <option value="off">{t.reminderOff}</option>
           </select>
           <div className="row">
-            <a className="btn btn-outline" href={botUrl} target="_blank" rel="noopener noreferrer">
+            <a
+              className="btn btn-outline"
+              href={botUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => {
+                e.preventDefault();
+                openExternal(botUrl);
+              }}
+            >
               {t.open}
             </a>
             <button className="btn-link quiet small" onClick={unlink}>
@@ -174,14 +186,29 @@ export function TelegramPromo({ go }: { go: (route: string) => void }) {
   const [status] = useTelegramStatus(true);
   if (!status?.enabled || status.linked) return null;
   return (
-    <div className="card cta">
-      <div>
-        <strong>{t.promoTitle}</strong>
-        <div className="muted small">{t.promoText}</div>
+    <div className="card stack bot-promo" data-testid="bot-promo">
+      <div className="spread" style={{ alignItems: 'flex-start', gap: 12 }}>
+        <div>
+          <strong>{t.promoTitle}</strong>
+          <div className="muted small">{t.promoText}</div>
+        </div>
+        <button className="btn btn-primary" onClick={() => go('profile')}>
+          {t.promoButton}
+        </button>
       </div>
-      <button className="btn btn-primary" onClick={() => go('profile')}>
-        {t.promoButton}
-      </button>
+      <BotFeatures />
     </div>
+  );
+}
+
+/** Bot nima qila olishi — qisqa ro'yxat (profil kartasi va bosh sahifadagi taklifda). */
+export function BotFeatures() {
+  const t = useT(telegramMsg);
+  return (
+    <ul className="bot-features" data-testid="bot-features">
+      {t.features.map((f) => (
+        <li key={f}>{f}</li>
+      ))}
+    </ul>
   );
 }

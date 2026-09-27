@@ -1670,3 +1670,16 @@ table.data td {
   color: #fff;
   font-weight: 600;
 }
+
+/* Telegram bot imkoniyatlari ro'yxati */
+.bot-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 0.88rem;
+}
+.bot-promo .spread .btn {
+  flex: none;
+}

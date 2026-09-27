@@ -171,6 +171,19 @@ public class AuthService
         return new AuthResult(token, user.Email, null);
     }
 
+    /// <summary>
+    /// Telegram Mini App orqali kirish: foydalanuvchi Telegram hisobi botga
+    /// avval ulangan (TelegramAccount), initData imzosi tekshirilgan — yangi sessiya.
+    /// </summary>
+    public async Task<AuthResult?> SignInLinkedAsync(Guid userId)
+    {
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user is null) return null;
+        var token = AddSession(user.Id);
+        await _db.SaveChangesAsync();
+        return new AuthResult(token, user.Email, null);
+    }
+
     /// <summary>Emailga kelgan kod bilan tasdiqlash. Muvaffaqiyatli bo'lsa — darhol kirilgan holat (token).</summary>
     public async Task<AuthResult> VerifyEmailAsync(string email, string code)
     {

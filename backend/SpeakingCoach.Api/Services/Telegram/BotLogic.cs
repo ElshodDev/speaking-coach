@@ -27,6 +27,8 @@ public abstract record BotCallback
     public sealed record SetLang(string Lang) : BotCallback;
     /// <summary>/lang tanlagichi (hamma uchun, hisob ulanmagan bo'lsa ham).</summary>
     public sealed record PickLang(string Lang) : BotCallback;
+    /// <summary>Saytdagi bo'limlar qo'llanmasi (hamma uchun).</summary>
+    public sealed record ShowGuide : BotCallback;
     public sealed record Unlink : BotCallback;
 
     // ---- Test qo'shish (/add) ----
@@ -57,6 +59,7 @@ public static partial class BotLogic
         BotCallback.SetReminder r => $"set:h:{(r.Hour is int h ? h.ToString() : "off")}",
         BotCallback.SetLang l => $"set:l:{l.Lang}",
         BotCallback.PickLang l => $"lang:{l.Lang}",
+        BotCallback.ShowGuide => "guide",
         BotCallback.Unlink => "unlink",
         BotCallback.AuthorExam e => $"au:e:{e.Exam}",
         BotCallback.AuthorKindPick k => $"au:k:{k.Key}",
@@ -83,6 +86,7 @@ public static partial class BotLogic
             ["set", "h", var h] when int.TryParse(h, out var hour) && hour is >= 0 and <= 23 => new BotCallback.SetReminder(hour),
             ["set", "l", var l] when Texts.Langs.Contains(l) => new BotCallback.SetLang(l),
             ["lang", var l] when Texts.Langs.Contains(l) => new BotCallback.PickLang(l),
+            ["guide"] => new BotCallback.ShowGuide(),
             ["unlink"] => new BotCallback.Unlink(),
             ["au", "e", var e] when BotAuthoring.Exams.Contains(e) => new BotCallback.AuthorExam(e),
             ["au", "k", var e, var m, var v] when Mock.AuthorKind.Parse($"{e}:{m}:{v}") is { } k => new BotCallback.AuthorKindPick(k.Key),

@@ -63,7 +63,11 @@ public record TgWebhookInfo(
 public record TgButton(
     [property: JsonPropertyName("text")] string Text,
     [property: JsonPropertyName("callback_data"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? CallbackData = null,
-    [property: JsonPropertyName("url"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Url = null);
+    [property: JsonPropertyName("url"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Url = null,
+    [property: JsonPropertyName("web_app"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] TgWebAppInfo? WebApp = null);
+
+/// <summary>Mini App (sayt Telegram ichida ochiladi). Faqat HTTPS manzil.</summary>
+public record TgWebAppInfo([property: JsonPropertyName("url")] string Url);
 
 /// <summary>
 /// Sozlamalar: Telegram:BotToken (majburiy), Telegram:BotUsername,
@@ -107,6 +111,18 @@ public class TelegramOptions
         user is not null && (AdminIds.Contains(user.Id) || (user.Username is { } u && AdminUsernames.Contains(u.ToLowerInvariant())));
 
     public bool Enabled => Token is not null;
+
+    /// <summary>Sayt HTTPS'da bo'lsa — Mini App sifatida (Telegram ichida) ochiladi.</summary>
+    public bool WebAppEnabled => FrontendUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Sayt sahifasiga tugma: Mini App bo'lsa Telegram ichida ochiladi (sahifa
+    /// "?tgroute=" orqali — Telegram o'z parametrlarini manzilning # qismiga
+    /// qo'shadi, shuning uchun marshrutni # da berib bo'lmaydi); aks holda oddiy havola.
+    /// </summary>
+    public TgButton SiteButton(string label, string route) => WebAppEnabled
+        ? new TgButton(label, WebApp: new TgWebAppInfo($"{FrontendUrl}/?tgroute={Uri.EscapeDataString(route)}"))
+        : new TgButton(label, Url: $"{FrontendUrl}/#/{route}");
 
     /// <summary>
     /// Telegram har bir webhook so'rovida X-Telegram-Bot-Api-Secret-Token

@@ -104,6 +104,12 @@ public partial class TelegramBot
                 return;
             }
 
+            if (BotLogic.IsCommand(text, "/guide"))
+            {
+                await SendGuideAsync(c, ct);
+                return;
+            }
+
             if (BotLogic.IsCommand(text, "/lang") || BotLogic.IsCommand(text, "/language"))
             {
                 await _api.SendMessageAsync(c.ChatId, c.T("bot.lang_pick"), BotLogic.LangButtons(c.Lang), ct: ct);
@@ -148,7 +154,7 @@ public partial class TelegramBot
                     if (await RequireLinkAsync(c, ct)) await _api.SendMessageAsync(c.ChatId, SettingsText(c), SettingsButtons(c), ct: ct);
                     return;
                 case MenuAction.Help:
-                    await _api.SendMessageAsync(c.ChatId, c.T("bot.help"), replyKeyboard: c.User is null ? null : BotLogic.MainMenu(c.Lang), ct: ct);
+                    await _api.SendMessageAsync(c.ChatId, c.T("bot.help"), [GuideRow(c)], ct: ct);
                     return;
             }
 
@@ -195,8 +201,15 @@ public partial class TelegramBot
         await _api.SendMessageAsync(c.ChatId, c.T("bot.welcome"), WelcomeButtons(c), ct: ct);
     }
 
-    /// <summary>Ulanmagan foydalanuvchiga: hisobni ulash va til tanlash (birinchi xabardanoq).</summary>
-    private IReadOnlyList<IReadOnlyList<TgButton>> WelcomeButtons(Ctx c) => [.. LinkButton(c), .. BotLogic.LangButtons(c.Lang)];
+    /// <summary>Ulanmagan foydalanuvchiga: hisobni ulash, qo'llanma va til tanlash (birinchi xabardanoq).</summary>
+    private IReadOnlyList<IReadOnlyList<TgButton>> WelcomeButtons(Ctx c) => [.. LinkButton(c), GuideRow(c), .. BotLogic.LangButtons(c.Lang)];
+
+    /// <summary>"Saytda nimalar bor?" va "Ilovani ochish".</summary>
+    private TgButton[] GuideRow(Ctx c) =>
+        [new TgButton(c.T("bot.guide_button"), BotLogic.Encode(new BotCallback.ShowGuide())), _options.SiteButton(c.T("bot.open_app"), "")];
+
+    private Task SendGuideAsync(Ctx c, CancellationToken ct) =>
+        _api.SendMessageAsync(c.ChatId, BotGuide.Message(c.Lang), BotGuide.Buttons(c.Lang, _options), ct: ct);
 
     /// <summary>/lang: tilni saqlaydi (ulangan — hisobga, ulanmagan — chatga) va yangi tilda javob beradi.</summary>
     private async Task<string> PickLangAsync(Ctx c, string lang, long? messageId, CancellationToken ct)
@@ -221,7 +234,7 @@ public partial class TelegramBot
     }
 
     private IReadOnlyList<IReadOnlyList<TgButton>> LinkButton(Ctx c) =>
-        new[] { new[] { new TgButton(c.T("bot.link_button"), Url: $"{_options.FrontendUrl}/#/profile") } };
+        new[] { new[] { _options.SiteButton(c.T("bot.link_button"), "profile") } };
 
     private async Task<bool> RequireLinkAsync(Ctx c, CancellationToken ct)
     {
@@ -362,7 +375,7 @@ public partial class TelegramBot
         var tasks = await _today.PendingTasksAsync(c.User!.Id);
         var (html, buttons) = BotToday.TodayMessage(c.Lang, plan, c.User.TargetScore, tasks, DateTime.UtcNow, tz);
         var rows = buttons
-            .Select(b => new[] { b.Callback is not null ? new TgButton(b.Label, BotLogic.Encode(b.Callback)) : new TgButton(b.Label, Url: $"{_options.FrontendUrl}/#/{b.Route}") })
+            .Select(b => new[] { b.Callback is not null ? new TgButton(b.Label, BotLogic.Encode(b.Callback)) : _options.SiteButton(b.Label, b.Route!) })
             .ToList();
         await _api.SendMessageAsync(c.ChatId, html, rows, ct: ct);
     }
@@ -375,7 +388,7 @@ public partial class TelegramBot
         var html = c.T("bot.stats", s.StreakDays, Math.Min(s.ReviewedToday, s.DailyGoal), s.DailyGoal, s.Due, s.Total);
         var buttons = new List<TgButton[]>();
         if (s.Due > 0) buttons.Add(new[] { new TgButton(c.T("bot.start_button"), BotLogic.Encode(new BotCallback.StartReview())) });
-        buttons.Add(new[] { new TgButton(c.T("bot.open_site"), Url: $"{_options.FrontendUrl}/#/progress") });
+        buttons.Add(new[] { _options.SiteButton(c.T("bot.open_site"), "progress") });
         await _api.SendMessageAsync(c.ChatId, html, buttons, ct: ct);
     }
 
@@ -413,7 +426,12 @@ public partial class TelegramBot
         {
             var action = BotLogic.Decode(cb.Data);
             if (action is null) return;
-            if (action is BotCallback.PickLang pick)
+            if (action is BotCallback.ShowGuide)
+            {
+                await SendGuideAsync(c, ct);
+                return;
+            }
+                        if (action is BotCallback.PickLang pick)
             {
                 toast = await PickLangAsync(c, pick.Lang, messageId, ct);
                 return;

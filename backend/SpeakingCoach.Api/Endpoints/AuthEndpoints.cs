@@ -1,5 +1,7 @@
+using Microsoft.EntityFrameworkCore;
 using SpeakingCoach.Api.Data;
 using SpeakingCoach.Api.Services;
+using SpeakingCoach.Api.Services.Telegram;
 
 namespace SpeakingCoach.Api.Endpoints;
 
@@ -8,6 +10,7 @@ public record VerifyRequest(string Email, string Code);
 public record EmailRequest(string Email);
 public record ResetRequest(string Email, string Code, string NewPassword);
 public record GoogleRequest(string Credential);
+public record TelegramAuthRequest(string InitData);
 
 public static class AuthEndpoints
 {
@@ -67,6 +70,20 @@ public static class AuthEndpoints
             return payload is null
                 ? Results.Json(request.Error("google.invalid"), statusCode: StatusCodes.Status401Unauthorized)
                 : ToResult(request, await auth.GoogleSignInAsync(payload));
+        }).RequireRateLimiting("auth");
+
+        // Telegram Mini App: sayt Telegram ichida ochilganda imzolangan initData
+        // yuboriladi; bot bilan ulangan hisob bo'lsa — parolsiz kiriladi.
+        app.MapPost("/api/auth/telegram", async (TelegramAuthRequest body, HttpRequest request, TelegramOptions options, AppDbContext db, AuthService auth) =>
+        {
+            var tgUserId = TelegramWebAppAuth.Validate(body.InitData, options.Token, DateTime.UtcNow);
+            if (tgUserId is null) return Results.Json(request.Error("auth.telegram_invalid"), statusCode: StatusCodes.Status401Unauthorized);
+            // Shaxsiy chatda chat ID = foydalanuvchi ID.
+            var account = await db.TelegramAccounts.FirstOrDefaultAsync(a => a.ChatId == tgUserId.Value);
+            var result = account is null ? null : await auth.SignInLinkedAsync(account.UserId);
+            return result is null
+                ? Results.Json(request.Error("auth.telegram_not_linked"), statusCode: StatusCodes.Status404NotFound)
+                : ToResult(request, result);
         }).RequireRateLimiting("auth");
 
         // Frontend "Parolni unutdim" va "Google bilan kirish" tugmalarini faqat

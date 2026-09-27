@@ -34,7 +34,7 @@ public class AssignmentNotifier(AppDbContext db, ITelegramApi api, TelegramOptio
                 {
                     new[] { a.Kind == "review"
                         ? new TgButton(Texts.Get(acc.Lang, "bot.task_do"), BotLogic.Encode(new BotCallback.StartReview()))
-                        : new TgButton(Texts.Get(acc.Lang, "bot.task_do"), Url: $"{options.FrontendUrl}/#/{route}") },
+                        : options.SiteButton(Texts.Get(acc.Lang, "bot.task_do"), route) },
                 }, ct: ct);
                 sent++;
                 await Task.Delay(50, ct);

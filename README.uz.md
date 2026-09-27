@@ -298,8 +298,8 @@ npm run dev
 ### 7. Avtomatik testlar
 
 ```bash
-dotnet test backend/SpeakingCoach.Api.Tests   # backend: 503 ta unit test
-cd frontend/speaking-coach-web && npm test     # frontend: 113 ta vitest testi
+dotnet test backend/SpeakingCoach.Api.Tests   # backend: 509 ta unit test
+cd frontend/speaking-coach-web && npm test     # frontend: 117 ta vitest testi
 ```
 
 Xuddi shu testlar har bir push'da GitHub Actions'da ham ishlaydi
@@ -419,6 +419,13 @@ bilan bir xil — botda takrorlangan karta saytda ham takrorlangan.
 - **Kechki eslatma** vazifalar (muddati oʻtganlari ham) va imtihongacha
   kunlarni ham aytadi; faqat bugungi maqsad bajarilgan va vazifa qolmagan
   boʻlsa yozilmaydi.
+- **🧭 Qoʻllanma** (`/guide`, birinchi xabarda va yordamda tugma) — saytning
+  boʻlimlari (Bugun, Mashqlar, Shadowing, Mock, Takrorlash, Lugʻat,
+  Viktorina, Natijalar, Oʻqituvchi) qisqa izoh bilan, har biriga tugma.
+- **📱 Mini App** — botdagi sayt tugmalari saytni Telegram ichida ochadi;
+  bot ulangan hisob boʻlsa, Telegram imzolagan `initData` tekshirilib, parolsiz
+  kiriladi (`POST /api/auth/telegram`, HMAC-SHA256, 24 soat). Saytda bot
+  imkoniyatlari bosh sahifa taklifida va Profil kartasida koʻrsatiladi.
 - **🌐 Til** (`/lang`) — oʻzbek, rus yoki ingliz; hisob ulanmagan boʻlsa ham
   ishlaydi (birinchi xabarda ham tanlash tugmalari bor), tanlov saqlanadi.
 - **Yangi vazifa**: oʻqituvchi vazifa berishi bilan botni ulagan
