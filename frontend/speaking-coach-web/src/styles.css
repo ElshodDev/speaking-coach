@@ -26,6 +26,8 @@
   --radius-sm: 10px;
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 20px rgba(16, 24, 40, 0.06);
   --nav-h: 64px;
+  /* Yopishqoq panellar (imtihon taymeri) qayerdan boshlanadi: planshetda menyu tepada. */
+  --sticky-top: 8px;
   /* Grafiklar: kategorik ranglar (tartib CVD uchun tekshirilgan — dataviz
      validatori bilan), issiqlik xaritasi uchun bitta rangli (ko'k) shkala. */
   --series-1: #2a78d6;
@@ -221,9 +223,20 @@ p {
   line-height: 18px;
 }
 
+.nav-brand {
+  display: none;
+}
+
 @media (min-width: 760px) {
+  :root {
+    --sticky-top: 62px;
+  }
   .app {
+    max-width: 880px;
     padding-bottom: 32px;
+  }
+  .nav-inner {
+    max-width: 880px;
   }
   .nav {
     position: sticky;
@@ -1702,4 +1715,223 @@ table.data td {
 .demo-banner .btn-link {
   font-weight: 600;
   padding: 0;
+}
+
+
+/* ================= Kompyuter (1024 px+): ekran to'liq ishlatiladi =================
+   Chapda doimiy menyu, o'ngda keng mazmun. Tor sahifalar (formalar) — markazda. */
+@media (min-width: 1024px) {
+  :root {
+    --sticky-top: 12px;
+    --sidebar-w: 244px;
+  }
+  .app {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      'nav top'
+      'nav main';
+    min-height: 100vh;
+  }
+  .topbar {
+    grid-area: top;
+    justify-content: flex-end;
+    padding: 14px clamp(24px, 3vw, 48px) 6px;
+  }
+  .topbar .brand {
+    display: none;
+  }
+  .nav {
+    grid-area: nav;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    margin: 0;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 18px;
+    padding: 20px 14px;
+    border: none;
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+    backdrop-filter: none;
+  }
+  .nav-brand {
+    display: flex;
+    padding: 0 10px;
+  }
+  .nav-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-width: none;
+  }
+  .nav button {
+    justify-content: flex-start;
+    height: 46px;
+    padding: 0 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.98rem;
+  }
+  .nav button:hover {
+    background: var(--surface-2);
+    color: var(--text);
+  }
+  .nav button[aria-current='page'] {
+    background: var(--primary-soft);
+  }
+  .nav .dot {
+    margin-left: auto;
+  }
+  main {
+    grid-area: main;
+    width: 100%;
+    padding: 0 clamp(24px, 3vw, 48px) 48px;
+  }
+  main.page-wide {
+    max-width: 1360px;
+    margin: 0 auto;
+  }
+  main.page-medium > * {
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  main.page-narrow > * {
+    max-width: 760px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .page-header h1 {
+    font-size: 1.9rem;
+  }
+
+  /* Umumiy ikki ustun: asosiy + o'ng panel; yoki teng ikki ustun. */
+  .split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+    gap: 0 28px;
+    align-items: start;
+  }
+  .split.half {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .tiles {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  /* Imtihon: matn | savollar (yoki topshiriq | javob) yonma-yon, har biri o'zi aylanadi. */
+  .exam-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0 20px;
+    align-items: start;
+  }
+  .exam-pane {
+    height: max(420px, calc(100vh - 250px));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  /* Mashq: chapda topshiriq (yozish/gapirish), o'ngda natija va tarix. */
+  .practice-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0 28px;
+    align-items: start;
+  }
+  .practice-split > :first-child {
+    position: sticky;
+    top: var(--sticky-top);
+  }
+  .practice-split > :first-child textarea {
+    min-height: 320px;
+  }
+  /* Shadowing darsi: chapda media va boshqaruv (yopishib turadi), o'ngda gaplar. */
+  .shadow-wide {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 0 28px;
+    align-items: start;
+  }
+  .shadow-left {
+    position: sticky;
+    top: var(--sticky-top);
+  }
+  .shadow-wide .shadow-media {
+    position: static;
+    margin: 0;
+    box-shadow: none;
+  }
+  .shadow-wide .shadow-dock {
+    position: static;
+  }
+  .shadow-wide .shadow-lines > li {
+    scroll-margin-top: 24px;
+    scroll-margin-bottom: 24px;
+  }
+  .shadow-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+  .comp-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0 32px;
+    align-items: start;
+  }
+  .comp-grid > :first-child {
+    position: sticky;
+    top: var(--sticky-top);
+    line-height: 1.7;
+  }
+  /* Yozish maydoni panelni to'ldiradi. */
+  .exam-editor {
+    display: flex;
+    flex-direction: column;
+  }
+  .exam-editor textarea {
+    flex: 1;
+    min-height: 260px;
+    resize: none;
+  }
+  .exam-split.sticky-left > :first-child {
+    position: sticky;
+    top: calc(var(--sticky-top) + 96px);
+    max-height: calc(100vh - var(--sticky-top) - 110px);
+    height: auto;
+    overflow-y: auto;
+  }
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 0 20px;
+  }
+  /* Profil kabi kartalar to'plami: ikki ustun, karta bo'linmaydi. */
+  .masonry {
+    columns: 2;
+    column-gap: 24px;
+    padding-top: 16px;
+  }
+  .masonry > * {
+    break-inside: avoid;
+    margin: 0 0 16px;
+  }
+}
+
+kbd {
+  display: inline-block;
+  min-width: 1.4em;
+  padding: 0 0.35em;
+  margin-right: 0.35em;
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  font: inherit;
+  font-size: 0.78em;
+  line-height: 1.5;
+  text-align: center;
+  opacity: 0.85;
 }

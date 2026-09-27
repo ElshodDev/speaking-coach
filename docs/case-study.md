@@ -2,7 +2,7 @@
 
 **Project:** [AI Speaking Coach](https://speaking-coach-theta.vercel.app) · [try the demo](https://speaking-coach-theta.vercel.app/#/demo) · [source](https://github.com/ElshodDev/speaking-coach)
 **Stack:** ASP.NET Core 10 Minimal API, EF Core + PostgreSQL (Neon), React 19 + TypeScript (Vite, PWA), Google Gemini, Telegram Bot API
-**Size:** about 13 000 lines of C# and 15 000 lines of TypeScript; 525 backend unit tests, 118 frontend unit tests, 22 Playwright end-to-end suites
+**Size:** about 13 000 lines of C# and 15 000 lines of TypeScript; 525 backend unit tests, 118 frontend unit tests, 23 Playwright end-to-end suites
 
 ---
 
@@ -99,7 +99,7 @@ The seed data is built by a pure function using the same records and card factor
 ## Testing approach
 
 - **Unit tests (xUnit, Vitest)** cover the pure logic: scheduling, scoring tables, validators, parsing, security rules and localisation. One test checks that every message key exists in all three languages with matching placeholders.
-- **End-to-end tests (Playwright)** drive the real frontend against a mocked API that follows the backend's contract, on a phone-sized viewport. The README screenshots and the demo GIF come from those same runs, so they always match the current UI.
+- **End-to-end tests (Playwright)** drive the real frontend against a mocked API that follows the backend's contract, on phone, tablet and laptop screens. The README screenshots and the demo GIF come from those same runs, so they always match the current UI.
 - **CI** builds and tests both halves on every push and fails on known vulnerable packages.
 
 The honest gap: the database and endpoint layer has no integration tests yet. That is the next piece of work (see below).

@@ -250,6 +250,7 @@ function App() {
         <PageHeader title={t.practiceTitle} subtitle={t.practiceSubtitle} />
         <UsageNote userKey={userKey} />
         <ExerciseTiles onOpen={(kind: ExerciseKind) => go(`practice/${kind}`)} />
+        <div className="card-grid">
         <div className="card cta" style={{ marginTop: 16 }} data-testid="shadowing-entry">
           <div>
             <strong>{tShadow.tile}</strong>
@@ -267,6 +268,7 @@ function App() {
           <button className="btn btn-primary" onClick={() => go('mock')}>
             {t.open}
           </button>
+        </div>
         </div>
       </>
     );
@@ -376,6 +378,11 @@ function App() {
         </header>
 
         <nav className="nav" aria-label={t.navLabel}>
+          {/* Kompyuterda menyu chap tomonda: logo uning tepasida. */}
+          <a className="brand nav-brand" href="#/">
+            <img src="/icons/icon-192.png" alt="" />
+            <span className="brand-name">Speaking Coach</span>
+          </a>
           <div className="nav-inner">
             {NAV.map((n) => (
               <button key={n.id} aria-current={activeNav === n.id ? 'page' : undefined} onClick={() => go(n.id)}>
@@ -393,7 +400,7 @@ function App() {
           </div>
         </nav>
 
-        <main>
+        <main className={pageWidth(section, sub)}>
           {isDemoEmail(email) && section !== 'demo' && <DemoBanner onRegister={leaveDemo} />}
           <ErrorBoundary resetKey={route} onHome={() => go('home')}>
             <Suspense fallback={<p className="muted" role="status" style={{ marginTop: 24 }}>⏳</p>}>{page}</Suspense>
@@ -402,6 +409,17 @@ function App() {
       </div>
     </>
   );
+}
+
+/** Kompyuterda ham tor qoladigan sahifalar: formalar va bittalik kartalar keng ekranda cho'zilmasin. */
+const NARROW = new Set(['login', 'register', 'welcome', 'demo', 'join', 'quiz']);
+/** O'rtacha kenglik: ketma-ket oqim (speaking, listening) va natijalar — satrlar juda uzun bo'lmasin. */
+const MEDIUM_MOCK = /^(speaking|cefr-speaking|listening|cefr-listening|result|session)$/;
+
+function pageWidth(section: string, sub?: string): string {
+  if (NARROW.has(section)) return 'page-narrow';
+  if (section === 'mock' && sub && MEDIUM_MOCK.test(sub)) return 'page-medium';
+  return 'page-wide';
 }
 
 function Profile({
@@ -450,6 +468,7 @@ function Profile({
   return (
     <>
       <PageHeader title={t.profile} />
+      <div className="masonry">
       <AuthPanel email={email} onChange={onAuthChange} />
       {/* key: profil serverdan kelganda forma qiymatlari yangilansin */}
       {(!email || profile) && <Settings key={profile ? 'user' : 'guest'} profile={profile} onSaved={onProfileSaved} />}
@@ -503,6 +522,7 @@ function Profile({
       </div>
 
       <div className="card soft small muted">{t.themeNote}</div>
+      </div>
 
       <p className="center small" style={{ marginTop: 16 }}>
         <a href={`/privacy.html#${lang}`}>{t.privacy}</a>

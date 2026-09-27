@@ -146,3 +146,13 @@ export function GuestNote({ loggedIn, onLogin }: { loggedIn: boolean; onLogin?: 
     </div>
   );
 }
+
+/** Kompyuterda ikki ustun: asosiy mazmun va o'ng panel (half — teng ikki ustun). Telefonda ishlatilmaydi. */
+export function Split({ main, side, half = false }: { main: ReactNode; side: ReactNode; half?: boolean }) {
+  return (
+    <div className={`split${half ? ' half' : ''}`}>
+      <div>{main}</div>
+      <aside>{side}</aside>
+    </div>
+  );
+}

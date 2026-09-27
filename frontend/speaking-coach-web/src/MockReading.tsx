@@ -7,6 +7,7 @@ import { mockObjMsg } from './locales/mockObjective';
 import { formatClock } from './mockLogic';
 import { answeredCount, ObjectiveQuestions, QuestionMap, questionNumbers, type Answers, type ClientGroup } from './ObjectiveQuestions';
 import { PageHeader } from './ui';
+import { useWide } from './layout';
 
 interface ReadingClient {
   id: string;
@@ -71,6 +72,7 @@ export function MockReading({
   const [now, setNow] = useState(Date.now());
   const [passage, setPassage] = useState(0);
   const [view, setView] = useState<'text' | 'questions'>('text');
+  const wide = useWide();
   const [status, setStatus] = useState<'loading' | 'exam' | 'submitting' | 'error'>('loading');
   const [error, setError] = useState('');
   const submittedRef = useRef(false);
@@ -169,6 +171,23 @@ export function MockReading({
   const p = test.passages[passage];
   const nums = questionNumbers(p.groups);
 
+  const article = (
+    <article>
+      <h3 style={{ marginTop: 0 }}>{p.title}</h3>
+      {p.text.split(/\n\s*\n/).map((para, i) => (
+        <p key={i} style={{ lineHeight: 1.65 }}>{para}</p>
+      ))}
+    </article>
+  );
+  const questions = (
+    <ObjectiveQuestions
+      groups={p.groups}
+      answers={answers}
+      onChange={(n, v) => setAnswers((a) => ({ ...a, [n]: v }))}
+      disabled={status === 'submitting'}
+    />
+  );
+
   function jump(n: number) {
     const idx = test!.passages.findIndex((ps) => questionNumbers(ps.groups).includes(n));
     setPassage(idx);
@@ -185,7 +204,7 @@ export function MockReading({
       <PageHeader title={title} onBack={back} backLabel={tm.title} />
       {repeated && <p className="muted small">{t.repeated}</p>}
 
-      <div className="card" style={{ position: 'sticky', top: 8, zIndex: 5, padding: '10px 14px' }}>
+      <div className="card" style={{ position: 'sticky', top: 'var(--sticky-top)', zIndex: 5, padding: '10px 14px' }}>
         <div className="spread" style={{ alignItems: 'center' }}>
           <span role="timer" aria-live="off">
             <span className="muted small">{t.timeLeft}: </span>
@@ -205,33 +224,27 @@ export function MockReading({
             </button>
           ))}
         </div>
-        <div className="segmented" role="group" style={{ marginTop: 8 }}>
+        {!wide && <div className="segmented" role="group" style={{ marginTop: 8 }}>
           <button aria-pressed={view === 'text'} onClick={() => setView('text')}>{t.showText}</button>
           <button aria-pressed={view === 'questions'} onClick={() => setView('questions')}>
             {t.showQuestions} ({nums[0]}–{nums[nums.length - 1]})
           </button>
-        </div>
+        </div>}
       </div>
 
       {error && <p className="error small" role="alert">{error}</p>}
 
-      <div className="card" data-testid={`reading-${view}`}>
-        {view === 'text' ? (
-          <article>
-            <h3 style={{ marginTop: 0 }}>{p.title}</h3>
-            {p.text.split(/\n\s*\n/).map((para, i) => (
-              <p key={i} style={{ lineHeight: 1.65 }}>{para}</p>
-            ))}
-          </article>
-        ) : (
-          <ObjectiveQuestions
-            groups={p.groups}
-            answers={answers}
-            onChange={(n, v) => setAnswers((a) => ({ ...a, [n]: v }))}
-            disabled={status === 'submitting'}
-          />
-        )}
-      </div>
+      {wide ? (
+        // Kompyuterda — haqiqiy kompyuterdagi imtihondagidek: matn chapda, savollar o'ngda, har biri o'zi aylanadi.
+        <div className="exam-split" data-testid="reading-split">
+          <div className="card exam-pane" data-testid="reading-text">{article}</div>
+          <div className="card exam-pane" data-testid="reading-questions">{questions}</div>
+        </div>
+      ) : (
+        <div className="card" data-testid={`reading-${view}`}>
+          {view === 'text' ? article : questions}
+        </div>
+      )}
 
       <div className="card">
         <QuestionMap numbers={all} answers={answers} onJump={jump} />

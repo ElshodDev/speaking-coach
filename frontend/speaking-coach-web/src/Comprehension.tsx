@@ -140,6 +140,8 @@ export function Comprehension({
 
           {mode === 'listening' && <Speaker text={exercise.passage} />}
 
+          {/* Kompyuterda matn chapda (yopishib turadi), savollar o'ngda. */}
+          <div className={showPassage ? 'comp-grid' : undefined}>
           {showPassage && (
             <div style={{ marginTop: 12 }}>
               <p className="muted tiny" style={{ marginBottom: 6 }}>
@@ -149,6 +151,7 @@ export function Comprehension({
             </div>
           )}
 
+          <div>
           <div className="spread" style={{ margin: '18px 0 10px' }}>
             <h3 style={{ margin: 0 }}>{t.questions}</h3>
             {!result && (
@@ -210,6 +213,8 @@ export function Comprehension({
               </button>
             </div>
           )}
+          </div>
+          </div>
         </div>
       )}
 

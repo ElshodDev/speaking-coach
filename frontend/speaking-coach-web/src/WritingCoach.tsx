@@ -148,7 +148,7 @@ export function WritingCoach({
   const words = countWords(text);
 
   return (
-    <>
+    <div className="practice-split">
       <div className="card">
         <div className="spread">
           <span className="muted small">{t.topic}</span>
@@ -183,6 +183,7 @@ export function WritingCoach({
         )}
       </div>
 
+      <div>
       {result && (
         <div className="card">
           <h3>{t.evaluation}</h3>
@@ -228,6 +229,7 @@ export function WritingCoach({
           );
         }}
       />
-    </>
+      </div>
+    </div>
   );
 }

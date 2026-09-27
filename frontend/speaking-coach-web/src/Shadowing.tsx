@@ -48,6 +48,7 @@ import {
 } from './shadowLogic';
 import { isSpeechSupported, pickVoices, sleep } from './speech';
 import { PageHeader } from './ui';
+import { focusedButton, typingTarget, useWide } from './layout';
 import { normalizeWord, WordSheet } from './WordSheet';
 
 const loadProgress = () => apiJson<ShadowProgress[]>('/api/shadowing/progress').catch(() => [] as ShadowProgress[]);
@@ -526,6 +527,14 @@ export function ShadowingLessonPage({ id, go, loggedIn, onLogin }: { id: string;
   const [player, setPlayer] = useState<LinePlayer | null>(null);
 
   const store = useRef(createStore()).current;
+  const wide = useWide();
+  // Klaviatura (kompyuter): Probel — tinglash/pauza, ←/→ — oldingi/keyingi gap, R — yozish.
+  const keyHandler = useRef<(e: KeyboardEvent) => void>(() => undefined);
+  useEffect(() => {
+    const on = (e: KeyboardEvent) => keyHandler.current(e);
+    window.addEventListener('keydown', on);
+    return () => window.removeEventListener('keydown', on);
+  }, []);
   // WordSheet effekti onClose'ga bog'liq — barqaror bo'lmasa, har renderda qayta so'raydi.
   const closePicked = useCallback(() => setPicked(null), []);
   const runRef = useRef(0);
@@ -803,6 +812,25 @@ export function ShadowingLessonPage({ id, go, loggedIn, onLogin }: { id: string;
   }
 
   const jump = (i: number | null) => i !== null && playLine(i);
+  keyHandler.current = (e: KeyboardEvent) => {
+    if (!player || picked || e.ctrlKey || e.metaKey || e.altKey || typingTarget(e)) return;
+    const onButton = focusedButton(e);
+    if (e.key === ' ' && !onButton) {
+      e.preventDefault();
+      if (busy) stopAll();
+      else playLine(index);
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      jump(nextIndex(index, total));
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      jump(index > 0 ? index - 1 : null);
+    } else if ((e.key === 'r' || e.key === 'R') && mode !== 'free') {
+      e.preventDefault();
+      if (recorder.recording) recorder.stop();
+      else void record();
+    }
+  };
   const status =
     phase === 'pause' ? t.yourTurn : phase === 'rec' ? t.yourTurnRec : phase === 'mine' ? t.listeningBack : null;
 
@@ -816,6 +844,9 @@ export function ShadowingLessonPage({ id, go, loggedIn, onLogin }: { id: string;
         {before && <span className="shadow-before" data-testid="done-before">{t.doneBefore(before.times, before.best)}</span>}
       </div>
 
+      {(() => {
+        const mediaEl = (
+          <>
       <div className="shadow-media" data-testid="media">
         {lesson.kind === 'youtube' ? (
           <div className="shadow-video">
@@ -858,6 +889,10 @@ export function ShadowingLessonPage({ id, go, loggedIn, onLogin }: { id: string;
         )}
       </div>
 
+          </>
+        );
+        const controlsEl = (
+          <>
       <div className="shadow-modebar">
         <div className="segmented" role="group" aria-label={t.modes.normal}>
           {(['normal', 'auto', 'free'] as const).map((m) => (
@@ -880,7 +915,12 @@ export function ShadowingLessonPage({ id, go, loggedIn, onLogin }: { id: string;
       </div>
       <p className="muted small shadow-modehint">{t.modeHint[mode]}</p>
       {lesson.kind === 'youtube' && <p className="muted small" style={{ margin: '0 0 8px' }}>{t.videoNote}</p>}
+      {wide && <p className="muted tiny" data-testid="shadow-keys">⌨️ {t.keysHint}</p>}
 
+          </>
+        );
+        const linesEl = (
+          <>
       <ol className="shadow-lines" ref={listRef} data-testid="lines">
         {lesson.lines.map((l, i) => {
           const current = i === index;
@@ -985,6 +1025,9 @@ export function ShadowingLessonPage({ id, go, loggedIn, onLogin }: { id: string;
         )}
       </div>
 
+          </>
+        );
+        const dockEl = (
       <div className="shadow-dock" data-testid="dock">
         <div className="shadow-controls" role="group" aria-label={t.play}>
           <button className="shadow-ctl" onClick={() => playLine(index, true)} disabled={!player} aria-label={t.replay}>
@@ -1014,6 +1057,26 @@ export function ShadowingLessonPage({ id, go, loggedIn, onLogin }: { id: string;
           ))}
         </div>
       </div>
+        );
+        // Kompyuterda: video/qahramonlar va boshqaruv chapda (yopishib turadi), gaplar ro'yxati o'ngda.
+        return wide ? (
+          <div className="shadow-wide">
+            <div className="shadow-left">
+              {mediaEl}
+              {controlsEl}
+              {dockEl}
+            </div>
+            <div className="shadow-right">{linesEl}</div>
+          </div>
+        ) : (
+          <>
+            {mediaEl}
+            {controlsEl}
+            {linesEl}
+            {dockEl}
+          </>
+        );
+      })()}
 
       {picked && (
         <WordSheet word={picked.word} sentence={picked.sentence} loggedIn={loggedIn} onClose={closePicked} onLogin={onLogin} />

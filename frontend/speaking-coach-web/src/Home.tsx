@@ -8,6 +8,7 @@ import { TodayPlan } from './TodayPlan';
 import { QuizTile, WordOfDay } from './WordOfDay';
 import { DemoHeroButton, isDemoEmail } from './Demo';
 import { demoMsg } from './locales/demo';
+import { useWide } from './layout';
 
 export type ExerciseKind = 'speaking' | 'writing' | 'reading' | 'listening';
 
@@ -53,48 +54,76 @@ export function Home({
 }) {
   const t = useT(homeMsg);
   const td = useT(demoMsg);
+  const wide = useWide();
   const open = (kind: ExerciseKind) => go(`practice/${kind}`);
 
   if (!email) {
-    return (
-      <>
-        <div className="card hero">
-          <h1>{t.heroTitle}</h1>
-          <p>{t.heroText}</p>
-          <div className="row">
-            <button className="btn btn-primary" onClick={() => open('speaking')}>
-              {t.tryIt}
-            </button>
-            <button className="btn-link" style={{ color: '#fff' }} onClick={() => go('register')}>
-              {t.createAccount}
-            </button>
-            <DemoHeroButton go={go} />
-          </div>
+    const hero = (
+      <div className="card hero">
+        <h1>{t.heroTitle}</h1>
+        <p>{t.heroText}</p>
+        <div className="row">
+          <button className="btn btn-primary" onClick={() => open('speaking')}>
+            {t.tryIt}
+          </button>
+          <button className="btn-link" style={{ color: '#fff' }} onClick={() => go('register')}>
+            {t.createAccount}
+          </button>
+          <DemoHeroButton go={go} />
         </div>
-
-        <div className="card">
-          <h2>{t.howItWorks}</h2>
-          <div className="steps">
-            {[
-              [t.step1Title, t.step1],
-              [t.step2Title, t.step2],
-              [t.step3Title, t.step3],
-            ].map(([title, text]) => (
-              <div className="step" key={title}>
-                <div>
-                  <strong>{title}</strong> <span className="muted">{text}</span>
-                </div>
+      </div>
+    );
+    const how = (
+      <div className="card">
+        <h2>{t.howItWorks}</h2>
+        <div className="steps">
+          {[
+            [t.step1Title, t.step1],
+            [t.step2Title, t.step2],
+            [t.step3Title, t.step3],
+          ].map(([title, text]) => (
+            <div className="step" key={title}>
+              <div>
+                <strong>{title}</strong> <span className="muted">{text}</span>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
-
-        <WordOfDay loggedIn={false} onLogin={() => go('login')} />
-        <QuizTile go={go} />
-
+      </div>
+    );
+    const practice = (
+      <>
         <h2 style={{ marginTop: 24 }}>{t.practice}</h2>
         <UsageNote userKey="guest" />
         <ExerciseTiles onOpen={open} />
+      </>
+    );
+    const word = <WordOfDay loggedIn={false} onLogin={() => go('login')} />;
+    const quiz = <QuizTile go={go} />;
+    if (wide) {
+      return (
+        <>
+          {hero}
+          <div className="split">
+            <div>
+              {how}
+              {practice}
+            </div>
+            <aside>
+              {word}
+              {quiz}
+            </aside>
+          </div>
+        </>
+      );
+    }
+    return (
+      <>
+        {hero}
+        {how}
+        {word}
+        {quiz}
+        {practice}
       </>
     );
   }
@@ -102,73 +131,108 @@ export function Home({
   const name = isDemoEmail(email) ? td.name : email.split('@')[0];
   const goal = stats ? Math.min(100, Math.round((stats.reviewedToday / stats.dailyGoal) * 100)) : 0;
 
-  return (
+  const header = (
+    <div className="page-header">
+      <h1>{t.hello(name)}</h1>
+      <p>{stats && stats.reviewedToday >= stats.dailyGoal ? t.goalDone : t.goalTodo}</p>
+    </div>
+  );
+  const plan = (
     <>
-      <div className="page-header">
-        <h1>{t.hello(name)}</h1>
-        <p>{stats && stats.reviewedToday >= stats.dailyGoal ? t.goalDone : t.goalTodo}</p>
-      </div>
-
       <TodayPlan go={go} />
       <TasksCard loggedIn go={go} />
       <GroupsShortcut go={go} />
-
-      {stats && (
-        <div className="card">
-          <div className="stats">
-            <div className="stat">
-              <div className="value">🔥 {stats.streakDays}</div>
-              <div className="label">{t.streakLabel}</div>
-            </div>
-            <div className="stat">
-              <div className="value">
-                {Math.min(stats.reviewedToday, stats.dailyGoal)}/{stats.dailyGoal}
-              </div>
-              <div className="label">{t.goalLabel}</div>
-            </div>
-            <div className="stat">
-              <div className="value">{stats.total}</div>
-              <div className="label">{t.totalLabel}</div>
-            </div>
-          </div>
-          <div className="progress" style={{ marginTop: 14 }}>
-            <div style={{ width: `${goal}%` }} />
-          </div>
+    </>
+  );
+  const statsCard = stats && (
+    <div className="card">
+      <div className="stats">
+        <div className="stat">
+          <div className="value">🔥 {stats.streakDays}</div>
+          <div className="label">{t.streakLabel}</div>
         </div>
-      )}
-
-      {stats && stats.due > 0 ? (
-        <div className="card cta">
-          <div>
-            <strong>{t.dueTitle(stats.due)}</strong>
-            <div className="muted small">{t.dueText}</div>
+        <div className="stat">
+          <div className="value">
+            {Math.min(stats.reviewedToday, stats.dailyGoal)}/{stats.dailyGoal}
           </div>
-          <button className="btn btn-primary" onClick={() => go('review')}>
-            {t.review}
-          </button>
+          <div className="label">{t.goalLabel}</div>
         </div>
-      ) : (
-        stats && (
-          <div className="card soft small">{t.nothingDue}</div>
-        )
-      )}
-
-      <WordOfDay loggedIn />
-      <QuizTile go={go} />
-
-      {!isDemoEmail(email) && <TelegramPromo go={go} />}
-
-      <button className="card cta" style={{ width: '100%', font: 'inherit', color: 'inherit', textAlign: 'left', cursor: 'pointer' }} onClick={() => go('progress')}>
+        <div className="stat">
+          <div className="value">{stats.total}</div>
+          <div className="label">{t.totalLabel}</div>
+        </div>
+      </div>
+      <div className="progress" style={{ marginTop: 14 }}>
+        <div style={{ width: `${goal}%` }} />
+      </div>
+    </div>
+  );
+  const due =
+    stats && stats.due > 0 ? (
+      <div className="card cta">
         <div>
-          <strong>{t.leagueTitle}</strong>
-          <div className="muted small">{t.leagueText}</div>
+          <strong>{t.dueTitle(stats.due)}</strong>
+          <div className="muted small">{t.dueText}</div>
         </div>
-        <span aria-hidden>→</span>
-      </button>
-
+        <button className="btn btn-primary" onClick={() => go('review')}>
+          {t.review}
+        </button>
+      </div>
+    ) : (
+      stats && <div className="card soft small">{t.nothingDue}</div>
+    );
+  const league = (
+    <button className="card cta" style={{ width: '100%', font: 'inherit', color: 'inherit', textAlign: 'left', cursor: 'pointer' }} onClick={() => go('progress')}>
+      <div>
+        <strong>{t.leagueTitle}</strong>
+        <div className="muted small">{t.leagueText}</div>
+      </div>
+      <span aria-hidden>→</span>
+    </button>
+  );
+  const practice = (
+    <>
       <h2 style={{ marginTop: 24 }}>{t.practice}</h2>
       <UsageNote userKey={email} />
       <ExerciseTiles onOpen={open} />
+    </>
+  );
+  const promo = !isDemoEmail(email) && <TelegramPromo go={go} />;
+
+  // Kompyuter: chapda reja va mashqlar, o'ngda holat (seriya, navbatdagi kartalar, so'z).
+  if (wide) {
+    return (
+      <>
+        {header}
+        <div className="split">
+          <div>
+            {plan}
+            {practice}
+            <WordOfDay loggedIn />
+          </div>
+          <aside>
+            {statsCard}
+            {due}
+            <QuizTile go={go} />
+            {league}
+            {promo}
+          </aside>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {header}
+      {plan}
+      {statsCard}
+      {due}
+      <WordOfDay loggedIn />
+      <QuizTile go={go} />
+      {promo}
+      {league}
+      {practice}
     </>
   );
 }

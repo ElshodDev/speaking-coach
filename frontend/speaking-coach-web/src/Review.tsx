@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { apiFetch, apiJson, postJson } from './api';
 import { isSpeechSupported, sleep, speakAsync, stopSpeaking } from './speech';
 import { PageHeader } from './ui';
 import { common, msg, useT } from './i18n';
 import { reviewMsg } from './locales/review';
 import { parseNote } from './Vocab';
+import { focusedButton, typingTarget, useWide } from './layout';
 
 export interface ReviewCard {
   id: string;
@@ -81,6 +82,14 @@ export function Review({
   const [revealed, setRevealed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const wide = useWide();
+  // Klaviatura (kompyuter): Probel/Enter — javob, 1–4 — baho. Ishlovchi har renderda yangilanadi.
+  const keyHandler = useRef<(e: KeyboardEvent) => void>(() => undefined);
+  useEffect(() => {
+    const on = (e: KeyboardEvent) => keyHandler.current(e);
+    window.addEventListener('keydown', on);
+    return () => window.removeEventListener('keydown', on);
+  }, []);
 
   const load = useCallback(async () => {
     if (!loggedIn) return;
@@ -159,6 +168,22 @@ export function Review({
     }
   }
 
+  keyHandler.current = (e: KeyboardEvent) => {
+    if (!current || busy || e.ctrlKey || e.metaKey || e.altKey || typingTarget(e)) return;
+    const onButton = focusedButton(e);
+    if (!revealed && (e.key === ' ' || e.key === 'Enter')) {
+      if (onButton) return; // tugmaning o'zi bajaradi
+      e.preventDefault();
+      setRevealed(true);
+      return;
+    }
+    const i = ['1', '2', '3', '4'].indexOf(e.key);
+    if (revealed && i >= 0) {
+      e.preventDefault();
+      grade(GRADES[i].value);
+    }
+  };
+
   async function remove() {
     if (!current || !confirm(t.confirmDelete)) return;
     await apiFetch(`/api/review/cards/${current.id}`, { method: 'DELETE' });
@@ -170,15 +195,27 @@ export function Review({
 
   const vocab = scope === 'vocab';
 
-  return (
+  const header = vocab ? (
+    <PageHeader title={t.vocabTitle} subtitle={t.vocabSubtitle} onBack={onBack} backLabel={t.vocabBack} />
+  ) : (
+    <PageHeader title={t.title} />
+  );
+  const statsBar = stats && !vocab && <StatsBar stats={stats} />;
+
+  return <ReviewLayout
+    wide={wide}
+    header={header}
+    stats={statsBar}
+    side={
+      <>
+        <CommuteMode dueCards={cards} scopeQuery={scopeQuery} />
+        {!vocab && <AddCardForm onAdded={() => { load(); onChanged(); }} />}
+      </>
+    }
+    main={
     <>
-      {vocab ? (
-        <PageHeader title={t.vocabTitle} subtitle={t.vocabSubtitle} onBack={onBack} backLabel={t.vocabBack} />
-      ) : (
-        <PageHeader title={t.title} />
-      )}
-      {stats && !vocab && <StatsBar stats={stats} />}
       {error && <p className="error small">{error}</p>}
+      {current && wide && <p className="muted tiny" style={{ margin: '12px 0 0' }} data-testid="review-keys">⌨️ {t.keysHint}</p>}
 
       {current ? (
         <div className="card">
@@ -221,8 +258,9 @@ export function Review({
                 {t.howWell}
               </p>
               <div className="grades">
-                {GRADES.map((g) => (
+                {GRADES.map((g, i) => (
                   <button key={g.value} className={`btn ${g.cls}`} onClick={() => grade(g.value)} disabled={busy}>
+                    {wide && <kbd aria-hidden>{i + 1}</kbd>}
                     {t.grades[g.value].label}
                     <small>{t.grades[g.value].hint}</small>
                   </button>
@@ -263,8 +301,33 @@ export function Review({
         )
       )}
 
-      <CommuteMode dueCards={cards} scopeQuery={scopeQuery} />
-      {!vocab && <AddCardForm onAdded={() => { load(); onChanged(); }} />}
+    </>
+    }
+  />;
+}
+
+/** Telefonda bitta ustun (holat → karta → yo'lda rejimi → karta qo'shish); kompyuterda karta chapda, qolgani o'ngda. */
+function ReviewLayout({ wide, header, stats, main, side }: { wide: boolean; header: ReactNode; stats: ReactNode; main: ReactNode; side: ReactNode }) {
+  if (!wide) {
+    return (
+      <>
+        {header}
+        {stats}
+        {main}
+        {side}
+      </>
+    );
+  }
+  return (
+    <>
+      {header}
+      <div className="split">
+        <div>{main}</div>
+        <aside>
+          {stats}
+          {side}
+        </aside>
+      </div>
     </>
   );
 }

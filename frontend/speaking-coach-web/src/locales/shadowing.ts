@@ -70,6 +70,7 @@ export const shadowingMsg = defineMessages(
     doneBefore: (times: number, best: number | null) => `✓ ${times} marta bajarilgan${best != null ? ` · eng yaxshi ball ${best}` : ''}`,
     names: { cat: 'Mushuk', owl: 'Boyoʻgʻli', robot: 'Robot', fox: 'Tulki', bear: 'Ayiq', penguin: 'Pingvin' } as Record<string, string>,
     lineN: (n: number) => `${n}-gap`,
+    keysHint: 'Klaviatura: Probel — tinglash/pauza, ← → — oldingi/keyingi gap, R — yozish',
   },
   {
     ru: {
@@ -137,6 +138,7 @@ export const shadowingMsg = defineMessages(
       doneBefore: (times: number, best: number | null) => `✓ Пройден ${times} ${ruPlural(times, 'раз', 'раза', 'раз')}${best != null ? ` · лучший балл ${best}` : ''}`,
       names: { cat: 'Кошка', owl: 'Сова', robot: 'Робот', fox: 'Лиса', bear: 'Медведь', penguin: 'Пингвин' },
       lineN: (n: number) => `Фраза ${n}`,
+      keysHint: 'Клавиатура: пробел — слушать/пауза, ← → — предыдущая/следующая фраза, R — запись',
     },
     en: {
       title: '🎬 Shadowing',
@@ -203,6 +205,7 @@ export const shadowingMsg = defineMessages(
       doneBefore: (times: number, best: number | null) => `✓ Done ${times} ${enPlural(times, 'time', 'times')}${best != null ? ` · best score ${best}` : ''}`,
       names: { cat: 'Cat', owl: 'Owl', robot: 'Robot', fox: 'Fox', bear: 'Bear', penguin: 'Penguin' },
       lineN: (n: number) => `Line ${n}`,
+      keysHint: 'Keyboard: Space — play/pause, ← → — previous/next line, R — record',
     },
   },
 );

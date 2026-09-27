@@ -3,7 +3,8 @@ import { apiJson } from './api';
 import { ActivityCalendar, LineChart, type CalendarDay, type LineSeries } from './charts';
 import { common, msg, useT } from './i18n';
 import { progressMsg, type BadgeId } from './locales/progress';
-import { PageHeader } from './ui';
+import { PageHeader, Split } from './ui';
+import { useWide } from './layout';
 
 interface LevelInfo {
   level: number;
@@ -76,6 +77,7 @@ export function Progress({ loggedIn, onLogin, go }: { loggedIn: boolean; onLogin
   const [board, setBoard] = useState<LeaderboardData | null>(null);
   const [error, setError] = useState('');
   const [trend, setTrend] = useState<'writing' | 'speaking'>('writing');
+  const wide = useWide();
   const t = useT(progressMsg);
   const cm = useT(common);
 
@@ -117,10 +119,8 @@ export function Progress({ loggedIn, onLogin, go }: { loggedIn: boolean; onLogin
   const trendPoints = (trend === 'writing' ? data.writingTrend : data.speakingTrend).map((p) => ({ at: p.at, values: p.scores }));
   const earned = data.badges.filter((b) => b.earned).length;
 
-  return (
+  const level = (
     <>
-      <PageHeader title={t.title} />
-
       <div className="card">
         <div className="level-ring">
           <div className="level-num" aria-label={t.levelTitle(lv.level)}>
@@ -144,6 +144,10 @@ export function Progress({ loggedIn, onLogin, go }: { loggedIn: boolean; onLogin
         </p>
       </div>
 
+    </>
+  );
+  const statsCard = (
+    <>
       <div className="card">
         <div className="stats">
           <div className="stat">
@@ -161,11 +165,19 @@ export function Progress({ loggedIn, onLogin, go }: { loggedIn: boolean; onLogin
         </div>
       </div>
 
+    </>
+  );
+  const activity = (
+    <>
       <div className="card">
         <h3>{t.activity}</h3>
         <ActivityCalendar days={data.calendar} />
       </div>
 
+    </>
+  );
+  const trendCard = (
+    <>
       <div className="card">
         <div className="spread" style={{ marginBottom: 10 }}>
           <h3 style={{ margin: 0 }}>{t.trendTitle}</h3>
@@ -194,6 +206,10 @@ export function Progress({ loggedIn, onLogin, go }: { loggedIn: boolean; onLogin
         )}
       </div>
 
+    </>
+  );
+  const badges = (
+    <>
       <div className="card">
         <div className="spread">
           <h3 style={{ margin: 0 }}>{t.badgesTitle}</h3>
@@ -217,8 +233,16 @@ export function Progress({ loggedIn, onLogin, go }: { loggedIn: boolean; onLogin
         </div>
       </div>
 
+    </>
+  );
+  const boardCard = (
+    <>
       {board && <Leaderboard board={board} onJoin={() => go('profile')} />}
 
+    </>
+  );
+  const hardest = (
+    <>
       {data.hardestCards.length > 0 && (
         <div className="card">
           <h3>{t.hardestTitle}</h3>
@@ -236,6 +260,32 @@ export function Progress({ loggedIn, onLogin, go }: { loggedIn: boolean; onLogin
           </ul>
         </div>
       )}
+    </>
+  );
+
+  // Kompyuter: chapda grafik va kalendar, o'ngda daraja, nishonlar va musobaqa.
+  if (wide) {
+    return (
+      <>
+        <PageHeader title={t.title} />
+        <Split
+          main={<>{statsCard}{trendCard}{activity}{hardest}</>}
+          side={<>{level}{boardCard}{badges}</>}
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <PageHeader title={t.title} />
+      {level}
+      {statsCard}
+      {activity}
+      {trendCard}
+      {badges}
+      {boardCard}
+      {hardest}
     </>
   );
 }

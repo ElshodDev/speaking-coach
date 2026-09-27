@@ -372,6 +372,7 @@ export function MockHub({ loggedIn, go, onLogin }: { loggedIn: boolean; go: (rou
         </p>
       )}
 
+      <div className="card-grid">
       <div className="card stack" style={{ borderColor: 'var(--primary)' }}>
         <h3 style={{ margin: 0 }}>{to.fullTitle}</h3>
         <p className="muted small" style={{ margin: 0 }}>{to.fullText}</p>
@@ -422,6 +423,7 @@ export function MockHub({ loggedIn, go, onLogin }: { loggedIn: boolean; go: (rou
             <span className="tiny" style={{ display: 'block', fontWeight: 400, opacity: 0.85 }}>{t.generalHint}</span>
           </button>
         </div>
+      </div>
       </div>
 
       <div className="card stack">

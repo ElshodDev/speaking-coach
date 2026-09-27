@@ -208,7 +208,7 @@ export function Recorder({
   const isBusy = status === 'uploading' || isTesting;
 
   return (
-    <>
+    <div className="practice-split">
       <div className="card">
         <div className="spread">
           <span className="muted small">{t.topic}</span>
@@ -246,6 +246,7 @@ export function Recorder({
         )}
       </div>
 
+      <div>
       {result && (
         <div className="card">
           <h3>{t.youSaid}</h3>
@@ -292,6 +293,7 @@ export function Recorder({
           );
         }}
       />
-    </>
+      </div>
+    </div>
   );
 }

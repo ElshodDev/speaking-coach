@@ -5,6 +5,7 @@ import { cefrMsg } from './locales/cefr';
 import { mockMsg } from './locales/mock';
 import { countWords, formatClock, wordRangeStatus } from './mockLogic';
 import { PageHeader } from './ui';
+import { useWide } from './layout';
 
 interface CefrWritingSet {
   id: string;
@@ -72,6 +73,7 @@ export function CefrWriting({ go, sessionId, onSubmitted }: { go: (route: string
   const [timing, setTiming] = useState<Timing | null>(null);
   const [texts, setTexts] = useState<Record<TaskKey, string>>({ '11': '', '12': '', '2': '' });
   const [tab, setTab] = useState<TaskKey>('11');
+  const wide = useWide();
   const [startedAt, setStartedAt] = useState(0);
   const [now, setNow] = useState(Date.now());
   const [status, setStatus] = useState<'loading' | 'exam' | 'submitting' | 'error'>('loading');
@@ -181,7 +183,7 @@ export function CefrWriting({ go, sessionId, onSubmitted }: { go: (route: string
     <>
       <PageHeader title={t.writingTitle} onBack={back} backLabel={tm.title} />
 
-      <div className="card" style={{ position: 'sticky', top: 8, zIndex: 5, padding: '10px 14px' }}>
+      <div className="card" style={{ position: 'sticky', top: 'var(--sticky-top)', zIndex: 5, padding: '10px 14px' }}>
         <div className="spread" style={{ alignItems: 'center' }}>
           <span role="timer" aria-live="off">
             <span className="muted small">{tm.timeLeft}: </span>
@@ -205,36 +207,61 @@ export function CefrWriting({ go, sessionId, onSubmitted }: { go: (route: string
       {error && <p className="error small" role="alert">{error}</p>}
       {status === 'submitting' && <p className="small" role="status">⏳ {tm.submitting}</p>}
 
-      {tab !== '2' && (
-        <div className="card stack">
-          <strong className="small">{t.situation}</strong>
-          <p className="small" style={{ margin: 0 }}>{set.role}</p>
-          <div className="quote small" style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{set.email}</div>
-        </div>
-      )}
-
-      <div className="card stack" data-testid={`cefr-writing-${tab}`}>
-        <strong>{t.task(label)}</strong>
-        <p style={{ margin: 0 }}>{prompts[tab]}</p>
-        <textarea
-          className="input"
-          rows={tab === '11' ? 6 : 12}
-          value={texts[tab]}
-          onChange={(e) => setTexts((x) => ({ ...x, [tab]: e.target.value }))}
-          placeholder={tm.placeholder}
-          aria-label={t.task(label)}
-          disabled={status === 'submitting'}
-          spellCheck={false}
-          autoCorrect="off"
-        />
-        <div className="spread small">
-          <span className={st === 'ok' ? 'txt-great' : 'muted'}>
-            {tab === '11' ? t.about50(n) : t.words(n, r.min, r.max)}
-            {st !== 'ok' && n > 0 ? ` · ${st === 'low' ? t.tooShort : t.tooLong}` : ''}
-          </span>
-          <span className="muted tiny">{tm.draftSaved}</span>
-        </div>
-      </div>
+      {(() => {
+        const situation = tab !== '2' && (
+          <div className="card stack">
+            <strong className="small">{t.situation}</strong>
+            <p className="small" style={{ margin: 0 }}>{set.role}</p>
+            <div className="quote small" style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{set.email}</div>
+          </div>
+        );
+        const prompt = (
+          <>
+            <strong>{t.task(label)}</strong>
+            <p style={{ margin: 0 }}>{prompts[tab]}</p>
+          </>
+        );
+        const editor = (
+          <>
+            <textarea
+              className="input"
+              rows={wide ? 18 : tab === '11' ? 6 : 12}
+              value={texts[tab]}
+              onChange={(e) => setTexts((x) => ({ ...x, [tab]: e.target.value }))}
+              placeholder={tm.placeholder}
+              aria-label={t.task(label)}
+              disabled={status === 'submitting'}
+              spellCheck={false}
+              autoCorrect="off"
+            />
+            <div className="spread small">
+              <span className={st === 'ok' ? 'txt-great' : 'muted'}>
+                {tab === '11' ? t.about50(n) : t.words(n, r.min, r.max)}
+                {st !== 'ok' && n > 0 ? ` · ${st === 'low' ? t.tooShort : t.tooLong}` : ''}
+              </span>
+              <span className="muted tiny">{tm.draftSaved}</span>
+            </div>
+          </>
+        );
+        // Kompyuterda: vaziyat va topshiriq chapda, javob o'ngda.
+        return wide ? (
+          <div className="exam-split" data-testid={`cefr-writing-${tab}`}>
+            <div className="exam-pane">
+              {situation}
+              <div className="card stack">{prompt}</div>
+            </div>
+            <div className="card stack exam-pane exam-editor">{editor}</div>
+          </div>
+        ) : (
+          <>
+            {situation}
+            <div className="card stack" data-testid={`cefr-writing-${tab}`}>
+              {prompt}
+              {editor}
+            </div>
+          </>
+        );
+      })()}
       <p className="muted tiny">{t.disclaimer}</p>
     </>
   );

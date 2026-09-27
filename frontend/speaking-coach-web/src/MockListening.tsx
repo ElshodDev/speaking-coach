@@ -250,7 +250,7 @@ export function MockListening({
   return (
     <>
       {header}
-      <div className="card" style={{ position: 'sticky', top: 8, zIndex: 5, padding: '10px 14px' }} data-testid="listening-status">
+      <div className="card" style={{ position: 'sticky', top: 'var(--sticky-top)', zIndex: 5, padding: '10px 14px' }} data-testid="listening-status">
         <div className="spread" style={{ alignItems: 'center' }}>
           <span>
             <strong>{showAll ? t.answered(answered, all.length) : t.part(current.part)}</strong>

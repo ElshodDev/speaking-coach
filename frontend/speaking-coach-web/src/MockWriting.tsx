@@ -5,6 +5,7 @@ import { mockMsg } from './locales/mock';
 import { MockChart, type ChartData } from './MockChart';
 import { countWords, draftUsable, formatClock, readDraft, writeDraft, type WritingDraft } from './mockLogic';
 import { PageHeader } from './ui';
+import { useWide } from './layout';
 
 interface WritingSet {
   id: string;
@@ -40,6 +41,7 @@ export function MockWriting({
   const [set, setSet] = useState<WritingSet | null>(null);
   const [timing, setTiming] = useState<Timing | null>(null);
   const [tab, setTab] = useState<1 | 2>(1);
+  const wide = useWide();
   const [task1, setTask1] = useState('');
   const [task2, setTask2] = useState('');
   const [startedAt, setStartedAt] = useState(0);
@@ -165,7 +167,7 @@ export function MockWriting({
     <>
       <PageHeader title={title} onBack={sessionId ? undefined : () => go('mock')} backLabel={t.title} />
 
-      <div className="card mock-sticky" style={{ position: 'sticky', top: 8, zIndex: 5, padding: '10px 14px' }}>
+      <div className="card mock-sticky" style={{ position: 'sticky', top: 'var(--sticky-top)', zIndex: 5, padding: '10px 14px' }}>
         <div className="spread" style={{ alignItems: 'center' }}>
           <span role="timer" aria-live="off">
             <span className="muted small">{t.timeLeft}: </span>
@@ -190,30 +192,56 @@ export function MockWriting({
       {error && <p className="error small" role="alert">{error}</p>}
       {status === 'submitting' && <p className="small" role="status">⏳ {t.submitting}</p>}
 
-      <div className="card stack" data-testid={`mock-writing-task${tab}`}>
-        <div className="spread small">
-          <strong>{tab === 1 ? t.task1 : t.task2}</strong>
-          <span className="muted">{t.recommended(tab === 1 ? 20 : 40)}</span>
-        </div>
-        <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{tab === 1 ? set.task1.prompt : set.task2}</p>
-        {tab === 1 && set.task1.chart && <MockChart data={set.task1.chart} />}
-        <textarea
-          className="input"
-          rows={14}
-          value={tab === 1 ? task1 : task2}
-          onChange={(e) => (tab === 1 ? setTask1 : setTask2)(e.target.value)}
-          placeholder={t.placeholder}
-          aria-label={tab === 1 ? t.task1 : t.task2}
-          disabled={status === 'submitting'}
-          spellCheck={false}
-          autoCorrect="off"
-          autoCapitalize="sentences"
-        />
-        <div className="spread small">
-          <span className={words >= min ? 'txt-great' : 'muted'}>{t.words(words, min)}</span>
-          <span className="muted tiny">{t.draftSaved}</span>
-        </div>
-      </div>
+      {(() => {
+        const head = (
+          <div className="spread small">
+            <strong>{tab === 1 ? t.task1 : t.task2}</strong>
+            <span className="muted">{t.recommended(tab === 1 ? 20 : 40)}</span>
+          </div>
+        );
+        const prompt = (
+          <>
+            <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{tab === 1 ? set.task1.prompt : set.task2}</p>
+            {tab === 1 && set.task1.chart && <MockChart data={set.task1.chart} />}
+          </>
+        );
+        const editor = (
+          <>
+            <textarea
+              className="input"
+              rows={wide ? 22 : 14}
+              value={tab === 1 ? task1 : task2}
+              onChange={(e) => (tab === 1 ? setTask1 : setTask2)(e.target.value)}
+              placeholder={t.placeholder}
+              aria-label={tab === 1 ? t.task1 : t.task2}
+              disabled={status === 'submitting'}
+              spellCheck={false}
+              autoCorrect="off"
+              autoCapitalize="sentences"
+            />
+            <div className="spread small">
+              <span className={words >= min ? 'txt-great' : 'muted'}>{t.words(words, min)}</span>
+              <span className="muted tiny">{t.draftSaved}</span>
+            </div>
+          </>
+        );
+        // Kompyuterda: topshiriq (va grafik) chapda, yozish maydoni o'ngda — xuddi kompyuterdagi IELTS'dagidek.
+        return wide ? (
+          <div className="exam-split" data-testid={`mock-writing-task${tab}`}>
+            <div className="card stack exam-pane">
+              {head}
+              {prompt}
+            </div>
+            <div className="card stack exam-pane exam-editor">{editor}</div>
+          </div>
+        ) : (
+          <div className="card stack" data-testid={`mock-writing-task${tab}`}>
+            {head}
+            {prompt}
+            {editor}
+          </div>
+        );
+      })()}
       <p className="muted tiny">{t.disclaimer}</p>
     </>
   );
