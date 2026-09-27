@@ -96,6 +96,8 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ReviewService>();
 builder.Services.AddScoped<TodayService>();
 builder.Services.AddScoped<SpeakingCoach.Api.Services.Mock.MockSets>();
+builder.Services.AddScoped<SpeakingCoach.Api.Services.Mock.ShadowingService>();
+builder.Services.AddSingleton<SpeakingCoach.Api.Services.Mock.IShadowingCoach, SpeakingCoach.Api.Services.Mock.GeminiShadowingCoach>();
 builder.Services.AddScoped<ProgressService>();
 builder.Services.AddScoped<AdminService>();
 
@@ -145,6 +147,7 @@ app.MapTelegramEndpoints();
 app.MapMockEndpoints();
 app.MapGroupEndpoints();
 app.MapFunEndpoints();
+app.MapShadowingEndpoints();
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 app.Run($"http://0.0.0.0:{port}");

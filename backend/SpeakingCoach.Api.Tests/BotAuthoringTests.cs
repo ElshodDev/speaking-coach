@@ -18,10 +18,12 @@ public class BotAuthoringTests
     // ---------------- Turlar va holat ----------------
 
     [Fact]
-    public void All_ten_kinds_have_unique_keys_and_parse_back()
+    public void All_kinds_have_unique_keys_and_parse_back()
     {
-        Assert.Equal(10, AuthorKind.All.Length);
-        Assert.Equal(10, AuthorKind.All.Select(k => k.Key).Distinct().Count());
+        Assert.Equal(12, AuthorKind.All.Length);
+        Assert.Equal(12, AuthorKind.All.Select(k => k.Key).Distinct().Count());
+        Assert.Equal("Shadowing (YouTube)", AuthorKind.Parse("shadowing:youtube:")!.Label);
+        Assert.Equal("Characters", AuthorKind.Parse("shadowing:character:")!.ModuleLabel);
         foreach (var k in AuthorKind.All) Assert.Equal(k, AuthorKind.Parse(k.Key));
         Assert.Null(AuthorKind.Parse("ielts:speaking:academic"));
         Assert.Null(AuthorKind.Parse(null));

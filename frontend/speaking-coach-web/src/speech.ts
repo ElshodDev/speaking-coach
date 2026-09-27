@@ -55,4 +55,15 @@ export function stopSpeaking() {
   if (isSpeechSupported()) window.speechSynthesis.cancel();
 }
 
+const MALE = /male\b|daniel|david|fred|alex|george|james|guy|arthur|ryan|mark|thomas|oliver|aaron/i;
+const FEMALE = /female|samantha|karen|zira|susan|victoria|moira|tessa|serena|kate|libby|sonia|jenny|aria|emma|google us english|google uk english female/i;
+
+/** Ikki xil ovoz: erkak va ayol (bo'lmasa — bitta ovoz, balandligi farqli). */
+export function pickVoices(voices: SpeechSynthesisVoice[]): { male?: SpeechSynthesisVoice; female?: SpeechSynthesisVoice } {
+  const en = voices.filter((v) => v.lang.toLowerCase().startsWith('en'));
+  const female = en.find((v) => FEMALE.test(v.name)) ?? en[0];
+  const male = en.find((v) => MALE.test(v.name) && !/female/i.test(v.name)) ?? en.find((v) => v !== female) ?? female;
+  return { male, female };
+}
+
 export const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));

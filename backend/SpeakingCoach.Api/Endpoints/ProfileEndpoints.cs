@@ -28,6 +28,7 @@ public static partial class ProfileEndpoints
             {
                 exercises = new { used = s.Exercises.Used, limit = s.Exercises.Limit, left = s.Exercises.Left },
                 words = new { used = s.Words.Used, limit = s.Words.Limit, left = s.Words.Left },
+                shadowing = s.Shadowing is { } sh ? new { used = sh.Used, limit = sh.Limit, left = sh.Left } : null,
                 unlimited = s.Unlimited,
                 guest = s.Guest,
             });

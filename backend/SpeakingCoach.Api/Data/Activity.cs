@@ -16,6 +16,9 @@ public enum ActivityType
 
     /// <summary>To'liq mock imtihon (IELTS Speaking yoki Writing) — natija ResponseData'da.</summary>
     MockExam = 4,
+
+    /// <summary>Shadowing darsi yakunlandi (takrorlangan gaplar va o'rtacha ball ResponseData'da).</summary>
+    Shadowing = 5,
 }
 
 /// <summary>

@@ -20,15 +20,23 @@ public record AuthorKind(string Exam, string Module, string Variant)
         new("cefr", "writing", ""),
         new("cefr", "reading", ""),
         new("cefr", "listening", ""),
+        new(ShadowingService.Exam, ShadowingRules.YouTube, ""),
+        new(ShadowingService.Exam, ShadowingRules.Character, ""),
     ];
 
     public static AuthorKind? Parse(string? key) => All.FirstOrDefault(k => k.Key == key);
 
     public bool Objective => Module is "reading" or "listening";
 
-    /// <summary>"IELTS Reading (Academic)", "CEFR Speaking".</summary>
-    public string Label => $"{(Exam == "cefr" ? "CEFR" : "IELTS")} {char.ToUpperInvariant(Module[0])}{Module[1..]}"
-        + (Variant.Length > 0 ? $" ({char.ToUpperInvariant(Variant[0])}{Variant[1..]})" : "");
+    public bool IsShadowing => Exam == ShadowingService.Exam;
+
+    /// <summary>"Reading (Academic)", "Speaking", "YouTube", "Characters".</summary>
+    public string ModuleLabel => IsShadowing
+        ? (Module == ShadowingRules.YouTube ? "YouTube" : "Characters")
+        : $"{char.ToUpperInvariant(Module[0])}{Module[1..]}" + (Variant.Length > 0 ? $" ({char.ToUpperInvariant(Variant[0])}{Variant[1..]})" : "");
+
+    /// <summary>"IELTS Reading (Academic)", "CEFR Speaking", "Shadowing (YouTube)".</summary>
+    public string Label => IsShadowing ? $"Shadowing ({ModuleLabel})" : $"{(Exam == "cefr" ? "CEFR" : "IELTS")} {ModuleLabel}";
 }
 
 /// <summary>
@@ -278,6 +286,7 @@ public static class MockAuthoringRules
         var o = MockSets.Web;
         return (kind.Exam, kind.Module) switch
         {
+            (ShadowingService.Exam, _) => Short(JsonSerializer.Deserialize<ShadowingLesson>(payload, o)!.Title),
             ("ielts", "speaking") => Short(JsonSerializer.Deserialize<SpeakingSet>(payload, o)!.Part2.Topic),
             ("ielts", "writing") => Short(JsonSerializer.Deserialize<WritingSet>(payload, o)!.Task2),
             ("cefr", "speaking") => Short(JsonSerializer.Deserialize<CefrSpeakingSet>(payload, o)!.Part2Topic),
@@ -298,6 +307,24 @@ public static class MockAuthoringRules
         sb.AppendLine(kind.Label).AppendLine(new string('=', kind.Label.Length)).AppendLine();
         switch (kind.Exam, kind.Module)
         {
+            case (ShadowingService.Exam, _):
+            {
+                var l = JsonSerializer.Deserialize<ShadowingLesson>(payload, o)!;
+                sb.AppendLine($"{l.Title} — {l.Level}, {l.Lines.Count} lines");
+                if (l.VideoId is { } vid && l.From is { } f && l.To is { } t)
+                    sb.AppendLine($"https://www.youtube.com/watch?v={vid}&t={(int)f}s  ({ShadowingRules.Clock(f)}–{ShadowingRules.Clock(t)})");
+                else
+                    sb.AppendLine("Characters: " + string.Join(", ", l.Characters));
+                sb.AppendLine();
+                foreach (var (line, i) in l.Lines.Select((x, i) => (x, i + 1)))
+                {
+                    var who = line.Start is { } st && line.End is { } en
+                        ? $"[{ShadowingRules.Clock(st)}.{(int)(st * 10 % 10)}–{ShadowingRules.Clock(en)}.{(int)(en * 10 % 10)}]"
+                        : $"{l.Characters.ElementAtOrDefault(line.Speaker) ?? "?"}:";
+                    sb.AppendLine($"{i,2}. {who} {line.Text}");
+                }
+                break;
+            }
             case ("ielts", "speaking"):
             {
                 var s = JsonSerializer.Deserialize<SpeakingSet>(payload, o)!;
@@ -399,6 +426,11 @@ public static class MockAuthoringRules
         var o = MockSets.Web;
         string body = (kind.Exam, kind.Module) switch
         {
+            (ShadowingService.Exam, _) => JsonSerializer.Deserialize<ShadowingLesson>(payload, o) is { } l
+                ? $"{l.Level} · {l.Lines.Count} lines · "
+                  + (l.VideoId is { } vid && l.From is { } f && l.To is { } t ? $"youtu.be/{vid} {ShadowingRules.Clock(f)}–{ShadowingRules.Clock(t)}" : string.Join(" + ", l.Characters))
+                  + "\n" + string.Join("\n", l.Lines.Take(4).Select(x => "• " + Short(x.Text, 90)))
+                : "",
             ("ielts", "speaking") => JsonSerializer.Deserialize<SpeakingSet>(payload, o) is { } s
                 ? $"Part 1: {s.Part1Topic} ({s.Part1.Length})\nPart 2: {s.Part2.Topic}\nPart 3: {s.Part3.Length}"
                 : "",

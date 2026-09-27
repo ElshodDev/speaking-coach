@@ -19,6 +19,13 @@ public partial class GeminiMockGenerator : IMockAuthoring
         var attempts = source.IsTopic ? 3 : 4;
         var (minWords, maxWords) = source.IsTopic ? (550, 1200) : (250, 1500);
 
+        if (kind.IsShadowing)
+        {
+            var lesson = await CreateShadowingAsync(kind, source, extra, ct);
+            var json = JsonSerializer.Serialize(lesson, Web);
+            return new AuthoredTest(kind, json, MockAuthoringRules.TitleOf(kind, json));
+        }
+
         object content = (kind.Exam, kind.Module) switch
         {
             ("ielts", "speaking") => await AskAsync<SpeakingSet>(MockAuthoringRules.IeltsSpeakingPrompt(source), MockAuthoringRules.ValidateIeltsSpeaking, ct, attempts, extra),
@@ -43,6 +50,53 @@ public partial class GeminiMockGenerator : IMockAuthoring
         var payload = JsonSerializer.Serialize(content, content.GetType(), Web);
         return new AuthoredTest(kind, payload, MockAuthoringRules.TitleOf(kind, payload));
     }
+
+    /// <summary>
+    /// Shadowing: YouTube — Gemini videoning tanlangan qismini tinglab, gaplarni
+    /// vaqti bilan yozadi (video bizga yuklanmaydi, Gemini o'zi oladi);
+    /// qahramonlar — mavzu yoki o'qituvchi matni bo'yicha dialog.
+    /// </summary>
+    private async Task<ShadowingLesson> CreateShadowingAsync(AuthorKind kind, AuthorSource source, object[]? extra, CancellationToken ct)
+    {
+        if (kind.Module == ShadowingRules.YouTube)
+        {
+            var clip = ShadowingRules.ParseYouTube(source.Text) ?? throw new InvalidOperationException("YouTube havolasi topilmadi");
+            object[] video =
+            [
+                new
+                {
+                    file_data = new { file_uri = clip.Url },
+                    // Faqat kerakli qism; kadrlar kam — bizga asosan ovoz kerak (token tejaladi).
+                    video_metadata = new { start_offset = $"{(int)clip.From}s", end_offset = $"{(int)Math.Ceiling(clip.To)}s", fps = 0.5 },
+                },
+            ];
+            var lesson = await AskAsync<ShadowingLesson>(
+                ShadowingRules.YouTubePrompt(clip, ShadowingRules.LevelIn(source.Text)),
+                l => ShadowingRules.Validate(Fix(l, clip)), ct, attempts: 3, video);
+            return Fix(lesson, clip);
+        }
+
+        var pair = ShadowingRules.Characters.OrderBy(_ => Random.Shared.Next()).Take(2).ToArray();
+        var level = ShadowingRules.LevelIn(source.Topic ?? source.Text) ?? "B1";
+        var made = await AskAsync<ShadowingLesson>(
+            ShadowingRules.CharacterPrompt(source, pair, level),
+            l => ShadowingRules.Validate(ShadowingRules.TrimCharacters(l with { Kind = ShadowingRules.Character, VideoId = null, From = null, To = null })),
+            ct, attempts: 3, source.IsTopic ? null : extra);
+        return ShadowingRules.TrimCharacters(made with { Id = "new", Kind = ShadowingRules.Character, VideoId = null, From = null, To = null });
+    }
+
+    /// <summary>Video va oraliq — havoladan (AI emas); vaqtlar kerak bo'lsa suriladi.</summary>
+    private static ShadowingLesson Fix(ShadowingLesson l, ShadowingRules.YouTubeClip clip) =>
+        l with
+        {
+            Id = "new",
+            Kind = ShadowingRules.YouTube,
+            VideoId = clip.VideoId,
+            From = clip.From,
+            To = clip.To,
+            Characters = [],
+            Lines = ShadowingRules.NormalizeTimes(l.Lines, clip.From, clip.To),
+        };
 
     /// <summary>IELTS Reading: 3 matn, 13 + 13 + 14 = 40 savol.</summary>
     public static readonly (int First, int Count)[] IeltsReadingLayout = [(1, 13), (14, 13), (27, 14)];

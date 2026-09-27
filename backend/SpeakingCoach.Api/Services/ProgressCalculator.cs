@@ -29,12 +29,14 @@ public static class ProgressCalculator
     public const int PerCorrectAnswerXp = 5;
     public const int ReviewXp = 2;
     public const int MockExamXp = 50;
+    public const int ShadowingXp = 15;
 
     public static int XpFor(ActivityFact a) => a.Type switch
     {
         ActivityType.Speaking or ActivityType.Writing => SpeakingWritingXp,
         ActivityType.Reading or ActivityType.Listening => ComprehensionXp + PerCorrectAnswerXp * (a.CorrectAnswers ?? 0),
         ActivityType.MockExam => MockExamXp,
+        ActivityType.Shadowing => ShadowingXp,
         _ => 0,
     };
 

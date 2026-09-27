@@ -8,6 +8,9 @@ public enum AiKind
 {
     Exercise,
     Word,
+
+    /// <summary>Shadowing: bitta gap talaffuzini tekshirish (qisqa audio, arzon so'rov).</summary>
+    Shadowing,
 }
 
 public record QuotaCounter(int Used, int Limit)
@@ -15,7 +18,7 @@ public record QuotaCounter(int Used, int Limit)
     public int Left => Math.Max(0, Limit - Used);
 }
 
-public record QuotaStatus(QuotaCounter Exercises, QuotaCounter Words, bool Unlimited, bool Guest);
+public record QuotaStatus(QuotaCounter Exercises, QuotaCounter Words, bool Unlimited, bool Guest, QuotaCounter? Shadowing = null);
 
 /// <summary>
 /// Kunlik limitlar (sozlanadi): Ai:ExercisesPerDay, Ai:WordsPerDay,
@@ -28,6 +31,8 @@ public class AiQuotaOptions
     public int Words { get; }
     public int GuestExercises { get; }
     public int GuestWords { get; }
+    public int Shadowing { get; }
+    public int GuestShadowing { get; }
 
     public AiQuotaOptions(IConfiguration config)
     {
@@ -36,6 +41,8 @@ public class AiQuotaOptions
         Words = Read("Ai:WordsPerDay", 100);
         GuestExercises = Read("Ai:GuestExercisesPerDay", 5);
         GuestWords = Read("Ai:GuestWordsPerDay", 20);
+        Shadowing = Read("Ai:ShadowingPerDay", 60);
+        GuestShadowing = Read("Ai:GuestShadowingPerDay", 10);
     }
 
     public int LimitFor(AiKind kind, bool guest) => (kind, guest) switch
@@ -43,6 +50,8 @@ public class AiQuotaOptions
         (AiKind.Exercise, false) => Exercises,
         (AiKind.Word, false) => Words,
         (AiKind.Exercise, true) => GuestExercises,
+        (AiKind.Shadowing, false) => Shadowing,
+        (AiKind.Shadowing, true) => GuestShadowing,
         _ => GuestWords,
     };
 }
@@ -121,7 +130,8 @@ public class AiQuotaService
                 new QuotaCounter(_guests.Get(guestKey, day, AiKind.Exercise), _options.GuestExercises),
                 new QuotaCounter(_guests.Get(guestKey, day, AiKind.Word), _options.GuestWords),
                 Unlimited: false,
-                Guest: true);
+                Guest: true,
+                new QuotaCounter(_guests.Get(guestKey, day, AiKind.Shadowing), _options.GuestShadowing));
         }
 
         var usage = await _db.AiUsages.FirstOrDefaultAsync(u => u.UserId == user.Id && u.Day == day);
@@ -129,7 +139,8 @@ public class AiQuotaService
             new QuotaCounter(usage?.Exercises ?? 0, _options.Exercises),
             new QuotaCounter(usage?.Words ?? 0, _options.Words),
             Unlimited: _admins.IsAdmin(user),
-            Guest: false);
+            Guest: false,
+            new QuotaCounter(usage?.Shadowing ?? 0, _options.Shadowing));
     }
 
     /// <summary>null — ruxsat; aks holda xabar kaliti (Texts) va parametrlari.</summary>
@@ -137,7 +148,12 @@ public class AiQuotaService
     {
         var status = await GetStatusAsync(user, guestKey);
         if (status.Unlimited) return null;
-        var counter = kind == AiKind.Exercise ? status.Exercises : status.Words;
+        var counter = kind switch
+        {
+            AiKind.Exercise => status.Exercises,
+            AiKind.Shadowing => status.Shadowing!,
+            _ => status.Words,
+        };
         if (counter.Left > 0) return null;
 
         var key = (kind, status.Guest) switch
@@ -145,6 +161,8 @@ public class AiQuotaService
             (AiKind.Exercise, true) => "ai.limit_guest",
             (AiKind.Exercise, false) => "ai.limit_exercises",
             (AiKind.Word, true) => "ai.limit_words_guest",
+            (AiKind.Shadowing, true) => "ai.limit_shadowing_guest",
+            (AiKind.Shadowing, false) => "ai.limit_shadowing",
             _ => "ai.limit_words",
         };
         return (key, new object?[] { counter.Limit, _options.LimitFor(kind, guest: false) });
@@ -165,8 +183,12 @@ public class AiQuotaService
             usage = new AiUsage { UserId = user.Id, Day = day };
             _db.AiUsages.Add(usage);
         }
-        if (kind == AiKind.Exercise) usage.Exercises++;
-        else usage.Words++;
+        switch (kind)
+        {
+            case AiKind.Exercise: usage.Exercises++; break;
+            case AiKind.Shadowing: usage.Shadowing++; break;
+            default: usage.Words++; break;
+        }
 
         try
         {

@@ -98,6 +98,19 @@ public static class Texts
             "Mehmonlar uchun soʻz izohlari limiti tugadi ({0} ta). Bepul hisob oching — kuniga {1} ta.",
             "Лимит объяснений слов для гостей исчерпан ({0}). Создайте бесплатный аккаунт — {1} в день.",
             "The guest limit for word look-ups is used up ({0}). Create a free account to get {1} a day."),
+        ["ai.limit_shadowing"] = new(
+            "Bugun {0} ta gap AI bilan tekshirildi — limit tugadi. Yozib, oʻzingiz solishtirishda davom eting yoki ertaga qayting.",
+            "Сегодня проверено {0} фраз с AI — лимит исчерпан. Продолжайте записывать и сравнивать сами или возвращайтесь завтра.",
+            "You've checked {0} lines with AI today — that's the daily limit. Keep recording and comparing yourself, or come back tomorrow."),
+        ["ai.limit_shadowing_guest"] = new(
+            "Mehmonlar uchun AI tekshiruv limiti tugadi ({0} ta). Bepul hisob oching — kuniga {1} ta.",
+            "Лимит AI-проверок для гостей исчерпан ({0}). Создайте бесплатный аккаунт — {1} в день.",
+            "The guest limit for AI checks is used up ({0}). Create a free account to get {1} a day."),
+        ["shadowing.not_found"] = new("Dars topilmadi.", "Урок не найден.", "Lesson not found."),
+        ["shadowing.bad_audio"] = new(
+            "Yozuv topilmadi yoki juda katta (koʻpi bilan 2 MB). Gapni qayta yozib koʻring.",
+            "Запись не найдена или слишком большая (не более 2 МБ). Запишите фразу ещё раз.",
+            "No recording, or it's too large (max 2 MB). Please record the line again."),
         ["account.confirm_mismatch"] = new(
             "Tasdiqlash uchun hisobingiz emailini aynan kiriting.",
             "Для подтверждения введите точный email вашего аккаунта.",
@@ -260,6 +273,18 @@ public static class Texts
             "<b>{0}</b>\n\nMaterialni yuboring: matn xabar, PDF yoki rasm (5 MB gacha). Savollar va toʻgʻri javoblar boʻlsa — saqlanadi; yetishmaganini Gemini toʻldiradi va ilova formatiga keltiradi.\nBekor qilish: /cancel",
             "<b>{0}</b>\n\nПришлите материал: текстом, PDF или фото (до 5 МБ). Вопросы и правильные ответы сохранятся; недостающее Gemini допишет и приведёт к формату приложения.\nОтмена: /cancel",
             "<b>{0}</b>\n\nSend the material: a text message, a PDF or a photo (up to 5 MB). Existing questions and answers are kept; Gemini fills in anything missing and converts it to the app's format.\nCancel: /cancel"),
+        ["bot.author_send_youtube"] = new(
+            "<b>{0}</b>\n\nYouTube havolasini yuboring (ochiq video, aniq inglizcha nutq). Kerakli qismini ham yozing, masalan:\n<code>https://youtu.be/VIDEO_ID 1:20-3:40</code>\nKoʻpi bilan 5 daqiqa; vaqt yozilmasa — boshidan 3 daqiqa. Darajani ham qoʻshishingiz mumkin (masalan: B1).\nBekor qilish: /cancel",
+            "<b>{0}</b>\n\nПришлите ссылку на YouTube (открытое видео, чёткая английская речь). Укажите нужный отрезок, например:\n<code>https://youtu.be/VIDEO_ID 1:20-3:40</code>\nНе более 5 минут; без времени — первые 3 минуты. Можно добавить уровень (например: B1).\nОтмена: /cancel",
+            "<b>{0}</b>\n\nSend a YouTube link (a public video with clear English speech). Add the part you want, e.g.:\n<code>https://youtu.be/VIDEO_ID 1:20-3:40</code>\nUp to 5 minutes; without a time range — the first 3 minutes. You can add a level too (e.g. B1).\nCancel: /cancel"),
+        ["bot.author_bad_youtube"] = new(
+            "YouTube havolasini topa olmadim yoki vaqt oraligʻi notoʻgʻri (10 soniyadan {0} daqiqagacha). Masalan: <code>https://youtu.be/VIDEO_ID 0:30-2:30</code>",
+            "Не нашёл ссылку на YouTube или неверный отрезок (от 10 секунд до {0} минут). Например: <code>https://youtu.be/VIDEO_ID 0:30-2:30</code>",
+            "I couldn't find a YouTube link, or the time range is wrong (10 seconds to {0} minutes). For example: <code>https://youtu.be/VIDEO_ID 0:30-2:30</code>"),
+        ["bot.author_character_note"] = new(
+            "🐾 Ikki qahramon navbatma-navbat gapiradi (ovoz — brauzerniki). Daraja yozsangiz (masalan: <i>B1 Travel</i>), shunga moslanadi; yozilmasa — B1.",
+            "🐾 Два персонажа говорят по очереди (голос браузера). Укажите уровень (например: <i>B1 Travel</i>) — иначе B1.",
+            "🐾 Two characters take turns speaking (browser voice). Add a level (e.g. <i>B1 Travel</i>), otherwise B1."),
         ["bot.author_listening_note"] = new(
             "🎧 Listening uchun audio emas, <b>matn (skript)</b> yuboring — ilova uni ovoz bilan oʻqib beradi.",
             "🎧 Для Listening пришлите не аудио, а <b>текст (скрипт)</b> — приложение озвучит его.",

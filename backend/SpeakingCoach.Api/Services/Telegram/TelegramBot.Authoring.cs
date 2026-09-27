@@ -65,7 +65,7 @@ public partial class TelegramBot
             return;
         }
 
-        var (input, error, args) = BotAuthoring.ReadInput(msg, generate);
+        var (input, error, args) = BotAuthoring.ReadInput(msg, generate, kind);
         if (input is null)
         {
             await _api.SendMessageAsync(c.ChatId, c.T(error!, args), BotAuthoring.CancelButtons(c.Lang), ct: ct);
@@ -164,9 +164,12 @@ public partial class TelegramBot
                 if (messageId is not null)
                 {
                     await _api.EditMessageAsync(c.ChatId, messageId.Value,
-                        c.T("bot.author_pick_kind", e.Exam == "cefr" ? "CEFR" : "IELTS"), BotAuthoring.KindButtons(e.Exam), ct);
+                        c.T("bot.author_pick_kind", BotAuthoring.ExamLabel(e.Exam)), BotAuthoring.KindButtons(e.Exam), ct);
                 }
                 return null;
+
+            case BotCallback.AuthorKindPick k when AuthorKind.Parse(k.Key) is { } kind && !BotAuthoring.NeedsMode(kind):
+                return await PickModeAsync(c, kind, generate: false, messageId, ct);
 
             case BotCallback.AuthorKindPick k when AuthorKind.Parse(k.Key) is { } kind:
                 if (messageId is not null)
@@ -177,15 +180,7 @@ public partial class TelegramBot
                 return null;
 
             case BotCallback.AuthorModePick m when AuthorKind.Parse(m.Key) is { } kind:
-            {
-                if (!await CanAuthorAsync(c, ct)) return c.T("bot.author_not_allowed");
-                c.Account!.BotState = BotAuthoring.State(kind, m.Generate);
-                await _db.SaveChangesAsync(ct);
-                var html = BotAuthoring.Instructions(c.Lang, kind, m.Generate);
-                if (messageId is not null) await _api.EditMessageAsync(c.ChatId, messageId.Value, html, BotAuthoring.CancelButtons(c.Lang), ct);
-                else await _api.SendMessageAsync(c.ChatId, html, BotAuthoring.CancelButtons(c.Lang), ct: ct);
-                return null;
-            }
+                return await PickModeAsync(c, kind, m.Generate, messageId, ct);
 
             case BotCallback.AuthorCancel:
                 await CancelAuthoringAsync(c, messageId, ct);
@@ -194,6 +189,18 @@ public partial class TelegramBot
             case BotCallback.TestCmd cmd:
                 return await HandleTestCmdAsync(c, cmd, messageId, ct);
         }
+        return null;
+    }
+
+    /// <summary>Tur va usul tanlandi — endi keyingi xabar (material, mavzu yoki havola) kutiladi.</summary>
+    private async Task<string?> PickModeAsync(Ctx c, AuthorKind kind, bool generate, long? messageId, CancellationToken ct)
+    {
+        if (!await CanAuthorAsync(c, ct)) return c.T("bot.author_not_allowed");
+        c.Account!.BotState = BotAuthoring.State(kind, generate);
+        await _db.SaveChangesAsync(ct);
+        var html = BotAuthoring.Instructions(c.Lang, kind, generate);
+        if (messageId is not null) await _api.EditMessageAsync(c.ChatId, messageId.Value, html, BotAuthoring.CancelButtons(c.Lang), ct);
+        else await _api.SendMessageAsync(c.ChatId, html, BotAuthoring.CancelButtons(c.Lang), ct: ct);
         return null;
     }
 

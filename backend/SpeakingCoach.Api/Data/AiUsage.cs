@@ -15,4 +15,7 @@ public class AiUsage
 
     /// <summary>So'z izohlari (arzon so'rov — alohida, kattaroq limit).</summary>
     public int Words { get; set; }
+
+    /// <summary>Shadowing: gap talaffuzini tekshirish.</summary>
+    public int Shadowing { get; set; }
 }

@@ -9,6 +9,7 @@ import { JoinByCode, JoinGroup, TasksPage } from './StudentTasks';
 import { savePendingJoin, takePendingJoin } from './groupLogic';
 import { teacherMsg } from './locales/teacher';
 import { mockMsg } from './locales/mock';
+import { shadowingMsg } from './locales/shadowing';
 import { PageHeader } from './ui';
 import { Settings } from './Settings';
 import { Vocab } from './Vocab';
@@ -28,6 +29,8 @@ import { shouldOnboard } from './planLogic';
 const MockHub = lazy(() => import('./Mock').then((m) => ({ default: m.MockHub })));
 const MockResultView = lazy(() => import('./Mock').then((m) => ({ default: m.MockResultView })));
 const MockSpeaking = lazy(() => import('./MockSpeaking').then((m) => ({ default: m.MockSpeaking })));
+const ShadowingList = lazy(() => import('./Shadowing').then((m) => ({ default: m.ShadowingList })));
+const ShadowingLessonPage = lazy(() => import('./Shadowing').then((m) => ({ default: m.ShadowingLessonPage })));
 const MockFullStart = lazy(() => import('./MockFull').then((m) => ({ default: m.MockFullStart })));
 const MockFullStep = lazy(() => import('./MockFull').then((m) => ({ default: m.MockFullStep })));
 const MockSessionView = lazy(() => import('./MockFull').then((m) => ({ default: m.MockSessionView })));
@@ -80,6 +83,7 @@ function App() {
   const t = useT(appMsg);
   const tHome = useT(homeMsg);
   const tMock = useT(mockMsg);
+  const tShadow = useT(shadowingMsg);
   const c = useT(common);
   const [route, go] = useRoute();
   const [email, setEmail] = useState<string | null>(null);
@@ -191,6 +195,15 @@ function App() {
         <PageHeader title={t.practiceTitle} subtitle={t.practiceSubtitle} />
         <UsageNote userKey={userKey} />
         <ExerciseTiles onOpen={(kind: ExerciseKind) => go(`practice/${kind}`)} />
+        <div className="card cta" style={{ marginTop: 16 }} data-testid="shadowing-entry">
+          <div>
+            <strong>{tShadow.tile}</strong>
+            <div className="muted small">{tShadow.tileText}</div>
+          </div>
+          <button className="btn btn-primary" onClick={() => go('shadowing')}>
+            {t.open}
+          </button>
+        </div>
         <div className="card cta" style={{ marginTop: 16 }}>
           <div>
             <strong>{tMock.tile}</strong>
@@ -202,6 +215,10 @@ function App() {
         </div>
       </>
     );
+  } else if (section === 'shadowing' && sub) {
+    page = <ShadowingLessonPage key={`${sub}-${userKey}`} id={sub} go={go} loggedIn={loggedIn} />;
+  } else if (section === 'shadowing') {
+    page = <ShadowingList go={go} />;
   } else if (section === 'mock' && sub === 'result' && third) {
     page = <MockResultView key={`${third}-${userKey}`} id={third} go={go} />;
   } else if (section === 'teacher' && sub && loggedIn) {
@@ -268,7 +285,7 @@ function App() {
     ? null
     : section === 'review' && sub === 'vocab'
       ? 'vocab'
-      : section === 'mock'
+      : section === 'mock' || section === 'shadowing'
         ? 'practice'
       : NAV.some((n) => n.id === section)
         ? section

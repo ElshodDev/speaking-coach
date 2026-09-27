@@ -80,7 +80,17 @@ public static class BotAuthoring
         _ => null,
     };
 
-    public static readonly string[] Exams = ["ielts", "cefr"];
+    public static readonly string[] Exams = ["ielts", "cefr", ShadowingService.Exam];
+
+    public static string ExamLabel(string exam) => exam switch
+    {
+        "cefr" => "CEFR",
+        ShadowingService.Exam => "Shadowing",
+        _ => "IELTS",
+    };
+
+    /// <summary>YouTube darsi uchun "usul" so'ralmaydi — faqat havola.</summary>
+    public static bool NeedsMode(AuthorKind kind) => !(kind.IsShadowing && kind.Module == ShadowingRules.YouTube);
 
     /// <summary>Tanlangan imtihon uchun turlar (bo'lim + variant).</summary>
     public static IEnumerable<AuthorKind> KindsOf(string exam) => AuthorKind.All.Where(k => k.Exam == exam);
@@ -88,11 +98,12 @@ public static class BotAuthoring
     public static IReadOnlyList<IReadOnlyList<TgButton>> ExamButtons() =>
     [
         [new TgButton("🎓 IELTS", BotLogic.Encode(new BotCallback.AuthorExam("ielts"))), new TgButton("🇺🇿 CEFR", BotLogic.Encode(new BotCallback.AuthorExam("cefr")))],
+        [new TgButton("🎬 Shadowing", BotLogic.Encode(new BotCallback.AuthorExam(ShadowingService.Exam)))],
     ];
 
     public static IReadOnlyList<IReadOnlyList<TgButton>> KindButtons(string exam) =>
         KindsOf(exam).Chunk(2)
-            .Select(row => (IReadOnlyList<TgButton>)row.Select(k => new TgButton(Emoji(k.Module) + " " + k.Label.Split(' ', 2)[1], BotLogic.Encode(new BotCallback.AuthorKindPick(k.Key)))).ToArray())
+            .Select(row => (IReadOnlyList<TgButton>)row.Select(k => new TgButton(Emoji(k.Module) + " " + k.ModuleLabel, BotLogic.Encode(new BotCallback.AuthorKindPick(k.Key)))).ToArray())
             .ToList();
 
     public static IReadOnlyList<IReadOnlyList<TgButton>> ModeButtons(string lang, AuthorKind kind) =>
@@ -126,12 +137,18 @@ public static class BotAuthoring
         "speaking" => "🎙",
         "writing" => "✍️",
         "reading" => "📖",
+        ShadowingRules.YouTube => "🎬",
+        ShadowingRules.Character => "🐾",
         _ => "🎧",
     };
 
     /// <summary>Material yuborish ko'rsatmasi (tanlangan turga mos).</summary>
     public static string Instructions(string lang, AuthorKind kind, bool generate) =>
-        generate
+        !NeedsMode(kind)
+            ? Texts.Get(lang, "bot.author_send_youtube", BotLogic.Html(kind.Label))
+            : kind.IsShadowing
+            ? Texts.Get(lang, generate ? "bot.author_send_topic" : "bot.author_send_src", BotLogic.Html(kind.Label)) + "\n" + Texts.Get(lang, "bot.author_character_note")
+            : generate
             ? Texts.Get(lang, "bot.author_send_topic", BotLogic.Html(kind.Label))
             : Texts.Get(lang, "bot.author_send_src", BotLogic.Html(kind.Label)) + (kind.Module == "listening" ? "\n" + Texts.Get(lang, "bot.author_listening_note") : "");
 
@@ -153,9 +170,15 @@ public static class BotAuthoring
     /// Kelgan xabarni tekshiradi: mavzu rejimida — qisqa matn; material
     /// rejimida — matn, PDF/.txt hujjat yoki rasm. Xato bo'lsa — matn kaliti.
     /// </summary>
-    public static (AuthorInput? Input, string? Error, object[] Args) ReadInput(TgMessage msg, bool generate)
+    public static (AuthorInput? Input, string? Error, object[] Args) ReadInput(TgMessage msg, bool generate, AuthorKind? kind = null)
     {
         var text = msg.Text?.Trim();
+        if (kind is not null && !NeedsMode(kind))
+        {
+            return ShadowingRules.ParseYouTube(text) is not null
+                ? (new AuthorInput(text, null, null, null), null, [])
+                : (null, "bot.author_bad_youtube", [(int)(ShadowingRules.MaxClip / 60)]);
+        }
         if (generate)
         {
             return text is { Length: >= 3 } t && t.Length <= MockAuthoringRules.MaxTopicChars
