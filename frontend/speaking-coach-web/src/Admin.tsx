@@ -20,7 +20,7 @@ interface AdminOverview {
   reviews7d: number;
   totalCards: number;
   daily: { date: string; signups: number; activeUsers: number; activities: number; reviews: number }[];
-  recentUsers: { email: string; createdAtUtc: string; lastActiveAtUtc: string | null; activities: number; level: string; verified: boolean }[];
+  recentUsers: { email: string; contact?: string | null; method?: string | null; createdAtUtc: string; lastActiveAtUtc: string | null; activities: number; level: string; verified: boolean }[];
   signups?: Record<string, number> | null;
   telegramLinked?: number;
   telegramActive7d?: number;
@@ -174,9 +174,13 @@ export function Admin() {
             <tbody>
               {data.recentUsers.map((u, i) => (
                 <tr key={i}>
-                  <td>
-                    {u.email} <span title={u.verified ? t.verified : t.unverified}>{u.verified ? '✅' : '⏳'}</span>
-                    <div className="muted tiny">{new Date(u.createdAtUtc).toLocaleDateString(locale)}</div>
+                  <td className="break">
+                    {u.contact ?? u.email}{' '}
+                    {!u.email.endsWith('.invalid') && <span title={u.verified ? t.verified : t.unverified}>{u.verified ? '✅' : '⏳'}</span>}
+                    <div className="muted tiny">
+                      {new Date(u.createdAtUtc).toLocaleDateString(locale)}
+                      {u.method ? ` · ${t.methods[u.method as keyof typeof t.methods] ?? u.method}` : ''}
+                    </div>
                   </td>
                   <td>{u.level}</td>
                   <td>{u.activities}</td>

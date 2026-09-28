@@ -28,7 +28,9 @@ public class AdminOptions
 }
 
 public record DailyPoint(string Date, int Signups, int ActiveUsers, int Activities, int Reviews);
-public record RecentUser(string Email, DateTime CreatedAtUtc, DateTime? LastActiveAtUtc, int Activities, string Level, bool Verified);
+public record RecentUser(string Email, DateTime CreatedAtUtc, DateTime? LastActiveAtUtc, int Activities, string Level, bool Verified,
+    // Admin uchun to'liq aloqa: email yoki Telegram (@username / ism / ID) va hisob qanday ochilgani.
+    string? Contact = null, string? Method = null);
 
 public record AdminOverview(
     int TotalUsers,
@@ -77,6 +79,22 @@ public class AdminService
         : hasPassword ? SignupMethods.Email
         : SignupMethods.Other;
 
+    /// <summary>
+    /// Admin ko'radigan to'liq aloqa: haqiqiy email (Telegram ulangan bo'lsa + @username);
+    /// Telegram hisobida ichki email o'rniga @username, bo'lmasa ism va Telegram ID.
+    /// </summary>
+    public static string Contact(string email, string? tgUsername, string? displayName)
+    {
+        var at = string.IsNullOrWhiteSpace(tgUsername) ? null : "@" + tgUsername.TrimStart('@');
+        const string suffix = "@" + TelegramLoginRules.SyntheticDomain;
+        if (!email.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+            return at is null ? email : $"{email} · {at}";
+        if (at is not null) return at;
+        var local = email[..^suffix.Length];
+        var id = local.StartsWith("tg-", StringComparison.OrdinalIgnoreCase) ? local[3..] : local;
+        return string.IsNullOrWhiteSpace(displayName) ? $"Telegram ID {id}" : $"{displayName} (Telegram ID {id})";
+    }
+
     /// <summary>"email 12 · google 5 · telegram 3" (ko'pidan kamiga).</summary>
     public static string SignupSummary(IReadOnlyDictionary<string, int>? signups) =>
         signups is null || signups.Count == 0
@@ -93,7 +111,7 @@ public class AdminService
 
         // Demo hisoblar statistikaga kirmaydi (ular 24 soatlik va haqiqiy foydalanuvchi emas).
         var allUsers = await _db.Users
-            .Select(u => new { u.Id, u.Email, u.CreatedAtUtc, u.Level, u.EmailVerifiedAtUtc, u.SignupMethod, HasPassword = u.PasswordHash != "" })
+            .Select(u => new { u.Id, u.Email, u.CreatedAtUtc, u.Level, u.EmailVerifiedAtUtc, u.SignupMethod, u.DisplayName, HasPassword = u.PasswordHash != "" })
             .ToListAsync();
         var demoIds = allUsers.Where(u => DemoAccount.IsDemo(u.Email)).Select(u => u.Id).ToHashSet();
         var users = allUsers.Where(u => !demoIds.Contains(u.Id)).ToList();
@@ -133,7 +151,7 @@ public class AdminService
                 recentReviews.Count(r => Local(r.ReviewedAtUtc) == d)));
         }
 
-        var recent = users.OrderByDescending(u => u.CreatedAtUtc).Take(10).ToList();
+        var recent = users.OrderByDescending(u => u.CreatedAtUtc).Take(20).ToList();
         var recentIds = recent.Select(u => u.Id).ToList();
         var lastActivity = await _db.Activities
             .Where(a => a.UserId != null && recentIds.Contains(a.UserId.Value))
@@ -145,13 +163,19 @@ public class AdminService
             .GroupBy(l => l.UserId)
             .Select(g => new { UserId = g.Key, Last = g.Max(l => l.ReviewedAtUtc) })
             .ToListAsync();
+        var recentTg = await _db.TelegramAccounts
+            .Where(t => recentIds.Contains(t.UserId))
+            .Select(t => new { t.UserId, t.Username })
+            .ToListAsync();
 
         var recentUsers = recent.Select(u =>
         {
             var a = lastActivity.FirstOrDefault(x => x.UserId == u.Id);
             var r = lastReview.FirstOrDefault(x => x.UserId == u.Id);
             DateTime? last = new[] { a?.Last, r?.Last }.Where(x => x is not null).Max();
-            return new RecentUser(ProgressCalculator.MaskEmail(u.Email), u.CreatedAtUtc, last, a?.Count ?? 0, u.Level, u.EmailVerifiedAtUtc is not null);
+            var tg = recentTg.FirstOrDefault(x => x.UserId == u.Id);
+            return new RecentUser(u.Email, u.CreatedAtUtc, last, a?.Count ?? 0, u.Level, u.EmailVerifiedAtUtc is not null,
+                Contact(u.Email, tg?.Username, u.DisplayName), InferSignup(u.SignupMethod, u.Email, u.HasPassword));
         }).ToList();
 
         var signups = users

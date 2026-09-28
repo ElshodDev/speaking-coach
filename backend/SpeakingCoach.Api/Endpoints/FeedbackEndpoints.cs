@@ -84,7 +84,8 @@ public static class FeedbackEndpoints
                         .Concat(telegram.AdminIds.Select(id => (ChatId: id, Lang: Texts.DefaultLang)))
                         .DistinctBy(t => t.ChatId)
                         .ToList();
-                    var from = user is null ? "guest" : ProgressCalculator.MaskEmail(user.Email);
+                    var tgName = user is null ? null : await db.TelegramAccounts.Where(a => a.UserId == user.Id).Select(a => a.Username).FirstOrDefaultAsync();
+                    var from = user is null ? "guest" : AdminService.Contact(user.Email, tgName, user.DisplayName);
                     var tail = $"{from} · {feedback.Page ?? "—"} · {feedback.Lang}";
                     _ = Task.Run(async () =>
                     {
@@ -124,10 +125,15 @@ public static class FeedbackEndpoints
                 .Take(take)
                 .ToListAsync();
             var userIds = rows.Where(f => f.UserId is not null).Select(f => f.UserId!.Value).Distinct().ToList();
+            // Admin fikr yozgan odamni to'liq ko'radi: email yoki Telegram (@username / ism / ID).
+            var tgNames = userIds.Count == 0
+                ? new Dictionary<Guid, string?>()
+                : (await db.TelegramAccounts.Where(a => userIds.Contains(a.UserId)).Select(a => new { a.UserId, a.Username }).ToListAsync())
+                    .ToDictionary(a => a.UserId, a => a.Username);
             var emails = userIds.Count == 0
                 ? new Dictionary<Guid, string>()
-                : (await db.Users.Where(u => userIds.Contains(u.Id)).Select(u => new { u.Id, u.Email }).ToListAsync())
-                    .ToDictionary(u => u.Id, u => u.Email);
+                : (await db.Users.Where(u => userIds.Contains(u.Id)).Select(u => new { u.Id, u.Email, u.DisplayName }).ToListAsync())
+                    .ToDictionary(u => u.Id, u => AdminService.Contact(u.Email, tgNames.GetValueOrDefault(u.Id), u.DisplayName));
             var result = rows.Select(f => new
             {
                 id = f.Id,

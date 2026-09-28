@@ -8,7 +8,7 @@ type FeedbackKind = 'bug' | 'idea' | 'content' | 'ai' | 'other';
 export const adminMsg = defineMessages(
   {
     title: 'Admin panel',
-    subtitle: 'Faqat umumiy statistika — shaxsiy matnlar koʻrsatilmaydi.',
+    subtitle: 'Umumiy statistika va foydalanuvchilar aloqasi — mashq matnlari koʻrsatilmaydi.',
     loadFailed: 'Yuklab boʻlmadi',
     totalUsers: 'Jami foydalanuvchilar',
     verifiedUsers: 'Email tasdiqlangan',
@@ -74,7 +74,7 @@ export const adminMsg = defineMessages(
   {
     ru: {
       title: 'Админ-панель',
-      subtitle: 'Только общая статистика — личные тексты не показываются.',
+      subtitle: 'Общая статистика и контакты пользователей — тексты упражнений не показываются.',
       loadFailed: 'Не удалось загрузить',
       totalUsers: 'Всего пользователей',
       verifiedUsers: 'Email подтверждён',
@@ -139,7 +139,7 @@ export const adminMsg = defineMessages(
     },
     en: {
       title: 'Admin panel',
-      subtitle: 'Aggregate statistics only — no personal texts are shown.',
+      subtitle: 'Aggregate statistics and user contacts — exercise texts are not shown.',
       loadFailed: 'Could not load',
       totalUsers: 'Total users',
       verifiedUsers: 'Verified email',
