@@ -1,3 +1,6 @@
+import { mistakesMsg } from './locales/mistakes';
+import { shareMsg } from './locales/share';
+import { ShareCardDialog, type ShareStats } from './ShareCard';
 import { useEffect, useState } from 'react';
 import { apiJson } from './api';
 import { ActivityCalendar, LineChart, type CalendarDay, type LineSeries } from './charts';
@@ -72,7 +75,19 @@ const badgeText = (b: Badge, t: Texts) => t.badges[b.id as BadgeId] ?? { title: 
 
 const tz = () => new Date().getTimezoneOffset();
 
-export function Progress({ loggedIn, onLogin, go }: { loggedIn: boolean; onLogin: () => void; go: (r: string) => void }) {
+export function Progress({
+  loggedIn,
+  onLogin,
+  go,
+  name = null,
+  streak = 0,
+}: {
+  loggedIn: boolean;
+  onLogin: () => void;
+  go: (r: string) => void;
+  name?: string | null;
+  streak?: number;
+}) {
   const [data, setData] = useState<ProgressData | null>(null);
   const [board, setBoard] = useState<LeaderboardData | null>(null);
   const [error, setError] = useState('');
@@ -80,6 +95,9 @@ export function Progress({ loggedIn, onLogin, go }: { loggedIn: boolean; onLogin
   const wide = useWide();
   const t = useT(progressMsg);
   const cm = useT(common);
+  const tMis = useT(mistakesMsg);
+  const tShare = useT(shareMsg);
+  const [shareStats, setShareStats] = useState<ShareStats | null>(null);
 
   useEffect(() => {
     if (!loggedIn) return;
@@ -118,6 +136,44 @@ export function Progress({ loggedIn, onLogin, go }: { loggedIn: boolean; onLogin
   const size = lv.nextLevelXp - lv.levelStartXp;
   const trendPoints = (trend === 'writing' ? data.writingTrend : data.speakingTrend).map((p) => ({ at: p.at, values: p.scores }));
   const earned = data.badges.filter((b) => b.earned).length;
+
+  // "Mening xatolarim" va "Natijani ulashish" — ikkita katta havola.
+  const links = (
+    <div className="progress-links">
+      <button className="card cta" style={{ width: '100%', font: 'inherit', color: 'inherit', textAlign: 'left', cursor: 'pointer' }} onClick={() => go('mistakes')} data-testid="mistakes-entry">
+        <div>
+          <strong>{tMis.tile}</strong>
+          <div className="muted small">{tMis.tileText}</div>
+        </div>
+        <span aria-hidden>→</span>
+      </button>
+      <button
+        className="card cta"
+        style={{ width: '100%', font: 'inherit', color: 'inherit', textAlign: 'left', cursor: 'pointer' }}
+        data-testid="share-entry"
+        onClick={() =>
+          setShareStats({
+            name,
+            level: data.level.level,
+            xp: data.level.xp,
+            streak,
+            bestStreak: data.bestStreak,
+            activities: data.totalActivities,
+            reviews: data.totalReviews,
+            badges: earned,
+            badgesTotal: data.badges.length,
+          })
+        }
+      >
+        <div>
+          <strong>{tShare.tile}</strong>
+          <div className="muted small">{tShare.tileText}</div>
+        </div>
+        <span aria-hidden>→</span>
+      </button>
+    </div>
+  );
+  const shareDialog = shareStats && <ShareCardDialog stats={shareStats} onClose={() => setShareStats(null)} />;
 
   const level = (
     <>
@@ -268,10 +324,12 @@ export function Progress({ loggedIn, onLogin, go }: { loggedIn: boolean; onLogin
     return (
       <>
         <PageHeader title={t.title} />
+        {links}
         <Split
           main={<>{statsCard}{trendCard}{activity}{hardest}</>}
           side={<>{level}{boardCard}{badges}</>}
         />
+        {shareDialog}
       </>
     );
   }
@@ -280,12 +338,14 @@ export function Progress({ loggedIn, onLogin, go }: { loggedIn: boolean; onLogin
     <>
       <PageHeader title={t.title} />
       {level}
+      {links}
       {statsCard}
       {activity}
       {trendCard}
       {badges}
       {boardCard}
       {hardest}
+      {shareDialog}
     </>
   );
 }

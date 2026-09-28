@@ -38,7 +38,7 @@ Root directory: `backend/SpeakingCoach.Api`, Docker. Environment:
 |---|---|
 | `Gemini__ApiKey` | Gemini kaliti (majburiy) |
 | `ConnectionStrings__Default` | Neon ulanish satri (majburiy) |
-| `FrontendOrigin` | Vercel manzili — CORS uchun |
+| `FrontendOrigin` | Sayt manzili — CORS va bot havolalari uchun. Bir nechta bo'lsa vergul bilan, birinchisi asosiy: `https://yangi-domen.uz,https://speaking-coach-theta.vercel.app` (eski manzil ham ishlab tursin) |
 | `Admin__Emails` | Sayt adminlari emaillari, vergul bilan |
 | `Email__BrevoApiKey`, `Email__FromAddress` | Email tasdiqlashni yoqadi (Brevo'da tasdiqlangan yuboruvchi) |
 | `Google__ClientId` | Google orqali kirish (Web OAuth client, Vercel manzili ruxsat etilgan origin) |

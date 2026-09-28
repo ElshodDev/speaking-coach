@@ -124,6 +124,9 @@ public static class PlanLogic
         ActivityType.Reading => "reading",
         ActivityType.Listening => "listening",
         ActivityType.Shadowing => "shadowing",
+        // AI suhbat — gapirish mashqi, diktant — tinglash mashqi sifatida rejada belgilanadi.
+        ActivityType.Conversation => "speaking",
+        ActivityType.Dictation => "listening",
         _ => null,
     };
 }

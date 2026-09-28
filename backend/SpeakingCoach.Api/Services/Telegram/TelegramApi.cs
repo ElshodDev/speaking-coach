@@ -89,7 +89,8 @@ public class TelegramOptions
         BotUsername = (Blank(config["Telegram:BotUsername"]) ?? "SpeakingCoachUzBot").TrimStart('@');
         PublicUrl = (Blank(config["Telegram:PublicUrl"]) ?? Blank(config["RENDER_EXTERNAL_URL"]))?.TrimEnd('/');
         CronSecret = Blank(config["Telegram:CronSecret"]);
-        FrontendUrl = (Blank(config["FrontendOrigin"]) ?? "http://localhost:5173").TrimEnd('/');
+        // Botdagi sayt tugmalari — asosiy (birinchi) manzilga.
+        FrontendUrl = FrontendOrigins.Parse(config["FrontendOrigin"])[0];
         AdminIds = ParseAdminIds(config["Telegram:Admins"]);
     }
 

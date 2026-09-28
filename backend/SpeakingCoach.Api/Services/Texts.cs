@@ -45,13 +45,13 @@ public static class Texts
             "Пароль должен быть не длиннее {0} символов.",
             "The password must be at most {0} characters long."),
         ["auth.email_taken"] = new(
-            "Bu email bilan allaqachon roʻyxatdan oʻtilgan.",
-            "Этот email уже зарегистрирован.",
-            "An account with this email already exists."),
+            "Bu email bilan hisob allaqachon bor — “Kirish”ni bosing. Hisobni Google orqali ochgan boʻlsangiz, “Google bilan kirish”dan foydalaning (Telegram yoki Instagram ichida emas, Safari yoki Chrome’da).",
+            "Аккаунт с этим email уже есть — нажмите «Войти». Если вы создавали его через Google, войдите через Google (в Safari или Chrome, а не внутри Telegram или Instagram).",
+            "An account with this email already exists — tap “Log in”. If you created it with Google, sign in with Google (in Safari or Chrome, not inside Telegram or Instagram)."),
         ["auth.wrong_credentials"] = new(
-            "Email yoki parol notoʻgʻri.",
-            "Неверный email или пароль.",
-            "Wrong email or password."),
+            "Email yoki parol notoʻgʻri. Hisobni Google orqali ochgan boʻlsangiz, uning paroli yoʻq — “Google bilan kirish”dan foydalaning (Safari yoki Chrome’da).",
+            "Неверный email или пароль. Если аккаунт создан через Google, пароля у него нет — войдите через Google (в Safari или Chrome).",
+            "Wrong email or password. If you created the account with Google, it has no password — sign in with Google (in Safari or Chrome)."),
         ["auth.not_logged_in"] = new("Tizimga kirilmagan.", "Вы не вошли в систему.", "You are not logged in."),
         ["code.wrong"] = new("Kod notoʻgʻri.", "Неверный код.", "The code is incorrect."),
         ["code.wrong_left"] = new(
@@ -443,6 +443,34 @@ public static class Texts
         ["assignment.bad_target"] = new("Kartalar soni {0} dan {1} gacha boʻlsin.", "Количество карточек — от {0} до {1}.", "The number of cards must be between {0} and {1}."),
         ["assignment.bad_due"] = new("Muddat notoʻgʻri: u kelajakda va bir yil ichida boʻlsin.", "Неверный срок: он должен быть в будущем и в пределах года.", "Invalid due date: it must be in the future and within a year."),
         ["assignment.limit"] = new("Bitta guruhda koʻpi bilan {0} ta vazifa.", "В одной группе не более {0} заданий.", "Up to {0} assignments per group."),
+        ["talk.login"] = new(
+            "AI suhbatdosh bilan gaplashish uchun tizimga kiring — suhbat va tuzatishlar hisobingizda saqlanadi.",
+            "Чтобы поговорить с ИИ-собеседником, войдите — диалог и исправления сохранятся в аккаунте.",
+            "Log in to talk to the AI partner — the conversation and corrections are saved to your account."),
+        ["talk.not_found"] = new(
+            "Suhbat topilmadi yoki muddati tugagan. Yangisini boshlang.",
+            "Диалог не найден или устарел. Начните новый.",
+            "Conversation not found or expired. Please start a new one."),
+        ["talk.limit"] = new(
+            "Bitta suhbatda koʻpi bilan {0} ta javob. “Yakunlash”ni bosing.",
+            "В одном диалоге не больше {0} ответов. Нажмите «Завершить».",
+            "At most {0} answers per conversation. Tap “Finish”."),
+        ["talk.empty"] = new(
+            "Javobingizni yozib oling yoki matn kiriting.",
+            "Запишите ответ голосом или введите текст.",
+            "Record your answer or type it."),
+        ["talk.not_heard"] = new(
+            "Ovozingiz eshitilmadi. Mikrofonga yaqinroq gapirib, qayta urinib koʻring.",
+            "Не удалось расслышать. Говорите ближе к микрофону и попробуйте ещё раз.",
+            "I couldn't hear you. Speak closer to the microphone and try again."),
+        ["talk.no_turns"] = new(
+            "Yakunlashdan oldin kamida bitta javob bering.",
+            "Прежде чем завершить, ответьте хотя бы один раз.",
+            "Give at least one answer before finishing."),
+        ["dictation.bad"] = new(
+            "Diktant natijasi notoʻgʻri.",
+            "Неверный результат диктанта.",
+            "Invalid dictation result."),
         ["mock.login"] = new(
             "Mock imtihon natijasi saqlanadi — buning uchun tizimga kiring.",
             "Результат пробного экзамена сохраняется — для этого войдите в систему.",

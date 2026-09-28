@@ -8,7 +8,9 @@ using SpeakingCoach.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var frontendOrigin = builder.Configuration["FrontendOrigin"] ?? "http://localhost:5173";
+// Bir nechta manzil bo'lishi mumkin (vergul bilan): birinchisi — asosiy (masalan, o'z domen),
+// qolganlari — eski manzil (vercel.app) ham ishlab tursin, o'rnatilgan PWA va eski havolalar uchun.
+var frontendOrigins = FrontendOrigins.Parse(builder.Configuration["FrontendOrigin"]);
 
 builder.Services.AddCors(options =>
 {
@@ -16,7 +18,7 @@ builder.Services.AddCors(options =>
     // shuning uchun AllowCredentials() shart emas; AllowAnyHeader() esa
     // Authorization sarlavhasiga ham ruxsat beradi.
     options.AddPolicy("AllowFrontend", policy =>
-        policy.WithOrigins(frontendOrigin)
+        policy.WithOrigins(frontendOrigins)
               .AllowAnyMethod()
               .AllowAnyHeader());
 });
@@ -68,6 +70,7 @@ builder.Services.AddHttpClient();
 // yuboradi (model fallback + retry + qat'iy JSON o'qish bir joyda).
 builder.Services.AddSingleton<GeminiClient>();
 builder.Services.AddSingleton<ISpeakingEvaluationService, GeminiSpeakingService>();
+builder.Services.AddSingleton<ITalkAi, GeminiTalkAi>();
 builder.Services.AddSingleton<IWritingEvaluationService, GeminiWritingService>();
 builder.Services.AddSingleton<IComprehensionService, GeminiComprehensionService>();
 builder.Services.AddSingleton<IWordService, GeminiWordService>();
@@ -170,6 +173,9 @@ app.MapGroupEndpoints();
 app.MapFunEndpoints();
 app.MapShadowingEndpoints();
 app.MapContentEndpoints();
+app.MapMistakeEndpoints();
+app.MapTalkEndpoints();
+app.MapDictationEndpoints();
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 app.Run($"http://0.0.0.0:{port}");

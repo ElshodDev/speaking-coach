@@ -19,6 +19,13 @@ public enum ActivityType
 
     /// <summary>Shadowing darsi yakunlandi (takrorlangan gaplar va o'rtacha ball ResponseData'da).</summary>
     Shadowing = 5,
+
+    /// <summary>AI suhbatdosh bilan rolli suhbat (xulosa va tuzatishlar ResponseData'da).</summary>
+    /// <remarks>Tur bazada matn sifatida saqlanadi — yangi qiymat migratsiya talab qilmaydi.</remarks>
+    Conversation = 6,
+
+    /// <summary>Diktant (eshitib yozish): nechta gap, so'zlar aniqligi.</summary>
+    Dictation = 7,
 }
 
 /// <summary>

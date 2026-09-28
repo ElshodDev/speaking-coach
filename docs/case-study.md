@@ -2,7 +2,7 @@
 
 **Project:** [AI Speaking Coach](https://speaking-coach-theta.vercel.app) · [try the demo](https://speaking-coach-theta.vercel.app/#/demo) · [source](https://github.com/ElshodDev/speaking-coach)
 **Stack:** ASP.NET Core 10 Minimal API, EF Core + PostgreSQL (Neon), React 19 + TypeScript (Vite, PWA), Google Gemini, Telegram Bot API
-**Size:** about 27 000 lines of C# (a large share of it built-in exam content) and 22 000 lines of TypeScript; 552 backend unit tests, 125 frontend unit tests, 25 Playwright end-to-end suites
+**Size:** about 27 000 lines of C# (a large share of it built-in exam content) and 22 000 lines of TypeScript; 590 backend unit tests, 135 frontend unit tests, 26 Playwright end-to-end suites
 
 ---
 
@@ -55,9 +55,13 @@ The frontend follows the same idea: while the API is waking up, the app retries 
 
 The first versions asked Gemini for everything: every reading passage, every listening script, every mock test. That made the app slow on the first click, dependent on a shared free quota, and empty whenever the model was busy. The app now ships its own original material: 88 graded reading and listening exercises, 44 full IELTS and CEFR Listening and Reading mock tests, 60 speaking and writing mock sets, 92 practice topics, 32 grammar lessons explained in three languages and 326 topic words. Every section lists its tests with a ✓ and the last score, so the learner picks what to do instead of getting whatever comes next. Wherever material could come from either source, the learner chooses between "📚 ready-made" and "✨ new by AI". The built-in content passes exactly the same validators as AI output, and unit tests fail the build if a passage is the wrong length for its level or a gap answer is missing from its text.
 
+### Reuse the data before adding AI
+
+Two of the later features cost no AI at all. **My mistakes** reads the corrections Gemini already returned for every speaking, writing, mock and conversation attempt, and a small deterministic classifier (a word-level diff plus keywords in the explanation, in three languages) sorts them into types such as articles, tenses and prepositions. It is approximate and says so, but it turns hundreds of scattered corrections into "your top three problems, and the lesson for each". **Dictation** checks typed sentences word by word in the browser. The one new AI feature, the **conversation partner**, keeps its history on the server and caps each conversation at eight turns, so a single conversation costs a known amount of quota.
+
 ### Keep the core logic pure
 
-The spaced-repetition scheduler (SM-2), the card factory, IELTS band rounding, the CEFR 0–36 → 75 conversion, XP and badges, reminder timing and Telegram callback parsing never touch the database or HTTP. That is why 552 backend tests run in seconds and why most bugs could be reproduced as a failing unit test first.
+The spaced-repetition scheduler (SM-2), the card factory, IELTS band rounding, the CEFR 0–36 → 75 conversion, XP and badges, reminder timing and Telegram callback parsing never touch the database or HTTP. That is why 590 backend tests run in seconds and why most bugs could be reproduced as a failing unit test first.
 
 XP is a good example. It is never stored: levels, badges and the weekly leaderboard are computed from `Activities` and `ReviewLogs`. There is no counter to drift out of sync, and when I changed the XP rules, all history was re-scored automatically.
 

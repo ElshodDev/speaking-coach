@@ -10,6 +10,8 @@ import { savePendingJoin, takePendingJoin } from './groupLogic';
 import { teacherMsg } from './locales/teacher';
 import { mockMsg } from './locales/mock';
 import { mockPickMsg, type MockPickTitle } from './locales/mockPick';
+import { talkMsg } from './locales/talk';
+import { dictationMsg } from './locales/dictation';
 import { MockPicker } from './MockPicker';
 import { shadowingMsg } from './locales/shadowing';
 import { learnMsg } from './locales/learn';
@@ -49,6 +51,10 @@ const TeacherGroup = lazy(() => import('./Teacher').then((m) => ({ default: m.Te
 const Progress = lazy(() => import('./Progress').then((m) => ({ default: m.Progress })));
 const Admin = lazy(() => import('./Admin').then((m) => ({ default: m.Admin })));
 const Quiz = lazy(() => import('./Quiz').then((m) => ({ default: m.Quiz })));
+const Mistakes = lazy(() => import('./Mistakes').then((m) => ({ default: m.Mistakes })));
+const TalkHub = lazy(() => import('./Talk').then((m) => ({ default: m.TalkHub })));
+const TalkSession = lazy(() => import('./Talk').then((m) => ({ default: m.TalkSession })));
+const Dictation = lazy(() => import('./Dictation').then((m) => ({ default: m.Dictation })));
 const LearnHub = lazy(() => import('./Learn').then((m) => ({ default: m.LearnHub })));
 const GrammarLessonPage = lazy(() => import('./Learn').then((m) => ({ default: m.GrammarLessonPage })));
 const VocabTopicPage = lazy(() => import('./Learn').then((m) => ({ default: m.VocabTopicPage })));
@@ -95,6 +101,8 @@ function App() {
   const tShadow = useT(shadowingMsg);
   const tLearn = useT(learnMsg);
   const tMockPick = useT(mockPickMsg);
+  const tTalk = useT(talkMsg);
+  const tDict = useT(dictationMsg);
   const c = useT(common);
   const [route, go] = useRoute();
   const [email, setEmail] = useState<string | null>(null);
@@ -274,6 +282,24 @@ function App() {
             {t.open}
           </button>
         </div>
+        <div className="card cta" style={{ marginTop: 16 }} data-testid="talk-entry">
+          <div>
+            <strong>{tTalk.tile}</strong>
+            <div className="muted small">{tTalk.tileText}</div>
+          </div>
+          <button className="btn btn-primary" onClick={() => go('talk')}>
+            {t.open}
+          </button>
+        </div>
+        <div className="card cta" style={{ marginTop: 16 }} data-testid="dictation-entry">
+          <div>
+            <strong>{tDict.tile}</strong>
+            <div className="muted small">{tDict.tileText}</div>
+          </div>
+          <button className="btn btn-primary" onClick={() => go('dictation')}>
+            {t.open}
+          </button>
+        </div>
         <div className="card cta" style={{ marginTop: 16 }} data-testid="shadowing-entry">
           <div>
             <strong>{tShadow.tile}</strong>
@@ -338,8 +364,16 @@ function App() {
     else page = <MockWriting key={k} variant={m.variant ?? 'academic'} go={go} setId={picked} />;
   } else if (section === 'mock') {
     page = <MockHub key={userKey} loggedIn={loggedIn} go={go} onLogin={toLogin} />;
+  } else if (section === 'talk' && sub) {
+    page = <TalkSession key={`${sub}-${userKey}`} scenario={sub} loggedIn={loggedIn} onLogin={toLogin} onCardsAdded={refreshStats} go={go} />;
+  } else if (section === 'talk') {
+    page = <TalkHub go={go} />;
+  } else if (section === 'dictation') {
+    page = <Dictation key={userKey} loggedIn={loggedIn} go={go} />;
+  } else if (section === 'mistakes') {
+    page = <Mistakes key={userKey} loggedIn={loggedIn} onLogin={toLogin} go={go} />;
   } else if (section === 'progress') {
-    page = <Progress key={userKey} loggedIn={loggedIn} onLogin={toLogin} go={go} />;
+    page = <Progress key={userKey} loggedIn={loggedIn} onLogin={toLogin} go={go} name={profile?.displayName ?? (email ? email.split('@')[0] : null)} streak={stats?.streakDays ?? 0} />;
   } else if (section === 'admin' && profile?.isAdmin) {
     page = <Admin />;
   } else if (section === 'profile' || section === 'admin' || section === 'login' || section === 'register') {
@@ -364,8 +398,10 @@ function App() {
     ? null
     : section === 'review' && sub === 'vocab'
       ? 'vocab'
-      : section === 'mock' || section === 'shadowing' || section === 'learn'
+      : section === 'mock' || section === 'shadowing' || section === 'learn' || section === 'talk' || section === 'dictation'
         ? 'practice'
+      : section === 'mistakes'
+        ? 'progress'
       : NAV.some((n) => n.id === section)
         ? section
         : 'home';
