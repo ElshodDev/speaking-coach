@@ -139,6 +139,10 @@ p {
   color: var(--text);
   text-decoration: none;
 }
+.brand img,
+.brand .logo {
+  flex: none;
+}
 .brand img {
   width: 30px;
   height: 30px;

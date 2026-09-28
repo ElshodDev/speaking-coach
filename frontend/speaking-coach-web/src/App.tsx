@@ -13,6 +13,7 @@ import { mockPickMsg, type MockPickTitle } from './locales/mockPick';
 import { talkMsg } from './locales/talk';
 import { dictationMsg } from './locales/dictation';
 import { MockPicker } from './MockPicker';
+import { Logo } from './Logo';
 import { shadowingMsg } from './locales/shadowing';
 import { learnMsg } from './locales/learn';
 import { PageHeader } from './ui';
@@ -412,7 +413,7 @@ function App() {
       <div className="app">
         <header className="topbar">
           <a className="brand" href="#/">
-            <img src="/icons/icon-192.png" alt="" />
+            <Logo size={30} />
             <span className="brand-name">Speaking Coach</span>
           </a>
           <div className="topbar-right">
@@ -438,7 +439,7 @@ function App() {
         <nav className="nav" aria-label={t.navLabel}>
           {/* Kompyuterda menyu chap tomonda: logo uning tepasida. */}
           <a className="brand nav-brand" href="#/">
-            <img src="/icons/icon-192.png" alt="" />
+            <Logo size={30} />
             <span className="brand-name">Speaking Coach</span>
           </a>
           <div className="nav-inner">

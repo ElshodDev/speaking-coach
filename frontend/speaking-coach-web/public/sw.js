@@ -12,8 +12,8 @@
 //
 // Yangi versiyada keshlash strategiyasi o'zgarsa, CACHE nomini oshiring
 // (v2, v3...) — eski kesh "activate" paytida o'chiriladi.
-const CACHE = 'speaking-coach-v2';
-const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png'];
+const CACHE = 'speaking-coach-v3'; // v3: yangi logo (eski ikonkalar keshdan tozalansin)
+const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/logo.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)));
