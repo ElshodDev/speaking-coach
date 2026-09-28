@@ -1,6 +1,6 @@
 # Case study: building an AI speaking coach on free tiers
 
-**Project:** [AI Speaking Coach](https://speaking-coach-theta.vercel.app) · [try the demo](https://speaking-coach-theta.vercel.app/#/demo) · [source](https://github.com/ElshodDev/speaking-coach)
+**Project:** [AI Speaking Coach](https://fluentuz.app) · [try the demo](https://fluentuz.app/#/demo) · [source](https://github.com/ElshodDev/speaking-coach)
 **Stack:** ASP.NET Core 10 Minimal API, EF Core + PostgreSQL (Neon), React 19 + TypeScript (Vite, PWA), Google Gemini, Telegram Bot API
 **Size:** about 31 000 lines of C# (a large share of it built-in exam content) and 27 000 lines of TypeScript; 759 backend unit tests, 170 frontend unit tests, 28 Playwright end-to-end suites
 

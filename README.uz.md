@@ -6,7 +6,7 @@
 
 IELTS, milliy CEFR (Multilevel) imtihoniga yoki shunchaki kundalik ingliz tiliga tayyorlanayotgan o'zbek va rus tilli o'quvchilar (A2–C1) uchun ilova. Siz **gapirasiz, yozasiz, o'qiysiz va tinglaysiz**. Sun'iy intellekt (Google Gemini) har bir urinishni rubrika bo'yicha baholab, aniq xatolarni ko'rsatadi. **Har bir xato esa kartaga aylanadi** va uni unutish arafasida qaytadan ko'rasiz. O'quv materiallari **ilovaning o'zida**: mashqlar, to'liq mock testlar, mavzular, grammatika darslari va mavzuli lug'at. Sun'iy intellekt yangi material faqat foydalanuvchi so'raganda yozadi. Interfeys o'zbek, rus va ingliz tillarida; telefonda, noutbukda va Telegram ichida ishlaydi.
 
-**[Ilovani ochish](https://speaking-coach-theta.vercel.app)** · **[▶ Demo — ro'yxatdan o'tmasdan](https://speaking-coach-theta.vercel.app/#/demo)** · **[Case study: loyiha qanday qurilgan (ingliz tilida)](docs/case-study.md)**
+**[Ilovani ochish](https://fluentuz.app)** · **[▶ Demo — ro'yxatdan o'tmasdan](https://fluentuz.app/#/demo)** · **[Case study: loyiha qanday qurilgan (ingliz tilida)](docs/case-study.md)**
 
 <sub>Demo tayyor bir haftalik tarix, kartalar va seriyasi bor shaxsiy hisob ochadi; u 24 soatdan keyin o'chiriladi. Server bepul tarifda ishlaydi va bo'sh turganda "uxlaydi", shuning uchun birinchi so'rov 30–60 soniya olishi mumkin.</sub>
 

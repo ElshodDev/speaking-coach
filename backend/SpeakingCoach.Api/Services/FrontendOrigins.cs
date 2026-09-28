@@ -3,7 +3,7 @@ namespace SpeakingCoach.Api.Services;
 /// <summary>
 /// FrontendOrigin sozlamasi: bitta yoki bir nechta manzil (vergul yoki bo'sh joy bilan).
 /// Birinchisi — asosiy sayt (bot havolalari shunga), hammasi — CORS ruxsati.
-/// Masalan: "https://speaking.elshod.me,https://speaking-coach-theta.vercel.app".
+/// Masalan: "https://fluentuz.app,https://speaking-coach-theta.vercel.app".
 /// </summary>
 public static class FrontendOrigins
 {

@@ -38,7 +38,7 @@ Root directory: `backend/SpeakingCoach.Api`, Docker. **Health check path: `/heal
 |---|---|
 | `Gemini__ApiKey` | Gemini kaliti (majburiy) |
 | `ConnectionStrings__Default` | Neon ulanish satri (majburiy) |
-| `FrontendOrigin` | Sayt manzili — CORS va bot havolalari uchun. Bir nechta bo'lsa vergul bilan, birinchisi asosiy: `https://yangi-domen.uz,https://speaking-coach-theta.vercel.app` (eski manzil ham ishlab tursin) |
+| `FrontendOrigin` | Sayt manzili — CORS va bot havolalari uchun. Bir nechta bo'lsa vergul bilan, birinchisi asosiy: `https://fluentuz.app,https://speaking-coach-theta.vercel.app` (eski manzil ham ishlab tursin) |
 | `Admin__Emails` | Sayt adminlari emaillari, vergul bilan |
 | `Email__BrevoApiKey`, `Email__FromAddress` | Email tasdiqlashni yoqadi (Brevo'da tasdiqlangan yuboruvchi) |
 | `Email__FromName` | Xatdagi yuboruvchi nomi (standart: `Speaking Coach`) |
@@ -63,7 +63,7 @@ GitHub → Settings → Secrets → Actions: `API_URL` (Render manzili) va `CRON
 
 ## Vercel (frontend)
 
-Root directory: `frontend/speaking-coach-web`; environment: `VITE_API_URL` (Render manzili) va `VITE_SITE_URL` (saytning o'z manzili — Telegram/Instagram havola ko'rinishidagi rasm uchun; bo'lmasa `https://speaking-coach-theta.vercel.app`). Domen o'zgarsa, `VITE_SITE_URL` va Render'dagi `FrontendOrigin`ni yangilang. Xavfsizlik sarlavhalari `vercel.json` da.
+Root directory: `frontend/speaking-coach-web`; environment: `VITE_API_URL` (Render manzili) va `VITE_SITE_URL` (saytning o'z manzili — Telegram/Instagram havola ko'rinishidagi rasm uchun; hozir `https://fluentuz.app`). Domen o'zgarsa, `VITE_SITE_URL` va Render'dagi `FrontendOrigin`ni yangilang. Xavfsizlik sarlavhalari `vercel.json` da.
 
 ## Migratsiyalar
 
@@ -76,3 +76,14 @@ Render ularni o'zi bajarmaydi: sxemaga bog'liq kodni push qilishdan oldin lokald
 - Admin panelda **qanday ro'yxatdan o'tishgan** jadvali bor: Telegram (sayt), Telegram Mini App, Google, email kodi, email + parol. Eski hisoblar (bu statistika qo'shilgunga qadar ochilgan) "Boshqa / eski" qatorida. Yana: nechta hisobga Telegram ulangan va ulardan nechtasi 7 kunda botda faol bo'lgan.
 - "Email tasdiqlangan" soni faqat haqiqiy emaillarni sanaydi (Telegram hisobining ichki `tg-…@telegram.invalid` manzili hisobga kirmaydi). Kod so'rab, uni kiritmagan va hech narsa qilmagan yozuvlar 7 kundan keyin avtomatik o'chiriladi.
 - **Fikrlar:** saytning pastidagi "Fikr bildirish" tugmasi orqali yozilganlar admin panelning oxirida ko'rinadi; `Telegram__Admins` dagi adminlarga bot darhol xabar ham yuboradi.
+
+## Domen (fluentuz.app)
+
+Domen Name.com'da (Student Pack, 2027-09-28 gacha; avtomatik yangilanish o'chiq). DNS Name.com'ning o'zida:
+
+| Type | Host | Qiymat | Nima uchun |
+|---|---|---|---|
+| A | (bo'sh) | Vercel → Settings → Domains ko'rsatgan IP | `fluentuz.app` → sayt |
+| CNAME | `www` | Vercel ko'rsatgan `…vercel-dns…` manzil | `www` → 308 bilan `fluentuz.app` ga |
+
+Domen o'zgarsa, uchta joyni yangilang: Render'dagi `FrontendOrigin` (birinchisi — asosiy), Vercel'dagi `VITE_SITE_URL` (keyin Redeploy) va Google Cloud Console → OAuth client → Authorized JavaScript origins.

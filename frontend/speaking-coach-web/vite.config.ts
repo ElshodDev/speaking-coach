@@ -2,7 +2,7 @@ import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 
 /** Havola oldindan ko'rinishi (Open Graph) uchun saytning to'liq manzili. */
-const DEFAULT_SITE_URL = 'https://speaking-coach-theta.vercel.app';
+const DEFAULT_SITE_URL = 'https://fluentuz.app';
 
 /**
  * index.html dagi __SITE_URL__ ni haqiqiy manzilga almashtiradi: og:image va

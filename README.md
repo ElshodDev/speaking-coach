@@ -6,7 +6,7 @@
 
 An English-practice app for Uzbek- and Russian-speaking learners (A2–C1) preparing for IELTS, the national CEFR Multilevel exam or everyday English. You **speak, write, read and listen**; an AI (Google Gemini) grades each attempt against a rubric and names concrete mistakes, and **every mistake becomes a flashcard** that comes back just before you would forget it. The learning material itself is **built into the app** — exercises, full mock tests, topics, grammar lessons and topic vocabulary — and AI writes new material only when the learner asks for it. The interface works in Uzbek, Russian and English, on a phone, a laptop or inside Telegram.
 
-**[Open the app](https://speaking-coach-theta.vercel.app)** · **[▶ Try the demo — no sign-up](https://speaking-coach-theta.vercel.app/#/demo)** · **[Case study: how it was built](docs/case-study.md)**
+**[Open the app](https://fluentuz.app)** · **[▶ Try the demo — no sign-up](https://fluentuz.app/#/demo)** · **[Case study: how it was built](docs/case-study.md)**
 
 <sub>The demo opens a private account with a week of history, flashcards and a streak already in place; it is deleted after 24 hours. The server runs on a free tier and sleeps when idle, so the first request can take 30–60 s.</sub>
 
