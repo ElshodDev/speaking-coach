@@ -48,10 +48,13 @@ export function Home({
   email,
   stats,
   go,
+  displayName,
 }: {
   email: string | null;
   stats: ReviewStats | null;
   go: (route: string) => void;
+  /** Profildagi ism/taxallus — bo'lsa salomlashuvda shu ishlatiladi. */
+  displayName?: string | null;
 }) {
   const t = useT(homeMsg);
   const td = useT(demoMsg);
@@ -129,7 +132,7 @@ export function Home({
     );
   }
 
-  const name = isDemoEmail(email) ? td.name : email.split('@')[0];
+  const name = displayName?.trim() || (isDemoEmail(email) ? td.name : email.split('@')[0]);
   const goal = stats ? Math.min(100, Math.round((stats.reviewedToday / stats.dailyGoal) * 100)) : 0;
 
   const header = (

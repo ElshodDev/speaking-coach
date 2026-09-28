@@ -10,7 +10,7 @@ export const shareMsg = defineMessages(
     share: '📤 Ulashish',
     download: '⬇️ Yuklab olish',
     close: 'Yopish',
-    hint: 'Rasmni Instagram yoki Telegram story’ga joylang.',
+    hint: 'Rasmni Instagram yoki Telegram storyʼga joylang.',
     level: (n: number, xp: number) => `${n}-daraja · ${xp} XP`,
     streak: 'kun ketma-ket',
     bestStreak: 'eng uzun seriya',

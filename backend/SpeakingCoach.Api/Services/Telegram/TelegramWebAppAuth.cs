@@ -44,7 +44,15 @@ public static class TelegramWebAppAuth
     }
 
     /// <summary>Tekshirilgan Telegram foydalanuvchisi (ID) yoki null: imzo noto'g'ri, eskirgan yoki user yo'q.</summary>
-    public static long? Validate(string? initData, string? botToken, DateTime nowUtc)
+    public static long? Validate(string? initData, string? botToken, DateTime nowUtc) =>
+        ValidateUser(initData, botToken, nowUtc)?.Id;
+
+    /// <summary>
+    /// Tekshirilgan Telegram foydalanuvchisi (ID, ism, @username, til) yoki
+    /// null: imzo noto'g'ri, eskirgan yoki user yo'q. Yangi hisob ochishda
+    /// ism va til ham kerak bo'ladi.
+    /// </summary>
+    public static TgUser? ValidateUser(string? initData, string? botToken, DateTime nowUtc)
     {
         if (botToken is null) return null;
         var fields = Parse(initData);
@@ -61,7 +69,10 @@ public static class TelegramWebAppAuth
         try
         {
             using var doc = JsonDocument.Parse(userJson);
-            return doc.RootElement.TryGetProperty("id", out var id) && id.TryGetInt64(out var v) ? v : null;
+            var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty("id", out var id) || !id.TryGetInt64(out var v) || v <= 0) return null;
+            string? Str(string name) => root.TryGetProperty(name, out var p) && p.ValueKind == JsonValueKind.String ? p.GetString() : null;
+            return new TgUser(v, Str("first_name"), Str("username"), Str("language_code"));
         }
         catch (JsonException)
         {

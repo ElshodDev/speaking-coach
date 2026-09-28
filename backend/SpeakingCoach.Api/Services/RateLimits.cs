@@ -14,13 +14,70 @@ namespace SpeakingCoach.Api.Services;
 /// <item>butun server — bir vaqtda 16 ta, navbatda 64 ta (xotira va Gemini kvotasi).</item>
 /// </list>
 /// Ustiga "ai" siyosati: foydalanuvchi/IP uchun daqiqasiga 30 ta.
+/// Boshqa nomli siyosatlar (AuthPolicy, CodePolicy, PollPolicy, WritePolicy) — pastda.
+/// Rad etilganda 429, JSON xabar va Retry-After sarlavhasi (soniyalarda).
 /// </summary>
 public static class RateLimits
 {
     public const string AiPolicy = "ai";
+
+    /// <summary>Kirish/ro'yxatdan o'tish/Google/Telegram Mini App/tasdiqlash/parol tiklash/demo: IP uchun daqiqasiga 30 ta.</summary>
+    public const string AuthPolicy = "auth";
+
+    /// <summary>Email YUBORADIGAN endpoint'lar (kod so'rash, qayta yuborish, parolni unutdim): IP uchun daqiqasiga 6 ta VA soatiga 30 ta.</summary>
+    public const string CodePolicy = "code";
+
+    /// <summary>Telegram orqali kirishni kutish (har 2 soniyada so'rov): IP uchun daqiqasiga 90 ta.</summary>
+    public const string PollPolicy = "poll";
+
+    /// <summary>Arzon, AI'siz yozuvlar (diktant natijasi, fikr-mulohaza, mock natijasi, profil): foydalanuvchi (yoki IP) uchun daqiqasiga 60 ta.</summary>
+    public const string WritePolicy = "write";
     /// <summary>Guruhga qo'shilish kodi: IP uchun daqiqasiga 60 ta — bir sinf bitta
     /// Wi-Fi ortida bir vaqtda qo'shila oladi, kodlarni terib chiqish esa amalda imkonsiz (31⁶ variant).</summary>
     public const string JoinPolicy = "join";
+
+    private static FixedWindowRateLimiterOptions PerWindow(int limit, TimeSpan window) =>
+        new() { PermitLimit = limit, Window = window, QueueLimit = 0 };
+
+    /// <summary>Barcha nomli siyosatlar, umumiy AI cheklovi va 429 javobi (Program.cs chaqiradi).</summary>
+    public static void Configure(RateLimiterOptions options)
+    {
+        options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+        options.OnRejected = async (context, ct) =>
+        {
+            var http = context.HttpContext;
+            // Qachon qayta urinish mumkin: oynali cheklovlar aytadi; bir vaqtdagi so'rovlar cheklovi — bir necha soniya.
+            var seconds = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter)
+                ? (int)Math.Clamp(Math.Ceiling(retryAfter.TotalSeconds), 1, 3600)
+                : 5;
+            http.Response.Headers.RetryAfter = seconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            await http.Response.WriteAsJsonAsync(
+                new { error = http.Request.T("rate_limited"), code = "rate_limited", retryAfterSeconds = seconds }, ct);
+        };
+
+        options.AddPolicy(AuthPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
+            Ip(http), _ => PerWindow(30, TimeSpan.FromMinutes(1))));
+
+        // Ikki cheklov birga: daqiqalik (tez takrorlash) va soatlik (email yuborish narxi, spam).
+        options.AddPolicy(CodePolicy, http => RateLimitPartition.Get(
+            Ip(http), _ => RateLimiter.CreateChained(
+                new FixedWindowRateLimiter(PerWindow(6, TimeSpan.FromMinutes(1))),
+                new FixedWindowRateLimiter(PerWindow(30, TimeSpan.FromHours(1))))));
+
+        options.AddPolicy(PollPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
+            Ip(http), _ => PerWindow(90, TimeSpan.FromMinutes(1))));
+
+        options.AddPolicy(WritePolicy, http => RateLimitPartition.GetFixedWindowLimiter(
+            User(http), _ => PerWindow(60, TimeSpan.FromMinutes(1))));
+
+        options.AddPolicy(AiPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
+            User(http), _ => PerWindow(30, TimeSpan.FromMinutes(1))));
+
+        options.AddPolicy(JoinPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
+            Ip(http), _ => PerWindow(60, TimeSpan.FromMinutes(1))));
+
+        options.GlobalLimiter = AiGlobal();
+    }
 
     public static string Ip(HttpContext http) => "ip:" + (http.Connection.RemoteIpAddress?.ToString() ?? "unknown");
 

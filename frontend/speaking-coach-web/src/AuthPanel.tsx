@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { apiFetch, apiJson, postJson, setToken } from './api';
+import { accountLabel, apiFetch, apiJson, postJson, setToken } from './api';
+import { TelegramLogin, type TelegramLoginResult } from './TelegramLogin';
 import { common, useLang, useT } from './i18n';
 import { authMsg } from './locales/auth';
 import { GoogleButton } from './GoogleButton';
@@ -33,9 +34,12 @@ export function AuthPanel({
   email,
   onChange,
   initialMode = 'login',
+  displayName,
 }: {
   email: string | null;
-  onChange: (email: string | null) => void;
+  onChange: (email: string | null, isNew?: boolean) => void;
+  /** Kirgan hisob taxallusi — Telegram hisobida email o'rniga ko'rsatiladi. */
+  displayName?: string | null;
   /** Tepadagi "Kirish" → login; "Hisob ochish" → register. */
   initialMode?: 'login' | 'register';
 }) {
@@ -54,6 +58,7 @@ export function AuthPanel({
   const [canReset, setCanReset] = useState(false);
   const [googleClientId, setGoogleClientId] = useState<string | null>(null);
   const [googleBroken, setGoogleBroken] = useState(false);
+  const [telegramLogin, setTelegramLogin] = useState(false);
   const [copied, setCopied] = useState(false);
   // Avtomatik yuborilgan oxirgi kod — bir xil kod ikki marta yuborilmasin.
   const lastTried = useRef('');
@@ -64,10 +69,11 @@ export function AuthPanel({
 
   // Xat yuborish sozlanmagan bo'lsa, "Parolni unutdim" ma'nosiz — ko'rsatmaymiz.
   useEffect(() => {
-    apiJson<{ emailVerification: boolean; googleClientId?: string | null }>('/api/auth/config')
+    apiJson<{ emailVerification: boolean; googleClientId?: string | null; telegramLogin?: boolean }>('/api/auth/config')
       .then((c) => {
         setCanReset(c.emailVerification);
         setGoogleClientId(c.googleClientId ?? null);
+        setTelegramLogin(!!c.telegramLogin);
         if (!c.emailVerification) setMode((m) => (m === 'code' ? initialMode : m));
       })
       .catch(() => {
@@ -154,6 +160,11 @@ export function AuthPanel({
     });
   }
 
+  function telegram(r: TelegramLoginResult) {
+    setToken(r.token);
+    onChange(r.email, r.isNew);
+  }
+
   function google(credential: string) {
     run(async () => finish(await postJson<AuthResponse>('/api/auth/google', { credential })));
   }
@@ -180,7 +191,7 @@ export function AuthPanel({
       <div className="card spread">
         <div className="break">
           <div className="muted tiny">{t.account}</div>
-          <strong>{email}</strong>
+          <strong data-testid="account-label">{accountLabel(email, displayName)}</strong>
         </div>
         <button className="btn btn-outline" onClick={logout}>
           {t.logout}
@@ -240,7 +251,7 @@ export function AuthPanel({
       googleClientId ? (
         <div className="inapp-note" data-testid="inapp-note">
           <strong className="small">{t.inAppTitle(inApp ?? 'Telegram')}</strong>
-          <p className="muted tiny" style={{ margin: '4px 0 8px' }}>{t.inAppText}</p>
+          <p className="muted tiny" style={{ margin: '4px 0 8px' }}>{t.inAppText(telegramLogin ? 'telegram' : canReset ? 'code' : 'password')}</p>
           <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
             {isAndroid(ua) && (
               <a className="btn btn-outline btn-sm" href={chromeIntent(window.location)}>
@@ -262,8 +273,31 @@ export function AuthPanel({
         </div>
       </>
     ) : googleClientId && googleBroken ? (
-      <p className="muted tiny" style={{ margin: 0 }} data-testid="google-failed">{t.googleFailed}</p>
+      <p className="muted tiny" style={{ margin: 0 }} data-testid="google-failed">{t.googleFailed(telegramLogin ? 'telegram' : canReset ? 'code' : 'password')}</p>
     ) : null;
+
+  // Telegram orqali kirish — eng oson yo'l (ayniqsa Telegram/Instagram ichida, Google ishlamaydigan joyda).
+  const telegramBlock = telegramLogin ? (
+    <>
+      <TelegramLogin onSuccess={telegram} />
+      {!googleClientId || inApp || inTelegram() || googleBroken ? (
+        <div className="divider">
+          <span>{t.or}</span>
+        </div>
+      ) : null}
+    </>
+  ) : null;
+
+  // Ilova ichida: avval "Google bu yerda ishlamaydi" izohi, keyin Telegram tugmasi; oddiy brauzerda — Telegram, Google.
+  const topBlocks = inApp || inTelegram() ? <>{googleBlock}{telegramBlock}</> : <>{telegramBlock}{googleBlock}</>;
+
+  const consent = (
+    <p className="muted tiny" style={{ margin: 0 }} data-testid="consent">
+      {t.consent} <a href={`/terms.html#${lang}`}>{t.termsLink}</a> {t.and}{' '}
+      <a href={`/privacy.html#${lang}`}>{t.privacyLink}</a>
+      {t.consentEnd === '.' ? '.' : ` ${t.consentEnd}`}
+    </p>
+  );
 
   const emailField = (
     <div className="small field">
@@ -314,23 +348,20 @@ export function AuthPanel({
       <form className="card stack" onSubmit={submit} data-testid="auth-form">
         <div>
           <h2 style={{ margin: 0 }}>{register ? t.registerTitle : t.loginTitle}</h2>
-          <p className="muted small" style={{ margin: '6px 0 0' }}>{t.codeHint}</p>
+          <p className="muted small" style={{ margin: '6px 0 0' }}>{telegramLogin ? t.codeHintTg : t.codeHint}</p>
         </div>
         {register && (
           <ul className="small" style={{ margin: 0, paddingLeft: 0, listStyle: 'none', display: 'grid', gap: 4 }} data-testid="auth-benefits">
             {t.benefits.map((b) => <li key={b}>{b}</li>)}
           </ul>
         )}
-        {googleBlock}
+        {topBlocks}
         {emailField}
         {messages}
         <button type="submit" className="btn btn-primary block" disabled={busy} data-testid="send-code">
           {busy ? t.wait : t.sendLoginCode}
         </button>
-        <p className="muted tiny" style={{ margin: 0 }}>
-          {t.consent} <a href={`/privacy.html#${lang}`}>{t.privacyLink}</a>
-          {t.consentEnd === '.' ? '.' : ` ${t.consentEnd}`}
-        </p>
+        {consent}
         <p className="small" style={{ margin: 0, paddingTop: 12, borderTop: '1px solid var(--border)', textAlign: 'center' }}>
           <button type="button" className="btn-link" onClick={() => go(initialMode)} data-testid="with-password">
             {t.withPassword}
@@ -430,7 +461,7 @@ export function AuthPanel({
         </ul>
       )}
       {/* Ilova ichidagi brauzerda (Telegram, Instagram…) Google kirish oynasi ishlamaydi (Google o'zi bloklaydi). */}
-      {googleBlock}
+      {topBlocks}
       {emailField}
       <div className="small field">
         <label htmlFor="auth-password">{t.password}</label>
@@ -463,12 +494,7 @@ export function AuthPanel({
         {busy ? t.wait : register ? t.createAccount : t.login}
       </button>
       {register && canReset && <p className="muted tiny" style={{ margin: 0 }}>{t.nextStep}</p>}
-      {register && (
-        <p className="muted tiny" style={{ margin: 0 }}>
-          {t.consent} <a href={`/privacy.html#${lang}`}>{t.privacyLink}</a>
-          {t.consentEnd === '.' ? '.' : ` ${t.consentEnd}`}
-        </p>
-      )}
+      {register && consent}
       {!register && canReset && (
         <button type="button" className="btn-link small" style={{ alignSelf: 'flex-start' }} onClick={() => go('forgot')}>
           {t.forgot}

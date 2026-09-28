@@ -1,4 +1,3 @@
-using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -16,11 +15,13 @@ builder.Services.AddCors(options =>
 {
     // Token cookie'da emas, "Authorization" sarlavhasida yuboriladi —
     // shuning uchun AllowCredentials() shart emas; AllowAnyHeader() esa
-    // Authorization sarlavhasiga ham ruxsat beradi.
+    // Authorization sarlavhasiga ham ruxsat beradi. Retry-After — brauzer
+    // JS'i "qancha kutish kerak"ni o'qiy olsin (429/503 javoblarida).
     options.AddPolicy("AllowFrontend", policy =>
         policy.WithOrigins(frontendOrigins)
               .AllowAnyMethod()
-              .AllowAnyHeader());
+              .AllowAnyHeader()
+              .WithExposedHeaders("Retry-After"));
 });
 
 // Render ilovamizning oldida "proxy" bo'lib turadi: server ko'radigan IP —
@@ -35,39 +36,22 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-// So'rovlar sonini cheklash (rate limiting):
-// - "auth": IP uchun daqiqasiga 10 ta — parolni ketma-ket taxmin qilishni sekinlashtiradi;
-// - "ai": foydalanuvchi (token) yoki mehmon (IP) uchun daqiqasiga 30 ta;
-// - GlobalLimiter: AI so'rovlari bir vaqtda nechta bo'lishi (foydalanuvchi,
-//   IP va butun server bo'yicha) — batafsil Services/RateLimits.cs da.
-builder.Services.AddRateLimiter(options =>
-{
-    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.OnRejected = async (context, ct) =>
-    {
-        await context.HttpContext.Response.WriteAsJsonAsync(
-            context.HttpContext.Request.Error("rate_limited"), ct);
-    };
+// So'rovlar sonini cheklash (rate limiting) — nomli siyosatlar ("auth", "code",
+// "poll", "write", "ai", "join") va AI uchun umumiy bir vaqtdagi cheklov:
+// batafsil Services/RateLimits.cs da. Rad etilsa — 429 + Retry-After.
+builder.Services.AddRateLimiter(RateLimits.Configure);
 
-    options.AddPolicy("auth", http => RateLimitPartition.GetFixedWindowLimiter(
-        RateLimits.Ip(http),
-        _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
-
-    options.AddPolicy(RateLimits.AiPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
-        RateLimits.User(http),
-        _ => new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromMinutes(1) }));
-
-    options.AddPolicy(RateLimits.JoinPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
-        RateLimits.Ip(http),
-        _ => new FixedWindowRateLimiterOptions { PermitLimit = 60, Window = TimeSpan.FromMinutes(1) }));
-
-    options.GlobalLimiter = RateLimits.AiGlobal();
-});
+// So'rov hajmi: umumiy 2 MB (JSON), audio endpoint'lar o'z chegarasini beradi (Services/Uploads.cs).
+Uploads.ConfigureDefaults(builder);
 
 builder.Services.AddHttpClient();
 
 // GeminiClient — barcha servislar shu bitta klass orqali Gemini'ga so'rov
 // yuboradi (model fallback + retry + qat'iy JSON o'qish bir joyda).
+builder.Services.AddSingleton(TimeProvider.System);
+// Butun server bo'yicha Gemini byudjeti va saqlagich (Ai:GlobalPerMinute, Ai:GlobalPerDay, Ai:Models...).
+builder.Services.AddSingleton(sp => new AiGuardOptions(sp.GetRequiredService<IConfiguration>()));
+builder.Services.AddSingleton<AiGuard>();
 builder.Services.AddSingleton<GeminiClient>();
 builder.Services.AddSingleton<ISpeakingEvaluationService, GeminiSpeakingService>();
 builder.Services.AddSingleton<ITalkAi, GeminiTalkAi>();
@@ -84,6 +68,9 @@ builder.Services.AddSingleton<IEmailSender, BrevoEmailSender>();
 builder.Services.AddSingleton<IGoogleSignIn, GoogleSignInService>();
 builder.Services.AddSingleton<AiQuotaOptions>();
 builder.Services.AddSingleton<GuestQuotaStore>();
+builder.Services.AddSingleton<AiDailyCaps>();
+builder.Services.AddSingleton<TalkLocks>();
+builder.Services.AddMemoryCache();
 builder.Services.AddSingleton(new DemoGate());
 builder.Services.AddSingleton<SpeakingCoach.Api.Services.Content.ContentAi>();
 builder.Services.AddScoped<AiQuotaService>();
@@ -99,6 +86,8 @@ builder.Services.AddHostedService<SpeakingCoach.Api.Services.Telegram.TelegramSt
 
 // Ishga tushganda: bazada yetishmayotgan jadval/migratsiya bo'lsa — logga aniq xato.
 builder.Services.AddHostedService<SchemaStartupCheck>();
+// Eski yozuvlarni tozalash (cron bo'lmasa ham): sessiyalar, kodlar, mashqlar, tashlab ketilgan hisoblar.
+builder.Services.AddHostedService<MaintenanceService>();
 
 // PasswordHasher holatsiz (stateless) — singleton yetarli. AuthService va
 // ReviewService esa AppDbContext'ga bog'liq; DbContext har so'rov uchun
@@ -139,6 +128,8 @@ app.Use((context, next) =>
     return next(context);
 });
 app.UseCors("AllowFrontend");
+// "AI band" (503 + Retry-After) va juda katta so'rov (413) — hamma endpoint uchun bir joyda.
+app.UseAiErrors();
 app.UseRateLimiter();
 
 // Eski versiyalar speaking audiolarini shu papkaga yozgan; endi yozilmaydi,
@@ -147,9 +138,12 @@ var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "uploads");
 
 app.MapGet("/", () => Results.Ok(new { status = "SpeakingCoach.Api ishlayapti" }));
 
-// Monitoring (masalan UptimeRobot) va Render uchun: server tirikmi VA
-// bazaga ulana oladimi. Baza ishlamasa 503 — "server bor, lekin xizmat
-// ko'rsata olmaydi".
+// Render health check uchun: faqat "jarayon tirikmi" — bazaga murojaat yo'q,
+// darhol 200. (Neon uxlab qolganda Render serverni behuda qayta ishga tushirmasin.)
+app.MapGet("/health/live", () => Results.Ok(new { status = "ok" }));
+
+// Monitoring (masalan UptimeRobot) uchun: server tirikmi VA bazaga ulana
+// oladimi. Baza ishlamasa 503 — "server bor, lekin xizmat ko'rsata olmaydi".
 app.MapGet("/health", async (AppDbContext db) =>
 {
     var dbOk = await db.Database.CanConnectAsync();
@@ -176,6 +170,7 @@ app.MapContentEndpoints();
 app.MapMistakeEndpoints();
 app.MapTalkEndpoints();
 app.MapDictationEndpoints();
+app.MapFeedbackEndpoints();
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 app.Run($"http://0.0.0.0:{port}");

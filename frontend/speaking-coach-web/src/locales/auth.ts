@@ -1,5 +1,23 @@
 import { defineMessages } from '../i18n';
 
+/** Google ishlamaganda taklif qilinadigan boshqa yoʻl: Telegram, email kodi yoki parol. */
+export type Alt = 'telegram' | 'code' | 'password';
+const ALT_UZ: Record<Alt, string> = {
+  telegram: '“Telegram orqali kirish”dan foydalaning',
+  code: 'Email kodi bilan kiring',
+  password: 'Email va parol bilan kiring',
+};
+const ALT_RU: Record<Alt, string> = {
+  telegram: 'Войдите через Telegram',
+  code: 'Войдите по коду из письма',
+  password: 'Войдите по email и паролю',
+};
+const ALT_EN: Record<Alt, string> = {
+  telegram: 'Use “Log in with Telegram”',
+  code: 'Sign in with an email code',
+  password: 'Sign in with your email and password',
+};
+
 /** AuthPanel.tsx — kirish, roʻyxatdan oʻtish, email tasdiqlash, parolni tiklash. */
 export const authMsg = defineMessages(
   {
@@ -51,10 +69,13 @@ export const authMsg = defineMessages(
     toRegister: 'Roʻyxatdan oʻting',
     toLogin: 'Kirish',
     changeEmail: 'Emailni oʻzgartirish',
-    consent: 'Roʻyxatdan oʻtib, siz',
+    consent: 'Davom etib, siz',
+    termsLink: 'foydalanish shartlari',
+    and: 'va',
     privacyLink: 'maxfiylik siyosatiga',
     consentEnd: 'rozilik bildirasiz.',
     codeHint: 'Emailingizni yozing — 6 xonali kod yuboramiz. Parol shart emas: hisob boʻlmasa, oʻzi ochiladi.',
+    codeHintTg: 'Telegram yoki email kodi bilan — parol shart emas. Hisob boʻlmasa, oʻzi ochiladi.',
     sendLoginCode: '📩 Kod yuborish',
     codeTitle: 'Emailingizni tekshiring',
     codeSent: (email: string) => `${email} manziliga 6 xonali kod yubordik. Xat kelmasa, “Spam” papkasini ham koʻring.`,
@@ -62,12 +83,13 @@ export const authMsg = defineMessages(
     withPassword: '🔑 Parol bilan kirish',
     withCode: '📩 Parolsiz — emailga kod bilan kirish',
     inAppTitle: (app: string) => `Siz ${app} ichidagi brauzerdasiz`,
-    inAppText: 'Google bilan kirish bu yerda ishlamaydi (Google buni oʻzi bloklaydi). Email kodi bilan kiring yoki saytni Chrome/Safari’da oching.',
-    openChrome: '🌐 Chrome’da ochish',
+    inAppText: (alt: Alt) =>
+      `Google bilan kirish bu yerda ishlamaydi (Google buni oʻzi bloklaydi). ${ALT_UZ[alt]} yoki saytni Chrome/Safariʼda oching.`,
+    openChrome: '🌐 Chromeʼda ochish',
     copyLink: '🔗 Havolani nusxalash',
     copied: '✓ Nusxalandi — brauzerga joylang',
-    iosHint: 'iPhone: pastdagi yoki yuqoridagi ⋯ / ↗ tugmasini bosib, “Safari’da ochish”ni tanlang.',
-    googleFailed: 'Google tugmasi yuklanmadi. Email kodi bilan kiring — u ham bir daqiqa.',
+    iosHint: 'iPhone: pastdagi yoki yuqoridagi ⋯ / ↗ tugmasini bosib, “Safariʼda ochish”ni tanlang.',
+    googleFailed: (alt: Alt) => `Google tugmasi yuklanmadi. ${ALT_UZ[alt]} — bu ham bir daqiqa.`,
   },
   {
     ru: {
@@ -119,10 +141,13 @@ export const authMsg = defineMessages(
       toRegister: 'Зарегистрируйтесь',
       toLogin: 'Войти',
       changeEmail: 'Изменить email',
-      consent: 'Регистрируясь, вы соглашаетесь с',
+      consent: 'Продолжая, вы соглашаетесь с',
+      termsLink: 'условиями использования',
+      and: 'и',
       privacyLink: 'политикой конфиденциальности',
       consentEnd: '.',
       codeHint: 'Введите email — пришлём 6-значный код. Пароль не нужен: если аккаунта нет, он создастся сам.',
+      codeHintTg: 'Через Telegram или по коду из письма — пароль не нужен. Если аккаунта нет, он создастся сам.',
       sendLoginCode: '📩 Отправить код',
       codeTitle: 'Проверьте почту',
       codeSent: (email: string) => `Мы отправили 6-значный код на ${email}. Если письма нет, загляните в «Спам».`,
@@ -130,12 +155,13 @@ export const authMsg = defineMessages(
       withPassword: '🔑 Войти с паролем',
       withCode: '📩 Без пароля — войти по коду из письма',
       inAppTitle: (app: string) => `Вы во встроенном браузере ${app}`,
-      inAppText: 'Вход через Google здесь не работает (Google сам это блокирует). Войдите по коду из письма или откройте сайт в Chrome/Safari.',
+      inAppText: (alt: Alt) =>
+        `Вход через Google здесь не работает (Google сам это блокирует). ${ALT_RU[alt]} или откройте сайт в Chrome/Safari.`,
       openChrome: '🌐 Открыть в Chrome',
       copyLink: '🔗 Скопировать ссылку',
       copied: '✓ Скопировано — вставьте в браузер',
       iosHint: 'iPhone: нажмите ⋯ или ↗ и выберите «Открыть в Safari».',
-      googleFailed: 'Кнопка Google не загрузилась. Войдите по коду из письма — это тоже минута.',
+      googleFailed: (alt: Alt) => `Кнопка Google не загрузилась. ${ALT_RU[alt]} — это тоже минута.`,
     },
     en: {
       account: 'Account',
@@ -186,10 +212,13 @@ export const authMsg = defineMessages(
       toRegister: 'Sign up',
       toLogin: 'Log in',
       changeEmail: 'Change email',
-      consent: 'By signing up you agree to the',
+      consent: 'By continuing you agree to the',
+      termsLink: 'terms of use',
+      and: 'and the',
       privacyLink: 'privacy policy',
       consentEnd: '.',
       codeHint: 'Enter your email and we’ll send a 6-digit code. No password needed: if you don’t have an account, one is created.',
+      codeHintTg: 'With Telegram or an email code — no password needed. If you don’t have an account, one is created.',
       sendLoginCode: '📩 Send code',
       codeTitle: 'Check your email',
       codeSent: (email: string) => `We sent a 6-digit code to ${email}. If it doesn’t arrive, check your Spam folder.`,
@@ -197,12 +226,13 @@ export const authMsg = defineMessages(
       withPassword: '🔑 Sign in with a password',
       withCode: '📩 No password — sign in with an email code',
       inAppTitle: (app: string) => `You’re in the ${app} in-app browser`,
-      inAppText: 'Google sign-in doesn’t work here (Google blocks it). Sign in with an email code, or open the site in Chrome/Safari.',
+      inAppText: (alt: Alt) =>
+        `Google sign-in doesn’t work here (Google blocks it). ${ALT_EN[alt]}, or open the site in Chrome/Safari.`,
       openChrome: '🌐 Open in Chrome',
       copyLink: '🔗 Copy link',
       copied: '✓ Copied — paste it into your browser',
       iosHint: 'iPhone: tap ⋯ or ↗ and choose “Open in Safari”.',
-      googleFailed: 'The Google button didn’t load. Sign in with an email code — it takes a minute too.',
+      googleFailed: (alt: Alt) => `The Google button didn’t load. ${ALT_EN[alt]} — it takes a minute too.`,
     },
   },
 );

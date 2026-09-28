@@ -86,8 +86,16 @@ public partial class TelegramBot
             }
         }
 
+        // Gemini kvotasi: har bir urinish (admin ham) — kunlik AI limitidan.
+        if (!_runner.TryTakeAttempt(c.User.Id))
+        {
+            await _api.SendMessageAsync(c.ChatId, c.T("bot.author_ai_limit", _runner.PerDay), ct: ct);
+            return;
+        }
+
         var job = new AuthorJob(c.ChatId, c.User.Id, c.Lang, isAdmin, kind, input);
         var started = _runner.TryStart(c.ChatId, (sp, token) => sp.GetRequiredService<TelegramBot>().RunAuthoringAsync(job, sp.GetRequiredService<IMockAuthoring>(), token));
+        if (!started) _runner.RefundAttempt(c.User.Id);
         await _api.SendMessageAsync(c.ChatId, c.T(started ? "bot.author_working" : "bot.author_busy"), ct: ct);
     }
 
@@ -110,6 +118,14 @@ public partial class TelegramBot
             }
             var source = new AuthorSource(job.Input.Text, file, job.Input.Mime, job.Input.Topic);
             test = await authoring.CreateAsync(job.Kind, source, ct);
+        }
+        catch (AiBusyException ex)
+        {
+            // Gemini'ga yetib bormadi (umumiy byudjet/saqlagich/kvota) — urinish sanalmaydi.
+            _runner.RefundAttempt(job.UserId);
+            _logger.LogWarning("Botda test tayyorlanmadi — AI band ({Reason}): chat {Chat}", ex.Reason, job.ChatId);
+            await TrySendAsync(job.ChatId, T("ai_busy"), CancellationToken.None);
+            return;
         }
         catch (Exception ex)
         {

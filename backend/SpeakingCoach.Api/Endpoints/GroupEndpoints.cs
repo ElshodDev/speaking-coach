@@ -61,7 +61,7 @@ public static class GroupEndpoints
             db.Groups.Add(group);
             await db.SaveChangesAsync();
             return Results.Ok(new { group.Id, group.Name, group.JoinCode });
-        }).RequireRateLimiting("auth");
+        }).RequireRateLimiting(RateLimits.WritePolicy);
 
         async Task<Group?> OwnGroupAsync(AppDbContext db, Guid id, Guid teacherId) =>
             await db.Groups.FirstOrDefaultAsync(g => g.Id == id && g.TeacherId == teacherId);
@@ -112,7 +112,7 @@ public static class GroupEndpoints
             group.Name = name;
             await db.SaveChangesAsync();
             return Results.Ok(new { group.Id, group.Name });
-        });
+        }).RequireRateLimiting(RateLimits.WritePolicy);
 
         // Kod tarqalib ketsa — yangisi; eski kod bilan endi qo'shilib bo'lmaydi.
         app.MapPost("/api/teacher/groups/{id:guid}/code", async (Guid id, HttpRequest request, AuthService auth, AppDbContext db) =>
@@ -124,7 +124,7 @@ public static class GroupEndpoints
             group.JoinCode = await UniqueCodeAsync(db);
             await db.SaveChangesAsync();
             return Results.Ok(new { group.JoinCode });
-        }).RequireRateLimiting("auth");
+        }).RequireRateLimiting(RateLimits.WritePolicy);
 
         app.MapDelete("/api/teacher/groups/{id:guid}", async (Guid id, HttpRequest request, AuthService auth, AppDbContext db) =>
         {
@@ -135,7 +135,7 @@ public static class GroupEndpoints
             db.Groups.Remove(group);   // a'zolik va vazifalar — cascade
             await db.SaveChangesAsync();
             return Results.Ok(new { deleted = true });
-        });
+        }).RequireRateLimiting(RateLimits.WritePolicy);
 
         app.MapDelete("/api/teacher/groups/{id:guid}/members/{userId:guid}", async (Guid id, Guid userId, HttpRequest request, AuthService auth, AppDbContext db) =>
         {
@@ -145,7 +145,7 @@ public static class GroupEndpoints
             db.GroupMembers.RemoveRange(await db.GroupMembers.Where(m => m.GroupId == id && m.UserId == userId).ToListAsync());
             await db.SaveChangesAsync();
             return Results.Ok(new { removed = true });
-        });
+        }).RequireRateLimiting(RateLimits.WritePolicy);
 
         app.MapPost("/api/teacher/groups/{id:guid}/assignments", async (Guid id, AssignmentRequest body, HttpRequest request, AuthService auth, AppDbContext db, IServiceScopeFactory scopes) =>
         {
@@ -183,7 +183,7 @@ public static class GroupEndpoints
                 }
             });
             return Results.Ok(new { a.Id });
-        });
+        }).RequireRateLimiting(RateLimits.WritePolicy);
 
         app.MapDelete("/api/teacher/assignments/{id:guid}", async (Guid id, HttpRequest request, AuthService auth, AppDbContext db) =>
         {
@@ -194,7 +194,7 @@ public static class GroupEndpoints
             db.Assignments.Remove(a);
             await db.SaveChangesAsync();
             return Results.Ok(new { deleted = true });
-        });
+        }).RequireRateLimiting(RateLimits.WritePolicy);
 
         // O'qituvchi o'quvchining SHU vazifaga mos urinishini ko'radi (masalan, insho matni va baholash).
         app.MapGet("/api/teacher/assignments/{id:guid}/students/{userId:guid}", async (Guid id, Guid userId, HttpRequest request, AuthService auth, AppDbContext db) =>
@@ -286,7 +286,7 @@ public static class GroupEndpoints
             db.GroupMembers.RemoveRange(await db.GroupMembers.Where(m => m.GroupId == id && m.UserId == user.Id).ToListAsync());
             await db.SaveChangesAsync();
             return Results.Ok(new { left = true });
-        });
+        }).RequireRateLimiting(RateLimits.WritePolicy);
     }
 
     /// <summary>Har bir vazifa × o'quvchi uchun holat (o'quvchilarning urinishlaridan avtomatik).</summary>

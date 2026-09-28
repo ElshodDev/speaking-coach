@@ -133,10 +133,10 @@ public partial class GeminiMockGenerator(GeminiClient gemini, ILogger<GeminiMock
                 validate(result);
                 return result;
             }
-            catch (InvalidOperationException ex) when (attempt < attempts)
+            catch (InvalidOperationException ex) when (attempt < attempts && ex is not GeminiApiException)
             {
                 lastError = ex.Message.Length > 300 ? ex.Message[..300] : ex.Message;
-                logger.LogWarning("Mock bo'lagi yaroqsiz, qayta so'ralmoqda: {Error}", ex.Message);
+                logger.LogWarning("Mock bo'lagi yaroqsiz, qayta so'ralmoqda: {Error}", GeminiClient.Truncate(ex.Message));
             }
         }
     }

@@ -13,6 +13,8 @@ export const writingMsg = defineMessages(
     words: (n: number) => `${n} ta soʻz`,
     chars: (n: number, max: number) => `${n}/${max} belgi`,
     submit: '✍️ Yuborish',
+    draftSaved: 'Qoralama shu qurilmada saqlandi.',
+    draftRestored: 'Oldingi qoralamangiz tiklandi.',
     evaluation: 'Baholash',
     criteria: {
       taskAchievement: 'Vazifani bajarish',
@@ -36,6 +38,8 @@ export const writingMsg = defineMessages(
       words: (n: number) => `${n} ${ruPlural(n, 'слово', 'слова', 'слов')}`,
       chars: (n: number, max: number) => `${n}/${max} ${ruPlural(max, 'символ', 'символа', 'символов')}`,
       submit: '✍️ Отправить',
+      draftSaved: 'Черновик сохранён на этом устройстве.',
+      draftRestored: 'Ваш прошлый черновик восстановлен.',
       evaluation: 'Оценка',
       criteria: {
         taskAchievement: 'Выполнение задания',
@@ -58,6 +62,8 @@ export const writingMsg = defineMessages(
       words: (n: number) => `${n} ${enPlural(n, 'word', 'words')}`,
       chars: (n: number, max: number) => `${n}/${max} characters`,
       submit: '✍️ Submit',
+      draftSaved: 'Draft saved on this device.',
+      draftRestored: 'Your previous draft has been restored.',
       evaluation: 'Evaluation',
       criteria: {
         taskAchievement: 'Task achievement',

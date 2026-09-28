@@ -43,42 +43,23 @@ public static class MockLimit
 
 public static class MockEndpoints
 {
+    /// <summary>Mock speaking: barcha javoblar birga (IELTS ~14 daqiqagacha nutq) va har bir javob alohida (8 MB).</summary>
     private const int MaxAudioMb = 15;
+    private const long MaxSpeakingBodyBytes = MaxAudioMb * Uploads.Mb + Uploads.FormOverheadBytes;
 
     public static void MapMockEndpoints(this IEndpointRouteBuilder app)
     {
         static IResult LoginFirst(HttpRequest r) => Results.Json(r.Error("mock.login"), statusCode: StatusCodes.Status401Unauthorized);
 
-        async Task<List<(DateTime At, string Module, string SetId)>> RecentAsync(AppDbContext db, Guid userId)
-        {
-            var rows = await db.Activities
-                .Where(a => a.UserId == userId && a.Type == ActivityType.MockExam)
-                .OrderByDescending(a => a.CreatedAtUtc)
-                .Take(300)
-                .Select(a => new { a.CreatedAtUtc, a.PromptData })
-                .ToListAsync();
-            return rows.Select(r =>
-            {
-                var p = ParsePrompt(r.PromptData);
-                return (r.CreatedAtUtc, p.Module, p.SetId);
-            }).ToList();
-        }
+        async Task<List<(DateTime At, string Module, string SetId)>> RecentAsync(AppDbContext db, Guid userId) =>
+            (await MockRowsAsync(db, userId, 300)).Select(r => (r.CreatedAtUtc, r.Module ?? "", r.SetId ?? "")).ToList();
 
         // Bitta imtihon/bo'lim bo'yicha urinishlar (natija bilan) — ro'yxatda ✓ va oxirgi ball uchun.
-        async Task<List<CatalogAttempt>> AttemptsAsync(AppDbContext db, Guid userId, string exam, string module)
-        {
-            var rows = await db.Activities
-                .Where(a => a.UserId == userId && a.Type == ActivityType.MockExam)
-                .OrderByDescending(a => a.CreatedAtUtc)
-                .Take(300)
-                .Select(a => new { a.CreatedAtUtc, a.PromptData, a.ResponseData })
-                .ToListAsync();
-            return rows
-                .Select(r => (P: ParsePrompt(r.PromptData), r.CreatedAtUtc, r.ResponseData))
-                .Where(x => x.P.Exam == exam && x.P.Module == module)
-                .Select(x => new CatalogAttempt(x.P.SetId, x.CreatedAtUtc, ReadOverall(x.ResponseData)))
+        async Task<List<CatalogAttempt>> AttemptsAsync(AppDbContext db, Guid userId, string exam, string module) =>
+            (await MockRowsAsync(db, userId, 300))
+                .Where(r => (r.Exam ?? "ielts") == exam && r.Module == module)
+                .Select(r => new CatalogAttempt(r.SetId ?? "", r.CreatedAtUtc, r.Overall))
                 .ToList();
-        }
 
         // null — ruxsat; aks holda 429 javobi (qachon yana mumkinligi bilan).
         async Task<IResult?> LimitAsync(HttpRequest request, AppDbContext db, User user, AdminOptions admins, IConfiguration config)
@@ -152,46 +133,38 @@ public static class MockEndpoints
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return LoginFirst(request);
             if (!request.HasFormContentType) return Results.BadRequest(request.Error("speaking.multipart"));
+            if (Uploads.DeclaredTooLarge(request, MaxSpeakingBodyBytes))
+                return Results.Json(request.Error("mock.too_big", MaxAudioMb), statusCode: StatusCodes.Status413PayloadTooLarge);
 
-            var form = await request.ReadFormAsync();
+            var ct = request.HttpContext.RequestAborted;
+            // "Katta so'rov" joyi — audio xotiraga o'qilishidan oldin.
+            using var slot = await Uploads.EnterAsync(ct);
+            var form = await request.ReadFormAsync(ct);
             var set = await sets.FindIeltsSpeakingAsync(form["setId"].ToString());
             if (set is null) return Results.BadRequest(request.Error("mock.bad_set"));
 
-            if (form.Files.Sum(f => f.Length) > MaxAudioMb * 1024L * 1024L)
-                return Results.BadRequest(request.Error("mock.too_big", MaxAudioMb));
+            var sizeError = CheckAudioSizes(request, form);
+            if (sizeError is not null) return sizeError;
 
-            var questionCount = set.Questions().Count;
-            var answers = new List<SpokenAnswer>();
-            for (var i = 0; i < questionCount; i++)
-            {
-                var file = form.Files.GetFile($"a{i}");
-                int.TryParse(form[$"s{i}"].ToString(), out var seconds);
-                byte[]? bytes = null;
-                if (file is { Length: > 0 })
-                {
-                    using var ms = new MemoryStream();
-                    await file.CopyToAsync(ms);
-                    bytes = ms.ToArray();
-                }
-                answers.Add(new SpokenAnswer(i, bytes, file?.ContentType, Math.Clamp(seconds, 0, 600)));
-            }
-            if (answers.All(a => a.Audio is null)) return Results.BadRequest(request.Error("mock.no_answers"));
-
+            // Limit — audio xotiraga o'qilishidan oldin.
             var limited = await LimitAsync(request, db, user, admins, config);
             if (limited is not null) return limited;
 
+            var answers = await ReadAnswersAsync(form, set.Questions().Count, ct);
+            if (answers.All(a => a.Audio is null)) return Results.BadRequest(request.Error("mock.no_answers"));
+
             try
             {
-                var result = await evaluator.EvaluateSpeakingAsync(set, answers, Texts.LangOf(request), request.HttpContext.RequestAborted);
+                var result = await evaluator.EvaluateSpeakingAsync(set, answers, Texts.LangOf(request), ct);
                 var id = await SaveAsync(db, reviews, user.Id, "speaking", set.Id, null, MockLimit.CleanSession(form["sessionId"].ToString()), result, result.TopCorrections, ActivityType.Speaking);
                 return Results.Ok(new { id, result });
             }
-            catch (Exception ex) when (ex is not OperationCanceledException || !request.HttpContext.RequestAborted.IsCancellationRequested)
+            catch (Exception ex) when (AiErrors.Handles(ex, request))
             {
                 logger.LogError(ex, "IELTS speaking mock baholanmadi");
                 return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);
             }
-        }).RequireRateLimiting("ai");
+        }).RequireRateLimiting(RateLimits.AiPolicy).WithBodyLimit(MaxSpeakingBodyBytes);
 
         app.MapPost("/api/mock/ielts/writing", async (
             WritingMockRequest body, HttpRequest request, AuthService auth, AppDbContext db, AdminOptions admins,
@@ -218,12 +191,12 @@ public static class MockEndpoints
                 var id = await SaveAsync(db, reviews, user.Id, "writing", set.Id, set.Variant, MockLimit.CleanSession(body.SessionId), result, result.TopCorrections, ActivityType.Writing);
                 return Results.Ok(new { id, result });
             }
-            catch (Exception ex) when (ex is not OperationCanceledException || !request.HttpContext.RequestAborted.IsCancellationRequested)
+            catch (Exception ex) when (AiErrors.Handles(ex, request))
             {
                 logger.LogError(ex, "IELTS writing mock baholanmadi");
                 return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);
             }
-        }).RequireRateLimiting("ai");
+        }).RequireRateLimiting(RateLimits.AiPolicy);
 
         // ---- Ro'yxat: barcha testlar/variantlar, qaysi biri ishlangan va oxirgi natija ----
         // Foydalanuvchi o'zi tanlaydi (to'liq imtihon esa avtomatik — hali ishlanmaganini oladi).
@@ -356,13 +329,19 @@ public static class MockEndpoints
                     logger.LogInformation("Yangi {Exam} {Module} testi yaratildi: {Id}", exam, module, id);
                     return Results.Ok(new { test = ClientPayload(module, id, payload), repeated = false, source = "ai" });
                 }
-                catch (Exception ex) when (ex is not OperationCanceledException || !request.HttpContext.RequestAborted.IsCancellationRequested)
+                catch (AiBusyException)
+                {
+                    // Gemini'ga yetib bormadi (byudjet/saqlagich/kvota) — urinish sanalmaydi; javob — markaziy 503.
+                    gate.Refund(user.Id);
+                    throw;
+                }
+                catch (Exception ex) when (AiErrors.Handles(ex, request))
                 {
                     logger.LogError(ex, "{Exam} {Module} testini yaratib bo'lmadi", exam, module);
                     return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);
                 }
             }
-        }).RequireRateLimiting("ai");
+        }).RequireRateLimiting(RateLimits.AiPolicy);
 
         app.MapPost("/api/mock/{exam}/{module}", async (
             string exam, string module, ObjectiveMockRequest body, HttpRequest request, AuthService auth, AppDbContext db) =>
@@ -375,15 +354,42 @@ public static class MockEndpoints
 
             var answers = (body.Answers ?? new())
                 .Where(kv => kv.Key.Length <= 3 && kv.Value is not null)
+                .Take(200)
                 .ToDictionary(kv => kv.Key, kv => kv.Value.Length > 200 ? kv.Value[..200] : kv.Value);
             var seconds = Math.Clamp(body.SecondsUsed, 0, 3 * 60 * 60);
             var sessionId = MockLimit.CleanSession(body.SessionId);
-            var id = exam == "cefr"
-                ? await SaveAsync(db, null!, "cefr", user.Id, module, test.Id.ToString(), null, sessionId, GradeCefrObjective(module, test, answers, seconds), [], null)
-                : await SaveAsync(db, null!, user.Id, module, test.Id.ToString(), test.Variant.Length == 0 ? null : test.Variant,
-                    sessionId, GradeObjective(module, test, answers, seconds), [], null);
+            var setId = test.Id.ToString();
+            object graded = exam == "cefr" ? GradeCefrObjective(module, test, answers, seconds) : GradeObjective(module, test, answers, seconds);
+            var review = graded is CefrObjectiveResult c ? c.Questions : ((ObjectiveResult)graded).Questions;
+
+            // XP yig'ishga qarshi (yangi qator = yangi XP): bugungi natijalar (Toshkent kuni) va oxirgi 10 daqiqa.
+            var now = DateTime.UtcNow;
+            var dayStart = TashkentTime.DayStartUtc(now);
+            var dupSince = now - XpGuard.DuplicateWindow;
+            var since = dayStart < dupSince ? dayStart : dupSince;
+            var todayRows = await db.Activities
+                .Where(a => a.UserId == user.Id && a.Type == ActivityType.MockExam && a.CreatedAtUtc >= since)
+                .OrderByDescending(a => a.CreatedAtUtc)
+                .Take(200)
+                .Select(a => new { a.Id, a.CreatedAtUtc, a.PromptData, Response = a.CreatedAtUtc >= dupSince ? a.ResponseData : null })
+                .ToListAsync();
+            var recent = todayRows
+                .Select(r => (Row: r, P: ParsePrompt(r.PromptData)))
+                .Select(x => new XpGuard.RecentResult(x.Row.Id, x.Row.CreatedAtUtc, x.P.SetId, x.P.Module, x.Row.Response))
+                .ToList();
+            // Aynan shu javoblar yaqinda yuborilgan — o'sha natija (ikki marta bosish yoki qayta yuborish).
+            if (XpGuard.FindDuplicate(recent, setId, module, XpGuard.Fingerprint(review), now) is Guid existing)
+                return Results.Ok(new { id = existing, duplicate = true });
+            var objectiveToday = recent.Count(r => r.CreatedAtUtc >= dayStart && r.Module is "listening" or "reading");
+            if (objectiveToday >= XpGuard.ObjectiveMocksPerDay)
+                return Results.Json(request.Error("mock.objective_limit", XpGuard.ObjectiveMocksPerDay), statusCode: StatusCodes.Status429TooManyRequests);
+
+            var id = graded is CefrObjectiveResult cefr
+                ? await SaveAsync(db, null!, "cefr", user.Id, module, setId, null, sessionId, cefr, [], null)
+                : await SaveAsync(db, null!, user.Id, module, setId, test.Variant.Length == 0 ? null : test.Variant,
+                    sessionId, (ObjectiveResult)graded, [], null);
             return Results.Ok(new { id });
-        });
+        }).RequireRateLimiting(RateLimits.WritePolicy);
 
         // To'liq imtihon (sessiya): 4 ta modul natijasi va umumiy band.
         app.MapGet("/api/mock/session/{sessionId}", async (string sessionId, HttpRequest request, AuthService auth, AppDbContext db) =>
@@ -392,14 +398,9 @@ public static class MockEndpoints
             if (user is null) return LoginFirst(request);
             var sid = MockLimit.CleanSession(sessionId);
             if (sid is null) return Results.NotFound();
-            var rows = await db.Activities
-                .Where(a => a.UserId == user.Id && a.Type == ActivityType.MockExam)
-                .OrderByDescending(a => a.CreatedAtUtc)
-                .Take(300)
-                .Select(a => new { a.Id, a.CreatedAtUtc, a.PromptData, a.ResponseData })
-                .ToListAsync();
+            var rows = await MockRowsAsync(db, user.Id, 300);
             var inSession = rows
-                .Select(r => new { r.Id, r.CreatedAtUtc, P = ParsePrompt(r.PromptData), Overall = ReadOverall(r.ResponseData) })
+                .Select(r => new { r.Id, r.CreatedAtUtc, P = r.Prompt, r.Overall })
                 .Where(r => r.P.SessionId == sid)
                 .ToList();
             var exam = inSession.FirstOrDefault()?.P.Exam ?? "ielts";
@@ -464,28 +465,32 @@ public static class MockEndpoints
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return LoginFirst(request);
             if (!request.HasFormContentType) return Results.BadRequest(request.Error("speaking.multipart"));
-            var form = await request.ReadFormAsync();
+            if (Uploads.DeclaredTooLarge(request, MaxSpeakingBodyBytes))
+                return Results.Json(request.Error("mock.too_big", MaxAudioMb), statusCode: StatusCodes.Status413PayloadTooLarge);
+            var ct = request.HttpContext.RequestAborted;
+            using var slot = await Uploads.EnterAsync(ct);
+            var form = await request.ReadFormAsync(ct);
             var set = await sets.FindCefrSpeakingAsync(form["setId"].ToString());
             if (set is null) return Results.BadRequest(request.Error("mock.bad_set"));
-            if (form.Files.Sum(f => f.Length) > MaxAudioMb * 1024L * 1024L)
-                return Results.BadRequest(request.Error("mock.too_big", MaxAudioMb));
-            var answers = await ReadAnswersAsync(form, set.Questions().Count);
-            if (answers.All(a => a.Audio is null)) return Results.BadRequest(request.Error("mock.no_answers"));
+            var sizeError = CheckAudioSizes(request, form);
+            if (sizeError is not null) return sizeError;
             var limited = await LimitAsync(request, db, user, admins, config);
             if (limited is not null) return limited;
+            var answers = await ReadAnswersAsync(form, set.Questions().Count, ct);
+            if (answers.All(a => a.Audio is null)) return Results.BadRequest(request.Error("mock.no_answers"));
             try
             {
-                var result = await evaluator.EvaluateSpeakingAsync(set, answers, Texts.LangOf(request), request.HttpContext.RequestAborted);
+                var result = await evaluator.EvaluateSpeakingAsync(set, answers, Texts.LangOf(request), ct);
                 var id = await SaveAsync(db, reviews, "cefr", user.Id, "speaking", set.Id, null, MockLimit.CleanSession(form["sessionId"].ToString()),
                     result, result.TopCorrections, ActivityType.Speaking);
                 return Results.Ok(new { id, result });
             }
-            catch (Exception ex) when (ex is not OperationCanceledException || !request.HttpContext.RequestAborted.IsCancellationRequested)
+            catch (Exception ex) when (AiErrors.Handles(ex, request))
             {
                 logger.LogError(ex, "CEFR speaking mock baholanmadi");
                 return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);
             }
-        }).RequireRateLimiting("ai");
+        }).RequireRateLimiting(RateLimits.AiPolicy).WithBodyLimit(MaxSpeakingBodyBytes);
 
         app.MapPost("/api/mock/cefr/writing", async (
             CefrWritingRequest body, HttpRequest request, AuthService auth, AppDbContext db, AdminOptions admins,
@@ -509,28 +514,23 @@ public static class MockEndpoints
                     result, result.TopCorrections, ActivityType.Writing);
                 return Results.Ok(new { id, result });
             }
-            catch (Exception ex) when (ex is not OperationCanceledException || !request.HttpContext.RequestAborted.IsCancellationRequested)
+            catch (Exception ex) when (AiErrors.Handles(ex, request))
             {
                 logger.LogError(ex, "CEFR writing mock baholanmadi");
                 return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);
             }
-        }).RequireRateLimiting("ai");
+        }).RequireRateLimiting(RateLimits.AiPolicy);
 
         // Natijalar tarixi (ro'yxat) va bitta natija (to'liq).
         app.MapGet("/api/mock/history", async (HttpRequest request, AuthService auth, AppDbContext db) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return LoginFirst(request);
-            var rows = await db.Activities
-                .Where(a => a.UserId == user.Id && a.Type == ActivityType.MockExam)
-                .OrderByDescending(a => a.CreatedAtUtc)
-                .Take(50)
-                .Select(a => new { a.Id, a.CreatedAtUtc, a.PromptData, a.ResponseData })
-                .ToListAsync();
+            var rows = await MockRowsAsync(db, user.Id, 50);
             return Results.Ok(rows.Select(r =>
             {
-                var p = ParsePrompt(r.PromptData);
-                return new { r.Id, r.CreatedAtUtc, exam = p.Exam, module = p.Module, variant = p.Variant, setId = p.SetId, sessionId = p.SessionId, overall = ReadOverall(r.ResponseData) };
+                var p = r.Prompt;
+                return new { r.Id, r.CreatedAtUtc, exam = p.Exam, module = p.Module, variant = p.Variant, setId = p.SetId, sessionId = p.SessionId, overall = r.Overall };
             }));
         });
 
@@ -583,24 +583,64 @@ public static class MockEndpoints
     }
 
     /// <summary>Speaking javoblari: "a{i}" audio fayllari va "s{i}" soniyalar (IELTS va CEFR uchun umumiy).</summary>
-    public static async Task<List<SpokenAnswer>> ReadAnswersAsync(IFormCollection form, int count)
+    public static async Task<List<SpokenAnswer>> ReadAnswersAsync(IFormCollection form, int count, CancellationToken ct = default)
     {
         var answers = new List<SpokenAnswer>();
         for (var i = 0; i < count; i++)
         {
             var file = form.Files.GetFile($"a{i}");
             int.TryParse(form[$"s{i}"].ToString(), out var seconds);
-            byte[]? bytes = null;
-            if (file is { Length: > 0 })
-            {
-                using var ms = new MemoryStream();
-                await file.CopyToAsync(ms);
-                bytes = ms.ToArray();
-            }
+            var bytes = file is { Length: > 0 } ? await Uploads.ReadAsync(file, ct) : null;
             answers.Add(new SpokenAnswer(i, bytes, file?.ContentType, Math.Clamp(seconds, 0, 600)));
         }
         return answers;
     }
+
+    /// <summary>Jami audio — 15 MB gacha, har bir javob — 8 MB gacha (xotiraga o'qishdan oldin).</summary>
+    private static IResult? CheckAudioSizes(HttpRequest request, IFormCollection form)
+    {
+        if (form.Files.Sum(f => f.Length) > MaxAudioMb * Uploads.Mb)
+            return Results.BadRequest(request.Error("mock.too_big", MaxAudioMb));
+        if (form.Files.Any(f => f.Length > Uploads.MaxRecordingBytes))
+            return Results.BadRequest(request.Error("audio.too_big", Uploads.MaxRecordingBytes / Uploads.Mb));
+        return null;
+    }
+
+    /// <summary>
+    /// Mock natijalarining yengil ko'rinishi: katta JSON (javoblar, izohlar) bazadan
+    /// tortilmaydi — kerakli maydonlar (exam, module, setId, overall...) Postgres'ning
+    /// o'zida jsonb'dan o'qiladi.
+    /// </summary>
+    public sealed class MockRow
+    {
+        public Guid Id { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public string? Exam { get; set; }
+        public string? Module { get; set; }
+        public string? SetId { get; set; }
+        public string? Variant { get; set; }
+        public string? SessionId { get; set; }
+        public decimal? Overall { get; set; }
+
+        public MockPrompt Prompt => new(Exam ?? "ielts", Module ?? "", SetId ?? "", Variant, SessionId);
+    }
+
+    public const string MockRowsSql = """
+        SELECT "Id", "CreatedAtUtc",
+               "PromptData"->>'exam' AS "Exam",
+               "PromptData"->>'module' AS "Module",
+               "PromptData"->>'setId' AS "SetId",
+               "PromptData"->>'variant' AS "Variant",
+               "PromptData"->>'sessionId' AS "SessionId",
+               CASE WHEN jsonb_typeof("ResponseData"->'overall') = 'number' THEN ("ResponseData"->>'overall')::numeric END AS "Overall"
+        FROM "Activities"
+        WHERE "UserId" = {0} AND "Type" = 'MockExam'
+        ORDER BY "CreatedAtUtc" DESC
+        LIMIT {1}
+        """;
+
+    private static Task<List<MockRow>> MockRowsAsync(AppDbContext db, Guid userId, int take) =>
+        db.Database.SqlQueryRaw<MockRow>(MockRowsSql, userId, take).ToListAsync();
 
     public static object ClientPayload(string module, Guid id, string payload) => module == "reading"
         ? ClientView.Reading(id, JsonSerializer.Deserialize<ReadingTest>(payload, GeminiMockGenerator.Web)!)

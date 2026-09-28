@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { currentMicEnv, micProblemOf, type MicProblem } from './micErrors';
+import { MicProblemNote } from './MicProblem';
 import { apiJson } from './api';
 import { msg, useT } from './i18n';
 import { cefrMsg } from './locales/cefr';
@@ -106,6 +108,7 @@ export function MockSpeaking({
   const c = useT(cefrMsg);
   const [phase, setPhase] = useState<Phase>('loading');
   const [error, setError] = useState('');
+  const [micProblem, setMicProblem] = useState<MicProblem | null>(null);
   const [set, setSet] = useState<{ id: string } | null>(null);
   const [steps, setSteps] = useState<SpeakingStep[]>([]);
   const [stepIndex, setStepIndex] = useState(0);
@@ -155,13 +158,15 @@ export function MockSpeaking({
   }, [phase]);
 
   async function begin() {
+    setMicProblem(null);
+    setError('');
     try {
       streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
       stepIndexRef.current = 0;
       setStepIndex(0);
       setPhase('running');
-    } catch {
-      setError(t.micDenied);
+    } catch (err) {
+      setMicProblem(micProblemOf(err, currentMicEnv()));
     }
   }
 
@@ -319,6 +324,7 @@ export function MockSpeaking({
             {(exam === 'cefr' ? c.rules : t.rules).map((r) => <li key={r}>{r}</li>)}
           </ul>
           {error && <p className="error small" role="alert">{error}</p>}
+          {micProblem && <MicProblemNote problem={micProblem} onRetry={begin} />}
           <button className="btn btn-primary block" onClick={begin} style={{ minHeight: 52 }}>
             🎙 {t.allowMic}
           </button>

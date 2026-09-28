@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { STABILITY_RUNS, StabilityTable, computeStats, runSequentially, type DimensionStats } from './Stability';
 import { getLevel, loadHistory as fetchHistory, postJson, type HistoryItem } from './api';
 import { initialTopic, TopicPicker, type PickedTopic } from './TopicPicker';
 import { cardsMessage } from './cards';
+import { useIsAdmin } from './adminFlag';
+import { clearDraft, draftKey, latestDraft, loadDraft, saveDraft } from './writingDraft';
 import { useT } from './i18n';
 import { stabilityMsg } from './locales/stability';
 import { writingMsg } from './locales/writing';
@@ -12,6 +14,8 @@ import { Corrections, Feedback, GuestNote, HistoryList, ScoreBar, type Correctio
 
 const MIN_CHARS = 20;
 const MAX_CHARS = 5000;
+/** Qoralama yozish to'xtagandan shuncha ms keyin saqlanadi. */
+const DRAFT_DEBOUNCE_MS = 700;
 
 type Status = 'idle' | 'uploading' | 'done' | 'error';
 
@@ -48,11 +52,15 @@ export function WritingCoach({
 }) {
   const t = useT(writingMsg);
   const ts = useT(stabilityMsg);
+  const isAdmin = useIsAdmin();
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
-  const [picked, setPicked] = useState<PickedTopic>(() => initialTopic('writing', getLevel()));
+  // Oldingi (yuborilmagan) qoralama bo'lsa — mavzu ham, matn ham tiklanadi.
+  const [restored] = useState(() => latestDraft());
+  const [picked, setPicked] = useState<PickedTopic>(() => restored?.topic ?? initialTopic('writing', getLevel()));
   const topic = picked.text;
-  const [text, setText] = useState('');
+  const [text, setText] = useState(() => restored?.text ?? '');
+  const [draftNote, setDraftNote] = useState<'restored' | 'saved' | null>(restored ? 'restored' : null);
   const [result, setResult] = useState<SubmitResponse | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   // Barqarorlik testi oxirgi MUVAFFAQIYATLI yuborilgan matnni ishlatadi —
@@ -66,6 +74,50 @@ export function WritingCoach({
   useEffect(() => {
     loadHistory();
   }, []);
+
+  // ---- Qoralama: yozish to'xtagach saqlanadi, sahifa yashirilganda — darhol ----
+  const latest = useRef({ picked, text, lastSubmittedText });
+  latest.current = { picked, text, lastSubmittedText };
+
+  // Oxirgi saqlangan holat — o'zgarmagan matnni qayta yozmaslik uchun.
+  const savedRef = useRef(restored ? `${draftKey(restored.topic)}\n${restored.text}` : '');
+
+  useEffect(() => {
+    // Baholangan matnni qayta saqlamaymiz (yuborilgach qoralama o'chirilgan).
+    if (text === lastSubmittedText) return;
+    const snapshot = `${draftKey(picked)}\n${text}`;
+    if (snapshot === savedRef.current) return;
+    const id = setTimeout(() => {
+      saveDraft(picked, text);
+      savedRef.current = snapshot;
+      setDraftNote(text.trim() ? 'saved' : null);
+    }, DRAFT_DEBOUNCE_MS);
+    return () => clearTimeout(id);
+  }, [picked, text, lastSubmittedText]);
+
+  useEffect(() => {
+    const flush = () => {
+      const c = latest.current;
+      if (document.visibilityState === 'hidden' && c.text !== c.lastSubmittedText) saveDraft(c.picked, c.text);
+    };
+    document.addEventListener('visibilitychange', flush);
+    window.addEventListener('pagehide', flush);
+    return () => {
+      document.removeEventListener('visibilitychange', flush);
+      window.removeEventListener('pagehide', flush);
+    };
+  }, []);
+
+  /** Boshqa mavzu tanlandi: uning qoralamasi bo'lsa — tiklanadi, bo'lmasa matn qoladi. */
+  function pickTopic(next: PickedTopic) {
+    setPicked(next);
+    const d = loadDraft(next);
+    if (d) {
+      savedRef.current = `${draftKey(next)}\n${d.text}`;
+      setText(d.text);
+      setDraftNote('restored');
+    }
+  }
 
   async function loadHistory() {
     setHistory(await fetchHistory('writing'));
@@ -128,6 +180,8 @@ export function WritingCoach({
     try {
       const data = await postEssay(text, true);
       setLastSubmittedText(text);
+      clearDraft(picked);
+      setDraftNote(null);
       setResult(data);
       setStatus('done');
       setMessage(cardsMessage(data.newCards));
@@ -146,7 +200,7 @@ export function WritingCoach({
     <div className="practice-split">
       <div className="card">
         <span className="muted small">{t.topic}</span>
-        <TopicPicker kind="writing" level={getLevel()} value={picked} onChange={setPicked} disabled={isBusy} />
+        <TopicPicker kind="writing" level={getLevel()} value={picked} onChange={pickTopic} disabled={isBusy} />
 
         <textarea
           className="input"
@@ -162,6 +216,11 @@ export function WritingCoach({
           <span>{t.words(words)}</span>
           <span>{t.chars(text.length, MAX_CHARS)}</span>
         </div>
+        {draftNote && text.trim() && (
+          <p className="muted tiny" style={{ margin: '-6px 0 10px' }} data-testid="draft-note">
+            {draftNote === 'restored' ? t.draftRestored : t.draftSaved}
+          </p>
+        )}
 
         <button className="btn btn-primary block" onClick={submitEssay} disabled={isBusy}>
           {t.submit}
@@ -185,15 +244,18 @@ export function WritingCoach({
           <Corrections items={result.evaluation.topCorrections} />
           <Feedback encouragement={result.evaluation.encouragement} nextFocus={result.evaluation.nextFocus} />
 
-          <div style={{ borderTop: '1px solid var(--border)', marginTop: 14, paddingTop: 12 }}>
-            <button className="btn btn-outline" onClick={runStabilityTest} disabled={isBusy || !lastSubmittedText}>
-              {ts.checkButton(STABILITY_RUNS)}
-            </button>
-            <p className="muted tiny" style={{ marginTop: 6, marginBottom: 0 }}>
-              {t.stabilityHint(STABILITY_RUNS)}
-            </p>
-            {testProgress && <p className="small">{testProgress}</p>}
-          </div>
+          {/* Barqarorlik testi — ichki tekshiruv vositasi (5× AI so'rovi), faqat admin uchun. */}
+          {isAdmin && (
+            <div style={{ borderTop: '1px solid var(--border)', marginTop: 14, paddingTop: 12 }}>
+              <button className="btn btn-outline" onClick={runStabilityTest} disabled={isBusy || !lastSubmittedText}>
+                {ts.checkButton(STABILITY_RUNS)}
+              </button>
+              <p className="muted tiny" style={{ marginTop: 6, marginBottom: 0 }}>
+                {t.stabilityHint(STABILITY_RUNS)}
+              </p>
+              {testProgress && <p className="small">{testProgress}</p>}
+            </div>
+          )}
         </div>
       )}
 

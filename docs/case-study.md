@@ -2,7 +2,7 @@
 
 **Project:** [AI Speaking Coach](https://speaking-coach-theta.vercel.app) · [try the demo](https://speaking-coach-theta.vercel.app/#/demo) · [source](https://github.com/ElshodDev/speaking-coach)
 **Stack:** ASP.NET Core 10 Minimal API, EF Core + PostgreSQL (Neon), React 19 + TypeScript (Vite, PWA), Google Gemini, Telegram Bot API
-**Size:** about 27 000 lines of C# (a large share of it built-in exam content) and 22 000 lines of TypeScript; 590 backend unit tests, 135 frontend unit tests, 26 Playwright end-to-end suites
+**Size:** about 31 000 lines of C# (a large share of it built-in exam content) and 27 000 lines of TypeScript; 759 backend unit tests, 170 frontend unit tests, 28 Playwright end-to-end suites
 
 ---
 
@@ -61,7 +61,7 @@ Two of the later features cost no AI at all. **My mistakes** reads the correctio
 
 ### Keep the core logic pure
 
-The spaced-repetition scheduler (SM-2), the card factory, IELTS band rounding, the CEFR 0–36 → 75 conversion, XP and badges, reminder timing and Telegram callback parsing never touch the database or HTTP. That is why 590 backend tests run in seconds and why most bugs could be reproduced as a failing unit test first.
+The spaced-repetition scheduler (SM-2), the card factory, IELTS band rounding, the CEFR 0–36 → 75 conversion, XP and badges, reminder timing and Telegram callback parsing never touch the database or HTTP. That is why 759 backend tests run in seconds and why most bugs could be reproduced as a failing unit test first.
 
 XP is a good example. It is never stored: levels, badges and the weekly leaderboard are computed from `Activities` and `ReviewLogs`. There is no counter to drift out of sync, and when I changed the XP rules, all history was re-scored automatically.
 
@@ -97,6 +97,18 @@ User feedback said signing in on a phone was hard, and three separate causes tur
 
 The fix was mostly subtraction. The default is now passwordless: email, then the 6-digit code, which phones offer to fill in from the letter and which submits itself on the sixth digit. The account is created by the first confirmed code, so there is no separate "register" step. The app detects in-app browsers and replaces the Google button with an explanation, an "Open in Chrome" link on Android and a copy-link button. Inputs are at least 16 px. The security model did not change: it reuses the same hashed, rate-limited codes, and a code sign-in into an unverified account wipes any password set before it, exactly like Google sign-in.
 
+Email codes still depend on a free mail quota of 300 letters a day, and most learners arrive from Telegram anyway. So the website got a Telegram sign-in that needs no Telegram widget and no extra domain setup: the site asks the API for a one-time deep link to the bot and shows a two-digit number; the user types it into the bot, which also offers a "This isn't me" button. The right number confirms the attempt, a wrong one cancels it, and the browser, which has been polling with a secret token, receives the session once. I first offered three number buttons, but a random tap would then succeed one time in three; typing the number, as Microsoft Authenticator switched to, makes the user actually look at the site, and the bot warns that anyone who sends you a link and tells you the number is a scammer. Telegram-created accounts get an internal address (`tg-<id>@telegram.invalid`) that is never shown and never emailed, and they can add a real email and password later from the profile.
+
+### A second audit: from "works" to "trustworthy"
+
+Before offering the app to the public I audited it again, this time from the point of view of a stranger on a cheap phone and of a store reviewer. The findings were less about bugs than about trust:
+
+- **Sign-in edge cases.** Google sign-in wiped the password of an unverified account even when email verification was switched off, so the owner could lock themselves out. Sessions expired after 30 days even for daily users. A Telegram Mini App user without a linked account hit a dead end. All three are fixed, with a test for each rule, and sessions now renew themselves while in use.
+- **A shared AI quota.** Gemini's free tier is one pool for everyone, and one AI conversation made up to nine calls. The client used to retry "quota exhausted" four times, which only burned more of it. Now there is a server-wide budget, a circuit breaker, per-feature caps and a clear "AI is busy, try again in N seconds" answer.
+- **Cold starts.** While the free server woke up, a signed-in user briefly looked like a guest, and anything typed in that state was lost. The app now restores the signed-in state immediately, shows a "server is waking up" banner and times requests out with a translated message.
+- **Content.** A script counted where the correct answer sits in multiple-choice questions: in the IELTS mocks, B was right in 68 of 112 three-option questions — a pattern a test-wise learner would exploit. Answers are now spread evenly and a unit test keeps them that way. The same review fixed seven factual or grammar mistakes in the built-in material and replaced typographic apostrophes in Uzbek text with the correct letters (ʻ and ʼ), again guarded by a test.
+- **Trust.** The app now has terms of use, an accurate privacy policy (what teachers can see, that audio is not stored, that the free Gemini tier may use submissions), an IELTS/CEFR disclaimer, a feedback button on every page and link previews for Telegram. The admin panel shows how people sign up, so growth from Telegram is measurable.
+
 ## A demo that can't be abused
 
 Recruiters and teachers rarely register just to look around, but an empty account shows nothing. The demo button creates a *separate* temporary account for each visitor, already filled with a week of history: speaking and writing feedback, reading and listening results, a finished shadowing lesson, saved words, flashcards (some due now) and a six-day streak.
@@ -124,6 +136,7 @@ The honest gap: the database and endpoint layer has no integration tests yet. Th
 2. **A custom domain** for the site and the API. It would let the session token move from `localStorage` to an `httpOnly` cookie, and let Brevo authenticate the sender so verification emails stop landing in spam.
 3. **Error monitoring** (Sentry) and privacy-friendly analytics, so I learn about failures and drop-offs from data instead of from users.
 4. **Keeping the API warm** with an uptime ping, to remove the 30–60 s cold start on the first visit.
+5. **A paid AI tier or another provider.** The free Gemini tier may use submissions to improve Google's products, and its terms exclude services aimed at people under 18, so the terms currently say 18+. A paid tier would lift both restrictions and open the app to school students.
 
 ## What I learned
 

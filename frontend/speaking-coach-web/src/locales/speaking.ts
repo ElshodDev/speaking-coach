@@ -1,11 +1,14 @@
-import { defineMessages } from '../i18n';
+import { defineMessages, enPlural, ruPlural } from '../i18n';
 
 /** Recorder.tsx — Gapirish mashqi. Mavzularning oʻzi (SPEAKING_TOPICS) inglizcha qoladi. */
 export const speakingMsg = defineMessages(
   {
     topic: 'Mavzu',
     otherTopic: '🔀 Boshqa mavzu',
-    micDenied: 'Mikrofondan foydalanishga ruxsat berilmadi. Brauzer manzil satridagi 🔒 belgisini bosib, mikrofonga ruxsat bering.',
+    maxLength: (min: number) => `Eng koʻpi ${min} daqiqa.`,
+    timeLeft: (s: number) => `Yana ${s} soniya — keyin yozuv avtomatik toʻxtaydi.`,
+    autoStopped: (max: number) => `Vaqt tugadi (${Math.round(max / 60)} daqiqa) — yozuv toʻxtatildi.`,
+    retry: '🔁 Qayta urinish',
     evaluating: 'Tinglanmoqda va baholanmoqda... (5–15 soniya)',
     uploadFailed: 'Yozuvni yuborib boʻlmadi',
     stop: 'Toʻxtatish',
@@ -22,7 +25,10 @@ export const speakingMsg = defineMessages(
     ru: {
       topic: 'Тема',
       otherTopic: '🔀 Другая тема',
-      micDenied: 'Нет доступа к микрофону. Нажмите на значок 🔒 в адресной строке браузера и разрешите доступ к микрофону.',
+      maxLength: (min: number) => `Не более ${min} ${ruPlural(min, 'минуты', 'минут', 'минут')}.`,
+      timeLeft: (s: number) => `Осталось ${s} ${ruPlural(s, 'секунда', 'секунды', 'секунд')} — потом запись остановится автоматически.`,
+      autoStopped: (max: number) => `Время вышло (${Math.round(max / 60)} мин) — запись остановлена.`,
+      retry: '🔁 Повторить',
       evaluating: 'Слушаем и оцениваем... (5–15 секунд)',
       uploadFailed: 'Не удалось отправить запись',
       stop: 'Остановить',
@@ -38,7 +44,10 @@ export const speakingMsg = defineMessages(
     en: {
       topic: 'Topic',
       otherTopic: '🔀 Another topic',
-      micDenied: 'Microphone access was denied. Click the 🔒 icon in the browser address bar and allow the microphone.',
+      maxLength: (min: number) => `Up to ${min} ${enPlural(min, 'minute', 'minutes')}.`,
+      timeLeft: (s: number) => `${s} ${enPlural(s, 'second', 'seconds')} left — then the recording stops automatically.`,
+      autoStopped: (max: number) => `Time is up (${Math.round(max / 60)} min) — recording stopped.`,
+      retry: '🔁 Try again',
       evaluating: 'Listening and grading... (5–15 seconds)',
       uploadFailed: 'Could not upload the recording',
       stop: 'Stop',

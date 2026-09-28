@@ -15,6 +15,7 @@ export const accountMsg = defineMessages(
     deleteWarn:
       'Hisob va unga tegishli hamma narsa — mashqlar, baholar, kartalar, lugʻat, natijalar — butunlay oʻchiriladi. Buni qaytarib boʻlmaydi.',
     deleteConfirmLabel: (email: string) => `Tasdiqlash uchun emailingizni kiriting: ${email}`,
+    deleteConfirmWord: 'Tasdiqlash uchun DELETE deb yozing:',
     deleteButton: 'Butunlay oʻchirish',
     cancel: 'Bekor qilish',
     deleted: 'Hisobingiz oʻchirildi.',
@@ -34,6 +35,7 @@ export const accountMsg = defineMessages(
       deleteWarn:
         'Аккаунт и всё, что с ним связано, — упражнения, оценки, карточки, словарь, результаты — будут удалены навсегда. Это нельзя отменить.',
       deleteConfirmLabel: (email: string) => `Для подтверждения введите ваш email: ${email}`,
+      deleteConfirmWord: 'Для подтверждения напишите DELETE:',
       deleteButton: 'Удалить навсегда',
       cancel: 'Отмена',
       deleted: 'Ваш аккаунт удалён.',
@@ -52,6 +54,7 @@ export const accountMsg = defineMessages(
       deleteWarn:
         'Your account and everything in it — exercises, scores, cards, vocabulary, progress — will be permanently deleted. This cannot be undone.',
       deleteConfirmLabel: (email: string) => `To confirm, type your email: ${email}`,
+      deleteConfirmWord: 'To confirm, type DELETE:',
       deleteButton: 'Delete forever',
       cancel: 'Cancel',
       deleted: 'Your account has been deleted.',

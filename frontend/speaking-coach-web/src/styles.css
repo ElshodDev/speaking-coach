@@ -2774,3 +2774,133 @@ main > *:nth-child(4) { animation-delay: 0.09s; }
   background-clip: text;
   color: transparent;
 }
+
+/* ---- Sahifa osti: huquqiy havolalar, ogohlantirish, fikr bildirish ---- */
+.site-footer {
+  margin-top: 40px;
+  padding: 16px 0 8px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+.site-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 4px 18px;
+  font-size: 0.85rem;
+}
+.site-footer-links a {
+  color: var(--muted);
+}
+.site-footer-links .btn-link {
+  font-size: 0.85rem;
+}
+/* Dialog footer ichida chiziladi — markazlashni meros qilib olmasin. */
+.site-footer .modal-backdrop {
+  text-align: start;
+}
+/* Kompyuter: chapda menyu ustuni, footer — kontent ostida (App.tsx: .app ichida, </main> dan keyin). */
+@media (min-width: 1024px) {
+  .app {
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      'nav top'
+      'nav main'
+      'nav foot';
+  }
+  .site-footer {
+    grid-area: foot;
+    margin: 0 clamp(24px, 3vw, 48px) 24px;
+  }
+}
+
+/* ---- "Server uyg'onmoqda" banneri: pastda, menyu ustida, bosishga xalaqit bermaydi ---- */
+.server-wake {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 10px);
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  padding: 0 12px;
+  pointer-events: none;
+}
+.server-wake-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 520px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  animation: rise-in 0.25s ease both;
+}
+.server-wake-spinner {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--primary-soft);
+  border-top-color: var(--primary);
+  animation: wake-spin 0.9s linear infinite;
+}
+@keyframes wake-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (min-width: 760px) {
+  .server-wake {
+    bottom: 20px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .server-wake-inner,
+  .server-wake-spinner {
+    animation: none;
+  }
+}
+
+/* ---- Barmoq bilan boshqariladigan ekranlar: bosiladigan joy kamida 44px
+   (WCAG 2.5.5 / Apple HIG). Sichqonchali kompyuterda joylashuv o'zgarmaydi. ---- */
+@media (pointer: coarse) {
+  .btn,
+  .input,
+  select.input,
+  .lang-select,
+  .chips button,
+  .segmented button,
+  .shadow-speeds button,
+  .choice,
+  .avatar {
+    min-height: 44px;
+  }
+  .avatar {
+    min-width: 44px;
+  }
+  .nav button {
+    min-height: 48px;
+  }
+  /* Matn ichidagi havola-tugmalar: ko'rinishi o'zgarmaydi, bosish maydoni
+     esa ko'rinmas qatlam bilan 44px gacha kengayadi. */
+  .btn-link {
+    position: relative;
+  }
+  .btn-link::after {
+    content: '';
+    position: absolute;
+    left: -6px;
+    right: -6px;
+    top: 50%;
+    height: 44px;
+    min-width: 44px;
+    transform: translateY(-50%);
+  }
+}

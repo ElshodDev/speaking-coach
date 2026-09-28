@@ -37,6 +37,9 @@ public class TelegramAccount
     /// test sifatida qabul qilinadi. null — oddiy holat.
     /// </summary>
     public string? BotState { get; set; }
+
+    /// <summary>Bot shu chatdan oxirgi marta yangilanish olgan vaqt (soatiga ko'pi bilan bir marta yoziladi) — statistika uchun.</summary>
+    public DateTime? LastSeenAtUtc { get; set; }
 }
 
 /// <summary>

@@ -7,6 +7,9 @@ using SpeakingCoach.Api.Services;
 namespace SpeakingCoach.Api.Endpoints;
 
 public record DeleteAccountRequest(string ConfirmEmail);
+public record SetPasswordRequest(string? CurrentPassword, string NewPassword);
+public record EmailChangeRequest(string Email);
+public record EmailConfirmRequest(string Email, string Code);
 
 /// <summary>
 /// Foydalanuvchining o'z ma'lumotlari ustidan nazorati: hammasini yuklab
@@ -16,6 +19,26 @@ public record DeleteAccountRequest(string ConfirmEmail);
 public static class AccountEndpoints
 {
     private static readonly JsonSerializerOptions Pretty = new() { WriteIndented = true };
+
+    /// <summary>Hisobni o'chirishni tasdiqlash so'zi (emaili sintetik — Telegram/demo — hisoblar uchun).</summary>
+    public const string DeleteWord = "DELETE";
+
+    /// <summary>
+    /// O'chirishni tasdiqlash: haqiqiy emailli hisob — emailni aynan yozadi;
+    /// emaili sintetik hisob (foydalanuvchi o'z "emailini" bilmaydi) — "DELETE"
+    /// (katta-kichik harf farqi yo'q; sintetik emailning o'zi ham qabul qilinadi).
+    /// </summary>
+    public static bool DeleteConfirmed(string userEmail, string? confirmation)
+    {
+        var typed = (confirmation ?? "").Trim();
+        if (AuthService.NormalizeEmail(typed) == userEmail) return true;
+        return AuthService.IsSyntheticEmail(userEmail) && string.Equals(typed, DeleteWord, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static IResult ToResult(HttpRequest request, AuthResult result, object ok) =>
+        result.Error is not null
+            ? Results.Json(request.ErrorWithCode(result.Error, result.ErrorArgs ?? []), statusCode: result.Status)
+            : Results.Ok(ok);
 
     public static void MapAccountEndpoints(this IEndpointRouteBuilder app, string uploadsPath)
     {
@@ -105,9 +128,10 @@ public static class AccountEndpoints
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return Unauthorized(request);
-            if (AuthService.NormalizeEmail(body.ConfirmEmail ?? "") != user.Email)
+            if (!DeleteConfirmed(user.Email, body.ConfirmEmail))
             {
-                return Results.BadRequest(request.Error("account.confirm_mismatch"));
+                return Results.BadRequest(request.ErrorWithCode(
+                    AuthService.IsSyntheticEmail(user.Email) ? "account.confirm_delete_word" : "account.confirm_mismatch"));
             }
 
             var audioIds = await db.Activities
@@ -134,6 +158,33 @@ public static class AccountEndpoints
             logger.LogInformation("Hisob o'chirildi: {UserId}", user.Id);
             return Results.Ok(new { deleted = true });
         }).RequireRateLimiting("auth");
+
+        // Parol o'rnatish (Google/kod/Telegram bilan ochilgan hisob) yoki almashtirish.
+        app.MapPost("/api/account/password", async (SetPasswordRequest body, HttpRequest request, AuthService auth) =>
+        {
+            var user = await auth.GetCurrentUserAsync(request);
+            if (user is null) return Unauthorized(request);
+            var result = await auth.SetPasswordAsync(user, body.CurrentPassword, body.NewPassword, request);
+            return ToResult(request, result, new { ok = true });
+        }).RequireRateLimiting("write");
+
+        // Email qo'shish/almashtirish, 1-qadam: yangi manzilga kod.
+        app.MapPost("/api/account/email/request", async (EmailChangeRequest body, HttpRequest request, AuthService auth) =>
+        {
+            var user = await auth.GetCurrentUserAsync(request);
+            if (user is null) return Unauthorized(request);
+            var result = await auth.RequestEmailChangeAsync(user, body.Email, Texts.LangOf(request));
+            return ToResult(request, result, new { ok = true, email = result.Email });
+        }).RequireRateLimiting("code");
+
+        // 2-qadam: kod to'g'ri — email almashadi (tasdiqlangan).
+        app.MapPost("/api/account/email/confirm", async (EmailConfirmRequest body, HttpRequest request, AuthService auth) =>
+        {
+            var user = await auth.GetCurrentUserAsync(request);
+            if (user is null) return Unauthorized(request);
+            var result = await auth.ConfirmEmailChangeAsync(user, body.Email, body.Code);
+            return ToResult(request, result, new { ok = true, email = result.Email });
+        }).RequireRateLimiting("write");
     }
 
     private static JsonElement? ParseJson(string json)

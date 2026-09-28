@@ -65,3 +65,38 @@ describe('speaking and writing topics', () => {
     for (const c of ['paragraph', 'essay-opinion', 'essay-discussion', 'letter-informal', 'letter-formal'] as const) expect(WRITING_TOPICS_BANK.some((t) => t.category === c), c).toBe(true);
   });
 });
+
+describe('grammar quiz answer positions', () => {
+  it('are spread evenly, so guessing one position does not pay off', () => {
+    // Har variantlar soni uchun: to'g'ri javob o'rni ulushi chegarada bo'lsin.
+    const bounds: Record<number, [number, number]> = { 3: [0.25, 0.42], 4: [0.18, 0.32] };
+    for (const n of [3, 4]) {
+      const qs = GRAMMAR.flatMap((g) => g.quiz).filter((q) => q.options.length === n);
+      if (qs.length < n * 5) continue;
+      const counts = Array.from({ length: n }, (_, i) => qs.filter((q) => q.answer === i).length);
+      const [min, max] = bounds[n];
+      for (const c of counts) expect(c / qs.length >= min && c / qs.length <= max, `${n} variant: ${counts.join('/')}`).toBe(true);
+    }
+  });
+});
+
+describe('Uzbek orthography', () => {
+  // Oʻzbek harflari: oʻ, gʻ — U+02BB (ʻ), tutuq belgisi — U+02BC (ʼ). ’ va ‘ (tirnoq) emas.
+  // Oʻzbekcha izoh ichidagi inglizcha qisqartmalar (didn’t, it’s, parents’) — inglizcha matn, tegilmaydi.
+  const english = /\b[A-Za-z]*n’t\b|\b[A-Za-z]+’s\b|\b(?:I|you|he|she|it|we|they|that|there|who)’(?:d|ll|re|ve)\b|\bI’m\b|\b[A-Za-z]+s’(?=\s|$|[.,;:!?)])|(?:^|\s)’s\b|\bo’clock\b/gi;
+  const uzbekStrings = (): [string, string][] => [
+    ...GRAMMAR.flatMap((g) => [
+      [g.id, g.title.uz],
+      [g.id, g.summary.uz],
+      ...g.rules.map((r): [string, string] => [g.id, r.text.uz]),
+      ...g.mistakes.map((m): [string, string] => [g.id, m.note.uz]),
+      ...g.quiz.map((q): [string, string] => [g.id, q.why.uz]),
+    ] as [string, string][]),
+    ...VOCAB_TOPICS.flatMap((t) => [[t.id, t.title.uz], ...t.words.map((w): [string, string] => [`${t.id}/${w.word}`, w.uz])] as [string, string][]),
+  ];
+
+  it('uses ʻ and ʼ, not typographic quotes, in Uzbek text', () => {
+    const bad = uzbekStrings().filter(([, s]) => /[’‘]/.test(s.replace(english, '')));
+    expect(bad.map(([id, s]) => `${id}: ${s}`)).toEqual([]);
+  });
+});

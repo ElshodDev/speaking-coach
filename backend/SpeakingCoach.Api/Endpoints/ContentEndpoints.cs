@@ -25,7 +25,7 @@ public static class ContentEndpoints
                 await quotas.RecordAsync(request, AiKind.Word);
                 return Results.Ok(topic);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException || !request.HttpContext.RequestAborted.IsCancellationRequested)
+            catch (Exception ex) when (AiErrors.Handles(ex, request))
             {
                 logger.LogWarning(ex, "AI mavzu taklif qila olmadi");
                 return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);
@@ -44,7 +44,7 @@ public static class ContentEndpoints
                 await quotas.RecordAsync(request, AiKind.Exercise);
                 return Results.Ok(quiz);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException || !request.HttpContext.RequestAborted.IsCancellationRequested)
+            catch (Exception ex) when (AiErrors.Handles(ex, request))
             {
                 logger.LogWarning(ex, "AI grammatika savollarini tuza olmadi");
                 return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);

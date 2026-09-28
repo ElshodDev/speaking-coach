@@ -56,6 +56,25 @@ public class User
 
     /// <summary>Tanishtiruv tugagan (yoki o'tkazib yuborilgan) vaqt. null — hali ko'rsatilmagan.</summary>
     public DateTime? OnboardedAtUtc { get; set; }
+
+    /// <summary>
+    /// Hisob qanday ochilgan (statistika uchun): "email", "code", "google",
+    /// "telegram" (saytdan bot orqali), "telegram_app" (Mini App), "demo".
+    /// null — bu maydondan oldin ochilgan va aniqlab bo'lmagan hisob.
+    /// </summary>
+    public string? SignupMethod { get; set; }
+}
+
+/// <summary>User.SignupMethod qiymatlari.</summary>
+public static class SignupMethods
+{
+    public const string Email = "email";
+    public const string Code = "code";
+    public const string Google = "google";
+    public const string Telegram = "telegram";
+    public const string TelegramApp = "telegram_app";
+    public const string Demo = "demo";
+    public const string Other = "other";
 }
 
 /// <summary>

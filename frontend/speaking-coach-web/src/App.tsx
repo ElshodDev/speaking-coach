@@ -1,7 +1,4 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
-import { Recorder } from './Recorder';
-import { WritingCoach } from './WritingCoach';
-import { Comprehension } from './Comprehension';
 import { Review, statsPath, type ReviewStats } from './Review';
 import { AuthPanel } from './AuthPanel';
 import { EXERCISES, ExerciseTiles, Home, type ExerciseKind } from './Home';
@@ -17,20 +14,33 @@ import { Logo } from './Logo';
 import { shadowingMsg } from './locales/shadowing';
 import { learnMsg } from './locales/learn';
 import { PageHeader } from './ui';
-import { Settings } from './Settings';
 import { Vocab } from './Vocab';
 import { UsageNote } from './Usage';
-import { AccountData } from './AccountData';
 import { TelegramCard } from './TelegramCard';
 import { ErrorBoundary } from './ErrorBoundary';
 import { DemoBanner, DemoOffer, DemoStart, isDemoEmail } from './Demo';
-import { cleanLaunchUrl, genuineTelegram, readyTelegram, telegramLaunch } from './tgApp';
-import { ApiError, apiFetch, apiJson, getToken, postJson, setLevel, setToken, type Profile as ProfileData } from './api';
+import { cleanLaunchUrl, genuineTelegram, inTelegram, readyTelegram, syncTgBack, telegramLaunch } from './tgApp';
+import {
+  accountLabel,
+  ApiError,
+  apiFetch,
+  apiJson,
+  getSavedEmail,
+  getToken,
+  postJson,
+  setLevel,
+  setSavedEmail,
+  setToken,
+  type Profile as ProfileData,
+} from './api';
+import { ServerWake } from './ServerWake';
+import { Footer } from './Footer';
+import { setIsAdmin } from './adminFlag';
+import { SignInMethods } from './SignInMethods';
 import { common, LangSelect, useLang, useT } from './i18n';
 import { appMsg } from './locales/app';
 import { homeMsg } from './locales/home';
 import { planMsg } from './locales/plan';
-import { Onboarding } from './Onboarding';
 import { shouldOnboard } from './planLogic';
 
 // Kam ochiladigan og'ir sahifalar — alohida fayllarda, faqat kerak bo'lganda
@@ -56,6 +66,12 @@ const Mistakes = lazy(() => import('./Mistakes').then((m) => ({ default: m.Mista
 const TalkHub = lazy(() => import('./Talk').then((m) => ({ default: m.TalkHub })));
 const TalkSession = lazy(() => import('./Talk').then((m) => ({ default: m.TalkSession })));
 const Dictation = lazy(() => import('./Dictation').then((m) => ({ default: m.Dictation })));
+const Recorder = lazy(() => import('./Recorder').then((m) => ({ default: m.Recorder })));
+const WritingCoach = lazy(() => import('./WritingCoach').then((m) => ({ default: m.WritingCoach })));
+const Comprehension = lazy(() => import('./Comprehension').then((m) => ({ default: m.Comprehension })));
+const Onboarding = lazy(() => import('./Onboarding').then((m) => ({ default: m.Onboarding })));
+const Settings = lazy(() => import('./Settings').then((m) => ({ default: m.Settings })));
+const AccountData = lazy(() => import('./AccountData').then((m) => ({ default: m.AccountData })));
 const LearnHub = lazy(() => import('./Learn').then((m) => ({ default: m.LearnHub })));
 const GrammarLessonPage = lazy(() => import('./Learn').then((m) => ({ default: m.GrammarLessonPage })));
 const VocabTopicPage = lazy(() => import('./Learn').then((m) => ({ default: m.VocabTopicPage })));
@@ -106,56 +122,67 @@ function App() {
   const tDict = useT(dictationMsg);
   const c = useT(common);
   const [route, go] = useRoute();
-  const [email, setEmail] = useState<string | null>(null);
+  // Oxirgi kirgan hisob darhol tiklanadi: server uyg'onguncha (30–60 s) ham
+  // ilova "kirgan" holatda turadi — mehmon ekrani chiqib, ish yo'qolmaydi.
+  const [email, setEmailState] = useState<string | null>(getSavedEmail);
+  const setEmail = useCallback((next: string | null) => {
+    setSavedEmail(next);
+    setEmailState(next);
+  }, []);
   const [stats, setStats] = useState<ReviewStats | null>(null);
   const [profile, setProfile] = useState<ProfileData | null>(null);
 
-  // Sahifa ochilganda: brauzerda token saqlangan bo'lsa, u hali yaroqlimi
-  // deb serverdan so'raymiz. Yaroqsiz bo'lsa (muddati o'tgan / chiqilgan) —
-  // o'chirib tashlaymiz, foydalanuvchi mehmon sifatida davom etadi.
+  // Sahifa ochilganda: brauzerda token bo'lsa — hali yaroqlimi deb serverdan
+  // so'raymiz. Faqat 401 (token yaroqsiz) — chiqarib yuboramiz; tarmoq xatosi yoki
+  // server uyg'onayotgan bo'lsa (Render: 30–60 s) — hisobdan chiqarmay, qayta so'raymiz.
+  // Telegram ichida (Mini App): token yo'q yoki eskirgan bo'lsa — initData bilan
+  // parolsiz kirish (hisob bo'lmasa, server o'zi ochadi), keyin kerakli bo'lim.
   useEffect(() => {
-    if (!getToken()) return;
+    const launch = telegramLaunch;
     let cancelled = false;
     let timer: number | undefined;
-    // Faqat 401 (token yaroqsiz) — chiqarib yuboramiz. Tarmoq xatosi yoki server
-    // uyg'onayotgan bo'lsa (Render: 30–60 s) — hisobdan chiqarmay, qayta so'raymiz.
-    const load = (attempt: number) => {
+
+    const telegramLogin = async () => {
+      // Faqat haqiqiy Telegram ichida — begona havola orqali boshqa hisobga kiritib bo'lmasin.
+      if (!launch?.initData || !genuineTelegram()) return;
+      try {
+        const r = await postJson<{ token: string; email: string }>('/api/auth/telegram', { initData: launch.initData });
+        if (cancelled) return;
+        setToken(r.token);
+        setEmail(r.email);
+      } catch {
+        // Telegram tasdiqlamadi yoki server javob bermadi — mehmon sifatida davom etadi.
+      }
+    };
+
+    const check = (attempt: number) => {
       apiJson<{ email: string }>('/api/auth/me')
         .then((me) => {
           if (!cancelled) setEmail(me.email);
         })
-        .catch((e) => {
+        .catch(async (e) => {
           if (cancelled) return;
-          if (e instanceof ApiError && e.status === 401) setToken(null);
-          else if (attempt < 4) timer = window.setTimeout(() => load(attempt + 1), 5000 * (attempt + 1));
+          if (e instanceof ApiError && e.status === 401) {
+            setToken(null);
+            setEmail(null);
+            await telegramLogin();
+          } else if (attempt < 4) {
+            timer = window.setTimeout(() => check(attempt + 1), 5000 * (attempt + 1));
+          }
         });
     };
-    load(0);
+
+    (async () => {
+      if (launch) await readyTelegram();
+      if (getToken()) check(0);
+      else await telegramLogin();
+      if (launch) cleanLaunchUrl(launch.route);
+    })();
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, []);
-
-  // Telegram ichida (Mini App): skript, bot ulangan hisob bo'lsa — parolsiz kirish, keyin kerakli bo'lim.
-  useEffect(() => {
-    const launch = telegramLaunch;
-    if (!launch) return;
-    (async () => {
-      await readyTelegram();
-      // Faqat haqiqiy Telegram ichida — begona havola orqali boshqa hisobga kiritib bo'lmasin.
-      if (!getToken() && launch.initData && genuineTelegram()) {
-        try {
-          const r = await postJson<{ token: string; email: string }>('/api/auth/telegram', { initData: launch.initData });
-          setToken(r.token);
-          setEmail(r.email);
-        } catch {
-          // Bu Telegram hali hisobga ulanmagan — mehmon sifatida davom etadi.
-        }
-      }
-      cleanLaunchUrl(launch.route);
-    })();
-  }, []);
+  }, [setEmail]);
 
   const loggedIn = email !== null;
 
@@ -174,6 +201,22 @@ function App() {
       })
       .catch(() => undefined);
   }, [loggedIn, email]);
+
+  const reloadProfile = useCallback(() => {
+    apiJson<ProfileData>('/api/profile').then(setProfile).catch(() => undefined);
+  }, []);
+
+  // Ichki vositalar (barqarorlik testi) faqat admin'ga.
+  useEffect(() => setIsAdmin(!!profile?.isAdmin), [profile]);
+
+  // Telegram'ning "‹ Orqaga" tugmasi: bosh sahifadan boshqa joyda ko'rinadi.
+  useEffect(() => {
+    if (!inTelegram()) return;
+    syncTgBack(route !== 'home', () => {
+      if (window.history.length > 1) window.history.back();
+      else go('home');
+    });
+  }, [route, go]);
 
   // Streak, kunlik maqsad va navbatdagi kartalar soni — bosh sahifa va
   // menyudagi raqam uchun. Mashqdan keyin yangi kartalar qo'shilsa yoki
@@ -374,23 +417,28 @@ function App() {
   } else if (section === 'mistakes') {
     page = <Mistakes key={userKey} loggedIn={loggedIn} onLogin={toLogin} go={go} />;
   } else if (section === 'progress') {
-    page = <Progress key={userKey} loggedIn={loggedIn} onLogin={toLogin} go={go} name={profile?.displayName ?? (email ? email.split('@')[0] : null)} streak={stats?.streakDays ?? 0} />;
+    page = <Progress key={userKey} loggedIn={loggedIn} onLogin={toLogin} go={go} name={profile?.displayName ?? (email ? accountLabel(email).split('@')[0] : null)} streak={stats?.streakDays ?? 0} />;
   } else if (section === 'admin' && profile?.isAdmin) {
     page = <Admin />;
   } else if (section === 'profile' || section === 'admin' || section === 'login' || section === 'register') {
     page = (
       <Profile
-        key={`${userKey}-${loggedIn ? '' : section}`}
+        key={loggedIn ? 'user' : `guest-${section}`}
         authMode={section === 'register' ? 'register' : 'login'}
         email={email}
         profile={profile}
         onAuthChange={onAuthChange}
         onProfileSaved={setProfile}
+        onEmailChanged={(next) => {
+          setEmail(next);
+          reloadProfile();
+        }}
+        onReloadProfile={reloadProfile}
         go={go}
       />
     );
   } else {
-    page = <Home email={email} stats={stats} go={go} />;
+    page = <Home email={email} stats={stats} go={go} displayName={profile?.displayName} />;
   }
 
   // Profil va Admin menyuda yo'q — ularda menyuning hech biri belgilanmaydi.
@@ -406,10 +454,11 @@ function App() {
       : NAV.some((n) => n.id === section)
         ? section
         : 'home';
-  const initial = (profile?.displayName || email || '?').charAt(0).toUpperCase();
+  const initial = (profile?.displayName || accountLabel(email) || '?').charAt(0).toUpperCase();
 
   return (
     <>
+      <ServerWake />
       <div className="app">
         <header className="topbar">
           <a className="brand" href="#/">
@@ -465,6 +514,7 @@ function App() {
             <Suspense fallback={<p className="muted" role="status" style={{ marginTop: 24 }}>⏳</p>}>{page}</Suspense>
           </ErrorBoundary>
         </main>
+        <Footer />
       </div>
     </>
   );
@@ -502,6 +552,8 @@ function Profile({
   profile,
   onAuthChange,
   onProfileSaved,
+  onEmailChanged,
+  onReloadProfile,
   go,
   authMode = 'login',
 }: {
@@ -510,12 +562,13 @@ function Profile({
   profile: ProfileData | null;
   onAuthChange: (email: string | null) => void;
   onProfileSaved: (p: ProfileData) => void;
+  onEmailChanged: (email: string) => void;
+  onReloadProfile: () => void;
   go: (route: string) => void;
 }) {
   const tt = useT(teacherMsg);
   const tp = useT(planMsg);
   const t = useT(appMsg);
-  const { lang } = useLang();
   const goalText = profile?.goal
     ? [
         tp.goals[profile.goal]?.[0] ?? profile.goal,
@@ -534,9 +587,6 @@ function Profile({
           <summary className="small" style={{ cursor: 'pointer' }}>{t.guestSettings}</summary>
           <Settings key="guest" profile={null} onSaved={onProfileSaved} bare />
         </details>
-        <p className="small" style={{ marginTop: 16 }}>
-          <a href={`/privacy.html#${lang}`}>{t.privacy}</a>
-        </p>
       </div>
     );
   }
@@ -544,7 +594,10 @@ function Profile({
     <>
       <PageHeader title={t.profile} />
       <div className="masonry">
-      <AuthPanel email={email} onChange={onAuthChange} />
+      <AuthPanel email={email} onChange={onAuthChange} displayName={profile?.displayName} />
+      {profile?.signIn && !isDemoEmail(email) && (
+        <SignInMethods methods={profile.signIn} onEmailChanged={onEmailChanged} onPasswordSaved={onReloadProfile} />
+      )}
       {/* key: profil serverdan kelganda forma qiymatlari yangilansin */}
       {(!email || profile) && <Settings key={profile ? 'user' : 'guest'} profile={profile} onSaved={onProfileSaved} />}
       {email && !isDemoEmail(email) && <TelegramCard key={email} />}
@@ -598,10 +651,6 @@ function Profile({
 
       <div className="card soft small muted">{t.themeNote}</div>
       </div>
-
-      <p className="center small" style={{ marginTop: 16 }}>
-        <a href={`/privacy.html#${lang}`}>{t.privacy}</a>
-      </p>
     </>
   );
 }

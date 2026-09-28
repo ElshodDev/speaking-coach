@@ -1,6 +1,8 @@
 // AI suhbatdosh: vaziyat tanlanadi, foydalanuvchi ovoz (yoki matn) bilan javob beradi,
 // AI rolda davom etadi (brauzer ovozida o'qiladi) va xatoni qisqa tuzatadi. Oxirida — xulosa.
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { currentMicEnv, micProblemOf, type MicProblem } from './micErrors';
+import { MicProblemNote } from './MicProblem';
 import { apiJson, getLevel, postJson } from './api';
 import { cardsMessage } from './cards';
 import { common, useT } from './i18n';
@@ -102,6 +104,7 @@ export function TalkSession({
   const [typing, setTyping] = useState(false);
   const [text, setText] = useState('');
   const [error, setError] = useState('');
+  const [micProblem, setMicProblem] = useState<MicProblem | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [cardsNote, setCardsNote] = useState('');
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -166,6 +169,7 @@ export function TalkSession({
 
   async function startRecording() {
     setError('');
+    setMicProblem(null);
     stopSpeaking();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -191,8 +195,9 @@ export function TalkSession({
       rec.start();
       recorderRef.current = rec;
       setPhase('recording');
-    } catch {
-      setError(t.micDenied);
+    } catch (err) {
+      // Mikrofon bo'lmasa ham suhbat to'xtamaydi — yozib javob berish rejimiga o'tadi.
+      setMicProblem(micProblemOf(err, currentMicEnv()));
       setTyping(true);
     }
   }
@@ -292,6 +297,7 @@ export function TalkSession({
             </button>
           </div>
           {error && <p className="error small" role="alert">{error}</p>}
+          {micProblem && <MicProblemNote problem={micProblem} />}
           {outOfTurns && <p className="small muted">{t.limitReached}</p>}
           {!outOfTurns && !typing && (
             phase === 'recording' ? (

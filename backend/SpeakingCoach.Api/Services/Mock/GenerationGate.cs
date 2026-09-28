@@ -41,6 +41,15 @@ public sealed class GenerationGate(TimeProvider? clock = null)
         return Outcome.Ok;
     }
 
+    /// <summary>Urinish Gemini'ga yetib bormadi (AI band) — oxirgi urinish hisobdan chiqariladi.</summary>
+    public void Refund(Guid userId)
+    {
+        lock (_lock)
+        {
+            if (_attempts.TryGetValue(userId, out var list) && list.Count > 0) list.RemoveAt(list.Count - 1);
+        }
+    }
+
     public int AttemptsOf(Guid userId)
     {
         var now = _clock.GetUtcNow().UtcDateTime;

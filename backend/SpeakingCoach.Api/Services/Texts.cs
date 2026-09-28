@@ -26,6 +26,31 @@ public static class Texts
             "Sunʼiy intellekt hozir javob bermadi. Birozdan soʻng qayta urinib koʻring.",
             "ИИ сейчас не ответил. Попробуйте немного позже.",
             "The AI didn't respond just now. Please try again shortly."),
+        ["ai_busy"] = new(
+            "Sunʼiy intellekt hozir juda band. Birozdan soʻng qayta urinib koʻring.",
+            "ИИ сейчас перегружен. Попробуйте чуть позже.",
+            "The AI is busy right now. Please try again in a little while."),
+        ["audio.too_big"] = new(
+            "Audio hajmi juda katta ({0} MB dan oshmasin).",
+            "Слишком большой аудиофайл (не более {0} МБ).",
+            "The audio file is too large (max {0} MB)."),
+        ["request.too_large"] = new("Soʻrov hajmi juda katta.", "Слишком большой запрос.", "The request is too large."),
+        ["talk.busy"] = new(
+            "Oldingi javobingiz hali tekshirilmoqda — biroz kuting.",
+            "Предыдущий ответ ещё обрабатывается — подождите немного.",
+            "Your previous answer is still being processed — please wait a moment."),
+        ["talk.daily_limit"] = new(
+            "Bugungi AI suhbat limiti tugadi ({0} ta javob). Ertaga davom eting.",
+            "Дневной лимит разговоров с ИИ исчерпан ({0} ответов). Продолжите завтра.",
+            "You've reached today's AI conversation limit ({0} replies). Continue tomorrow."),
+        ["bot.author_ai_limit"] = new(
+            "Bugun test tayyorlash limiti tugadi ({0} ta urinish). Ertaga qayta urinib koʻring.",
+            "Лимит на подготовку тестов на сегодня исчерпан ({0} попыток). Попробуйте завтра.",
+            "Today's test-creation limit is used up ({0} attempts). Please try again tomorrow."),
+        ["mock.objective_limit"] = new(
+            "Bugun {0} ta natija yuborildi — bu kunlik chegara. Ertaga davom eting.",
+            "Сегодня отправлено {0} результатов — это дневной лимит. Продолжите завтра.",
+            "You've submitted {0} results today — that's the daily limit. Continue tomorrow."),
 
         ["demo.limit"] = new(
             "Bugun demo hisoblar soni tugadi. Oddiy hisob oching — bu bepul va bir daqiqa oladi.",
@@ -45,13 +70,13 @@ public static class Texts
             "Пароль должен быть не длиннее {0} символов.",
             "The password must be at most {0} characters long."),
         ["auth.email_taken"] = new(
-            "Bu email bilan hisob allaqachon bor — “Kirish”ni bosing. Hisobni Google orqali ochgan boʻlsangiz, “Google bilan kirish”dan foydalaning (Telegram yoki Instagram ichida emas, Safari yoki Chrome’da).",
-            "Аккаунт с этим email уже есть — нажмите «Войти». Если вы создавали его через Google, войдите через Google (в Safari или Chrome, а не внутри Telegram или Instagram).",
-            "An account with this email already exists — tap “Log in”. If you created it with Google, sign in with Google (in Safari or Chrome, not inside Telegram or Instagram)."),
+            "Bu email bilan hisob allaqachon bor — “Kirish”ni bosing. Hisobni Google orqali ochgan boʻlsangiz, “Google bilan kirish”dan foydalaning (Telegram yoki Instagram ichida emas, Safari yoki Chromeʼda) yoki “Telegram orqali kirish”.",
+            "Аккаунт с этим email уже есть — нажмите «Войти». Если вы создавали его через Google, войдите через Google (в Safari или Chrome, а не внутри Telegram или Instagram) или через «Войти через Telegram».",
+            "An account with this email already exists — tap “Log in”. If you created it with Google, sign in with Google (in Safari or Chrome, not inside Telegram or Instagram) or use “Log in with Telegram”."),
         ["auth.wrong_credentials"] = new(
-            "Email yoki parol notoʻgʻri. Hisobni Google orqali ochgan boʻlsangiz, uning paroli yoʻq — “Google bilan kirish”dan foydalaning (Safari yoki Chrome’da).",
-            "Неверный email или пароль. Если аккаунт создан через Google, пароля у него нет — войдите через Google (в Safari или Chrome).",
-            "Wrong email or password. If you created the account with Google, it has no password — sign in with Google (in Safari or Chrome)."),
+            "Email yoki parol notoʻgʻri. Hisobni Google orqali ochgan boʻlsangiz, uning paroli yoʻq — “Google bilan kirish”dan foydalaning (Safari yoki Chromeʼda) yoki “Telegram orqali kirish”.",
+            "Неверный email или пароль. Если аккаунт создан через Google, пароля у него нет — войдите через Google (в Safari или Chrome) или через «Войти через Telegram».",
+            "Wrong email or password. If you created the account with Google, it has no password — sign in with Google (in Safari or Chrome) or use “Log in with Telegram”."),
         ["auth.not_logged_in"] = new("Tizimga kirilmagan.", "Вы не вошли в систему.", "You are not logged in."),
         ["code.wrong"] = new("Kod notoʻgʻri.", "Неверный код.", "The code is incorrect."),
         ["code.wrong_left"] = new(
@@ -78,6 +103,35 @@ public static class Texts
             "Xatni yuborib boʻlmadi. Birozdan soʻng qayta urinib koʻring.",
             "Не удалось отправить письмо. Попробуйте немного позже.",
             "We couldn't send the email. Please try again shortly."),
+        ["email.cap"] = new(
+            "Bugun email orqali kod yuborish limiti tugadi. “Telegram orqali kirish” yoki Google bilan kiring yoki ertaga qayta urinib koʻring.",
+            "Лимит писем с кодами на сегодня исчерпан. Войдите через Telegram или Google либо попробуйте завтра.",
+            "Today's limit for emailed codes is used up. Log in with Telegram or Google, or try again tomorrow."),
+        ["tglogin.disabled"] = new(
+            "Telegram orqali kirish hozircha sozlanmagan.",
+            "Вход через Telegram пока не настроен.",
+            "Telegram sign-in is not set up yet."),
+        ["tglogin.prompt"] = new(
+            "🔐 <b>Speaking Coach</b> saytiga kirish soʻrovi.\n\nSaytda koʻrsatilgan <b>2 xonali raqamni</b> shu yerga yozing.\n\n⚠️ Raqamni faqat oʻzingiz ochgan saytdan oling. Agar kimdir sizga bu havolani yuborib, raqamni aytgan boʻlsa — bu firibgarlik: “Bu men emasman”ni bosing.",
+            "🔐 Запрос на вход на сайт <b>Speaking Coach</b>.\n\nНапишите сюда <b>2-значное число</b>, показанное на сайте.\n\n⚠️ Берите число только с сайта, который открыли сами. Если кто-то прислал вам эту ссылку и назвал число — это мошенничество: нажмите «Это не я».",
+            "🔐 Sign-in request for the <b>Speaking Coach</b> website.\n\nType the <b>2-digit number</b> shown on the website here.\n\n⚠️ Only use a number from a website you opened yourself. If someone sent you this link and told you the number, it's a scam: tap “This isn't me”."),
+        ["tglogin.private_only"] = new(
+            "Saytga kirish faqat bot bilan shaxsiy chatda ishlaydi.",
+            "Вход на сайт работает только в личном чате с ботом.",
+            "Website sign-in only works in a private chat with the bot."),
+        ["tglogin.not_me"] = new("🚫 Bu men emasman", "🚫 Это не я", "🚫 This isn't me"),
+        ["tglogin.done"] = new(
+            "✅ Tayyor — saytga qayting.",
+            "✅ Готово — вернитесь на сайт.",
+            "✅ Done — go back to the website."),
+        ["tglogin.cancelled"] = new(
+            "❌ Kirish urinishi bekor qilindi. Agar bu siz boʻlsangiz, saytda “Telegram orqali kirish”ni qayta bosing.",
+            "❌ Попытка входа отменена. Если это были вы, снова нажмите «Войти через Telegram» на сайте.",
+            "❌ The sign-in attempt was cancelled. If it was you, press “Log in with Telegram” on the website again."),
+        ["tglogin.expired"] = new(
+            "⌛ Bu kirish havolasi eskirgan yoki allaqachon ishlatilgan. Saytda “Telegram orqali kirish”ni qayta bosing.",
+            "⌛ Эта ссылка для входа устарела или уже использована. Снова нажмите «Войти через Telegram» на сайте.",
+            "⌛ This sign-in link has expired or was already used. Press “Log in with Telegram” on the website again."),
         ["email.unavailable"] = new(
             "Email yuborish hozircha sozlanmagan.",
             "Отправка писем пока не настроена.",
@@ -123,6 +177,38 @@ public static class Texts
             "Tasdiqlash uchun hisobingiz emailini aynan kiriting.",
             "Для подтверждения введите точный email вашего аккаунта.",
             "To confirm, type your account's email exactly."),
+        ["account.confirm_delete_word"] = new(
+            "Tasdiqlash uchun DELETE deb yozing.",
+            "Для подтверждения напишите DELETE.",
+            "To confirm, type DELETE."),
+        ["account.need_email"] = new(
+            "Avval hisobingizga haqiqiy email qoʻshing — parol email bilan birga ishlaydi.",
+            "Сначала добавьте в аккаунт настоящий email — пароль работает вместе с email.",
+            "Add a real email to your account first — a password works together with an email."),
+        ["account.wrong_password"] = new(
+            "Joriy parol notoʻgʻri.",
+            "Текущий пароль неверный.",
+            "The current password is incorrect."),
+        ["account.email_same"] = new(
+            "Bu allaqachon hisobingiz emaili.",
+            "Это уже email вашего аккаунта.",
+            "This is already your account's email."),
+        ["account.email_taken"] = new(
+            "Bu email boshqa hisobga tegishli. Oʻsha hisobga kiring yoki boshqa email kiriting.",
+            "Этот email принадлежит другому аккаунту. Войдите в тот аккаунт или укажите другой email.",
+            "This email belongs to another account. Log in to that account or use a different email."),
+        ["feedback.bad_kind"] = new(
+            "Fikr turini tanlang.",
+            "Выберите тип отзыва.",
+            "Please choose a feedback type."),
+        ["feedback.bad_message"] = new(
+            "Xabar {0}–{1} belgidan iborat boʻlsin.",
+            "Сообщение должно содержать от {0} до {1} символов.",
+            "The message must be {0}–{1} characters long."),
+        ["feedback.admin_notify"] = new(
+            "💬 <b>Yangi fikr</b> ({0})\n\n{1}\n\n<i>{2}</i>",
+            "💬 <b>Новый отзыв</b> ({0})\n\n{1}\n\n<i>{2}</i>",
+            "💬 <b>New feedback</b> ({0})\n\n{1}\n\n<i>{2}</i>"),
         // ---- Telegram bot ----
         ["bot.menu_today"] = new("📋 Bugun", "📋 Сегодня", "📋 Today"),
         ["bot.cmd_today"] = new("Bugungi reja va vazifalar", "План на сегодня и задания", "Today's plan and assignments"),
@@ -167,7 +253,7 @@ public static class Texts
             "🌐 Выберите язык бота:\n<i>Tilni tanlang · Choose a language</i>",
             "🌐 Choose the bot language:\n<i>Tilni tanlang · Выберите язык</i>"),
         ["bot.your_id"] = new(
-            "🆔 Telegram ID'ingiz: <code>{0}</code>",
+            "🆔 Telegram IDʼingiz: <code>{0}</code>",
             "🆔 Ваш Telegram ID: <code>{0}</code>",
             "🆔 Your Telegram ID: <code>{0}</code>"),
         ["bot.lang_saved"] = new("✅ Bot tili: {0}", "✅ Язык бота: {0}", "✅ Bot language: {0}"),
@@ -189,9 +275,9 @@ public static class Texts
         ["bot.sec_teacher"] = new("👩‍🏫 Oʻqituvchi", "👩‍🏫 Учитель", "👩‍🏫 Teacher"),
         ["bot.cmd_help"] = new("Bot nima qila oladi", "Что умеет бот", "What the bot can do"),
         ["bot.welcome"] = new(
-            "👋 Salom! Men <b>Speaking Coach</b> botiman.\n\n📚 Inglizcha soʻz yuboring — maʼnosini tushuntiraman.\n🔁 Kartalaringizni shu yerning oʻzida takrorlaysiz.\n⏰ Har kuni bitta eslatma — seriya uzilmasin.\n\nToʻliq foydalanish uchun saytdagi hisobingizni ulang: <b>Profil → Telegramni ulash</b>.\n🌐 Tilni pastdagi tugmalar yoki /lang bilan almashtiring.",
-            "👋 Привет! Я бот <b>Speaking Coach</b>.\n\n📚 Пришлите английское слово — объясню, что оно значит.\n🔁 Повторяйте свои карточки прямо здесь.\n⏰ Одно напоминание в день — чтобы серия не прервалась.\n\nЧтобы пользоваться всем, подключите аккаунт на сайте: <b>Профиль → Подключить Telegram</b>.\n🌐 Язык можно сменить кнопками ниже или командой /lang.",
-            "👋 Hi! I'm the <b>Speaking Coach</b> bot.\n\n📚 Send me an English word and I'll explain it.\n🔁 Review your cards right here in the chat.\n⏰ One reminder a day to keep your streak alive.\n\nTo use everything, connect your account on the website: <b>Profile → Connect Telegram</b>.\n🌐 Change the language with the buttons below or /lang."),
+            "👋 Salom! Men <b>Speaking Coach</b> botiman.\n\n📚 Inglizcha soʻz yuboring — maʼnosini tushuntiraman.\n🔁 Kartalaringizni shu yerning oʻzida takrorlaysiz.\n⏰ Har kuni bitta eslatma — seriya uzilmasin.\n\nBoshlash uchun <b>📱 Ilovani ochish</b>ni bosing — hisob Telegram orqali bir zumda ochiladi. Saytda hisobingiz boʻlsa, uni ulang: <b>Profil → Telegramni ulash</b>.\n🌐 Tilni pastdagi tugmalar yoki /lang bilan almashtiring.",
+            "👋 Привет! Я бот <b>Speaking Coach</b>.\n\n📚 Пришлите английское слово — объясню, что оно значит.\n🔁 Повторяйте свои карточки прямо здесь.\n⏰ Одно напоминание в день — чтобы серия не прервалась.\n\nЧтобы начать, нажмите <b>📱 Открыть приложение</b> — аккаунт создастся через Telegram за секунду. Если у вас уже есть аккаунт на сайте, подключите его: <b>Профиль → Подключить Telegram</b>.\n🌐 Язык можно сменить кнопками ниже или командой /lang.",
+            "👋 Hi! I'm the <b>Speaking Coach</b> bot.\n\n📚 Send me an English word and I'll explain it.\n🔁 Review your cards right here in the chat.\n⏰ One reminder a day to keep your streak alive.\n\nTo start, tap <b>📱 Open the app</b> — your account is created through Telegram in a second. If you already have an account on the website, connect it: <b>Profile → Connect Telegram</b>.\n🌐 Change the language with the buttons below or /lang."),
         ["bot.link_button"] = new("🔗 Hisobni ulash", "🔗 Подключить аккаунт", "🔗 Connect account"),
         ["bot.linked"] = new(
             "✅ Hisob ulandi: <b>{0}</b>\n\nEndi pastdagi menyudan foydalaning yoki istalgan inglizcha soʻzni yuboring. Eslatma har kuni soat {1} da keladi — <b>⚙️ Sozlamalar</b>da oʻzgartirasiz.",
@@ -202,13 +288,13 @@ public static class Texts
             "Ссылка устарела или неверна. Нажмите <b>Профиль → Подключить Telegram</b> на сайте ещё раз.",
             "This link has expired or is invalid. Press <b>Profile → Connect Telegram</b> on the website again."),
         ["bot.need_link"] = new(
-            "Buning uchun avval saytdagi hisobingizni ulang.",
-            "Для этого сначала подключите аккаунт на сайте.",
-            "Please connect your website account first."),
+            "Buning uchun hisob kerak. <b>📱 Ilovani ochish</b>ni bosing — hisob Telegram orqali bir zumda ochiladi. Saytda hisobingiz boʻlsa — <b>🔗 Hisobni ulash</b>.",
+            "Для этого нужен аккаунт. Нажмите <b>📱 Открыть приложение</b> — аккаунт создастся через Telegram за секунду. Если аккаунт на сайте уже есть — <b>🔗 Подключить аккаунт</b>.",
+            "You need an account for this. Tap <b>📱 Open the app</b> — your account is created through Telegram in a second. Already have one on the website? Tap <b>🔗 Connect account</b>."),
         ["bot.admin_stats"] = new(
-            "👥 <b>Foydalanuvchilar</b>\n\n✅ Roʻyxatdan oʻtgan (email tasdiqlangan): <b>{0}</b>\n🗂 Jami yozuvlar: {1} (kod kiritmaganlar ham)\n🆕 Bugun: {2} · 7 kunda: {3}\n\n🔥 <b>Faol</b> (mashq yoki takrorlash)\nBugun: {4} · 7 kun: {5} · 30 kun: {6}\n\nDemo hisoblar hisobga kirmaydi. Batafsil: saytda Profil → Admin panel.",
-            "👥 <b>Пользователи</b>\n\n✅ Зарегистрированы (email подтверждён): <b>{0}</b>\n🗂 Всего записей: {1} (включая не введших код)\n🆕 Сегодня: {2} · за 7 дней: {3}\n\n🔥 <b>Активные</b> (упражнение или повторение)\nСегодня: {4} · 7 дней: {5} · 30 дней: {6}\n\nДемо-аккаунты не учитываются. Подробнее: на сайте Профиль → Админ-панель.",
-            "👥 <b>Users</b>\n\n✅ Registered (email confirmed): <b>{0}</b>\n🗂 All records: {1} (including those who never entered a code)\n🆕 Today: {2} · last 7 days: {3}\n\n🔥 <b>Active</b> (exercise or review)\nToday: {4} · 7 days: {5} · 30 days: {6}\n\nDemo accounts are not counted. Details: on the website, Profile → Admin panel."),
+            "👥 <b>Foydalanuvchilar</b>\n\n🗂 Jami hisoblar: <b>{1}</b> (kod kiritmaganlar ham)\n✅ Haqiqiy email tasdiqlangan: {0}\n🆕 Bugun: {2} · 7 kunda: {3}\n🧭 Qanday ochilgan: {7}\n\n🔥 <b>Faol</b> (mashq yoki takrorlash)\nBugun: {4} · 7 kun: {5} · 30 kun: {6}\n\n🤖 Telegram ulangan: {8} · botda 7 kunda faol: {9}\n💬 Fikrlar (7 kun): {10}\n\nDemo hisoblar hisobga kirmaydi. Batafsil: saytda Profil → Admin panel.",
+            "👥 <b>Пользователи</b>\n\n🗂 Всего аккаунтов: <b>{1}</b> (включая не введших код)\n✅ Настоящий email подтверждён: {0}\n🆕 Сегодня: {2} · за 7 дней: {3}\n🧭 Как созданы: {7}\n\n🔥 <b>Активные</b> (упражнение или повторение)\nСегодня: {4} · 7 дней: {5} · 30 дней: {6}\n\n🤖 Telegram подключён: {8} · активны в боте за 7 дней: {9}\n💬 Отзывы (7 дней): {10}\n\nДемо-аккаунты не учитываются. Подробнее: на сайте Профиль → Админ-панель.",
+            "👥 <b>Users</b>\n\n🗂 All accounts: <b>{1}</b> (including those who never entered a code)\n✅ Real email confirmed: {0}\n🆕 Today: {2} · last 7 days: {3}\n🧭 Signed up via: {7}\n\n🔥 <b>Active</b> (exercise or review)\nToday: {4} · 7 days: {5} · 30 days: {6}\n\n🤖 Telegram linked: {8} · active in the bot (7 days): {9}\n💬 Feedback (7 days): {10}\n\nDemo accounts are not counted. Details: on the website, Profile → Admin panel."),
         ["bot.admin_only"] = new(
             "🔒 Bu buyruq faqat adminlar uchun.",
             "🔒 Эта команда только для администраторов.",
@@ -415,7 +501,7 @@ public static class Texts
         ["bot.bank_pending"] = new("📥 Tekshiruvni kutmoqda: {0} ta", "📥 Ждут проверки: {0}", "📥 Waiting for review: {0}"),
         ["bot.bank_mine"] = new("📚 <b>Mening testlarim</b>", "📚 <b>Мои тесты</b>", "📚 <b>My tests</b>"),
         ["bot.not_admin_hint"] = new(
-            "Bot ulangan hisob: {0}, Telegram ID: <code>{1}</code> (admin emas). Admin boʻlish uchun Render’da Admin__Emails ga shu hisob emailini yoki Telegram__Admins ga shu ID ni yozing.",
+            "Bot ulangan hisob: {0}, Telegram ID: <code>{1}</code> (admin emas). Admin boʻlish uchun Renderʼda Admin__Emails ga shu hisob emailini yoki Telegram__Admins ga shu ID ni yozing.",
             "Бот привязан к аккаунту: {0}, Telegram ID: <code>{1}</code> (не админ). Чтобы стать админом, укажите в Render email этого аккаунта в Admin__Emails или этот ID в Telegram__Admins.",
             "The bot is linked to: {0}, Telegram ID: <code>{1}</code> (not an admin). To become the admin, put this account's email in Admin__Emails or this ID in Telegram__Admins on Render."),
         ["bot.bank_empty"] = new("Hali test qoʻshmagansiz. /add bilan boshlang.", "Вы ещё не добавляли тестов. Начните с /add.", "You haven't added any tests yet. Start with /add."),
@@ -607,6 +693,21 @@ public static class Texts
     /// <summary>Qisqartma: <c>{ error = "..." }</c> ko'rinishidagi JSON.</summary>
     public static object Error(this HttpRequest request, string key, params object?[] args) =>
         new { error = request.T(key, args) };
+
+    /// <summary>
+    /// Frontend xatoni matnsiz ajrata olishi uchun barqaror kod: kalitdagi
+    /// nuqta → pastki chiziq ("email.cap" → "email_cap"). Istisno:
+    /// "email.unavailable" → "email_disabled" (xat yuborish sozlanmagan).
+    /// </summary>
+    public static string CodeOf(string key) => key switch
+    {
+        "email.unavailable" => "email_disabled",
+        _ => key.Replace('.', '_'),
+    };
+
+    /// <summary>Qisqartma: <c>{ error = "...", code = "..." }</c> ko'rinishidagi JSON.</summary>
+    public static object ErrorWithCode(this HttpRequest request, string key, params object?[] args) =>
+        new { error = request.T(key, args), code = CodeOf(key) };
 }
 
 /// <summary>

@@ -56,7 +56,10 @@ export function AccountData({ email, onDeleted }: { email: string; onDeleted: ()
     }
   }
 
-  const matches = typed.trim().toLowerCase() === email.toLowerCase();
+  // Telegram (yoki demo) hisobida email ichki (…@….invalid) — uning o'rniga DELETE so'zi yoziladi.
+  const wordMode = email.toLowerCase().endsWith('.invalid');
+  const expected = wordMode ? 'delete' : email.toLowerCase();
+  const matches = typed.trim().toLowerCase() === expected;
 
   return (
     <div className="card stack">
@@ -78,12 +81,13 @@ export function AccountData({ email, onDeleted }: { email: string; onDeleted: ()
             ⚠️ {t.deleteWarn}
           </p>
           <label className="small" htmlFor="confirm-email">
-            {t.deleteConfirmLabel(email)}
+            {wordMode ? t.deleteConfirmWord : t.deleteConfirmLabel(email)}
           </label>
           <input
             id="confirm-email"
             className="input"
-            type="email"
+            type={wordMode ? 'text' : 'email'}
+            autoCapitalize="none"
             autoComplete="off"
             value={typed}
             onChange={(e) => setTyped(e.target.value)}

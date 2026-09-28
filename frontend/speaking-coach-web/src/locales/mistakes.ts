@@ -30,7 +30,7 @@ export const mistakesMsg = defineMessages(
     cats: {
       articles: { name: 'Artikllar (a / an / the)', tip: 'Birlikdagi sanaladigan otdan oldin “a/an”, aniq narsa haqida gapirganda — “the”.' },
       prepositions: { name: 'Predloglar (in / on / at…)', tip: 'Predloglarni alohida emas, iboralar bilan yodlang: good at, arrive in, depend on.' },
-      agreement: { name: 'Fe’l va ega moslashuvi', tip: 'He/she/it bilan hozirgi zamonda feʼlga -s qoʻshiladi; koʻplikda — are/were/have.' },
+      agreement: { name: 'Feʼl va ega moslashuvi', tip: 'He/she/it bilan hozirgi zamonda feʼlga -s qoʻshiladi; koʻplikda — are/were/have.' },
       tense: { name: 'Zamonlar', tip: 'Oʻtgan voqea — past simple (went); hozirgacha davom etayotgani — present perfect (have lived).' },
       plural: { name: 'Koʻplik shakli', tip: 'many, two, several, these kabi soʻzlardan keyin ot koʻplikda boʻladi: many students.' },
       comparatives: { name: 'Qiyosiy daraja', tip: 'Qisqa sifatlar: -er/-est (cheaper); uzunlari: more/most (more expensive). Ikkalasini birga ishlatmang.' },

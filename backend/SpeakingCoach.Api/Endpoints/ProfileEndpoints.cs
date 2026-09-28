@@ -51,6 +51,8 @@ public static partial class ProfileEndpoints
                 examDate = user.ExamDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
                 dailyMinutes = user.DailyMinutes ?? PlanLogic.DefaultMinutes,
                 onboarded = user.OnboardedAtUtc is not null,
+                // Kirish usullari: realEmail=false — email sintetik (Telegram/demo), frontend uni ko'rsatmaydi.
+                signIn = await auth.GetSignInMethodsAsync(user),
             });
         });
 
@@ -81,7 +83,7 @@ public static partial class ProfileEndpoints
             user.OnboardedAtUtc ??= DateTime.UtcNow;
             await db.SaveChangesAsync();
             return Results.Ok(new { goal = user.Goal, level = user.Level, targetScore = user.TargetScore, onboarded = true });
-        });
+        }).RequireRateLimiting(RateLimits.WritePolicy);
 
         // Bugungi reja: takrorlash, kunning ko'nikmasi, (imtihonga tayyorlanayotganlarga) mock.
         app.MapGet("/api/plan/today", async (HttpRequest request, AuthService auth, TodayService todayService, int tzOffsetMinutes = 0) =>
@@ -136,7 +138,7 @@ public static partial class ProfileEndpoints
             user.ShowOnLeaderboard = body.ShowOnLeaderboard;
             await db.SaveChangesAsync();
             return Results.Ok(new { displayName = user.DisplayName, level = user.Level, showOnLeaderboard = user.ShowOnLeaderboard });
-        });
+        }).RequireRateLimiting(RateLimits.WritePolicy);
 
         app.MapGet("/api/progress", async (HttpRequest request, AuthService auth, ProgressService progress, int tzOffsetMinutes = 0) =>
         {
@@ -194,11 +196,11 @@ public static partial class ProfileEndpoints
                 await quotas.RecordAsync(request, AiKind.Word);
                 return Results.Ok(explanation);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (AiErrors.Handles(ex, request))
             {
                 logger.LogError(ex, "So'z izohida xato: {Word}", clean.Value.Word);
                 return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);
             }
-        }).RequireRateLimiting("ai");
+        }).RequireRateLimiting(RateLimits.AiPolicy);
     }
 }

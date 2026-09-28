@@ -2,17 +2,17 @@
 // internetda ham tez ochilishi uchun.
 //
 // Qoidalar:
-// - Backend (boshqa domen: onrender.com) so'rovlari HECH QACHON keshlanmaydi —
-//   baholash va kartalar har doim yangi bo'lishi kerak.
-// - Sahifaning o'zi (index.html): avval internetdan (yangi versiya chiqsa
-//   darhol ko'rinsin), internet bo'lmasa — keshdan.
+// - Backend (/api, boshqa domen: onrender.com) so'rovlari HECH QACHON
+//   keshlanmaydi — baholash va kartalar har doim yangi bo'lishi kerak.
+// - Sahifalar (navigatsiya: index.html, privacy.html, terms.html): avval
+//   internetdan — yangi deploy darhol ko'rinsin; internet bo'lmasa — keshdan.
 // - /assets/ ichidagi JS/CSS fayllar nomida xesh bor (masalan
 //   index-yCz_3Dgm.js) — ular hech qachon o'zgarmaydi, shuning uchun
-//   avval keshdan olinadi.
+//   avval keshdan olinadi. Ikonkalar ham shunday.
 //
 // Yangi versiyada keshlash strategiyasi o'zgarsa, CACHE nomini oshiring
 // (v2, v3...) — eski kesh "activate" paytida o'chiriladi.
-const CACHE = 'speaking-coach-v3'; // v3: yangi logo (eski ikonkalar keshdan tozalansin)
+const CACHE = 'speaking-coach-v4'; // v4: barcha sahifalar network-first, /api hech qachon keshlanmaydi
 const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/logo.svg'];
 
 self.addEventListener('install', (event) => {
@@ -30,29 +30,43 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+/** Ilovaning o'zi (SPA): marshrut hash'da, shuning uchun "/" va "/index.html" bitta sahifa. */
+const isAppShell = (pathname) => pathname === '/' || pathname === '/index.html';
+
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin) return; // backend va boshqa domenlar — tegmaymiz
+  // Backend va boshqa domenlar (API, YouTube, Telegram skripti) — tegmaymiz.
+  if (url.origin !== self.location.origin) return;
+  // Bir domenda proksi qilingan API bo'lsa ham — hech qachon keshlanmaydi.
+  if (url.pathname.startsWith('/api/') || url.pathname === '/api') return;
 
-  // Faqat ilovaning o'zi (index.html). /privacy.html kabi alohida sahifalar
-  // oddiy tarmoq so'rovi bo'lib qoladi — aks holda ular "/" nomi bilan
-  // keshga tushib, oflaynda bosh sahifa o'rniga ochilib qolardi.
-  if (request.mode === 'navigate' && (url.pathname === '/' || url.pathname === '/index.html')) {
+  // Sahifalar: network-first. Har sahifa O'Z manzili bilan keshlanadi —
+  // oflaynda /privacy.html o'rniga bosh sahifa ochilib qolmasin.
+  if (request.mode === 'navigate') {
+    const key = isAppShell(url.pathname) ? '/' : url.pathname;
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE).then((cache) => cache.put('/', copy));
+          if (response.ok && response.type === 'basic') {
+            const copy = response.clone();
+            caches.open(CACHE).then((cache) => cache.put(key, copy));
+          }
           return response;
         })
-        .catch(() => caches.match('/')),
+        .catch(async () => {
+          const cached = await caches.match(key);
+          if (cached) return cached;
+          // Noma'lum sahifa oflaynda — hech bo'lmasa ilovaning o'zi.
+          return (await caches.match('/')) ?? Response.error();
+        }),
     );
     return;
   }
 
+  // Xeshli fayllar va ikonkalar: cache-first.
   if (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/icons/')) {
     event.respondWith(
       caches.match(request).then(

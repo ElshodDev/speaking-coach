@@ -21,9 +21,24 @@ interface AdminOverview {
   totalCards: number;
   daily: { date: string; signups: number; activeUsers: number; activities: number; reviews: number }[];
   recentUsers: { email: string; createdAtUtc: string; lastActiveAtUtc: string | null; activities: number; level: string; verified: boolean }[];
+  signups?: Record<string, number> | null;
+  telegramLinked?: number;
+  telegramActive7d?: number;
+  feedback7d?: number;
 }
 
-const TYPES = ['Speaking', 'Writing', 'Reading', 'Listening'] as const;
+interface FeedbackItem {
+  id: string;
+  kind: string;
+  message: string;
+  page: string | null;
+  lang: string | null;
+  createdAtUtc: string;
+  userEmail: string | null;
+}
+
+const TYPES = ['Speaking', 'Writing', 'Reading', 'Listening', 'MockExam', 'Shadowing', 'Conversation', 'Dictation'] as const;
+const METHODS = ['telegram', 'telegram_app', 'google', 'code', 'email', 'other'] as const;
 
 /**
  * Admin panel — faqat serverdagi Admin:Emails ro'yxatidagi foydalanuvchiga.
@@ -33,6 +48,7 @@ const TYPES = ['Speaking', 'Writing', 'Reading', 'Listening'] as const;
 export function Admin() {
   const [data, setData] = useState<AdminOverview | null>(null);
   const [error, setError] = useState('');
+  const [feedback, setFeedback] = useState<FeedbackItem[] | null>(null);
   const t = useT(adminMsg);
   const cm = useT(common);
   const locale = localeOf(useLang().lang);
@@ -41,6 +57,9 @@ export function Admin() {
     apiJson<AdminOverview>(`/api/admin/overview?tzOffsetMinutes=${new Date().getTimezoneOffset()}`)
       .then(setData)
       .catch((e) => setError(e instanceof Error ? e.message : msg(adminMsg).loadFailed));
+    apiJson<FeedbackItem[]>('/api/admin/feedback?take=50')
+      .then(setFeedback)
+      .catch(() => setFeedback([]));
   }, []);
 
   if (error) {
@@ -62,7 +81,11 @@ export function Admin() {
     { label: t.active30d, value: data.active30d },
     { label: t.reviews7d, value: data.reviews7d, sub: t.totalOf(data.totalReviews.toLocaleString(locale)) },
     { label: t.totalCards, value: data.totalCards },
+    { label: t.telegramLinked, value: data.telegramLinked ?? 0, sub: t.telegramActive7d(data.telegramActive7d ?? 0) },
+    { label: t.feedback7d, value: data.feedback7d ?? 0 },
   ];
+  const signups = data.signups ?? {};
+  const signupTotal = METHODS.reduce((sum, m) => sum + (signups[m] ?? 0), 0);
 
   return (
     <>
@@ -93,6 +116,23 @@ export function Admin() {
       <div className="card">
         <h3>{t.signupsTitle}</h3>
         <BarChart label={t.signupsLabel} data={data.daily.map((d) => ({ date: d.date, value: d.signups }))} />
+      </div>
+
+      <div className="card" data-testid="signup-methods">
+        <h3>{t.signupMethodsTitle}</h3>
+        <div className="table-wrap">
+          <table className="data">
+            <tbody>
+              {METHODS.map((m) => (
+                <tr key={m}>
+                  <td>{t.methods[m]}</td>
+                  <td>{(signups[m] ?? 0).toLocaleString(locale)}</td>
+                  <td className="muted">{signupTotal ? `${Math.round(((signups[m] ?? 0) / signupTotal) * 100)}%` : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="card">
@@ -146,6 +186,21 @@ export function Admin() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div className="card stack" data-testid="admin-feedback">
+        <h3 style={{ margin: 0 }}>{t.feedbackTitle}</h3>
+        {feedback && feedback.length === 0 && <p className="muted small" style={{ margin: 0 }}>{t.feedbackEmpty}</p>}
+        {feedback?.map((f) => (
+          <div key={f.id} className="feedback-item">
+            <div className="muted tiny">
+              {t.feedbackKinds[f.kind as keyof typeof t.feedbackKinds] ?? f.kind} · {new Date(f.createdAtUtc).toLocaleString(locale)} ·{' '}
+              {f.userEmail ?? t.feedbackGuest}
+              {f.page ? ` · ${f.page}` : ''}
+            </div>
+            <div className="small" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{f.message}</div>
+          </div>
+        ))}
       </div>
     </>
   );

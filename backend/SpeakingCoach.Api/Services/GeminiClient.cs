@@ -16,33 +16,34 @@ public class GeminiClient
 {
     private readonly HttpClient _http;
     private readonly string _apiKey;
+    private readonly AiGuard _guard;
+    private readonly ILogger<GeminiClient> _logger;
 
-    // Model nomi vaqt o'tishi bilan yangilanishi mumkin — agar 404 yoki
-    // "model not found" xatosi chiqsa, https://ai.google.dev/gemini-api/docs/models
+    // Model nomlari sozlanadi (Ai:Models, vergul bilan): birinchisi — asosiy,
+    // qolganlari — zaxira. Eng yangi flash model talab yuqori bo'lganda 503
+    // "high demand" qaytarishi ma'lum muammo — u band bo'lsa, yengilroq va
+    // odatda ko'proq bo'sh sig'imga ega keyingi modelga avtomatik o'tamiz.
+    // 404 yoki "model not found" chiqsa — https://ai.google.dev/gemini-api/docs/models
     // sahifasidan joriy bepul tier model nomini tekshiring.
-    private const string Model = "gemini-3.6-flash";
+    private IReadOnlyList<string> Models => _guard.Options.Models;
 
-    // Eng yangi/kuchli flash model (yuqoridagi Model) talab yuqori bo'lganda
-    // 503 "high demand" qaytarishi ma'lum muammo — hatto pullik tarifda ham
-    // xabar berilgan. Shuning uchun u band bo'lsa, yengilroq va odatda
-    // ko'proq bo'sh sig'imga ega FallbackModel'ga avtomatik o'tamiz
-    // (natija sifati bir oz farq qilishi mumkin, lekin funksiya ishlab turadi).
-    private const string FallbackModel = "gemini-3.5-flash-lite";
-    private static readonly string[] ModelsInPriorityOrder = { Model, FallbackModel };
+    /// <summary>Vaqtinchalik xatoda (429 daqiqalik / 5xx) bitta model uchun faqat 1 marta qayta urinamiz.</summary>
+    public static readonly TimeSpan DefaultBackoff = TimeSpan.FromMilliseconds(1500);
 
-    // Har bir model uchun faqat 1 marta qayta urinamiz (2s kutib), keyin
-    // darhol keyingi modelga o'tamiz — chunki 503 javobining o'zi ham
-    // 6-24 soniya davom etishi mumkin, shuning uchun bitta modelda uzoq
-    // "tiqilib qolish" o'rniga tezroq zaxira modelga o'tish umumiy kutish
-    // vaqtini qisqartiradi.
-    private static readonly int[] RetryDelaysMs = { 2000 };
+    /// <summary>Gemini "retryDelay" (yoki Retry-After) shundan uzoq bo'lsa — shu modelda kutmaymiz.</summary>
+    public static readonly TimeSpan MaxHonoredDelay = TimeSpan.FromSeconds(5);
 
-    public GeminiClient(IConfiguration config, IHttpClientFactory httpClientFactory)
+    /// <summary>Loglar va xato matnlarida model javobi/xato tanasidan ko'pi bilan shuncha belgi.</summary>
+    public const int MaxLoggedChars = 500;
+
+    public GeminiClient(IConfiguration config, IHttpClientFactory httpClientFactory, AiGuard guard, ILogger<GeminiClient> logger)
     {
         _apiKey = config["Gemini:ApiKey"]
             ?? throw new InvalidOperationException(
                 "Gemini:ApiKey sozlanmagan. Lokalda: dotnet user-secrets set \"Gemini:ApiKey\" \"...\". " +
                 "Railway/Render'da: Gemini__ApiKey environment variable (qo'sh pastki chiziq).");
+        _guard = guard;
+        _logger = logger;
         _http = httpClientFactory.CreateClient();
         // Butun testni (masalan PDF'dan Reading) o'girish 100 soniyadan uzoq
         // davom etishi mumkin; odatiy so'rovlar baribir ancha tez tugaydi.
@@ -50,16 +51,19 @@ public class GeminiClient
     }
 
     /// <summary>
-    /// Har bir model uchun: birinchi urinish + RetryDelaysMs.Length ta qayta
-    /// urinish (orada kutib). Faqat 503 (ServiceUnavailable) va 429
-    /// (TooManyRequests) qayta urinishga arziydi — boshqa xatolar (masalan
-    /// 400 — noto'g'ri so'rov, 401/403 — noto'g'ri API kalit) qayta
-    /// urinsangiz ham o'zgarmaydi, shuning uchun darhol otiladi.
-    /// Model retrylari tugab, hali ham band bo'lsa — ModelsInPriorityOrder
-    /// dagi keyingi (yengilroq) modelga o'tamiz.
+    /// So'rovni yuboradi: har bir model uchun birinchi urinish + vaqtinchalik
+    /// xatoda (429 daqiqalik yoki 5xx) ko'pi bilan 1 ta qayta urinish (qisqa
+    /// kutib; Gemini aytgan kutish 5 soniyadan oshsa — kutmasdan keyingi modelga).
+    /// Kunlik kvota tugagan bo'lsa — qayta urinilmaydi, model bir muddat
+    /// o'tkazib yuboriladi. Boshqa xatolar (400, 401/403...) darhol otiladi.
+    /// Har bir HTTP urinish umumiy byudjetdan (AiGuard) joy oladi; byudjet
+    /// tugagan yoki saqlagich ochiq bo'lsa — AiBusyException (503).
     /// </summary>
     public async Task<HttpResponseMessage> SendWithFallbackAsync(object requestBody, CancellationToken ct = default)
     {
+        // Saqlagich ochiq bo'lsa — hatto JSON'ni ham yozib o'tirmaymiz.
+        if (_guard.IsOpen(out var openUntil)) throw new AiBusyException(openUntil, "breaker");
+
         // JSON bir marta yoziladi (audio base64 bilan bir necha MB bo'lishi mumkin) —
         // har bir urinish/model uchun qayta serializatsiya qilinmaydi.
         var body = JsonSerializer.SerializeToUtf8Bytes(requestBody, requestBody.GetType(), RequestJson);
@@ -88,55 +92,110 @@ public class GeminiClient
     {
         string? lastErrorBody = null;
         System.Net.HttpStatusCode? lastStatus = null;
+        GeminiErrorInfo? lastFailure = null;
+        DateTime? earliestUnblock = null;
+        GeminiApiException? notFound = null;
 
-        foreach (var model in ModelsInPriorityOrder)
+        foreach (var model in Models)
         {
+            if (_guard.IsModelBlocked(model, out var until))
+            {
+                earliestUnblock = earliestUnblock is null || until < earliestUnblock ? until : earliestUnblock;
+                continue;
+            }
+
             // Kalit URL'da emas, sarlavhada: URL'lar loglarga (HttpClient,
             // proksi) yozilib qolishi mumkin.
             var url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent";
 
-            for (var attempt = 0; attempt <= RetryDelaysMs.Length; attempt++)
+            for (var attempt = 0; attempt < 2; attempt++)
             {
+                await _guard.AcquireAsync(ct);
+
                 using var request = new HttpRequestMessage(HttpMethod.Post, url);
                 request.Headers.Add("x-goog-api-key", _apiKey);
                 request.Content = new ByteArrayContent(body);
                 request.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
 
-                var response = await _http.SendAsync(request, ct);
+                HttpResponseMessage response;
+                try
+                {
+                    response = await _http.SendAsync(request, ct);
+                }
+                catch (Exception ex) when (ex is HttpRequestException || (ex is TaskCanceledException && !ct.IsCancellationRequested))
+                {
+                    // Tarmoq xatosi yoki 3 daqiqalik timeout — Gemini "band" deb hisoblanadi.
+                    _guard.ReportFailure();
+                    throw;
+                }
 
                 if (response.IsSuccessStatusCode)
                 {
+                    _guard.ReportSuccess();
                     return response;
                 }
 
+                TimeSpan? retryAfter;
+                string errorBody;
                 using (response)
                 {
-                    lastErrorBody = Truncate(await response.Content.ReadAsStringAsync(ct), 2000);
+                    // Turini aniqlash uchun to'liq tana kerak (quotaId, retryDelay oxirida keladi); logga — qisqasi.
+                    errorBody = Truncate(await response.Content.ReadAsStringAsync(ct), 16_000);
                     lastStatus = response.StatusCode;
+                    retryAfter = response.Headers.RetryAfter?.Delta;
                 }
-                var isRetryable = lastStatus == System.Net.HttpStatusCode.ServiceUnavailable
-                    || lastStatus == System.Net.HttpStatusCode.TooManyRequests;
+                lastErrorBody = Truncate(errorBody, MaxLoggedChars);
+                var failure = GeminiErrors.Classify(lastStatus.Value, errorBody, retryAfter);
+                lastFailure = failure;
 
-                if (!isRetryable)
+                if (failure.Kind == GeminiFailure.Fatal)
                 {
-                    throw new InvalidOperationException($"Gemini API xatosi ({lastStatus}): {lastErrorBody}");
+                    var fatal = new GeminiApiException(lastStatus.Value, $"Gemini API xatosi ({lastStatus}, {model}): {lastErrorBody}");
+                    // Model nomi eskirgan (404) — keyingi modelni sinaymiz; boshqa xatolar so'rovning o'zida.
+                    if (lastStatus != System.Net.HttpStatusCode.NotFound) throw fatal;
+                    _logger.LogError("Gemini modeli topilmadi: {Model} — Ai:Models sozlamasini tekshiring", model);
+                    notFound = fatal;
+                    break;
                 }
 
-                if (attempt < RetryDelaysMs.Length)
+                _guard.ReportFailure();
+                _logger.LogWarning("Gemini {Model}: {Status} ({Kind})", model, (int)lastStatus.Value, failure.Kind);
+
+                if (failure.Kind == GeminiFailure.QuotaExhausted)
                 {
-                    await Task.Delay(RetryDelaysMs[attempt], ct);
+                    // Kunlik kvota — qayta urinish befoyda: model bir muddat chetga.
+                    _guard.MarkModelExhausted(model, failure.RetryAfter);
+                    _guard.IsModelBlocked(model, out var blockedUntil);
+                    earliestUnblock = earliestUnblock is null || blockedUntil < earliestUnblock ? blockedUntil : earliestUnblock;
+                    break;
                 }
+
+                // Vaqtinchalik xato: bir marta, qisqa kutib. Uzoq kutish so'ralsa — keyingi modelga.
+                var delay = failure.RetryAfter ?? DefaultBackoff;
+                if (attempt > 0 || delay > MaxHonoredDelay) break;
+                await Task.Delay(delay, ct);
             }
-            // Shu model uchun barcha urinishlar tugadi (baribir 503/429) —
-            // tashqi foreach ModelsInPriorityOrder'dagi keyingi modelga o'tadi.
+            // Shu model uchun urinishlar tugadi — keyingi (zaxira) modelga o'tamiz.
         }
 
-        throw new InvalidOperationException(
-            $"Barcha modellar band ({lastStatus}), {ModelsInPriorityOrder.Length} ta model, "
-            + $"har biri {RetryDelaysMs.Length + 1} marta sinaldi. Oxirgi xato: {lastErrorBody}");
+        // Hamma model band yoki kvotasi tugagan — bu "keyinroq urinib ko'ring" holati (503).
+        var now = _guard.UtcNow;
+        if (lastFailure?.Kind == GeminiFailure.Fatal && notFound is not null) throw notFound;
+        if (lastFailure is null || lastFailure.Kind == GeminiFailure.QuotaExhausted)
+        {
+            throw new AiBusyException(earliestUnblock ?? now.AddMinutes(1), "quota");
+        }
+        var wait = lastFailure.RetryAfter is { } h && h > TimeSpan.FromSeconds(10) ? h : TimeSpan.FromSeconds(30);
+        throw new AiBusyException(now + (wait > TimeSpan.FromMinutes(10) ? TimeSpan.FromMinutes(10) : wait),
+            $"overloaded {(int?)lastStatus}");
     }
 
-    private static string Truncate(string s, int max) => s.Length <= max ? s : s[..max] + "…";
+    /// <summary>Log va xato matnlari uchun: ko'pi bilan max belgi.</summary>
+    public static string Truncate(string? s, int max = MaxLoggedChars)
+    {
+        s ??= "";
+        return s.Length <= max ? s : s[..max] + "…";
+    }
 
     /// <summary>
     /// Gemini JSON'ini C# record'larga aylantirishning QAT'IY sozlamalari.
@@ -169,12 +228,12 @@ public class GeminiClient
         try
         {
             return JsonSerializer.Deserialize<T>(text, StrictJson)
-                ?? throw new InvalidOperationException($"Gemini bo'sh JSON qaytardi: {text}");
+                ?? throw new InvalidOperationException($"Gemini bo'sh JSON qaytardi: {Truncate(text)}");
         }
         catch (JsonException ex)
         {
             throw new InvalidOperationException(
-                $"Gemini javobi kutilgan shaklda emas ({ex.Message}). Javob: {text}", ex);
+                $"Gemini javobi kutilgan shaklda emas ({Truncate(ex.Message, 200)}). Javob: {Truncate(text)}", ex);
         }
     }
 

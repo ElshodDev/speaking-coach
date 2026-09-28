@@ -12,6 +12,8 @@ public record ResetRequest(string Email, string Code, string NewPassword);
 public record GoogleRequest(string Credential);
 public record TelegramAuthRequest(string InitData);
 public record DemoRequest(int TzOffsetMinutes = -300);
+public record TelegramLoginStartRequest(string? Lang = null);
+public record TelegramPollRequest(string? PollToken);
 
 public static class AuthEndpoints
 {
@@ -24,7 +26,7 @@ public static class AuthEndpoints
         {
             if (result.Error is not null)
             {
-                return Results.Json(request.Error(result.Error, result.ErrorArgs ?? []), statusCode: result.Status);
+                return Results.Json(request.ErrorWithCode(result.Error, result.ErrorArgs ?? []), statusCode: result.Status);
             }
             if (result.NeedsVerification)
             {
@@ -50,11 +52,11 @@ public static class AuthEndpoints
 
         app.MapPost("/api/auth/resend", async (EmailRequest body, HttpRequest request, AuthService auth) =>
             ToResult(request, await auth.ResendAsync(body.Email, EmailCodePurpose.Verify, Texts.LangOf(request))))
-            .RequireRateLimiting("auth");
+            .RequireRateLimiting("code");
 
         app.MapPost("/api/auth/forgot", async (EmailRequest body, HttpRequest request, AuthService auth) =>
             ToResult(request, await auth.ForgotPasswordAsync(body.Email, Texts.LangOf(request))))
-            .RequireRateLimiting("auth");
+            .RequireRateLimiting("code");
 
         app.MapPost("/api/auth/reset", async (ResetRequest body, HttpRequest request, AuthService auth) =>
             ToResult(request, await auth.ResetPasswordAsync(body.Email, body.Code, body.NewPassword)))
@@ -64,7 +66,7 @@ public static class AuthEndpoints
         // Hisob bo'lmasa, birinchi kodda ochiladi — alohida "ro'yxatdan o'tish" qadami yo'q.
         app.MapPost("/api/auth/code/request", async (EmailRequest body, HttpRequest request, AuthService auth) =>
             ToResult(request, await auth.RequestLoginCodeAsync(body.Email, Texts.LangOf(request))))
-            .RequireRateLimiting("auth");
+            .RequireRateLimiting("code");
 
         app.MapPost("/api/auth/code/verify", async (VerifyRequest body, HttpRequest request, AuthService auth) =>
             ToResult(request, await auth.LoginWithCodeAsync(body.Email, body.Code)))
@@ -84,23 +86,57 @@ public static class AuthEndpoints
         }).RequireRateLimiting("auth");
 
         // Telegram Mini App: sayt Telegram ichida ochilganda imzolangan initData
-        // yuboriladi; bot bilan ulangan hisob bo'lsa — parolsiz kiriladi.
-        app.MapPost("/api/auth/telegram", async (TelegramAuthRequest body, HttpRequest request, TelegramOptions options, AppDbContext db, AuthService auth) =>
+        // yuboriladi. Bot bilan ulangan hisob bo'lsa — o'sha hisobga kiriladi;
+        // bo'lmasa — Telegram orqali yangi hisob ochiladi (parolsiz).
+        app.MapPost("/api/auth/telegram", async (TelegramAuthRequest body, HttpRequest request, TelegramOptions options, AuthService auth) =>
         {
-            var tgUserId = TelegramWebAppAuth.Validate(body.InitData, options.Token, DateTime.UtcNow);
-            if (tgUserId is null) return Results.Json(request.Error("auth.telegram_invalid"), statusCode: StatusCodes.Status401Unauthorized);
-            // Shaxsiy chatda chat ID = foydalanuvchi ID.
-            var account = await db.TelegramAccounts.FirstOrDefaultAsync(a => a.ChatId == tgUserId.Value);
-            var result = account is null ? null : await auth.SignInLinkedAsync(account.UserId);
-            return result is null
-                ? Results.Json(request.Error("auth.telegram_not_linked"), statusCode: StatusCodes.Status404NotFound)
-                : ToResult(request, result);
+            var tg = TelegramWebAppAuth.ValidateUser(body.InitData, options.Token, DateTime.UtcNow);
+            if (tg is null) return Results.Json(request.ErrorWithCode("auth.telegram_invalid"), statusCode: StatusCodes.Status401Unauthorized);
+            var (result, isNew) = await auth.SignInTelegramAsync(tg, SignupMethods.TelegramApp, Texts.LangOf(request));
+            return Results.Ok(new { token = result.Token, email = result.Email, isNew });
         }).RequireRateLimiting("auth");
+
+        // Saytdan Telegram orqali kirish (Telegram/Instagram ichidagi brauzerda
+        // Google ishlamaydi, email esa o'chiq yoki limiti tugagan bo'lishi mumkin):
+        // 1) start → bot havolasi + 2 xonali kod; 2) botda shu raqam bosiladi;
+        // 3) sayt poll qilib sessiyani oladi.
+        app.MapPost("/api/auth/telegram/start", async (TelegramLoginStartRequest? body, HttpRequest request, TelegramOptions options, AuthService auth) =>
+        {
+            if (!options.Enabled)
+            {
+                return Results.Json(request.ErrorWithCode("tglogin.disabled"), statusCode: StatusCodes.Status503ServiceUnavailable);
+            }
+            var lang = Texts.Langs.Contains(body?.Lang) ? body!.Lang! : Texts.LangOf(request);
+            var start = await auth.StartTelegramLoginAsync(lang, request.HttpContext.Connection.RemoteIpAddress?.ToString());
+            return Results.Ok(new
+            {
+                loginId = start.LoginId.ToString("N"),
+                pollToken = start.PollToken,
+                botUrl = $"https://t.me/{options.BotUsername}?start={TelegramLoginRules.StartPrefix}{start.Nonce}",
+                code = start.Code,
+                expiresInSeconds = start.ExpiresInSeconds,
+            });
+        }).RequireRateLimiting("auth");
+
+        app.MapPost("/api/auth/telegram/poll", async (TelegramPollRequest body, AuthService auth) =>
+        {
+            var r = await auth.PollTelegramLoginAsync(body.PollToken);
+            return r.Token is null
+                ? Results.Ok(new { status = r.Status })
+                : Results.Ok(new { status = r.Status, token = r.Token, email = r.Email, isNew = r.IsNew });
+        }).RequireRateLimiting("poll");
 
         // Frontend "Parolni unutdim" va "Google bilan kirish" tugmalarini faqat
         // tegishli xizmat sozlangan bo'lsa ko'rsatadi. Client ID maxfiy emas.
-        app.MapGet("/api/auth/config", (AuthService auth, IGoogleSignIn google, IConfiguration config) =>
-            Results.Ok(new { emailVerification = auth.VerificationRequired, googleClientId = google.ClientId, demo = DemoAccount.Enabled(config) }));
+        app.MapGet("/api/auth/config", (AuthService auth, IGoogleSignIn google, IConfiguration config, TelegramOptions telegram) =>
+            Results.Ok(new
+            {
+                emailVerification = auth.VerificationRequired,
+                googleClientId = google.ClientId,
+                demo = DemoAccount.Enabled(config),
+                telegramLogin = telegram.Enabled,
+                botUsername = telegram.Enabled ? telegram.BotUsername : null,
+            }));
 
         // Demo: ro'yxatdan o'tmasdan, tayyor ma'lumotli vaqtinchalik hisob (24 soat).
         app.MapPost("/api/auth/demo", async (DemoRequest? body, HttpRequest request, AuthService auth, DemoGate gate, IConfiguration config) =>
@@ -127,9 +163,8 @@ public static class AuthEndpoints
         app.MapGet("/api/auth/me", async (HttpRequest request, AuthService auth) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
-            return user is null
-                ? Results.Json(request.Error("auth.not_logged_in"), statusCode: StatusCodes.Status401Unauthorized)
-                : Results.Ok(new { email = user.Email });
+            if (user is null) return Results.Json(request.Error("auth.not_logged_in"), statusCode: StatusCodes.Status401Unauthorized);
+            return Results.Ok(new { email = user.Email, signIn = await auth.GetSignInMethodsAsync(user) });
         });
     }
 }

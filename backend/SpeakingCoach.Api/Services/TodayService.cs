@@ -22,9 +22,13 @@ public class TodayService(AppDbContext db, ReviewService reviews)
         var stats = await reviews.GetStatsAsync(user.Id, offset);
 
         var since = now.AddDays(-60);
+        // PromptData faqat mock uchun kerak (qaysi imtihon/bo'lim) — o'qish matnlari va
+        // insholar bazadan tortilmaydi (CASE SQL'ning o'zida).
         var rows = await db.Activities
             .Where(a => a.UserId == user.Id && a.CreatedAtUtc >= since)
-            .Select(a => new { a.Type, a.CreatedAtUtc, a.PromptData })
+            .OrderByDescending(a => a.CreatedAtUtc)
+            .Take(1000)
+            .Select(a => new { a.Type, a.CreatedAtUtc, PromptData = a.Type == ActivityType.MockExam ? a.PromptData : "{}" })
             .ToListAsync();
         var practiced = rows
             .Where(r => ReviewScheduler.ToLocalDate(r.CreatedAtUtc, offset) == today)

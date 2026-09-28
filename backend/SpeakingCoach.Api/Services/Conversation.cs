@@ -39,7 +39,8 @@ public record TalkSummary(
 /// <summary>
 /// AI suhbatdosh: foydalanuvchi ovoz (yoki matn) bilan javob beradi, Gemini bitta
 /// so'rovda uni eshitadi, rolda davom etadi va bitta eng muhim xatoni qisqa
-/// tuzatadi. Suhbat cheklangan (MaxTurns) — kvota bitta mashq sifatida hisoblanadi.
+/// tuzatadi. Suhbat cheklangan (MaxTurns): boshlash — bitta mashq (kunlik limit),
+/// har bir navbat — alohida kunlik navbatlar limitidan (Ai:TalkTurnsPerDay).
 /// Prompt va natijani tekshirish — toza funksiyalar (unit testlangan).
 /// </summary>
 public static class Talk
@@ -140,6 +141,33 @@ public static class Talk
     }
 
     public static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+}
+
+/// <summary>
+/// Bitta suhbatda bir vaqtda faqat bitta navbat (yoki yakun): ikkita parallel
+/// so'rov bir xil holatni o'qib, bir-birining yozuvini o'chirib yubormasin va
+/// ikki barobar Gemini so'rovi ketmasin. Ikkinchisi darhol 409 oladi.
+/// Bitta server — xotiradagi qulf yetarli.
+/// </summary>
+public class TalkLocks
+{
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, byte> _busy = new();
+
+    /// <summary>null — suhbat hozir band (boshqa navbat bajarilmoqda).</summary>
+    public IDisposable? TryEnter(Guid talkId) =>
+        _busy.TryAdd(talkId, 0) ? new Lease(this, talkId) : null;
+
+    public bool IsBusy(Guid talkId) => _busy.ContainsKey(talkId);
+
+    private sealed class Lease(TalkLocks owner, Guid id) : IDisposable
+    {
+        private int _disposed;
+
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) == 0) owner._busy.TryRemove(id, out _);
+        }
+    }
 }
 
 public interface ITalkAi

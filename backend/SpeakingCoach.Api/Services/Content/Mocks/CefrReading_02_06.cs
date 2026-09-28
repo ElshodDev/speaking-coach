@@ -794,7 +794,7 @@ public static partial class BuiltInCefr
                 Item(2, "If you lose your ___, please tell a member of staff immediately.", "\"You need your library card to enter the building and to borrow books.\"", "card"),
                 Item(3, "Reading Hall 2 is a ___ hall: no talking of any kind is allowed there.", "\"Phones must be switched to silent in all reading halls.\"", "silent"),
                 Item(4, "All other drinks and all food must be consumed in the ___.", "\"Calls may only be made in the corridor or in the café on the ground floor.\"", "café", "cafe"),
-                Item(5, "If you need to keep a ___ for longer than two weeks, you can renew it online.", "\"Readers may borrow up to five books at a time for two weeks.\"", "book"),
+                Item(5, "If you need to keep a ___ for longer than two weeks, you can renew it online.", "\"Readers may borrow up to five books at a time for two weeks.\" (\"item\" is also accepted: \"every item that is returned late\".)", "book", "item"),
                 Item(6, "Leave them on the trolleys at the end of each row, and our ___ will return them to the correct place.", "\"Please tell a member of staff immediately.\"", "staff"),
             ]),
         ]);

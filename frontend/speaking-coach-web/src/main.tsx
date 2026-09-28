@@ -6,6 +6,7 @@ import { installChunkReload } from './ErrorBoundary';
 // Inter (o'zgaruvchan shrift): lotin, kirill va o'zbekcha ʻ belgilari; brauzer faqat kerakli qismini yuklaydi.
 import '@fontsource-variable/inter';
 import './styles.css';
+import './auth.css';
 
 installChunkReload();
 

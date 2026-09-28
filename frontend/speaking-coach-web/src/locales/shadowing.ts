@@ -11,7 +11,7 @@ export const shadowingMsg = defineMessages(
     all: 'Hammasi',
     level: 'Daraja',
     series: { youtube: '🎬 Jonli ingliz tili', character: '🐾 Kundalik suhbatlar' } as Record<string, string>,
-    seriesHint: { youtube: 'YouTube’dagi haqiqiy nutq', character: 'Qahramonlar gapiradi — boshlash uchun qulay' } as Record<string, string>,
+    seriesHint: { youtube: 'YouTubeʼdagi haqiqiy nutq', character: 'Qahramonlar gapiradi — boshlash uchun qulay' } as Record<string, string>,
     episode: (n: number) => `#${n}`,
     lines: (n: number) => `${n} ta gap`,
     minutes: (s: number) => (s < 60 ? `${s} soniya` : `${Math.round(s / 60)} daqiqa`),
@@ -57,7 +57,7 @@ export const shadowingMsg = defineMessages(
     micDenied: 'Mikrofonga ruxsat berilmadi. Brauzer sozlamalarida mikrofonga ruxsat bering.',
     noMic: 'Bu brauzerda ovoz yozib boʻlmaydi — tinglab, ovoz chiqarib takrorlang.',
     videoError: 'Videoni yuklab boʻlmadi. Internetni tekshiring yoki boshqa darsni tanlang.',
-    videoNote: 'Video YouTube’dan (youtube-nocookie.com) koʻrsatiladi.',
+    videoNote: 'Video YouTubeʼdan (youtube-nocookie.com) koʻrsatiladi.',
     // Yakun
     progress: (done: number, total: number) => `${done}/${total} gap takrorlandi`,
     avg: (n: number) => `Oʻrtacha AI bahosi: ${n}`,

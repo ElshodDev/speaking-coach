@@ -27,11 +27,23 @@ export function parseLaunch(hash: string, search: string): TelegramLaunch | null
 export const telegramLaunch: TelegramLaunch | null =
   typeof window === 'undefined' ? null : parseLaunch(window.location.hash, window.location.search);
 
-interface TelegramWebApp {
+interface TelegramBackButton {
+  show(): void;
+  hide(): void;
+  onClick(cb: () => void): void;
+  offClick(cb: () => void): void;
+}
+
+export interface TelegramWebApp {
   ready(): void;
   expand(): void;
   openTelegramLink?(url: string): void;
   openLink?(url: string): void;
+  /** Bot API 6.1+ */
+  BackButton?: TelegramBackButton;
+  /** Bot API 7.7+: pastga surish Mini App'ni yopmasin (matn aylantirishda tasodifan yopilardi). */
+  disableVerticalSwipes?(): void;
+  isVersionAtLeast?(version: string): boolean;
 }
 
 declare global {
@@ -77,12 +89,8 @@ export function readyTelegram(timeoutMs = 4000): Promise<void> {
   }
   return new Promise((resolve) => {
     const done = () => {
-      try {
-        window.Telegram?.WebApp?.ready();
-        window.Telegram?.WebApp?.expand();
-      } catch {
-        /* eski Telegram versiyasi */
-      }
+      const wa = window.Telegram?.WebApp;
+      if (wa) applyTelegramUi(wa);
       resolve();
     };
     if (window.Telegram?.WebApp) return done();
@@ -94,6 +102,60 @@ export function readyTelegram(timeoutMs = 4000): Promise<void> {
     document.head.appendChild(s);
     window.setTimeout(resolve, timeoutMs);
   });
+}
+
+/** Versiya tekshiruvi: eski skriptda isVersionAtLeast bo'lmasa — funksiya borligiga ishonamiz. */
+function supports(wa: TelegramWebApp, version: string): boolean {
+  try {
+    return wa.isVersionAtLeast ? wa.isVersionAtLeast(version) : true;
+  } catch {
+    return false;
+  }
+}
+
+/** ready(), to'liq ekran va (7.7+) pastga surib yopishni o'chirish. */
+export function applyTelegramUi(wa: TelegramWebApp) {
+  try {
+    wa.ready();
+    wa.expand();
+  } catch {
+    /* eski Telegram versiyasi */
+  }
+  try {
+    if (wa.disableVerticalSwipes && supports(wa, '7.7')) wa.disableVerticalSwipes();
+  } catch {
+    /* qo'llab-quvvatlanmaydi — muhim emas */
+  }
+}
+
+// Hozir BackButton'ga bog'langan ishlovchi — yangisini bog'lashdan oldin
+// eskisi albatta offClick qilinadi (aks holda bosishda ikki marta "orqaga").
+let backHandler: (() => void) | null = null;
+
+/**
+ * Telegram'ning tepadagi "‹ Orqaga" tugmasi: showBack — ko'rsatish/yashirish,
+ * onBack — bosilganda. Har marshrut o'zgarishida chaqiriladi (App.tsx).
+ */
+export function syncTgBack(showBack: boolean, onBack: () => void, wa: TelegramWebApp | undefined = typeof window === 'undefined' ? undefined : window.Telegram?.WebApp,
+) {
+  const bb = wa?.BackButton;
+  if (!wa || !bb || !supports(wa, '6.1')) return;
+  try {
+    if (backHandler) {
+      bb.offClick(backHandler);
+      backHandler = null;
+    }
+    if (showBack) {
+      const handler = () => onBack();
+      bb.onClick(handler);
+      backHandler = handler;
+      bb.show();
+    } else {
+      bb.hide();
+    }
+  } catch {
+    /* eski Telegram versiyasi */
+  }
 }
 
 /** Mini App parametrlarini manzildan olib tashlaydi va kerakli bo'limga o'tadi. */

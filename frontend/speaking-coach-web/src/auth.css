@@ -1,0 +1,79 @@
+/* Kirish: Telegram orqali kirish, kirish usullari, admin fikrlar ro'yxati. */
+
+.btn-telegram {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #229ed9;
+  color: #fff;
+  border: 1px solid #1c8cc2;
+  text-decoration: none;
+}
+.btn-telegram:hover:not(:disabled) {
+  background: #1c8cc2;
+}
+.btn-telegram:focus-visible {
+  outline: 3px solid color-mix(in srgb, #229ed9 45%, transparent);
+  outline-offset: 2px;
+}
+
+.tg-login.card.soft {
+  margin: 0;
+  padding: 14px 16px;
+}
+.tg-steps {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 4px;
+}
+.tg-code {
+  align-self: center;
+  text-align: center;
+  min-width: 4ch;
+  font-size: 2.6rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+  padding: 4px 22px;
+  border-radius: var(--radius-sm);
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+}
+
+.signin-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.signin-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.badge.success {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.feedback-item {
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+.feedback-item:first-of-type {
+  border-top: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .tg-code {
+    background: color-mix(in srgb, var(--primary) 22%, transparent);
+    color: #c7d7ff;
+  }
+}

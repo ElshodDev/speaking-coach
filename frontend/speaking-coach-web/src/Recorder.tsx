@@ -2,8 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { STABILITY_RUNS, StabilityTable, computeStats, runSequentially, type DimensionStats } from './Stability';
 import { apiJson, getLevel, loadHistory as fetchHistory, type HistoryItem } from './api';
 import { cardsMessage } from './cards';
+import { useIsAdmin } from './adminFlag';
 import { useT } from './i18n';
 import { speakingMsg } from './locales/speaking';
+import { currentMicEnv, micPrecheck, micProblemOf, type MicProblem } from './micErrors';
+import { MicProblemNote } from './MicProblem';
 import { audioExt } from './shadowLogic';
 import { initialTopic, TopicPicker, type PickedTopic } from './TopicPicker';
 import { stabilityMsg } from './locales/stability';
@@ -12,6 +15,15 @@ import { Corrections, Feedback, GuestNote, HistoryList, ScoreBar, type Correctio
 // Mavzular endi ilovaning tayyor bankida (content/topics.ts) — TopicPicker orqali.
 
 type Status = 'idle' | 'recording' | 'uploading' | 'done' | 'error';
+
+/**
+ * Yozuvning eng uzun davomiyligi (soniya). Server 10 MB gacha qabul qiladi
+ * (3 daqiqa webm/opus ≈ 1 MB), lekin uzun nutqni AI sifatsiz baholaydi va
+ * so'rov sekinlashadi — 3 daqiqada avtomatik to'xtaymiz.
+ */
+export const DEFAULT_MAX_SECONDS = 180;
+/** Oxirgi shuncha soniyada "qolgan vaqt" ko'rsatiladi. */
+const WARN_SECONDS = 30;
 
 interface EvaluationResult {
   transcript: string;
@@ -34,13 +46,18 @@ export function Recorder({
   loggedIn,
   onCardsAdded,
   onLogin,
+  maxSeconds = DEFAULT_MAX_SECONDS,
 }: {
   loggedIn: boolean;
   onCardsAdded?: () => void;
   onLogin?: () => void;
+  /** Yozuv shuncha soniyada avtomatik to'xtaydi (standart — 3 daqiqa). */
+  maxSeconds?: number;
 }) {
   const t = useT(speakingMsg);
   const ts = useT(stabilityMsg);
+  const isAdmin = useIsAdmin();
+  const [micProblem, setMicProblem] = useState<MicProblem | null>(null);
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
   const [picked, setPicked] = useState<PickedTopic>(() => initialTopic('speaking', getLevel()));
@@ -97,6 +114,15 @@ export function Recorder({
   }
 
   async function startRecording() {
+    setMicProblem(null);
+    const env = currentMicEnv();
+    const pre = micPrecheck(env);
+    if (pre) {
+      setStatus('error');
+      setMessage('');
+      setMicProblem(pre);
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       if (!aliveRef.current) {
@@ -128,16 +154,35 @@ export function Recorder({
       setResult(null);
       setStability(null);
       setTestProgress('');
-    } catch {
+    } catch (err) {
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
       setStatus('error');
-      setMessage(t.micDenied);
+      setMessage('');
+      setMicProblem(micProblemOf(err, env));
     }
   }
 
-  function stopRecording() {
-    mediaRecorderRef.current?.stop();
+  function stopRecording(auto = false) {
+    const rec = mediaRecorderRef.current;
+    if (!rec || rec.state === 'inactive') return;
+    rec.stop();
+    setStatus('uploading');
+    setMessage(auto ? `${t.autoStopped(maxSeconds)} ${t.evaluating}` : t.evaluating);
+  }
+
+  // Eng uzun davomiylikka yetdi — o'zimiz to'xtatib, baholashga yuboramiz.
+  useEffect(() => {
+    if (status === 'recording' && seconds >= maxSeconds) stopRecording(true);
+    // stopRecording har chizishda yangi — faqat soniya/holat o'zgarganda tekshiramiz.
+  }, [seconds, status, maxSeconds]);
+
+  // Yuborish muvaffaqiyatsiz bo'lsa (internet uzildi, AI band) — o'sha yozuvni qayta yuborish.
+  function retryUpload() {
+    if (!lastBlob) return;
     setStatus('uploading');
     setMessage(t.evaluating);
+    uploadAudio(lastBlob);
   }
 
   // Bitta yuborish — oddiy oqim (save=true) ham, barqarorlik testi
@@ -200,6 +245,9 @@ export function Recorder({
 
   const isRecording = status === 'recording';
   const isBusy = status === 'uploading' || isTesting;
+  const left = Math.max(0, maxSeconds - seconds);
+  const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  const uploadFailed = status === 'error' && !micProblem && !!lastBlob && !result;
 
   return (
     <div className="practice-split">
@@ -209,25 +257,37 @@ export function Recorder({
 
         <button
           className={`btn block ${isRecording ? 'btn-danger' : 'btn-primary'}`}
-          onClick={isRecording ? stopRecording : startRecording}
+          onClick={isRecording ? () => stopRecording() : startRecording}
           disabled={isBusy}
           style={{ minHeight: 56, fontSize: '1.05rem' }}
         >
           {isRecording ? (
             <>
-              <span className="recording-dot" /> {t.stop} · {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}
+              <span className="recording-dot" /> {t.stop} · {clock(seconds)}
             </>
           ) : (
             t.start
           )}
         </button>
-        <p className="muted tiny" style={{ marginTop: 8, marginBottom: 0 }}>
-          {t.tip}
-        </p>
+        {isRecording && left <= WARN_SECONDS ? (
+          <p className="small" style={{ marginTop: 8, marginBottom: 0, color: 'var(--warning)', fontWeight: 600 }} data-testid="rec-left">
+            {t.timeLeft(left)}
+          </p>
+        ) : (
+          <p className="muted tiny" style={{ marginTop: 8, marginBottom: 0 }}>
+            {t.tip} {t.maxLength(Math.round(maxSeconds / 60))}
+          </p>
+        )}
+        {micProblem && <MicProblemNote problem={micProblem} onRetry={startRecording} />}
         {message && (
           <p className={status === 'error' ? 'error small' : 'small'} style={{ marginTop: 10, marginBottom: 0 }}>
             {message}
           </p>
+        )}
+        {uploadFailed && (
+          <button className="btn btn-outline btn-sm" style={{ marginTop: 8 }} onClick={retryUpload}>
+            {t.retry}
+          </button>
         )}
       </div>
 
@@ -245,15 +305,18 @@ export function Recorder({
           <Corrections items={result.evaluation.topCorrections} />
           <Feedback encouragement={result.evaluation.encouragement} nextFocus={result.evaluation.nextFocus} />
 
-          <div style={{ borderTop: '1px solid var(--border)', marginTop: 14, paddingTop: 12 }}>
-            <button className="btn btn-outline" onClick={runStabilityTest} disabled={isBusy || !lastBlob}>
-              {ts.checkButton(STABILITY_RUNS)}
-            </button>
-            <p className="muted tiny" style={{ marginTop: 6, marginBottom: 0 }}>
-              {t.stabilityHint(STABILITY_RUNS)}
-            </p>
-            {testProgress && <p className="small">{testProgress}</p>}
-          </div>
+          {/* Barqarorlik testi — ichki tekshiruv vositasi (5× AI so'rovi), faqat admin uchun. */}
+          {isAdmin && (
+            <div style={{ borderTop: '1px solid var(--border)', marginTop: 14, paddingTop: 12 }}>
+              <button className="btn btn-outline" onClick={runStabilityTest} disabled={isBusy || !lastBlob}>
+                {ts.checkButton(STABILITY_RUNS)}
+              </button>
+              <p className="muted tiny" style={{ marginTop: 6, marginBottom: 0 }}>
+                {t.stabilityHint(STABILITY_RUNS)}
+              </p>
+              {testProgress && <p className="small">{testProgress}</p>}
+            </div>
+          )}
         </div>
       )}
 

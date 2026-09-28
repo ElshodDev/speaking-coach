@@ -23,6 +23,8 @@ public class AppDbContext : DbContext
     public DbSet<Group> Groups => Set<Group>();
     public DbSet<GroupMember> GroupMembers => Set<GroupMember>();
     public DbSet<Assignment> Assignments => Set<Assignment>();
+    public DbSet<TelegramLogin> TelegramLogins => Set<TelegramLogin>();
+    public DbSet<Feedback> Feedbacks => Set<Feedback>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -61,6 +63,7 @@ public class AppDbContext : DbContext
             entity.HasIndex(u => u.Email).IsUnique();
             entity.Property(u => u.Goal).HasMaxLength(16);
             entity.Property(u => u.TargetScore).HasMaxLength(8);
+            entity.Property(u => u.SignupMethod).HasMaxLength(16);
         });
 
         modelBuilder.Entity<TelegramAccount>(entity =>
@@ -73,6 +76,34 @@ public class AppDbContext : DbContext
             entity.Property(t => t.BotState).HasMaxLength(100);
             entity.HasIndex(t => t.UserId).IsUnique();
             entity.HasOne<User>().WithMany().HasForeignKey(t => t.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TelegramLogin>(entity =>
+        {
+            entity.Property(t => t.NonceHash).HasMaxLength(64);
+            entity.Property(t => t.PollTokenHash).HasMaxLength(64);
+            entity.Property(t => t.Code).HasMaxLength(2);
+            entity.Property(t => t.TgUsername).HasMaxLength(64);
+            entity.Property(t => t.TgFirstName).HasMaxLength(64);
+            entity.Property(t => t.Ip).HasMaxLength(64);
+            entity.Property(t => t.Lang).HasMaxLength(5);
+            entity.HasIndex(t => t.NonceHash).IsUnique();
+            entity.HasIndex(t => t.PollTokenHash).IsUnique();
+            // Eski urinishlarni tozalash: WHERE CreatedAtUtc < ?.
+            entity.HasIndex(t => t.CreatedAtUtc);
+            entity.HasOne<User>().WithMany().HasForeignKey(t => t.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Feedback>(entity =>
+        {
+            entity.Property(f => f.Kind).HasMaxLength(16);
+            entity.Property(f => f.Message).HasMaxLength(2000);
+            entity.Property(f => f.Page).HasMaxLength(200);
+            entity.Property(f => f.Lang).HasMaxLength(5);
+            entity.Property(f => f.Ip).HasMaxLength(64);
+            entity.HasIndex(f => f.CreatedAtUtc);
+            // Hisob o'chirilsa — uning fikrlari ham (maxfiylik va'dasi: hamma ma'lumot o'chadi).
+            entity.HasOne<User>().WithMany().HasForeignKey(f => f.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<TelegramChat>(entity =>

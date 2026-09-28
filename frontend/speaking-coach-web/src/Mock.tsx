@@ -4,6 +4,7 @@ import { localeOf, useLang, useT } from './i18n';
 import { mockMsg } from './locales/mock';
 import { mockObjMsg } from './locales/mockObjective';
 import { cefrMsg } from './locales/cefr';
+import { legalMsg } from './locales/legal';
 import { choiceLabel, type ClientGroup } from './ObjectiveQuestions';
 import { bandKey, cefrLevel, formatBand } from './mockLogic';
 import { Corrections, PageHeader, type CorrectionItem } from './ui';
@@ -352,6 +353,7 @@ export function MockHub({ loggedIn, go, onLogin }: { loggedIn: boolean; go: (rou
 
   const to = useT(mockObjMsg);
   const tc = useT(cefrMsg);
+  const tl = useT(legalMsg);
   const blocked = !loggedIn || status?.remaining === 0;
 
   return (
@@ -373,6 +375,9 @@ export function MockHub({ loggedIn, go, onLogin }: { loggedIn: boolean; go: (rou
       )}
 
       <p className="muted small" style={{ margin: '8px 0 0' }}>{to.sourceNote}</p>
+      <p className="muted tiny" style={{ margin: '6px 0 0' }} data-testid="mock-disclaimer">
+        {tl.disclaimer} {tl.cefrNote}
+      </p>
       <div className="card-grid">
       <div className="card stack" style={{ borderColor: 'var(--primary)' }}>
         <h3 style={{ margin: 0 }}>{to.fullTitle}</h3>

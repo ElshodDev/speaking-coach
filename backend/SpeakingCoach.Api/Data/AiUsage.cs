@@ -1,7 +1,7 @@
 namespace SpeakingCoach.Api.Data;
 
 /// <summary>
-/// Bir foydalanuvchining bir kundagi (UTC) sun'iy intellekt so'rovlari soni.
+/// Bir foydalanuvchining bir kundagi (Toshkent vaqti, UTC+5) sun'iy intellekt so'rovlari soni.
 /// Gemini'ning bepul kvotasi hamma uchun umumiy — bitta odam uni tugatib
 /// qo'ymasligi uchun har kimga kunlik limit. Kalit: (UserId, Day).
 /// </summary>

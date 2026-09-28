@@ -30,6 +30,8 @@ public abstract record BotCallback
     /// <summary>Saytdagi bo'limlar qo'llanmasi (hamma uchun).</summary>
     public sealed record ShowGuide : BotCallback;
     public sealed record Unlink : BotCallback;
+    /// <summary>Saytga Telegram orqali kirish: bosilgan raqam (null — "Bu men emasman").</summary>
+    public sealed record WebLogin(Guid LoginId, int? Number) : BotCallback;
 
     // ---- Test qo'shish (/add) ----
     public sealed record AuthorExam(string Exam) : BotCallback;
@@ -61,6 +63,7 @@ public static partial class BotLogic
         BotCallback.PickLang l => $"lang:{l.Lang}",
         BotCallback.ShowGuide => "guide",
         BotCallback.Unlink => "unlink",
+        BotCallback.WebLogin w => $"tl:{w.LoginId:N}:{(w.Number is int n ? n.ToString(System.Globalization.CultureInfo.InvariantCulture) : "x")}",
         BotCallback.AuthorExam e => $"au:e:{e.Exam}",
         BotCallback.AuthorKindPick k => $"au:k:{k.Key}",
         BotCallback.AuthorModePick m => $"au:m:{m.Key}:{(m.Generate ? "g" : "s")}",
@@ -88,6 +91,9 @@ public static partial class BotLogic
             ["lang", var l] when Texts.Langs.Contains(l) => new BotCallback.PickLang(l),
             ["guide"] => new BotCallback.ShowGuide(),
             ["unlink"] => new BotCallback.Unlink(),
+            ["tl", var id, "x"] when Guid.TryParseExact(id, "N", out var g) => new BotCallback.WebLogin(g, null),
+            ["tl", var id, var n] when Guid.TryParseExact(id, "N", out var g) && n.Length == 2 && n.All(char.IsAsciiDigit)
+                && int.Parse(n, System.Globalization.CultureInfo.InvariantCulture) is var num && SpeakingCoach.Api.Services.TelegramLoginRules.IsValidCode(num) => new BotCallback.WebLogin(g, num),
             ["au", "e", var e] when BotAuthoring.Exams.Contains(e) => new BotCallback.AuthorExam(e),
             ["au", "k", var e, var m, var v] when Mock.AuthorKind.Parse($"{e}:{m}:{v}") is { } k => new BotCallback.AuthorKindPick(k.Key),
             ["au", "m", var e, var m, var v, "g" or "s"] when Mock.AuthorKind.Parse($"{e}:{m}:{v}") is { } k => new BotCallback.AuthorModePick(k.Key, p[5] == "g"),
@@ -182,6 +188,12 @@ public static partial class BotLogic
         Convert.ToBase64String(RandomNumberGenerator.GetBytes(24)).Replace('+', '-').Replace('/', '_').TrimEnd('=');
 
     public static string HashToken(string token) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
+
+    // ---- Statistika ----
+
+    /// <summary>TelegramAccount.LastSeenAtUtc ni yangilash kerakmi (soatiga ko'pi bilan bir marta — bazaga ortiqcha yozmaslik uchun).</summary>
+    public static bool ShouldTouchLastSeen(DateTime? lastSeenUtc, DateTime nowUtc) =>
+        lastSeenUtc is null || nowUtc - lastSeenUtc.Value >= TimeSpan.FromHours(1);
 
     // ---- Eslatma ----
 

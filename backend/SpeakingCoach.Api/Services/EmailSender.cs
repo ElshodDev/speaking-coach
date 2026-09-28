@@ -38,6 +38,8 @@ public class BrevoEmailSender : IEmailSender
     public BrevoEmailSender(IConfiguration config, IHttpClientFactory httpClientFactory, IHostEnvironment env, ILogger<BrevoEmailSender> logger)
     {
         _http = httpClientFactory.CreateClient();
+        // Brevo osilib qolsa — so'rov (va rate limit joyi) uzoq band bo'lmasin; xato "email.send_failed" bo'ladi.
+        _http.Timeout = TimeSpan.FromSeconds(10);
         _logger = logger;
         _apiKey = config["Email:BrevoApiKey"];
         _fromAddress = config["Email:FromAddress"];

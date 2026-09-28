@@ -44,7 +44,12 @@ public record AdminOverview(
     int TotalCards,
     List<DailyPoint> Daily,
     List<RecentUser> RecentUsers,
-    int NewUsersToday = 0);
+    int NewUsersToday = 0,
+    // Qanday ochilgan: email, code, google, telegram, telegram_app, other (demo hisobga kirmaydi).
+    Dictionary<string, int>? Signups = null,
+    int TelegramLinked = 0,
+    int TelegramActive7d = 0,
+    int Feedback7d = 0);
 
 /// <summary>
 /// Admin panel uchun umumiy statistika. Faqat SONLAR va niqoblangan
@@ -60,6 +65,24 @@ public class AdminService
         _db = db;
     }
 
+    /// <summary>
+    /// Hisob qanday ochilgan. Bu maydondan oldingi hisoblar (null) uchun
+    /// taxmin: paroli bor — "email", demo — "demo", qolgani — "other"
+    /// (Google yoki kod bilan kirish — bazada Google bog'lanishi saqlanmaydi).
+    /// </summary>
+    public static string InferSignup(string? signupMethod, string email, bool hasPassword) =>
+        !string.IsNullOrEmpty(signupMethod) ? signupMethod
+        : DemoAccount.IsDemo(email) ? SignupMethods.Demo
+        : email.EndsWith("@" + TelegramLoginRules.SyntheticDomain, StringComparison.OrdinalIgnoreCase) ? SignupMethods.Telegram
+        : hasPassword ? SignupMethods.Email
+        : SignupMethods.Other;
+
+    /// <summary>"email 12 · google 5 · telegram 3" (ko'pidan kamiga).</summary>
+    public static string SignupSummary(IReadOnlyDictionary<string, int>? signups) =>
+        signups is null || signups.Count == 0
+            ? "—"
+            : string.Join(" · ", signups.OrderByDescending(kv => kv.Value).ThenBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => $"{kv.Key} {kv.Value}"));
+
     public async Task<AdminOverview> GetOverviewAsync(int tzOffsetMinutes)
     {
         var now = DateTime.UtcNow;
@@ -69,7 +92,9 @@ public class AdminService
         var today = Local(now);
 
         // Demo hisoblar statistikaga kirmaydi (ular 24 soatlik va haqiqiy foydalanuvchi emas).
-        var allUsers = await _db.Users.Select(u => new { u.Id, u.Email, u.CreatedAtUtc, u.Level, u.EmailVerifiedAtUtc }).ToListAsync();
+        var allUsers = await _db.Users
+            .Select(u => new { u.Id, u.Email, u.CreatedAtUtc, u.Level, u.EmailVerifiedAtUtc, u.SignupMethod, HasPassword = u.PasswordHash != "" })
+            .ToListAsync();
         var demoIds = allUsers.Where(u => DemoAccount.IsDemo(u.Email)).Select(u => u.Id).ToHashSet();
         var users = allUsers.Where(u => !demoIds.Contains(u.Id)).ToList();
 
@@ -129,9 +154,17 @@ public class AdminService
             return new RecentUser(ProgressCalculator.MaskEmail(u.Email), u.CreatedAtUtc, last, a?.Count ?? 0, u.Level, u.EmailVerifiedAtUtc is not null);
         }).ToList();
 
+        var signups = users
+            .GroupBy(u => InferSignup(u.SignupMethod, u.Email, u.HasPassword))
+            .ToDictionary(g => g.Key, g => g.Count());
+        var tgAccounts = await _db.TelegramAccounts.Select(t => new { t.UserId, t.LastSeenAtUtc }).ToListAsync();
+        tgAccounts = tgAccounts.Where(t => !demoIds.Contains(t.UserId)).ToList();
+        var feedback7d = await _db.Feedbacks.CountAsync(f => f.CreatedAtUtc >= since7);
+
         return new AdminOverview(
             users.Count,
-            users.Count(u => u.EmailVerifiedAtUtc is not null),
+            // Faqat haqiqiy emaillar (Telegram orqali ochilganlar "tasdiqlangan", lekin emaili yo'q).
+            users.Count(u => u.EmailVerifiedAtUtc is not null && !AuthService.IsSyntheticEmail(u.Email)),
             users.Count(u => u.CreatedAtUtc >= since7),
             ActiveSince(t => Local(t) == today),
             ActiveSince(t => t >= since7),
@@ -143,6 +176,10 @@ public class AdminService
             await _db.ReviewCards.CountAsync(_ => true),
             daily,
             recentUsers,
-            users.Count(u => Local(u.CreatedAtUtc) == today));
+            users.Count(u => Local(u.CreatedAtUtc) == today),
+            signups,
+            tgAccounts.Count,
+            tgAccounts.Count(t => t.LastSeenAtUtc >= since7),
+            feedback7d);
     }
 }

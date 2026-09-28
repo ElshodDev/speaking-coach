@@ -1,6 +1,6 @@
 import type { Level, TopicWord, VocabTopic } from './types';
 
-// Qoʻshimcha mavzuli lugʻat: har mavzuda 16 ta soʻz (A2–C1), oʻzbekcha va ruscha tarjima, ta’rif va misol.
+// Qoʻshimcha mavzuli lugʻat: har mavzuda 16 ta soʻz (A2–C1), oʻzbekcha va ruscha tarjima, taʼrif va misol.
 const w = (
   word: string,
   pos: string,
@@ -44,7 +44,7 @@ export const VOCAB_TOPICS_MORE: VocabTopic[] = [
       w("freezing", "adjective", "qahraton, juda sovuq", "ледяной, очень холодный", "extremely cold", "It's freezing outside, so wear a warm hat.", 'A2'),
       w("thunderstorm", "noun", "momaqaldiroqli jala", "гроза", "a storm with thunder, lightning and heavy rain", "The thunderstorm woke me up in the middle of the night.", 'A2'),
       w("degree", "noun", "daraja (harorat)", "градус", "a unit for measuring temperature", "It was forty degrees in Tashkent yesterday.", 'A2'),
-      w("forecast", "noun", "ob-havo ma’lumoti, prognoz", "прогноз погоды", "a report that says what the weather will probably be like", "The forecast says it will rain tomorrow.", 'B1'),
+      w("forecast", "noun", "ob-havo maʼlumoti, prognoz", "прогноз погоды", "a report that says what the weather will probably be like", "The forecast says it will rain tomorrow.", 'B1'),
       w("humid", "adjective", "nam, dim", "влажный", "(of air or weather) hot and wet in an uncomfortable way", "Summers in Tashkent are hot but not very humid.", 'B1'),
       w("heatwave", "noun", "jazirama kunlar, issiq toʻlqini", "аномальная жара", "a period of unusually hot weather", "During the heatwave, people stayed indoors in the afternoon.", 'B1'),
       w("pour", "verb", "chelaklab quymoq (yomgʻir)", "лить как из ведра", "to rain very heavily", "It poured all day, so we cancelled the picnic.", 'B1'),
@@ -73,11 +73,11 @@ export const VOCAB_TOPICS_MORE: VocabTopic[] = [
       w("reliable", "adjective", "ishonchli", "надёжный", "someone you can trust to do what they promise", "Ask Aziz to help — he is very reliable.", 'B1'),
       w("stubborn", "adjective", "oʻjar, qaysar", "упрямый", "not willing to change your ideas or behaviour", "My little brother is too stubborn to say sorry.", 'B1'),
       w("frustrated", "adjective", "asabi buzilgan, jahli chiqqan", "раздражённый, досадующий", "annoyed because you cannot do or change something", "I get frustrated when the internet is slow.", 'B2'),
-      w("sensitive", "adjective", "ta’sirchan, nozik tabiatli", "чувствительный, ранимый", "easily upset by what other people say or do", "Be careful what you say — he's very sensitive.", 'B2'),
+      w("sensitive", "adjective", "taʼsirchan, nozik tabiatli", "чувствительный, ранимый", "easily upset by what other people say or do", "Be careful what you say — he's very sensitive.", 'B2'),
       w("outgoing", "adjective", "kirishimli, ochiqkoʻngil", "общительный", "friendly and happy to meet new people", "My sister is outgoing and makes friends easily.", 'B2'),
       w("overwhelmed", "adjective", "(ish yoki hislar) bosib ketgan, eplay olmay qolgan", "подавленный, перегруженный", "feeling that something is too much for you to deal with", "I felt overwhelmed by all the work before the holidays.", 'B2'),
       w("resilient", "adjective", "bardoshli, qiyinchilikdan tez oʻziga keladigan", "стойкий, жизнестойкий", "able to recover quickly after something difficult", "Children are often more resilient than adults think.", 'C1'),
-      w("conscientious", "adjective", "vijdonan ishlaydigan, mas’uliyatli", "добросовестный", "careful to do your work well and completely", "She is a conscientious student who never misses a deadline.", 'C1'),
+      w("conscientious", "adjective", "vijdonan ishlaydigan, masʼuliyatli", "добросовестный", "careful to do your work well and completely", "She is a conscientious student who never misses a deadline.", 'C1'),
       w("ambivalent", "adjective", "ikkilanib turgan, qarama-qarshi hislardagi", "испытывающий противоречивые чувства", "having mixed feelings about something", "I feel ambivalent about moving abroad for work.", 'C1'),
     ],
   },
@@ -130,7 +130,7 @@ export const VOCAB_TOPICS_MORE: VocabTopic[] = [
   {
     id: 'arts-music',
     emoji: '🎨',
-    title: { uz: "San’at va musiqa", ru: "Искусство и музыка", en: "Art and music" },
+    title: { uz: "Sanʼat va musiqa", ru: "Искусство и музыка", en: "Art and music" },
     words: [
       w("painting", "noun", "rasm (boʻyoqda chizilgan), kartina", "картина", "a picture made with paint", "There is a beautiful painting of Samarkand in our living room.", 'A2'),
       w("instrument", "noun", "cholgʻu asbobi", "музыкальный инструмент", "an object such as a piano or guitar that you use to make music", "Do you play a musical instrument?", 'A2'),
@@ -145,7 +145,7 @@ export const VOCAB_TOPICS_MORE: VocabTopic[] = [
       w("melody", "noun", "kuy, ohang", "мелодия", "a group of musical notes that make a tune", "The melody of this song is very easy to remember.", 'B2'),
       w("abstract", "adjective", "abstrakt, mavhum", "абстрактный", "(of art) using shapes and colours instead of showing real people or things", "I don't really understand abstract paintings.", 'B2'),
       w("rehearsal", "noun", "repetitsiya, tayyorgarlik mashqi", "репетиция", "a practice before a public performance", "The orchestra has a rehearsal every Thursday evening.", 'B2'),
-      w("acclaimed", "adjective", "e’tirof etilgan, yuqori baholangan", "признанный, получивший признание", "praised by many people, especially critics", "The film was acclaimed by critics around the world.", 'C1'),
+      w("acclaimed", "adjective", "eʼtirof etilgan, yuqori baholangan", "признанный, получивший признание", "praised by many people, especially critics", "The film was acclaimed by critics around the world.", 'C1'),
       w("aesthetic", "adjective", "estetik, goʻzallikka oid", "эстетический", "connected with beauty and art", "The old building has great aesthetic value.", 'C1'),
       w("improvise", "verb", "badiha qilmoq, improvizatsiya qilmoq", "импровизировать", "to play or perform something without preparing it first", "Jazz musicians often improvise during a performance.", 'C1'),
     ],

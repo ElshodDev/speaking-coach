@@ -47,7 +47,7 @@ public static class ReviewEndpoints
             return card is null
                 ? Results.NotFound(request.Error("review.card_not_found"))
                 : Results.Ok(new { card.Id, card.DueAtUtc, card.IntervalDays });
-        });
+        }).RequireRateLimiting(RateLimits.WritePolicy);
 
         app.MapPost("/api/review/cards", async (ManualCardRequest body, HttpRequest request, AuthService auth, ReviewService reviews, AppDbContext db) =>
         {
@@ -75,7 +75,7 @@ public static class ReviewEndpoints
             }
             await db.SaveChangesAsync();
             return Results.Ok(new { added });
-        });
+        }).RequireRateLimiting(RateLimits.WritePolicy);
 
         app.MapDelete("/api/review/cards/{id:guid}", async (Guid id, HttpRequest request, AuthService auth, ReviewService reviews) =>
         {
@@ -84,7 +84,7 @@ public static class ReviewEndpoints
             return await reviews.DeleteAsync(userId.Value, id)
                 ? Results.Ok()
                 : Results.NotFound(request.Error("review.card_not_found"));
-        });
+        }).RequireRateLimiting(RateLimits.WritePolicy);
 
         app.MapGet("/api/review/stats", async (HttpRequest request, AuthService auth, ReviewService reviews, int tzOffsetMinutes = 0) =>
         {

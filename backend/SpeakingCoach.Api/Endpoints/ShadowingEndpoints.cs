@@ -16,6 +16,7 @@ public record ShadowingDoneRequest(int Lines, int? Average);
 public static class ShadowingEndpoints
 {
     public const long MaxAudioBytes = 2 * 1024 * 1024;
+    private const long MaxBodyBytes = MaxAudioBytes + Uploads.FormOverheadBytes;
 
     public static string? LessonIdOf(string promptJson)
     {
@@ -57,7 +58,12 @@ public static class ShadowingEndpoints
             ILogger<Program> logger) =>
         {
             if (!request.HasFormContentType) return Results.BadRequest(request.Error("shadowing.bad_audio"));
-            var form = await request.ReadFormAsync();
+            if (Uploads.DeclaredTooLarge(request, MaxBodyBytes))
+                return Results.Json(request.Error("shadowing.bad_audio"), statusCode: StatusCodes.Status413PayloadTooLarge);
+            var ct = request.HttpContext.RequestAborted;
+            // "Katta so'rov" joyi — audio xotiraga o'qilishidan oldin.
+            using var slot = await Uploads.EnterIfLargeAsync(request, ct);
+            var form = await request.ReadFormAsync(ct);
             var audio = form.Files.GetFile("audio");
             if (audio is null || audio.Length == 0 || audio.Length > MaxAudioBytes) return Results.BadRequest(request.Error("shadowing.bad_audio"));
 
@@ -70,20 +76,19 @@ public static class ShadowingEndpoints
             var limited = await quotas.CheckAsync(request, AiKind.Shadowing);
             if (limited is not null) return limited;
 
-            using var ms = new MemoryStream();
-            await audio.CopyToAsync(ms);
+            var bytes = await Uploads.ReadAsync(audio, ct);
             try
             {
-                var result = await coach.CheckAsync(lesson.Lines[index].Text, ms.ToArray(), audio.ContentType, Texts.LangOf(request), request.HttpContext.RequestAborted);
+                var result = await coach.CheckAsync(lesson.Lines[index].Text, bytes, audio.ContentType, Texts.LangOf(request), ct);
                 await quotas.RecordAsync(request, AiKind.Shadowing);
                 return Results.Ok(result);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException || !request.HttpContext.RequestAborted.IsCancellationRequested)
+            catch (Exception ex) when (AiErrors.Handles(ex, request))
             {
                 logger.LogWarning(ex, "Shadowing tekshiruvi bajarilmadi: {Lesson} #{Line}", lesson.Id, index);
                 return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);
             }
-        }).RequireRateLimiting("ai");
+        }).RequireRateLimiting(RateLimits.AiPolicy).WithBodyLimit(MaxBodyBytes);
 
         // Dars yakunlandi: hisobi bor foydalanuvchiga faoliyat (XP va seriya).
         // Bir dars — kuniga bitta yozuv (qayta-qayta bosib XP yig'ib bo'lmaydi).
@@ -128,6 +133,6 @@ public static class ShadowingEndpoints
             });
             await db.SaveChangesAsync();
             return Results.Ok(new { saved = true });
-        });
+        }).RequireRateLimiting(RateLimits.WritePolicy);
     }
 }

@@ -118,17 +118,33 @@ public static partial class ObjectiveGrading
 
     // ---- Xom ball → band ----
     //
-    // ielts.org ("IELTS scoring in detail") aniq jadval bermaydi — faqat
-    // o'rtacha nuqtalar: Listening va Academic Reading: 16→5, 23→6, 30→7,
-    // 35→8; General Training Reading: 15→4, 23→5, 30→6, 35→7. Shu
-    // nuqtalar orasini chiziqli to'ldiramiz (0→0, 40→9 — shkala chetlari)
-    // va rasmiy .25/.75 qoidasi bilan yarim band'gacha yaxlitlaymiz.
-    // "Aniq raqamlar test versiyasiga qarab biroz farq qiladi" (ielts.org),
-    // shuning uchun natija — TAXMINIY.
+    // TAXMINIY jadvallar. ielts.org ("IELTS scoring in detail") faqat o'rtacha
+    // nuqtalarni beradi: Listening 16→5, 23→6, 30→7, 35→8; Academic Reading
+    // 15→5, 23→6, 30→7, 35→8; General Training Reading 15→4, 23→5, 30→6,
+    // 35→7 — va "aniq raqamlar test versiyasiga qarab biroz farq qiladi".
+    // To'liq oraliqlar — keng tarqalgan ommaviy qo'llanmalardagi (IDP, British
+    // Council tayyorlov materiallari) jadvallar; ular yuqoridagi rasmiy
+    // nuqtalarga mos (masalan Academic 15/40 → 5.0, GT 34–35/40 → 7.0).
+    // Eng past oraliqlar e'lon qilinmagan: 0 dan jadval boshigacha chiziqli.
+    // Jadval nuqtalar ko'rinishida saqlanadi: har oraliqning ikki cheti bir xil
+    // band'ga ega, shuning uchun butun xom ballar aynan jadvaldagi natijani
+    // beradi (40 dan kam savolli testda masshtablangan ball — chetlar orasida).
 
-    public static readonly (int Raw, decimal Band)[] ListeningAnchors = [(0, 0m), (16, 5m), (23, 6m), (30, 7m), (35, 8m), (40, 9m)];
-    public static readonly (int Raw, decimal Band)[] AcademicReadingAnchors = ListeningAnchors;
-    public static readonly (int Raw, decimal Band)[] GeneralReadingAnchors = [(0, 0m), (15, 4m), (23, 5m), (30, 6m), (35, 7m), (40, 9m)];
+    public static readonly (int Raw, decimal Band)[] ListeningAnchors = Steps(
+        (4, 5, 2.5m), (6, 7, 3m), (8, 9, 3.5m), (10, 12, 4m), (13, 15, 4.5m), (16, 17, 5m), (18, 22, 5.5m),
+        (23, 25, 6m), (26, 29, 6.5m), (30, 31, 7m), (32, 34, 7.5m), (35, 36, 8m), (37, 38, 8.5m), (39, 40, 9m));
+
+    public static readonly (int Raw, decimal Band)[] AcademicReadingAnchors = Steps(
+        (4, 5, 2.5m), (6, 7, 3m), (8, 9, 3.5m), (10, 12, 4m), (13, 14, 4.5m), (15, 18, 5m), (19, 22, 5.5m),
+        (23, 26, 6m), (27, 29, 6.5m), (30, 32, 7m), (33, 34, 7.5m), (35, 36, 8m), (37, 38, 8.5m), (39, 40, 9m));
+
+    public static readonly (int Raw, decimal Band)[] GeneralReadingAnchors = Steps(
+        (6, 8, 2.5m), (9, 11, 3m), (12, 14, 3.5m), (15, 18, 4m), (19, 22, 4.5m), (23, 26, 5m), (27, 29, 5.5m),
+        (30, 31, 6m), (32, 33, 6.5m), (34, 35, 7m), (36, 36, 7.5m), (37, 38, 8m), (39, 39, 8.5m), (40, 40, 9m));
+
+    /// <summary>Oraliqlar (min–max xom ball → band) → BandFor uchun nuqtalar, 0→0 dan boshlab.</summary>
+    private static (int Raw, decimal Band)[] Steps(params (int Lo, int Hi, decimal Band)[] ranges) =>
+        [(0, 0m), .. ranges.SelectMany(r => r.Lo == r.Hi ? new[] { (r.Lo, r.Band) } : new[] { (r.Lo, r.Band), (r.Hi, r.Band) })];
 
     public static decimal BandFor(int raw, (int Raw, decimal Band)[] anchors, int total = 40)
     {

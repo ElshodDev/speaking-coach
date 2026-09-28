@@ -1,6 +1,8 @@
 import { defineMessages } from '../i18n';
 
-type ActivityType = 'Speaking' | 'Writing' | 'Reading' | 'Listening';
+type ActivityType = 'Speaking' | 'Writing' | 'Reading' | 'Listening' | 'MockExam' | 'Shadowing' | 'Conversation' | 'Dictation';
+type Method = 'email' | 'code' | 'google' | 'telegram' | 'telegram_app' | 'other';
+type FeedbackKind = 'bug' | 'idea' | 'content' | 'ai' | 'other';
 
 /** Admin.tsx — umumiy statistika paneli. */
 export const adminMsg = defineMessages(
@@ -41,7 +43,33 @@ export const adminMsg = defineMessages(
       Writing: '✍️ Yozish',
       Reading: '📖 Oʻqish',
       Listening: '🎧 Tinglash',
+      MockExam: '📝 Mock imtihon',
+      Shadowing: '🗣 Shadowing',
+      Conversation: '💬 AI suhbat',
+      Dictation: '✏️ Diktant',
     } as Record<ActivityType, string>,
+    signupMethodsTitle: 'Qanday roʻyxatdan oʻtishgan',
+    methods: {
+      email: 'Email + parol',
+      code: 'Email kodi',
+      google: 'Google',
+      telegram: 'Telegram (sayt)',
+      telegram_app: 'Telegram Mini App',
+      other: 'Boshqa / eski',
+    } as Record<Method, string>,
+    telegramLinked: 'Telegram ulangan',
+    telegramActive7d: (n: number) => `${n} tasi 7 kunda botda faol`,
+    feedback7d: 'Fikrlar (7 kun)',
+    feedbackTitle: 'Foydalanuvchi fikrlari',
+    feedbackEmpty: 'Hozircha fikr yoʻq.',
+    feedbackGuest: 'mehmon',
+    feedbackKinds: {
+      bug: '🐞 Xato',
+      idea: '💡 Taklif',
+      content: '📚 Kontent xatosi',
+      ai: '🤖 AI javobi',
+      other: '💬 Boshqa',
+    } as Record<FeedbackKind, string>,
   },
   {
     ru: {
@@ -81,6 +109,32 @@ export const adminMsg = defineMessages(
         Writing: '✍️ Письмо',
         Reading: '📖 Чтение',
         Listening: '🎧 Аудирование',
+        MockExam: '📝 Пробный экзамен',
+        Shadowing: '🗣 Шэдоуинг',
+        Conversation: '💬 Разговор с ИИ',
+        Dictation: '✏️ Диктант',
+      },
+      signupMethodsTitle: 'Как регистрировались',
+      methods: {
+        email: 'Email + пароль',
+        code: 'Код по email',
+        google: 'Google',
+        telegram: 'Telegram (сайт)',
+        telegram_app: 'Telegram Mini App',
+        other: 'Другое / старые',
+      },
+      telegramLinked: 'Telegram подключён',
+      telegramActive7d: (n: number) => `${n} активны в боте за 7 дней`,
+      feedback7d: 'Отзывы (7 дней)',
+      feedbackTitle: 'Отзывы пользователей',
+      feedbackEmpty: 'Пока отзывов нет.',
+      feedbackGuest: 'гость',
+      feedbackKinds: {
+        bug: '🐞 Ошибка',
+        idea: '💡 Идея',
+        content: '📚 Ошибка в материале',
+        ai: '🤖 Ответ ИИ',
+        other: '💬 Другое',
       },
     },
     en: {
@@ -120,6 +174,32 @@ export const adminMsg = defineMessages(
         Writing: '✍️ Writing',
         Reading: '📖 Reading',
         Listening: '🎧 Listening',
+        MockExam: '📝 Mock exam',
+        Shadowing: '🗣 Shadowing',
+        Conversation: '💬 AI conversation',
+        Dictation: '✏️ Dictation',
+      },
+      signupMethodsTitle: 'How people signed up',
+      methods: {
+        email: 'Email + password',
+        code: 'Email code',
+        google: 'Google',
+        telegram: 'Telegram (website)',
+        telegram_app: 'Telegram Mini App',
+        other: 'Other / older',
+      },
+      telegramLinked: 'Telegram linked',
+      telegramActive7d: (n: number) => `${n} active in the bot in 7 days`,
+      feedback7d: 'Feedback (7 days)',
+      feedbackTitle: 'User feedback',
+      feedbackEmpty: 'No feedback yet.',
+      feedbackGuest: 'guest',
+      feedbackKinds: {
+        bug: '🐞 Bug',
+        idea: '💡 Idea',
+        content: '📚 Content error',
+        ai: '🤖 AI answer',
+        other: '💬 Other',
       },
     },
   },

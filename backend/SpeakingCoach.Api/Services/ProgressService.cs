@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using SpeakingCoach.Api.Data;
 
 namespace SpeakingCoach.Api.Services;
@@ -31,11 +32,17 @@ public record LeaderboardDto(DateTime WeekStartUtc, List<LeaderboardEntry> Entri
 public class ProgressService
 {
     private const int TrendLength = 20;
-    private readonly AppDbContext _db;
 
-    public ProgressService(AppDbContext db)
+    /// <summary>Haftalik reyting hamma uchun bir xil — shuncha vaqt xotirada saqlanadi (har so'rovda qayta hisoblanmaydi).</summary>
+    public static readonly TimeSpan LeaderboardCacheFor = TimeSpan.FromSeconds(60);
+
+    private readonly AppDbContext _db;
+    private readonly IMemoryCache _cache;
+
+    public ProgressService(AppDbContext db, IMemoryCache cache)
     {
         _db = db;
+        _cache = cache;
     }
 
     public async Task<ProgressDto> GetProgressAsync(Guid userId, int tzOffsetMinutes)
@@ -131,13 +138,44 @@ public class ProgressService
     {
         var weekStart = ProgressCalculator.WeekStartUtc(DateTime.UtcNow);
 
-        var me = await _db.Users.FirstAsync(u => u.Id == meId);
+        // Umumiy jadval (ishtirokchilar va ularning XP'si) — 60 soniyalik keshdan.
+        var ranked = await _cache.GetOrCreateAsync(("leaderboard", weekStart), entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = LeaderboardCacheFor;
+            return RankParticipantsAsync(weekStart);
+        }) ?? [];
+
+        var me = await _db.Users
+            .Where(u => u.Id == meId)
+            .Select(u => new { u.ShowOnLeaderboard, u.DisplayName })
+            .FirstAsync();
+        var mine = ranked.FirstOrDefault(r => r.UserId == meId);
+        // Ro'yxatda bo'lmasam (yoki kesh eskirgan bo'lsa ham) — o'z XP'm alohida, yangi hisoblanadi.
+        var myXp = mine?.Xp ?? (await WeeklyXpAsync([meId], weekStart)).GetValueOrDefault(meId);
+
+        return new LeaderboardDto(
+            weekStart,
+            ranked.Take(20).Select(r => new LeaderboardEntry(r.Rank, r.Name, r.Xp, r.UserId == meId)).ToList(),
+            myXp,
+            mine?.Rank,
+            me.ShowOnLeaderboard,
+            !string.IsNullOrWhiteSpace(me.DisplayName));
+    }
+
+    private async Task<List<RankedRow>> RankParticipantsAsync(DateTime weekStart)
+    {
         var participants = await _db.Users
             .Where(u => u.ShowOnLeaderboard && u.DisplayName != null)
             .Select(u => new { u.Id, Name = u.DisplayName! })
             .ToListAsync();
-        var ids = participants.Select(p => p.Id).Append(meId).Distinct().ToList();
+        if (participants.Count == 0) return [];
+        var xp = await WeeklyXpAsync(participants.Select(p => p.Id).ToList(), weekStart);
+        return ProgressCalculator.Rank(participants.Select(p => new LeaderboardRow(p.Id, p.Name, xp.GetValueOrDefault(p.Id))));
+    }
 
+    /// <summary>Shu haftadagi XP: faoliyatlar (JSON faqat O'qish/Tinglash uchun) va takrorlashlar soni.</summary>
+    private async Task<Dictionary<Guid, int>> WeeklyXpAsync(List<Guid> ids, DateTime weekStart)
+    {
         var acts = await _db.Activities
             .Where(a => a.UserId != null && ids.Contains(a.UserId.Value) && a.CreatedAtUtc >= weekStart)
             .Select(a => new
@@ -153,21 +191,12 @@ public class ProgressService
             .GroupBy(l => l.UserId)
             .Select(g => new { UserId = g.Key, Count = g.Count() })
             .ToListAsync();
+        var reviewCounts = reviews.ToDictionary(r => r.UserId, r => r.Count);
+        var byUser = acts.ToLookup(a => a.UserId);
 
-        int WeeklyXp(Guid id) => ProgressCalculator.TotalXp(
-            acts.Where(a => a.UserId == id).Select(a => new ActivityFact(a.Type, a.CreatedAtUtc,
+        return ids.Distinct().ToDictionary(id => id, id => ProgressCalculator.TotalXp(
+            byUser[id].Select(a => new ActivityFact(a.Type, a.CreatedAtUtc,
                 a.Response is null ? null : ProgressCalculator.ReadCorrectAnswers(a.Type, a.Response))),
-            reviews.FirstOrDefault(r => r.UserId == id)?.Count ?? 0);
-
-        var ranked = ProgressCalculator.Rank(participants.Select(p => new LeaderboardRow(p.Id, p.Name, WeeklyXp(p.Id))));
-        var mine = ranked.FirstOrDefault(r => r.UserId == meId);
-
-        return new LeaderboardDto(
-            weekStart,
-            ranked.Take(20).Select(r => new LeaderboardEntry(r.Rank, r.Name, r.Xp, r.UserId == meId)).ToList(),
-            WeeklyXp(meId),
-            mine?.Rank,
-            me.ShowOnLeaderboard,
-            !string.IsNullOrWhiteSpace(me.DisplayName));
+            reviewCounts.GetValueOrDefault(id)));
     }
 }

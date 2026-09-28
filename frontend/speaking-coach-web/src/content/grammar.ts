@@ -22,7 +22,7 @@ export const GRAMMAR: GrammarLesson[] = [
     rules: [
       {
         text: t(
-          "Present Simple — odatlar, jadvallar va umumiy haqiqatlar uchun. He, she, it bilan fe’lga -s yoki -es qoʻshiladi, inkor va soʻroq gaplarda esa do/does yordamchi fe’li ishlatiladi.",
+          "Present Simple — odatlar, jadvallar va umumiy haqiqatlar uchun. He, she, it bilan feʼlga -s yoki -es qoʻshiladi, inkor va soʻroq gaplarda esa do/does yordamchi feʼli ishlatiladi.",
           "Present Simple — для привычек, расписаний и фактов. С he, she, it к глаголу добавляется -s или -es, а в отрицаниях и вопросах используется вспомогательный глагол do/does.",
           "Use the present simple for habits, timetables and facts. Add -s or -es after he, she, it, and use do/does in negatives and questions.",
         ),
@@ -30,7 +30,7 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         text: t(
-          "Present Continuous — am/is/are + fe’l-ing. Hozir sodir boʻlayotgan yoki vaqtincha davom etayotgan ishlar uchun ishlatiladi: now, right now, at the moment, these days, this week.",
+          "Present Continuous — am/is/are + feʼl-ing. Hozir sodir boʻlayotgan yoki vaqtincha davom etayotgan ishlar uchun ishlatiladi: now, right now, at the moment, these days, this week.",
           "Present Continuous — am/is/are + глагол с окончанием -ing. Используется для действий, которые происходят сейчас или временно: now, right now, at the moment, these days, this week.",
           "The present continuous is am/is/are + verb-ing. Use it for actions happening now or for temporary situations: now, at the moment, these days, this week.",
         ),
@@ -38,7 +38,7 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         text: t(
-          "Holat fe’llari (know, like, want, need, believe, understand, belong) odatda davomli shaklda ishlatilmaydi, chunki ular harakatni emas, holatni bildiradi.",
+          "Holat feʼllari (know, like, want, need, believe, understand, belong) odatda davomli shaklda ishlatilmaydi, chunki ular harakatni emas, holatni bildiradi.",
           "Глаголы состояния (know, like, want, need, believe, understand, belong) обычно не употребляются в длительной форме: они обозначают состояние, а не действие.",
           "State verbs (know, like, want, need, believe, understand, belong) are not usually used in the continuous form because they describe states, not actions.",
         ),
@@ -50,7 +50,7 @@ export const GRAMMAR: GrammarLesson[] = [
         wrong: "He work in a bank.",
         right: "He works in a bank.",
         note: t(
-          "Uchinchi shaxs birlikda (he, she, it) fe’lga -s qoʻshiladi.",
+          "Uchinchi shaxs birlikda (he, she, it) feʼlga -s qoʻshiladi.",
           "В третьем лице единственного числа (he, she, it) к глаголу добавляется -s.",
           "With he, she and it, the verb needs -s.",
         ),
@@ -59,7 +59,7 @@ export const GRAMMAR: GrammarLesson[] = [
         wrong: "I am agree with you.",
         right: "I agree with you.",
         note: t(
-          "Agree — fe’l, shuning uchun oldidan am qoʻyilmaydi. «Roziman» soʻzini aynan tarjima qilmang.",
+          "Agree — feʼl, shuning uchun oldidan am qoʻyilmaydi. «Roziman» soʻzini aynan tarjima qilmang.",
           "Agree — это глагол, поэтому am перед ним не нужен. Не переводите «я согласен» дословно.",
           "Agree is a verb, so it doesn't need am in front of it.",
         ),
@@ -68,7 +68,7 @@ export const GRAMMAR: GrammarLesson[] = [
         wrong: "I am understanding you now.",
         right: "I understand you now.",
         note: t(
-          "Understand — holat fe’li, u odatda -ing shaklida ishlatilmaydi.",
+          "Understand — holat feʼli, u odatda -ing shaklida ishlatilmaydi.",
           "Understand — глагол состояния, в длительной форме он обычно не используется.",
           "Understand is a state verb, so we don't normally use it with -ing.",
         ),
@@ -77,7 +77,7 @@ export const GRAMMAR: GrammarLesson[] = [
         wrong: "What you are doing?",
         right: "What are you doing?",
         note: t(
-          "Soʻroq gapda yordamchi fe’l (am/is/are) egadan oldin keladi.",
+          "Soʻroq gapda yordamchi feʼl (am/is/are) egadan oldin keladi.",
           "В вопросе вспомогательный глагол (am/is/are) стоит перед подлежащим.",
           "In questions, the auxiliary (am/is/are) comes before the subject.",
         ),
@@ -86,10 +86,10 @@ export const GRAMMAR: GrammarLesson[] = [
     quiz: [
       {
         prompt: "My father ___ tea every morning.",
-        options: ["drinks", "is drinking", "drink"],
-        answer: 0,
+        options: ["is drinking", "drink", "drinks"],
+        answer: 2,
         why: t(
-          "Every morning — odat, demak Present Simple; he bilan fe’lga -s qoʻshiladi.",
+          "Every morning — odat, demak Present Simple; he bilan feʼlga -s qoʻshiladi.",
           "Every morning — привычка, значит Present Simple; с he добавляется -s.",
           "Every morning shows a habit, so we use the present simple with -s.",
         ),
@@ -106,18 +106,18 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "I ___ what you mean.",
-        options: ["am understanding", "understands", "understand"],
-        answer: 2,
+        options: ["am understanding", "understand", "understands"],
+        answer: 1,
         why: t(
-          "Understand — holat fe’li; I bilan -s ham qoʻshilmaydi.",
+          "Understand — holat feʼli; I bilan -s ham qoʻshilmaydi.",
           "Understand — глагол состояния, а с I окончание -s не нужно.",
           "Understand is a state verb, and there is no -s after I.",
         ),
       },
       {
         prompt: "___ your sister speak French?",
-        options: ["Is", "Does", "Do"],
-        answer: 1,
+        options: ["Is", "Do", "Does"],
+        answer: 2,
         why: t(
           "Your sister — uchinchi shaxs birlik, shuning uchun soʻroqda Does ishlatiladi.",
           "Your sister — третье лицо единственного числа, поэтому в вопросе нужен Does.",
@@ -136,10 +136,10 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "The train ___ at 7:15 tomorrow morning.",
-        options: ["is leave", "leaves", "leaving"],
-        answer: 1,
+        options: ["leaves", "is leave", "leaving"],
+        answer: 0,
         why: t(
-          "Jadval boʻyicha boʻladigan ishlar (poyezd, dars, film) uchun kelasi zamon ma’nosida ham Present Simple ishlatiladi.",
+          "Jadval boʻyicha boʻladigan ishlar (poyezd, dars, film) uchun kelasi zamon maʼnosida ham Present Simple ishlatiladi.",
           "Для расписаний (поезда, уроки, сеансы) Present Simple используется даже о будущем.",
           "We use the present simple for timetables, even when we talk about the future.",
         ),
@@ -150,7 +150,7 @@ export const GRAMMAR: GrammarLesson[] = [
     id: 'a2-past-simple',
     level: 'A2',
     title: t(
-      "Oʻtgan oddiy zamon: toʻgʻri va notoʻgʻri fe’llar",
+      "Oʻtgan oddiy zamon: toʻgʻri va notoʻgʻri feʼllar",
       "Прошедшее простое время: правильные и неправильные глаголы",
       "Past simple: regular and irregular verbs",
     ),
@@ -162,7 +162,7 @@ export const GRAMMAR: GrammarLesson[] = [
     rules: [
       {
         text: t(
-          "Toʻgʻri fe’llarga -ed qoʻshiladi. Imloga e’tibor bering: live → lived, stop → stopped, study → studied.",
+          "Toʻgʻri feʼllarga -ed qoʻshiladi. Imloga eʼtibor bering: live → lived, stop → stopped, study → studied.",
           "К правильным глаголам добавляется -ed. Обратите внимание на правописание: live → lived, stop → stopped, study → studied.",
           "Regular verbs add -ed. Watch the spelling: live → lived, stop → stopped, study → studied.",
         ),
@@ -170,7 +170,7 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         text: t(
-          "Notoʻgʻri fe’llarning oʻtgan zamon shakli yodlab olinadi: go → went, buy → bought, see → saw, have → had, make → made.",
+          "Notoʻgʻri feʼllarning oʻtgan zamon shakli yodlab olinadi: go → went, buy → bought, see → saw, have → had, make → made.",
           "Формы прошедшего времени неправильных глаголов нужно запомнить: go → went, buy → bought, see → saw, have → had, make → made.",
           "Irregular verbs have special past forms that you need to learn: go → went, buy → bought, see → saw, have → had, make → made.",
         ),
@@ -178,7 +178,7 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         text: t(
-          "Inkor va soʻroq gaplarda did / didn’t ishlatiladi, asosiy fe’l esa boshlangʻich shaklga qaytadi.",
+          "Inkor va soʻroq gaplarda did / didn’t ishlatiladi, asosiy feʼl esa boshlangʻich shaklga qaytadi.",
           "В отрицаниях и вопросах используется did / didn't, а основной глагол возвращается в начальную форму.",
           "In negatives and questions use did / didn't, and the main verb goes back to its base form.",
         ),
@@ -186,7 +186,7 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         text: t(
-          "«…oldin» ma’nosida ago ishlatiladi va u vaqt ifodasidan keyin turadi: three years ago.",
+          "«…oldin» maʼnosida ago ishlatiladi va u vaqt ifodasidan keyin turadi: three years ago.",
           "«…назад» переводится как ago, и оно стоит после обозначения времени: three years ago.",
           "To say how long before now, use ago after the time period: three years ago.",
         ),
@@ -198,7 +198,7 @@ export const GRAMMAR: GrammarLesson[] = [
         wrong: "I didn't went to school yesterday.",
         right: "I didn't go to school yesterday.",
         note: t(
-          "Did / didn’t dan keyin fe’l boshlangʻich shaklda boʻladi — oʻtgan zamon belgisini did oʻzi koʻrsatadi.",
+          "Did / didn’t dan keyin feʼl boshlangʻich shaklda boʻladi — oʻtgan zamon belgisini did oʻzi koʻrsatadi.",
           "После did / didn't глагол стоит в начальной форме — прошедшее время уже показывает did.",
           "After did / didn't, use the base form — did already shows the past.",
         ),
@@ -207,7 +207,7 @@ export const GRAMMAR: GrammarLesson[] = [
         wrong: "Did you saw the new film?",
         right: "Did you see the new film?",
         note: t(
-          "Soʻroq gapda ham did dan keyin fe’lning birinchi shakli ishlatiladi.",
+          "Soʻroq gapda ham did dan keyin feʼlning birinchi shakli ishlatiladi.",
           "В вопросе после did тоже нужна начальная форма глагола.",
           "In questions, the verb after did is in the base form too.",
         ),
@@ -216,7 +216,7 @@ export const GRAMMAR: GrammarLesson[] = [
         wrong: "I came to Tashkent before three years.",
         right: "I came to Tashkent three years ago.",
         note: t(
-          "«Uch yil oldin» — three years ago. Before bu ma’noda vaqt miqdoridan oldin qoʻyilmaydi.",
+          "«Uch yil oldin» — three years ago. Before bu maʼnoda vaqt miqdoridan oldin qoʻyilmaydi.",
           "«Три года назад» — three years ago, а не before three years.",
           "To say 'three years before now', use three years ago, not before three years.",
         ),
@@ -225,7 +225,7 @@ export const GRAMMAR: GrammarLesson[] = [
         wrong: "Yesterday I go to the market.",
         right: "Yesterday I went to the market.",
         note: t(
-          "Yesterday oʻtgan zamonni bildiradi, demak fe’l ham oʻtgan zamon shaklida boʻlishi kerak.",
+          "Yesterday oʻtgan zamonni bildiradi, demak feʼl ham oʻtgan zamon shaklida boʻlishi kerak.",
           "Yesterday указывает на прошлое, значит и глагол должен стоять в прошедшем времени.",
           "Yesterday refers to the past, so the verb must be in the past too.",
         ),
@@ -237,7 +237,7 @@ export const GRAMMAR: GrammarLesson[] = [
         options: ["see", "saw", "seen", "seed"],
         answer: 1,
         why: t(
-          "See — notoʻgʻri fe’l, uning oʻtgan zamon shakli saw.",
+          "See — notoʻgʻri feʼl, uning oʻtgan zamon shakli saw.",
           "See — неправильный глагол, его форма прошедшего времени — saw.",
           "See is irregular; its past simple form is saw.",
         ),
@@ -247,7 +247,7 @@ export const GRAMMAR: GrammarLesson[] = [
         options: ["didn't come", "didn't came", "not came"],
         answer: 0,
         why: t(
-          "Inkor gapda didn’t + fe’lning boshlangʻich shakli ishlatiladi.",
+          "Inkor gapda didn’t + feʼlning boshlangʻich shakli ishlatiladi.",
           "В отрицании используется didn't + начальная форма глагола.",
           "Negatives use didn't + the base form.",
         ),
@@ -257,15 +257,15 @@ export const GRAMMAR: GrammarLesson[] = [
         options: ["do", "were", "did"],
         answer: 2,
         why: t(
-          "Oʻtmishdagi ish haqida soʻralmoqda, shuning uchun yordamchi fe’l did.",
+          "Oʻtmishdagi ish haqida soʻralmoqda, shuning uchun yordamchi feʼl did.",
           "Вопрос о прошлом, поэтому вспомогательный глагол — did.",
           "The question is about the past, so the auxiliary is did.",
         ),
       },
       {
         prompt: "I moved to Samarkand five years ___.",
-        options: ["before", "last", "ago"],
-        answer: 2,
+        options: ["before", "ago", "last"],
+        answer: 1,
         why: t(
           "«Besh yil oldin» — five years ago; ago vaqt ifodasidan keyin keladi.",
           "«Пять лет назад» — five years ago; ago стоит после периода времени.",
@@ -274,10 +274,10 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "He ___ English at university in 2015.",
-        options: ["studyed", "studied", "studys"],
-        answer: 1,
+        options: ["studyed", "studys", "studied"],
+        answer: 2,
         why: t(
-          "Undosh + y bilan tugagan fe’llarda y harfi i ga almashadi: study → studied.",
+          "Undosh + y bilan tugagan feʼllarda y harfi i ga almashadi: study → studied.",
           "Если глагол оканчивается на согласную + y, y меняется на i: study → studied.",
           "When a verb ends in consonant + y, change y to i: study → studied.",
         ),
@@ -287,7 +287,7 @@ export const GRAMMAR: GrammarLesson[] = [
         options: ["buyed", "buy", "brought", "bought"],
         answer: 3,
         why: t(
-          "Buy — notoʻgʻri fe’l: buy → bought. Brought esa bring fe’lining shakli.",
+          "Buy — notoʻgʻri feʼl: buy → bought. Brought esa bring feʼlining shakli.",
           "Buy — неправильный глагол: buy → bought. Brought — это форма глагола bring.",
           "Buy is irregular: buy → bought. Brought is the past of bring.",
         ),
@@ -299,7 +299,7 @@ export const GRAMMAR: GrammarLesson[] = [
     level: 'A2',
     title: t("Artikllar: a/an va the", "Артикли a/an и the", "Articles: a/an and the"),
     summary: t(
-      "Oʻzbek va rus tillarida artikl yoʻq, shuning uchun ular koʻpincha tushib qoladi. A/an — «bitta, qandaydir», the — «oʻsha, ma’lum», umumiy ma’noda esa koʻpincha artikl ishlatilmaydi.",
+      "Oʻzbek va rus tillarida artikl yoʻq, shuning uchun ular koʻpincha tushib qoladi. A/an — «bitta, qandaydir», the — «oʻsha, maʼlum», umumiy maʼnoda esa koʻpincha artikl ishlatilmaydi.",
       "В узбекском и русском языках нет артиклей, поэтому их часто пропускают. A/an — «один, какой-то», the — «тот самый, известный», а в общем значении артикль часто не нужен.",
       "Uzbek and Russian have no articles, so learners often leave them out. A/an means 'one, any', the means 'the specific one', and general ideas often need no article.",
     ),
@@ -322,7 +322,7 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         text: t(
-          "Umumiy ma’noda koʻplikdagi va sanalmaydigan otlar, tillar, ovqatlanish vaqtlari va koʻpchilik davlat hamda shahar nomlari artiklsiz ishlatiladi.",
+          "Umumiy maʼnoda koʻplikdagi va sanalmaydigan otlar, tillar, ovqatlanish vaqtlari va koʻpchilik davlat hamda shahar nomlari artiklsiz ishlatiladi.",
           "Без артикля употребляются исчисляемые во множественном числе и неисчисляемые существительные в общем значении, языки, приёмы пищи, а также большинство названий стран и городов.",
           "Use no article with plural and uncountable nouns in a general sense, languages, meals, and most names of countries and cities.",
         ),
@@ -343,7 +343,7 @@ export const GRAMMAR: GrammarLesson[] = [
         wrong: "The life is beautiful.",
         right: "Life is beautiful.",
         note: t(
-          "Umumiy ma’nodagi mavhum otlar (life, love, music) oldidan the qoʻyilmaydi.",
+          "Umumiy maʼnodagi mavhum otlar (life, love, music) oldidan the qoʻyilmaydi.",
           "Абстрактные существительные в общем значении (life, love, music) употребляются без the.",
           "Abstract nouns in a general sense (life, love, music) take no article.",
         ),
@@ -370,8 +370,8 @@ export const GRAMMAR: GrammarLesson[] = [
     quiz: [
       {
         prompt: "I saw ___ elephant at the zoo.",
-        options: ["a", "an", "the"],
-        answer: 1,
+        options: ["a", "the", "an"],
+        answer: 2,
         why: t(
           "Elephant unli tovush bilan boshlanadi va birinchi marta tilga olinmoqda — an.",
           "Elephant начинается с гласного звука и упоминается впервые — an.",
@@ -390,8 +390,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "My mother is ___ teacher.",
-        options: ["the", "an", "a"],
-        answer: 2,
+        options: ["a", "the", "an"],
+        answer: 0,
         why: t(
           "Kasb aytilmoqda, teacher undosh tovush bilan boshlanadi — a.",
           "Называется профессия, teacher начинается с согласного звука — a.",
@@ -403,15 +403,15 @@ export const GRAMMAR: GrammarLesson[] = [
         options: ["a", "the", "— (no article)"],
         answer: 2,
         why: t(
-          "Coffee bu yerda umumiy ma’noda, sanalmaydigan ot — artikl kerak emas.",
+          "Coffee bu yerda umumiy maʼnoda, sanalmaydigan ot — artikl kerak emas.",
           "Coffee здесь в общем значении и неисчисляемо — артикль не нужен.",
           "Coffee is uncountable and used in a general sense, so no article.",
         ),
       },
       {
         prompt: "It was ___ best day of my life.",
-        options: ["a", "the", "an"],
-        answer: 1,
+        options: ["the", "a", "an"],
+        answer: 0,
         why: t(
           "Best — orttirma daraja, undan oldin doim the keladi.",
           "Best — превосходная степень, перед ней всегда the.",
@@ -419,7 +419,7 @@ export const GRAMMAR: GrammarLesson[] = [
         ),
       },
       {
-        prompt: "My cousin studies at ___ university in Bukhara.",
+        prompt: "There is ___ university near my cousin's house in Bukhara.",
         options: ["an", "a", "— (no article)"],
         answer: 1,
         why: t(
@@ -446,9 +446,9 @@ export const GRAMMAR: GrammarLesson[] = [
     rules: [
       {
         text: t(
-          "Qisqa (bir boʻgʻinli) sifatlarga -er / -est qoʻshiladi. Imlo: big → bigger, nice → nicer, happy → happier. Solishtirishda than ishlatiladi.",
-          "К коротким (односложным) прилагательным добавляется -er / -est. Правописание: big → bigger, nice → nicer, happy → happier. При сравнении используется than.",
-          "Short (one-syllable) adjectives add -er / -est. Spelling: big → bigger, nice → nicer, happy → happier. Use than to compare.",
+          "Bir boʻgʻinli sifatlarga -er / -est qoʻshiladi: big → bigger, nice → nicer. -y bilan tugaydigan ikki boʻgʻinli sifatlar ham -er / -est oladi, y esa i ga almashadi: happy → happier, heavy → heavier. Solishtirishda than ishlatiladi.",
+          "К односложным прилагательным добавляется -er / -est: big → bigger, nice → nicer. Двусложные прилагательные на -y тоже получают -er / -est, а y меняется на i: happy → happier, heavy → heavier. При сравнении используется than.",
+          "One-syllable adjectives add -er / -est: big → bigger, nice → nicer. Two-syllable adjectives ending in -y also add -er / -est, changing y to i: happy → happier, heavy → heavier. Use than to compare.",
         ),
         examples: ["Tashkent is bigger than Namangan.", "Today is hotter than yesterday.", "This is the cheapest café in town."],
       },
@@ -462,7 +462,7 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         text: t(
-          "Ba’zi sifatlar qoidaga boʻysunmaydi: good → better → the best, bad → worse → the worst, far → further → the furthest.",
+          "Baʼzi sifatlar qoidaga boʻysunmaydi: good → better → the best, bad → worse → the worst, far → further → the furthest.",
           "Некоторые прилагательные образуют степени не по правилу: good → better → the best, bad → worse → the worst, far → further → the furthest.",
           "Some adjectives are irregular: good → better → the best, bad → worse → the worst, far → further → the furthest.",
         ),
@@ -509,12 +509,12 @@ export const GRAMMAR: GrammarLesson[] = [
     quiz: [
       {
         prompt: "An elephant is ___ than a horse.",
-        options: ["heavier", "heavyer", "more heavy"],
-        answer: 0,
+        options: ["heavyer", "heavier", "more heavy"],
+        answer: 1,
         why: t(
-          "Heavy — qisqa sifat, y harfi i ga almashadi: heavier.",
-          "Heavy — короткое прилагательное, y меняется на i: heavier.",
-          "Heavy is short, and y changes to i: heavier.",
+          "Heavy — -y bilan tugaydigan ikki boʻgʻinli sifat: -er qoʻshiladi, y harfi i ga almashadi: heavier.",
+          "Heavy — двусложное прилагательное на -y: добавляется -er, y меняется на i: heavier.",
+          "Heavy is a two-syllable adjective ending in -y, so it adds -er and y changes to i: heavier.",
         ),
       },
       {
@@ -529,8 +529,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "My English is ___ than last year.",
-        options: ["gooder", "more good", "better"],
-        answer: 2,
+        options: ["gooder", "better", "more good"],
+        answer: 1,
         why: t(
           "Good ning qiyosiy darajasi — better.",
           "Сравнительная степень от good — better.",
@@ -539,8 +539,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "Moscow is colder ___ Tashkent in winter.",
-        options: ["that", "than", "then"],
-        answer: 1,
+        options: ["than", "that", "then"],
+        answer: 0,
         why: t(
           "Qiyosiy darajadan keyin than keladi.",
           "После сравнительной степени идёт than.",
@@ -549,8 +549,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "The bus is not as ___ as the metro.",
-        options: ["faster", "fastest", "fast"],
-        answer: 2,
+        options: ["faster", "fast", "fastest"],
+        answer: 1,
         why: t(
           "As … as qurilishida sifat oddiy shaklda boʻladi.",
           "В конструкции as … as прилагательное стоит в обычной форме.",
@@ -559,8 +559,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "Monday was the ___ day of my week.",
-        options: ["worst", "baddest", "worse", "most bad"],
-        answer: 0,
+        options: ["baddest", "worse", "worst", "most bad"],
+        answer: 2,
         why: t(
           "Bad → worse → the worst; the dan keyin orttirma daraja kerak.",
           "Bad → worse → the worst; после the нужна превосходная степень.",
@@ -586,7 +586,7 @@ export const GRAMMAR: GrammarLesson[] = [
     rules: [
       {
         text: t(
-          "Present Perfect: have/has + fe’lning uchinchi shakli (V3). Hayotiy tajriba (ever, never) va hozir koʻrinib turgan natija haqida gapirganda ishlatiladi. Vaqt aniq aytilmaydi.",
+          "Present Perfect: have/has + feʼlning uchinchi shakli (V3). Hayotiy tajriba (ever, never) va hozir koʻrinib turgan natija haqida gapirganda ishlatiladi. Vaqt aniq aytilmaydi.",
           "Present Perfect: have/has + третья форма глагола (V3). Используется для жизненного опыта (ever, never) и результата, важного сейчас. Точное время не называется.",
           "Present perfect is have/has + past participle. Use it for life experience (ever, never) and results that matter now, without saying exactly when.",
         ),
@@ -658,8 +658,8 @@ export const GRAMMAR: GrammarLesson[] = [
     quiz: [
       {
         prompt: "She ___ in this company since 2020.",
-        options: ["works", "has worked", "worked"],
-        answer: 1,
+        options: ["works", "worked", "has worked"],
+        answer: 2,
         why: t(
           "Since + hozirgacha davom etayotgan holat → Present Perfect.",
           "Since + ситуация, которая продолжается до сих пор → Present Perfect.",
@@ -668,8 +668,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "We ___ to Samarkand last summer.",
-        options: ["have gone", "have been", "went"],
-        answer: 2,
+        options: ["went", "have gone", "have been"],
+        answer: 0,
         why: t(
           "Last summer — tugagan vaqt, demak Past Simple.",
           "Last summer — законченное время, значит Past Simple.",
@@ -688,8 +688,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "___ you finished your report yet?",
-        options: ["Have", "Did", "Are"],
-        answer: 0,
+        options: ["Did", "Are", "Have"],
+        answer: 2,
         why: t(
           "Yet bilan soʻroq gapda Present Perfect ishlatiladi: Have you finished…?",
           "С yet в вопросе используется Present Perfect: Have you finished…?",
@@ -698,8 +698,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "This is the first time I ___ a horse.",
-        options: ["ride", "rode", "have ridden"],
-        answer: 2,
+        options: ["ride", "have ridden", "rode"],
+        answer: 1,
         why: t(
           "This is the first time … qurilishidan keyin Present Perfect keladi.",
           "После This is the first time … используется Present Perfect.",
@@ -708,8 +708,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "When ___ you start learning English?",
-        options: ["have", "did", "has"],
-        answer: 1,
+        options: ["have", "has", "did"],
+        answer: 2,
         why: t(
           "When aniq vaqtni soʻraydi, shuning uchun Past Simple: When did…?",
           "When спрашивает о конкретном времени, поэтому Past Simple: When did…?",
@@ -734,7 +734,7 @@ export const GRAMMAR: GrammarLesson[] = [
     rules: [
       {
         text: t(
-          "Will — gapirayotgan paytda qabul qilingan qaror, va’da, yordam taklifi hamda shaxsiy fikrga asoslangan bashorat (I think…, probably).",
+          "Will — gapirayotgan paytda qabul qilingan qaror, vaʼda, yordam taklifi hamda shaxsiy fikrga asoslangan bashorat (I think…, probably).",
           "Will — решение, принятое в момент речи, обещание, предложение помощи и прогноз, основанный на мнении (I think…, probably).",
           "Will is for decisions made at the moment of speaking, promises, offers and predictions based on opinion (I think…, probably).",
         ),
@@ -758,7 +758,7 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         text: t(
-          "When, as soon as, before, after, until va if dan keyin kelasi zamon ma’nosida will emas, Present Simple ishlatiladi.",
+          "When, as soon as, before, after, until va if dan keyin kelasi zamon maʼnosida will emas, Present Simple ishlatiladi.",
           "После when, as soon as, before, after, until и if в значении будущего используется Present Simple, а не will.",
           "After when, as soon as, before, after, until and if, use the present simple for the future, not will.",
         ),
@@ -806,8 +806,8 @@ export const GRAMMAR: GrammarLesson[] = [
     quiz: [
       {
         prompt: "The phone is ringing. — OK, I ___ it.",
-        options: ["answer", "'ll answer", "am going to answer"],
-        answer: 1,
+        options: ["'ll answer", "answer", "am going to answer"],
+        answer: 0,
         why: t(
           "Qaror aynan hozir qabul qilinmoqda, shuning uchun will.",
           "Решение принимается прямо сейчас, поэтому will.",
@@ -816,8 +816,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "Look at that driver! He ___ crash!",
-        options: ["will", "is going to", "is"],
-        answer: 1,
+        options: ["will", "is", "is going to"],
+        answer: 2,
         why: t(
           "Bashorat koʻrinib turgan belgiga asoslangan, shuning uchun be going to.",
           "Прогноз основан на том, что мы видим, поэтому be going to.",
@@ -826,8 +826,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "I ___ my grandmother on Sunday — we've already arranged it.",
-        options: ["visit", "will visit", "am visiting"],
-        answer: 2,
+        options: ["am visiting", "visit", "will visit"],
+        answer: 0,
         why: t(
           "Kelishib olingan reja — Present Continuous.",
           "Это договорённость — Present Continuous.",
@@ -839,15 +839,15 @@ export const GRAMMAR: GrammarLesson[] = [
         options: ["get", "will get", "are getting"],
         answer: 0,
         why: t(
-          "As soon as dan keyin kelasi zamon ma’nosida Present Simple ishlatiladi.",
+          "As soon as dan keyin kelasi zamon maʼnosida Present Simple ishlatiladi.",
           "После as soon as будущее выражается через Present Simple.",
           "After as soon as, we use the present simple for the future.",
         ),
       },
       {
         prompt: "I think people ___ on Mars one day.",
-        options: ["are living", "will live", "live"],
-        answer: 1,
+        options: ["are living", "live", "will live"],
+        answer: 2,
         why: t(
           "I think bilan shaxsiy fikrga asoslangan bashorat — will.",
           "Прогноз-мнение с I think — will.",
@@ -856,8 +856,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "She has saved some money. She ___ a new laptop.",
-        options: ["is going to buy", "buys", "will buying"],
-        answer: 0,
+        options: ["buys", "will buying", "is going to buy"],
+        answer: 2,
         why: t(
           "Bu oldindan oʻylangan niyat, shuning uchun be going to.",
           "Это заранее обдуманное намерение, поэтому be going to.",
@@ -882,7 +882,7 @@ export const GRAMMAR: GrammarLesson[] = [
     rules: [
       {
         text: t(
-          "Birinchi tur: If + Present Simple, will + fe’l. Kelajakda haqiqatan sodir boʻlishi mumkin boʻlgan vaziyat va uning natijasi.",
+          "Birinchi tur: If + Present Simple, will + feʼl. Kelajakda haqiqatan sodir boʻlishi mumkin boʻlgan vaziyat va uning natijasi.",
           "Первый тип: If + Present Simple, will + глагол. Реальная ситуация в будущем и её результат.",
           "First conditional: If + present simple, will + verb. A real possibility in the future and its result.",
         ),
@@ -890,7 +890,7 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         text: t(
-          "Ikkinchi tur: If + Past Simple, would + fe’l. Hozirgi yoki kelajakdagi xayoliy vaziyat. Past Simple bu yerda oʻtmishni emas, «haqiqiy emas» degan ma’noni bildiradi.",
+          "Ikkinchi tur: If + Past Simple, would + feʼl. Hozirgi yoki kelajakdagi xayoliy vaziyat. Past Simple bu yerda oʻtmishni emas, «haqiqiy emas» degan maʼnoni bildiradi.",
           "Второй тип: If + Past Simple, would + глагол. Воображаемая ситуация в настоящем или будущем. Past Simple здесь означает не прошлое, а нереальность.",
           "Second conditional: If + past simple, would + verb. An imaginary situation now or in the future. The past form here means 'not real', not 'past'.",
         ),
@@ -898,7 +898,7 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         text: t(
-          "Maslahat berishda If I were you… ishlatiladi (barcha shaxslarda were). Unless «agar … boʻlmasa» ma’nosini beradi.",
+          "Maslahat berishda If I were you… ishlatiladi (barcha shaxslarda were). Unless «agar … boʻlmasa» maʼnosini beradi.",
           "Для совета используется If I were you… (were для всех лиц). Unless означает «если не».",
           "Use If I were you… to give advice (were for all persons). Unless means 'if not'.",
         ),
@@ -947,18 +947,18 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "If I ___ a car, I would drive to work.",
-        options: ["have", "had", "would have"],
-        answer: 1,
+        options: ["have", "would have", "had"],
+        answer: 2,
         why: t(
-          "Ikkinchi tur: If + Past Simple, would + fe’l.",
+          "Ikkinchi tur: If + Past Simple, would + feʼl.",
           "Второй тип: If + Past Simple, would + глагол.",
           "Second conditional: If + past simple, would + verb.",
         ),
       },
       {
         prompt: "What would you do if you ___ a million dollars?",
-        options: ["find", "will find", "would find", "found"],
-        answer: 3,
+        options: ["found", "find", "will find", "would find"],
+        answer: 0,
         why: t(
           "Xayoliy vaziyat, would bor — demak if qismida Past Simple.",
           "Воображаемая ситуация с would — значит, в части с if Past Simple.",
@@ -967,8 +967,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "If I were you, I ___ that job.",
-        options: ["will take", "would take", "take"],
-        answer: 1,
+        options: ["will take", "take", "would take"],
+        answer: 2,
         why: t(
           "If I were you dan keyin maslahat would bilan beriladi.",
           "После If I were you совет даётся с would.",
@@ -977,8 +977,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "We won't go out ___ the rain stops.",
-        options: ["if", "because", "unless"],
-        answer: 2,
+        options: ["if", "unless", "because"],
+        answer: 1,
         why: t(
           "Unless = if not: «yomgʻir toʻxtamasa, chiqmaymiz».",
           "Unless = if not: «не выйдем, если дождь не прекратится».",
@@ -1006,7 +1006,7 @@ export const GRAMMAR: GrammarLesson[] = [
       "Obligation and advice: must, have to, should",
     ),
     summary: t(
-      "Bu modal fe’llar nima majburiy, nima taqiqlangan, nima shart emas va nima tavsiya etilishini aytish uchun kerak.",
+      "Bu modal feʼllar nima majburiy, nima taqiqlangan, nima shart emas va nima tavsiya etilishini aytish uchun kerak.",
       "Эти модальные глаголы помогают сказать, что обязательно, что запрещено, что необязательно и что рекомендуется.",
       "These modal verbs help you say what is necessary, forbidden, not necessary or advisable.",
     ),
@@ -1029,7 +1029,7 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         text: t(
-          "Mustn’t — «mumkin emas» (taqiq), don’t have to — «shart emas» (zarurat yoʻq). Ma’nolari butunlay farq qiladi!",
+          "Mustn’t — «mumkin emas» (taqiq), don’t have to — «shart emas» (zarurat yoʻq). Maʼnolari butunlay farq qiladi!",
           "Mustn't — «нельзя» (запрет), don't have to — «не обязательно». Значения совершенно разные!",
           "Mustn't means it's forbidden; don't have to means it isn't necessary. They are very different!",
         ),
@@ -1049,7 +1049,7 @@ export const GRAMMAR: GrammarLesson[] = [
         wrong: "You must to finish it today.",
         right: "You must finish it today.",
         note: t(
-          "Must, should, can kabi modal fe’llardan keyin to qoʻyilmaydi.",
+          "Must, should, can kabi modal feʼllardan keyin to qoʻyilmaydi.",
           "После модальных глаголов must, should, can частица to не нужна.",
           "No to after modal verbs like must, should and can.",
         ),
@@ -1085,8 +1085,8 @@ export const GRAMMAR: GrammarLesson[] = [
     quiz: [
       {
         prompt: "You ___ use your phone during the exam. It's forbidden.",
-        options: ["don't have to", "mustn't", "shouldn't to"],
-        answer: 1,
+        options: ["mustn't", "don't have to", "shouldn't to"],
+        answer: 0,
         why: t(
           "Taqiq — mustn’t.",
           "Запрет — mustn't.",
@@ -1095,8 +1095,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "Tomorrow is Sunday, so I ___ get up early.",
-        options: ["don't have to", "mustn't", "must"],
-        answer: 0,
+        options: ["mustn't", "don't have to", "must"],
+        answer: 1,
         why: t(
           "Yakshanba — erta turish shart emas: don’t have to.",
           "В воскресенье рано вставать не обязательно: don't have to.",
@@ -1115,8 +1115,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "You look tired. You ___ go to bed earlier.",
-        options: ["must to", "have", "should"],
-        answer: 2,
+        options: ["should", "must to", "have"],
+        answer: 0,
         why: t(
           "Bu maslahat, shuning uchun should.",
           "Это совет, поэтому should.",
@@ -1158,7 +1158,7 @@ export const GRAMMAR: GrammarLesson[] = [
     rules: [
       {
         text: t(
-          "Yasalishi: be (kerakli zamonda) + fe’lning uchinchi shakli (V3). Zamonni be fe’li koʻrsatadi.",
+          "Yasalishi: be (kerakli zamonda) + feʼlning uchinchi shakli (V3). Zamonni be feʼli koʻrsatadi.",
           "Образование: be (в нужном времени) + третья форма глагола (V3). Время показывает глагол be.",
           "Form: be (in the right tense) + past participle. The verb be shows the tense.",
         ),
@@ -1166,7 +1166,7 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         text: t(
-          "Bajaruvchi noma’lum, ravshan yoki muhim boʻlmaganda majhul nisbat qoʻllanadi. Bajaruvchini aytish kerak boʻlsa, by ishlatiladi.",
+          "Bajaruvchi nomaʼlum, ravshan yoki muhim boʻlmaganda majhul nisbat qoʻllanadi. Bajaruvchini aytish kerak boʻlsa, by ishlatiladi.",
           "Пассив используется, когда исполнитель неизвестен, очевиден или неважен. Если исполнителя нужно назвать, используется by.",
           "Use the passive when the doer is unknown, obvious or unimportant. If you need to name the doer, use by.",
         ),
@@ -1174,7 +1174,7 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         text: t(
-          "Modal fe’llar bilan: modal + be + V3. Davomli zamonlarda: is/was being + V3.",
+          "Modal feʼllar bilan: modal + be + V3. Davomli zamonlarda: is/was being + V3.",
           "С модальными глаголами: модальный глагол + be + V3. В длительных временах: is/was being + V3.",
           "With modals: modal + be + past participle. In continuous tenses: is/was being + past participle.",
         ),
@@ -1182,7 +1182,7 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         text: t(
-          "Rasmiy uslubda fikr yoki mish-mishni yetkazish uchun: It is said that… / He is believed to… Bu «aytilishicha», «taxmin qilinishicha» ma’nosini beradi.",
+          "Rasmiy uslubda fikr yoki mish-mishni yetkazish uchun: It is said that… / He is believed to… Bu «aytilishicha», «taxmin qilinishicha» maʼnosini beradi.",
           "В официальном стиле для передачи мнений и слухов: It is said that… / He is believed to… — «говорят, что», «считается, что».",
           "In formal style, report opinions with It is said that… or He is believed to…",
         ),
@@ -1194,7 +1194,7 @@ export const GRAMMAR: GrammarLesson[] = [
         wrong: "The house was build in 1990.",
         right: "The house was built in 1990.",
         note: t(
-          "Majhul nisbatda fe’lning uchinchi shakli (V3) kerak: build → built.",
+          "Majhul nisbatda feʼlning uchinchi shakli (V3) kerak: build → built.",
           "В пассиве нужна третья форма глагола: build → built.",
           "The passive needs the past participle: build → built.",
         ),
@@ -1203,7 +1203,7 @@ export const GRAMMAR: GrammarLesson[] = [
         wrong: "This novel was written from Tolstoy.",
         right: "This novel was written by Tolstoy.",
         note: t(
-          "«Tolstoy tomonidan» — by Tolstoy. From bu ma’noda ishlatilmaydi.",
+          "«Tolstoy tomonidan» — by Tolstoy. From bu maʼnoda ishlatilmaydi.",
           "«Написан Толстым» — by Tolstoy, а не from.",
           "The doer is introduced with by, not from.",
         ),
@@ -1212,7 +1212,7 @@ export const GRAMMAR: GrammarLesson[] = [
         wrong: "The accident was happened at night.",
         right: "The accident happened at night.",
         note: t(
-          "Happen, arrive, die kabi toʻldiruvchi olmaydigan fe’llar majhul nisbatda ishlatilmaydi.",
+          "Happen, arrive, die kabi toʻldiruvchi olmaydigan feʼllar majhul nisbatda ishlatilmaydi.",
           "Непереходные глаголы (happen, arrive, die) не образуют страдательный залог.",
           "Verbs with no object (happen, arrive, die) can't be passive.",
         ),
@@ -1221,7 +1221,7 @@ export const GRAMMAR: GrammarLesson[] = [
         wrong: "The letter sent yesterday.",
         right: "The letter was sent yesterday.",
         note: t(
-          "Majhul nisbatda be yordamchi fe’li tushib qolmasligi kerak.",
+          "Majhul nisbatda be yordamchi feʼli tushib qolmasligi kerak.",
           "В пассиве нельзя пропускать вспомогательный глагол be.",
           "Don't leave out be in the passive.",
         ),
@@ -1230,8 +1230,8 @@ export const GRAMMAR: GrammarLesson[] = [
     quiz: [
       {
         prompt: "This mosque ___ in the 15th century.",
-        options: ["built", "was built", "was building"],
-        answer: 1,
+        options: ["built", "was building", "was built"],
+        answer: 2,
         why: t(
           "Masjidni kimdir qurgan, masjid oʻzi qurmagan — was + V3.",
           "Мечеть построили, она не строила сама — was + V3.",
@@ -1260,8 +1260,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "The accident ___ at about 9 p.m.",
-        options: ["was happened", "happened", "has been happened"],
-        answer: 1,
+        options: ["was happened", "has been happened", "happened"],
+        answer: 2,
         why: t(
           "Happen majhul nisbatda ishlatilmaydi.",
           "Глагол happen не употребляется в пассиве.",
@@ -1273,7 +1273,7 @@ export const GRAMMAR: GrammarLesson[] = [
         options: ["be signed", "signed", "be sign"],
         answer: 0,
         why: t(
-          "Modal fe’l bilan majhul nisbat: must be + V3.",
+          "Modal feʼl bilan majhul nisbat: must be + V3.",
           "Пассив с модальным глаголом: must be + V3.",
           "Passive with a modal: must be + past participle.",
         ),
@@ -1302,7 +1302,7 @@ export const GRAMMAR: GrammarLesson[] = [
     rules: [
       {
         text: t(
-          "Kirish fe’li oʻtgan zamonda boʻlsa (said, told), zamon orqaga suriladi: Present → Past, Past / Present Perfect → Past Perfect, will → would, can → could.",
+          "Kirish feʼli oʻtgan zamonda boʻlsa (said, told), zamon orqaga suriladi: Present → Past, Past / Present Perfect → Past Perfect, will → would, can → could.",
           "Если вводящий глагол в прошедшем времени (said, told), время сдвигается: Present → Past, Past / Present Perfect → Past Perfect, will → would, can → could.",
           "When the reporting verb is past (said, told), tenses move back: present → past, past / present perfect → past perfect, will → would, can → could.",
         ),
@@ -1375,18 +1375,18 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "My teacher ___ me to read more books.",
-        options: ["told", "said", "spoke"],
-        answer: 0,
+        options: ["said", "told", "spoke"],
+        answer: 1,
         why: t(
-          "Kishi + to + fe’l qurilishi tell bilan ishlatiladi: told me to…",
+          "Kishi + to + feʼl qurilishi tell bilan ishlatiladi: told me to…",
           "Конструкция человек + to + глагол используется с tell: told me to…",
           "Tell + person + to-infinitive is used for instructions: told me to…",
         ),
       },
       {
         prompt: "She asked me where ___.",
-        options: ["I worked", "did I work", "do I work"],
-        answer: 0,
+        options: ["did I work", "do I work", "I worked"],
+        answer: 2,
         why: t(
           "Oʻzlashtirma soʻroqda darak gap tartibi: where I worked.",
           "В косвенном вопросе прямой порядок слов: where I worked.",
@@ -1395,8 +1395,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "'Can you help me?' → He asked if I ___ help him.",
-        options: ["can", "will", "could"],
-        answer: 2,
+        options: ["could", "can", "will"],
+        answer: 0,
         why: t(
           "Can oʻzlashtirma gapda could ga aylanadi.",
           "В косвенной речи can превращается в could.",
@@ -1434,7 +1434,7 @@ export const GRAMMAR: GrammarLesson[] = [
       "Relative clauses: defining and non-defining",
     ),
     summary: t(
-      "Aniqlovchi ergash gaplar odam yoki narsa haqida qoʻshimcha ma’lumot beradi va ikki qisqa gapni bitta silliq gapga birlashtirishga yordam beradi.",
+      "Aniqlovchi ergash gaplar odam yoki narsa haqida qoʻshimcha maʼlumot beradi va ikki qisqa gapni bitta silliq gapga birlashtirishga yordam beradi.",
       "Определительные придаточные дают дополнительную информацию о человеке или предмете и помогают объединить два коротких предложения в одно.",
       "Relative clauses add information about a person or thing and let you join two short sentences into one smooth one.",
     ),
@@ -1457,7 +1457,7 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         text: t(
-          "Cheklamaydigan (non-defining) ergash gap qoʻshimcha ma’lumot beradi va vergul bilan ajratiladi. Unda that ishlatilmaydi va olmoshni tushirib boʻlmaydi.",
+          "Cheklamaydigan (non-defining) ergash gap qoʻshimcha maʼlumot beradi va vergul bilan ajratiladi. Unda that ishlatilmaydi va olmoshni tushirib boʻlmaydi.",
           "Распространительное (non-defining) придаточное даёт дополнительную информацию и выделяется запятыми. В нём нельзя использовать that и опускать местоимение.",
           "A non-defining clause adds extra information and has commas. You can't use that, and you can't leave the pronoun out.",
         ),
@@ -1465,7 +1465,7 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         text: t(
-          "Which butun oldingi gapga ham ishora qila oladi — bunda u vergul bilan ajratiladi va «bu esa» ma’nosini beradi.",
+          "Which butun oldingi gapga ham ishora qila oladi — bunda u vergul bilan ajratiladi va «bu esa» maʼnosini beradi.",
           "Which может относиться ко всему предыдущему предложению — тогда оно отделяется запятой и значит «что».",
           "Which can refer to a whole previous clause — then it follows a comma and means 'and this'.",
         ),
@@ -1486,7 +1486,7 @@ export const GRAMMAR: GrammarLesson[] = [
         wrong: "My father, that is a doctor, works a lot.",
         right: "My father, who is a doctor, works a lot.",
         note: t(
-          "Vergul bilan ajratilgan qoʻshimcha ma’lumotda that ishlatilmaydi.",
+          "Vergul bilan ajratilgan qoʻshimcha maʼlumotda that ishlatilmaydi.",
           "В придаточном с запятыми that не используется.",
           "That is not used in non-defining clauses with commas.",
         ),
@@ -1504,7 +1504,7 @@ export const GRAMMAR: GrammarLesson[] = [
         wrong: "I met a girl who her father is a pilot.",
         right: "I met a girl whose father is a pilot.",
         note: t(
-          "Egalik ma’nosi («otasi uchuvchi boʻlgan qiz») whose bilan ifodalanadi.",
+          "Egalik maʼnosi («otasi uchuvchi boʻlgan qiz») whose bilan ifodalanadi.",
           "Принадлежность («девушка, чей отец — пилот») выражается через whose.",
           "Possession is expressed with whose.",
         ),
@@ -1523,10 +1523,10 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "Samarkand, ___ is famous for the Registan, is my favourite city.",
-        options: ["which", "that", "where"],
-        answer: 0,
+        options: ["that", "where", "which"],
+        answer: 2,
         why: t(
-          "Vergulli qoʻshimcha ma’lumot, narsa (shahar) haqida — which; that bu yerda mumkin emas.",
+          "Vergulli qoʻshimcha maʼlumot, narsa (shahar) haqida — which; that bu yerda mumkin emas.",
           "Распространительное придаточное о городе — which; that здесь невозможно.",
           "It's a non-defining clause about a thing, so which; that isn't possible with commas.",
         ),
@@ -1543,8 +1543,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "I have a friend ___ father is a pilot.",
-        options: ["who", "who's", "whose"],
-        answer: 2,
+        options: ["whose", "who", "who's"],
+        answer: 0,
         why: t(
           "«Otasi uchuvchi boʻlgan» — egalik, demak whose.",
           "«Чей отец — пилот» — принадлежность, значит whose.",
@@ -1553,10 +1553,10 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "My grandmother, ___ is 85, still works in her garden.",
-        options: ["who", "that", "which"],
-        answer: 0,
+        options: ["that", "which", "who"],
+        answer: 2,
         why: t(
-          "Odam haqida vergulli qoʻshimcha ma’lumot — faqat who.",
+          "Odam haqida vergulli qoʻshimcha maʼlumot — faqat who.",
           "Дополнительная информация о человеке с запятыми — только who.",
           "Extra information about a person, with commas: only who.",
         ),
@@ -1578,14 +1578,14 @@ export const GRAMMAR: GrammarLesson[] = [
     level: 'B2',
     title: t("Gerundiy va infinitiv", "Герундий и инфинитив", "Gerunds vs infinitives"),
     summary: t(
-      "Ba’zi fe’llardan keyin -ing shakli (gerundiy), ba’zilaridan keyin esa to + fe’l (infinitiv) keladi. Ayrim fe’llarda tanlov gapning ma’nosini oʻzgartiradi.",
+      "Baʼzi feʼllardan keyin -ing shakli (gerundiy), baʼzilaridan keyin esa to + feʼl (infinitiv) keladi. Ayrim feʼllarda tanlov gapning maʼnosini oʻzgartiradi.",
       "После одних глаголов идёт форма на -ing (герундий), после других — to + глагол (инфинитив). У некоторых глаголов выбор меняет смысл.",
       "Some verbs are followed by -ing (gerund), others by to + verb (infinitive). With a few verbs, the choice changes the meaning.",
     ),
     rules: [
       {
         text: t(
-          "Gerundiy enjoy, avoid, finish, mind, suggest, consider, keep, practise fe’llaridan keyin, barcha predloglardan keyin va gapning egasi vazifasida ishlatiladi.",
+          "Gerundiy enjoy, avoid, finish, mind, suggest, consider, keep, practise feʼllaridan keyin, barcha predloglardan keyin va gapning egasi vazifasida ishlatiladi.",
           "Герундий используется после enjoy, avoid, finish, mind, suggest, consider, keep, practise, после любых предлогов и в роли подлежащего.",
           "Use the gerund after enjoy, avoid, finish, mind, suggest, consider, keep, practise, after all prepositions, and as the subject of a sentence.",
         ),
@@ -1593,7 +1593,7 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         text: t(
-          "To-infinitiv want, decide, hope, plan, agree, refuse, promise, afford fe’llaridan keyin, sifatlardan keyin va maqsadni bildirganda («…ish uchun») ishlatiladi.",
+          "To-infinitiv want, decide, hope, plan, agree, refuse, promise, afford feʼllaridan keyin, sifatlardan keyin va maqsadni bildirganda («…ish uchun») ishlatiladi.",
           "Инфинитив с to используется после want, decide, hope, plan, agree, refuse, promise, afford, после прилагательных и для выражения цели («чтобы»).",
           "Use to + infinitive after want, decide, hope, plan, agree, refuse, promise, afford, after adjectives, and to express purpose.",
         ),
@@ -1601,7 +1601,7 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         text: t(
-          "Stop, remember, forget, try fe’llarida ma’no oʻzgaradi: stop doing — «…ishni tashlamoq», stop to do — «…ish uchun toʻxtamoq»; remember doing — «…ganini eslamoq», remember to do — «…ishni unutmaslik».",
+          "Stop, remember, forget, try feʼllarida maʼno oʻzgaradi: stop doing — «…ishni tashlamoq», stop to do — «…ish uchun toʻxtamoq»; remember doing — «…ganini eslamoq», remember to do — «…ishni unutmaslik».",
           "У stop, remember, forget, try значение меняется: stop doing — «перестать делать», stop to do — «остановиться, чтобы сделать»; remember doing — «помнить, что сделал», remember to do — «не забыть сделать».",
           "With stop, remember, forget and try, the meaning changes: stop doing = quit; stop to do = pause in order to do; remember doing = recall the past; remember to do = not forget a task.",
         ),
@@ -1609,7 +1609,7 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         text: t(
-          "Make va let dan keyin, shuningdek modal fe’llardan keyin to siz infinitiv keladi.",
+          "Make va let dan keyin, shuningdek modal feʼllardan keyin to siz infinitiv keladi.",
           "После make и let, а также после модальных глаголов используется инфинитив без to.",
           "After make, let and modal verbs, use the infinitive without to.",
         ),
@@ -1630,7 +1630,7 @@ export const GRAMMAR: GrammarLesson[] = [
         wrong: "I suggest you to take a taxi.",
         right: "I suggest taking a taxi.",
         note: t(
-          "Suggest dan keyin kishi + to + fe’l qoʻllanmaydi: suggest doing yoki suggest (that) you do.",
+          "Suggest dan keyin kishi + to + feʼl qoʻllanmaydi: suggest doing yoki suggest (that) you do.",
           "После suggest не бывает конструкции «человек + to + глагол»: suggest doing или suggest (that) you do.",
           "Suggest is never followed by person + to-infinitive: say suggest doing or suggest (that) you do.",
         ),
@@ -1639,7 +1639,7 @@ export const GRAMMAR: GrammarLesson[] = [
         wrong: "She made me to wait for an hour.",
         right: "She made me wait for an hour.",
         note: t(
-          "Make + kishi + to siz fe’l.",
+          "Make + kishi + to siz feʼl.",
           "Make + человек + глагол без to.",
           "Make + person + verb without to.",
         ),
@@ -1657,28 +1657,28 @@ export const GRAMMAR: GrammarLesson[] = [
     quiz: [
       {
         prompt: "Would you mind ___ the window?",
-        options: ["to open", "opening", "open"],
-        answer: 1,
+        options: ["to open", "open", "opening"],
+        answer: 2,
         why: t(
-          "Mind fe’lidan keyin gerundiy keladi.",
+          "Mind feʼlidan keyin gerundiy keladi.",
           "После mind используется герундий.",
           "Mind is followed by the gerund.",
         ),
       },
       {
         prompt: "We can't afford ___ a new car this year.",
-        options: ["buying", "buy", "to buy"],
-        answer: 2,
+        options: ["buying", "to buy", "buy"],
+        answer: 1,
         why: t(
-          "Afford fe’lidan keyin to-infinitiv keladi.",
+          "Afford feʼlidan keyin to-infinitiv keladi.",
           "После afford используется инфинитив с to.",
           "Afford is followed by to + infinitive.",
         ),
       },
       {
         prompt: "I was thirsty, so I stopped ___ some water.",
-        options: ["to buy", "buying", "buy"],
-        answer: 0,
+        options: ["buying", "buy", "to buy"],
+        answer: 2,
         why: t(
           "Maqsad — suv sotib olish uchun toʻxtadi: stop to do.",
           "Цель — остановился, чтобы купить воды: stop to do.",
@@ -1687,8 +1687,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "She is good at ___ problems.",
-        options: ["solve", "to solve", "solving"],
-        answer: 2,
+        options: ["solving", "solve", "to solve"],
+        answer: 0,
         why: t(
           "Predlogdan (at) keyin doim -ing shakli keladi.",
           "После предлога (at) всегда форма на -ing.",
@@ -1697,8 +1697,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "My boss made me ___ the report again.",
-        options: ["rewrite", "to rewrite", "rewriting"],
-        answer: 0,
+        options: ["to rewrite", "rewrite", "rewriting"],
+        answer: 1,
         why: t(
           "Make + kishi + to siz infinitiv.",
           "Make + человек + инфинитив без to.",
@@ -1707,8 +1707,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "Don't forget ___ your grandmother on her birthday.",
-        options: ["calling", "to call", "call"],
-        answer: 1,
+        options: ["calling", "call", "to call"],
+        answer: 2,
         why: t(
           "Kelajakda bajarilishi kerak boʻlgan ish — forget to do.",
           "Действие, которое нужно выполнить, — forget to do.",
@@ -1742,7 +1742,7 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         text: t(
-          "Aralash shart gap (oʻtmish → hozir): If + Past Perfect, would + fe’l. Oʻtmishdagi holat hozirgi natijaga ta’sir qiladi.",
+          "Aralash shart gap (oʻtmish → hozir): If + Past Perfect, would + feʼl. Oʻtmishdagi holat hozirgi natijaga taʼsir qiladi.",
           "Смешанный тип (прошлое → настоящее): If + Past Perfect, would + глагол. Условие в прошлом влияет на настоящее.",
           "Mixed (past → present): If + past perfect, would + verb. A past condition affects the present.",
         ),
@@ -1779,7 +1779,7 @@ export const GRAMMAR: GrammarLesson[] = [
         wrong: "If I had studied medicine, I would have been a doctor now.",
         right: "If I had studied medicine, I would be a doctor now.",
         note: t(
-          "Now hozirgi natijani koʻrsatadi, shuning uchun aralash tur: would + fe’l.",
+          "Now hozirgi natijani koʻrsatadi, shuning uchun aralash tur: would + feʼl.",
           "Now указывает на результат в настоящем, поэтому смешанный тип: would + глагол.",
           "Now shows a present result, so use the mixed form: would + verb.",
         ),
@@ -1797,8 +1797,8 @@ export const GRAMMAR: GrammarLesson[] = [
     quiz: [
       {
         prompt: "If we ___ the map, we wouldn't have got lost.",
-        options: ["had checked", "checked", "would have checked"],
-        answer: 0,
+        options: ["checked", "had checked", "would have checked"],
+        answer: 1,
         why: t(
           "Uchinchi tur: if qismida Past Perfect.",
           "Третий тип: в части с if — Past Perfect.",
@@ -1807,10 +1807,10 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "If she had accepted the offer, she ___ in London now.",
-        options: ["would have been", "would be", "had been"],
-        answer: 1,
+        options: ["would be", "would have been", "had been"],
+        answer: 0,
         why: t(
-          "Now — hozirgi natija, demak aralash tur: would + fe’l.",
+          "Now — hozirgi natija, demak aralash tur: would + feʼl.",
           "Now — результат в настоящем, значит смешанный тип: would + глагол.",
           "Now shows a present result, so we use would + verb.",
         ),
@@ -1830,15 +1830,15 @@ export const GRAMMAR: GrammarLesson[] = [
         options: ["would take", "would have taken", "took"],
         answer: 1,
         why: t(
-          "Doimiy xususiyat (hozir ham qaysar) oʻtmishdagi natijaga ta’sir qilgan: would have + V3.",
+          "Doimiy xususiyat (hozir ham qaysar) oʻtmishdagi natijaga taʼsir qilgan: would have + V3.",
           "Постоянная черта (он и сейчас упрям) повлияла на прошлое: would have + V3.",
           "A permanent trait affected a past result: would have + past participle.",
         ),
       },
       {
         prompt: "If it hadn't rained, we ___ the match.",
-        options: ["might have won", "might win", "had won"],
-        answer: 0,
+        options: ["might win", "might have won", "had won"],
+        answer: 1,
         why: t(
           "Oʻtmishdagi ehtimoliy natija — might have + V3.",
           "Возможный результат в прошлом — might have + V3.",
@@ -1847,8 +1847,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "If I ___ more confident, I would have spoken at the meeting.",
-        options: ["had", "am", "were"],
-        answer: 2,
+        options: ["were", "had", "am"],
+        answer: 0,
         why: t(
           "Doimiy holat (umuman ishonchsizman) — if qismida Past Simple: were.",
           "Постоянное состояние (я вообще неуверен) — в части с if Past Simple: were.",
@@ -1860,16 +1860,16 @@ export const GRAMMAR: GrammarLesson[] = [
   {
     id: 'c1-inversion',
     level: 'C1',
-    title: t("Ta’kid uchun inversiya", "Инверсия для усиления", "Inversion for emphasis"),
+    title: t("Taʼkid uchun inversiya", "Инверсия для усиления", "Inversion for emphasis"),
     summary: t(
-      "Inkor yoki cheklov ma’nosidagi ravish gap boshiga chiqsa, ega va yordamchi fe’l oʻrin almashadi. Bu usul nutqni ta’sirchan va rasmiy qiladi — esse, nutq va rasmiy xatlarda qoʻl keladi.",
+      "Inkor yoki cheklov maʼnosidagi ravish gap boshiga chiqsa, ega va yordamchi feʼl oʻrin almashadi. Bu usul nutqni taʼsirchan va rasmiy qiladi — esse, nutq va rasmiy xatlarda qoʻl keladi.",
       "Если в начало предложения выносится отрицательное или ограничительное наречие, подлежащее и вспомогательный глагол меняются местами. Это делает речь выразительной и официальной — полезно в эссе, выступлениях и деловых письмах.",
       "When a negative or limiting adverbial starts a sentence, the subject and auxiliary swap places. It makes your language emphatic and formal — useful in essays, speeches and formal letters.",
     ),
     rules: [
       {
         text: t(
-          "Never, rarely, seldom, hardly ever, not only, under no circumstances, at no time bilan gap boshlansa: ravish + yordamchi fe’l + ega + asosiy fe’l. Yordamchi fe’l boʻlmasa, do/does/did qoʻshiladi.",
+          "Never, rarely, seldom, hardly ever, not only, under no circumstances, at no time bilan gap boshlansa: ravish + yordamchi feʼl + ega + asosiy feʼl. Yordamchi feʼl boʻlmasa, do/does/did qoʻshiladi.",
           "Если предложение начинается с never, rarely, seldom, hardly ever, not only, under no circumstances, at no time: наречие + вспомогательный глагол + подлежащее + основной глагол. Если вспомогательного глагола нет, добавляется do/does/did.",
           "After never, rarely, seldom, hardly ever, not only, under no circumstances, at no time: adverbial + auxiliary + subject + main verb. If there is no auxiliary, add do/does/did.",
         ),
@@ -1905,7 +1905,7 @@ export const GRAMMAR: GrammarLesson[] = [
         wrong: "Never I have seen such chaos.",
         right: "Never have I seen such chaos.",
         note: t(
-          "Never gap boshida kelsa, yordamchi fe’l egadan oldin turadi.",
+          "Never gap boshida kelsa, yordamchi feʼl egadan oldin turadi.",
           "Если never стоит в начале, вспомогательный глагол ставится перед подлежащим.",
           "When never starts the sentence, the auxiliary comes before the subject.",
         ),
@@ -1941,8 +1941,8 @@ export const GRAMMAR: GrammarLesson[] = [
     quiz: [
       {
         prompt: "Rarely ___ such a talented student.",
-        options: ["I have met", "have I met", "I met"],
-        answer: 1,
+        options: ["I have met", "I met", "have I met"],
+        answer: 2,
         why: t(
           "Rarely gap boshida — inversiya: have I met.",
           "Rarely в начале — инверсия: have I met.",
@@ -1951,18 +1951,18 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "Not only ___ late, but he also forgot the tickets.",
-        options: ["was he", "he was", "he has"],
-        answer: 0,
+        options: ["he was", "was he", "he has"],
+        answer: 1,
         why: t(
-          "Not only dan keyin yordamchi fe’l egadan oldin keladi: was he.",
+          "Not only dan keyin yordamchi feʼl egadan oldin keladi: was he.",
           "После not only вспомогательный глагол стоит перед подлежащим: was he.",
           "After not only, the auxiliary goes before the subject: was he.",
         ),
       },
       {
         prompt: "No sooner had the film started ___ the lights went out.",
-        options: ["when", "that", "than"],
-        answer: 2,
+        options: ["than", "when", "that"],
+        answer: 0,
         why: t(
           "No sooner doim than bilan juftlashadi.",
           "No sooner всегда сочетается с than.",
@@ -1981,8 +1981,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "Only after the meeting ___ the truth.",
-        options: ["we learned", "did we learn", "we did learn"],
-        answer: 1,
+        options: ["we learned", "we did learn", "did we learn"],
+        answer: 2,
         why: t(
           "Only after … dan keyin bosh gapda inversiya: did we learn.",
           "После only after … в главной части инверсия: did we learn.",
@@ -1991,8 +1991,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "Hardly ___ the door when the phone rang.",
-        options: ["I had opened", "did I open", "had I opened"],
-        answer: 2,
+        options: ["I had opened", "had I opened", "did I open"],
+        answer: 1,
         why: t(
           "Hardly … when qurilishida Past Perfect va inversiya: had I opened.",
           "В конструкции hardly … when — Past Perfect и инверсия: had I opened.",
@@ -2089,8 +2089,8 @@ export const GRAMMAR: GrammarLesson[] = [
     quiz: [
       {
         prompt: "___ the heavy traffic, we arrived on time.",
-        options: ["Although", "Despite", "However"],
-        answer: 1,
+        options: ["Although", "However", "Despite"],
+        answer: 2,
         why: t(
           "Keyin ot birikmasi (the heavy traffic) keladi, shuning uchun despite.",
           "Дальше идёт существительное (the heavy traffic), поэтому despite.",
@@ -2099,8 +2099,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "You can join the team ___ you attend every training session.",
-        options: ["provided that", "in case", "whereas"],
-        answer: 0,
+        options: ["in case", "whereas", "provided that"],
+        answer: 2,
         why: t(
           "«…sharti bilan» — provided that.",
           "«При условии, что» — provided that.",
@@ -2119,8 +2119,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "The evidence was weak. ___, the jury found him guilty.",
-        options: ["Although", "Nevertheless", "Despite"],
-        answer: 1,
+        options: ["Nevertheless", "Although", "Despite"],
+        answer: 0,
         why: t(
           "Yangi gap boshida, vergul bilan zidlik — nevertheless.",
           "Противопоставление в начале нового предложения с запятой — nevertheless.",
@@ -2139,8 +2139,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "The factory closed ___ a lack of funding.",
-        options: ["because", "consequently", "owing to"],
-        answer: 2,
+        options: ["because", "owing to", "consequently"],
+        answer: 1,
         why: t(
           "Sabab ot bilan berilgan (a lack of funding) — owing to.",
           "Причина выражена существительным (a lack of funding) — owing to.",
@@ -2165,7 +2165,7 @@ export const GRAMMAR: GrammarLesson[] = [
     rules: [
       {
         text: t(
-          "Wish / if only + Past Simple — hozirgi holat boshqacha boʻlishini istash. To be fe’li koʻpincha barcha shaxslarda were shaklida boʻladi.",
+          "Wish / if only + Past Simple — hozirgi holat boshqacha boʻlishini istash. To be feʼli koʻpincha barcha shaxslarda were shaklida boʻladi.",
           "Wish / if only + Past Simple — желание, чтобы настоящее было другим. Глагол to be часто имеет форму were для всех лиц.",
           "Wish / if only + past simple: you want the present to be different. Be often becomes were for all persons.",
         ),
@@ -2189,7 +2189,7 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         text: t(
-          "Would rather + fe’l — oʻz afzalligi; would rather + boshqa shaxs + Past Simple — boshqa odamdan istak. It’s (high) time + Past Simple — «…vaqti keldi».",
+          "Would rather + feʼl — oʻz afzalligi; would rather + boshqa shaxs + Past Simple — boshqa odamdan istak. It’s (high) time + Past Simple — «…vaqti keldi».",
           "Would rather + глагол — собственное предпочтение; would rather + другое лицо + Past Simple — желание в отношении другого человека. It's (high) time + Past Simple — «давно пора».",
           "Would rather + verb for your own preference; would rather + another person + past simple for others. It's (high) time + past simple means 'it should happen now'.",
         ),
@@ -2237,8 +2237,8 @@ export const GRAMMAR: GrammarLesson[] = [
     quiz: [
       {
         prompt: "I wish I ___ how to play the guitar.",
-        options: ["know", "knew", "would know"],
-        answer: 1,
+        options: ["knew", "know", "would know"],
+        answer: 0,
         why: t(
           "Hozirgi holat haqida istak — wish + Past Simple.",
           "Желание о настоящем — wish + Past Simple.",
@@ -2257,8 +2257,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "I wish it ___ raining — we want to go for a walk.",
-        options: ["would stop", "stops", "will stop"],
-        answer: 0,
+        options: ["stops", "would stop", "will stop"],
+        answer: 1,
         why: t(
           "Vaziyat oʻzgarishini xohlash — wish + would.",
           "Желание, чтобы ситуация изменилась, — wish + would.",
@@ -2267,8 +2267,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "I'd rather you ___ my phone without asking.",
-        options: ["don't use", "didn't use", "not use"],
-        answer: 1,
+        options: ["didn't use", "don't use", "not use"],
+        answer: 0,
         why: t(
           "Would rather + boshqa shaxs + Past Simple.",
           "Would rather + другое лицо + Past Simple.",
@@ -2277,8 +2277,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "It's high time we ___ a decision.",
-        options: ["will make", "make", "made"],
-        answer: 2,
+        options: ["will make", "made", "make"],
+        answer: 1,
         why: t(
           "It’s high time dan keyin Past Simple ishlatiladi.",
           "После It's high time используется Past Simple.",
@@ -2287,8 +2287,8 @@ export const GRAMMAR: GrammarLesson[] = [
       },
       {
         prompt: "She wishes she ___ that expensive dress — now she has no money.",
-        options: ["didn't buy", "wouldn't buy", "hadn't bought"],
-        answer: 2,
+        options: ["hadn't bought", "didn't buy", "wouldn't buy"],
+        answer: 0,
         why: t(
           "Koʻylak allaqachon sotib olingan — oʻtmish uchun afsus: Past Perfect.",
           "Платье уже куплено — сожаление о прошлом: Past Perfect.",

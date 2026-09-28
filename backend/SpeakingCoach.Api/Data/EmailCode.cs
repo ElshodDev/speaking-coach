@@ -11,6 +11,9 @@ public enum EmailCodePurpose
     /// <summary>Parolsiz kirish: emailga kelgan kod bilan (telefonda parol yozish noqulay).</summary>
     /// <remarks>Bazada matn sifatida saqlanadi (HasConversion&lt;string&gt;, 20 belgi) — migratsiya kerak emas.</remarks>
     Login = 2,
+
+    /// <summary>Emailni almashtirish/qo'shish: kod YANGI manzilga yuboriladi va shu manzilga bog'lanadi.</summary>
+    ChangeEmail = 3,
 }
 
 /// <summary>

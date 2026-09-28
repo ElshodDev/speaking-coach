@@ -23,7 +23,9 @@ public record QuotaStatus(QuotaCounter Exercises, QuotaCounter Words, bool Unlim
 /// <summary>
 /// Kunlik limitlar (sozlanadi): Ai:ExercisesPerDay, Ai:WordsPerDay,
 /// Ai:GuestExercisesPerDay, Ai:GuestWordsPerDay. Mehmonga kamroq — hisob
-/// ochishga qo'shimcha sabab.
+/// ochishga qo'shimcha sabab. Qo'shimcha (xotirada): Ai:TalkTurnsPerDay —
+/// AI suhbatdagi navbatlar, Ai:AuthoringPerDay — botda test tayyorlash urinishlari.
+/// Kun — Toshkent vaqti bilan (TashkentTime).
 /// </summary>
 public class AiQuotaOptions
 {
@@ -33,6 +35,8 @@ public class AiQuotaOptions
     public int GuestWords { get; }
     public int Shadowing { get; }
     public int GuestShadowing { get; }
+    public int TalkTurns { get; }
+    public int Authoring { get; }
 
     public AiQuotaOptions(IConfiguration config)
     {
@@ -43,6 +47,8 @@ public class AiQuotaOptions
         GuestWords = Read("Ai:GuestWordsPerDay", 20);
         Shadowing = Read("Ai:ShadowingPerDay", 60);
         GuestShadowing = Read("Ai:GuestShadowingPerDay", 10);
+        TalkTurns = Read("Ai:TalkTurnsPerDay", 40);
+        Authoring = Read("Ai:AuthoringPerDay", 10);
     }
 
     public int LimitFor(AiKind kind, bool guest) => (kind, guest) switch
@@ -57,7 +63,7 @@ public class AiQuotaOptions
 }
 
 /// <summary>
-/// Mehmonlar hisoblagichi — IP bo'yicha, xotirada. Server qayta ishga
+/// Mehmonlar hisoblagichi — IP bo'yicha, xotirada, Toshkent kuni bo'yicha. Server qayta ishga
 /// tushsa nolga tushadi — mehmon uchun bu yetarli (asosiy himoya —
 /// daqiqalik rate limit), hisobi borlar uchun esa bazada saqlanadi.
 /// </summary>
@@ -73,6 +79,49 @@ public class GuestQuotaStore
         // Eski kunlarni tozalaymiz — lug'at cheksiz o'smasin.
         foreach (var key in _counts.Keys.Where(k => k.Day < day)) _counts.TryRemove(key, out _);
     }
+}
+
+/// <summary>
+/// Bazasiz kunlik hisoblagichlar (sxema o'zgarmasin): AI suhbat navbatlari va
+/// botda test tayyorlash. Bitta server — xotirada yetarli; qayta ishga tushsa
+/// nolga tushadi (asosiy himoya — umumiy AI byudjeti va AiUsage).
+/// TryTake — atomar: "joy bormi" va "yozish" bitta qadamda (parallel so'rovlar
+/// limitni aylanib o'ta olmaydi); AI xato bersa — Refund.
+/// </summary>
+public class AiDailyCaps
+{
+    private readonly object _lock = new();
+    private readonly Dictionary<(string Key, DateOnly Day), int> _counts = new();
+
+    public int Used(string key, DateOnly day)
+    {
+        lock (_lock) return _counts.TryGetValue((key, day), out var n) ? n : 0;
+    }
+
+    public bool TryTake(string key, DateOnly day, int limit)
+    {
+        lock (_lock)
+        {
+            var n = _counts.TryGetValue((key, day), out var v) ? v : 0;
+            if (n >= limit) return false;
+            _counts[(key, day)] = n + 1;
+            // Eski kunlar — lug'at cheksiz o'smasin.
+            if (_counts.Count > 1000)
+                foreach (var old in _counts.Keys.Where(k => k.Day < day).ToList()) _counts.Remove(old);
+            return true;
+        }
+    }
+
+    public void Refund(string key, DateOnly day)
+    {
+        lock (_lock)
+        {
+            if (_counts.TryGetValue((key, day), out var n) && n > 0) _counts[(key, day)] = n - 1;
+        }
+    }
+
+    public static string TalkKey(Guid userId) => "talk:" + userId.ToString("N");
+    public static string AuthoringKey(Guid userId) => "author:" + userId.ToString("N");
 }
 
 /// <summary>
@@ -97,7 +146,8 @@ public class AiQuotaService
         _guests = guests;
     }
 
-    public static DateOnly Today(DateTime utcNow) => DateOnly.FromDateTime(utcNow);
+    /// <summary>Limit kuni — Toshkent vaqti bilan (UTC+5): yarim tunda yangilanadi.</summary>
+    public static DateOnly Today(DateTime utcNow) => TashkentTime.Today(utcNow);
 
     private static string IpOf(HttpRequest request) => request.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 

@@ -12,6 +12,9 @@ public static class SpeakingWritingEndpoints
     /// <summary>Mavzu — bitta savol yoki sarlavha; uzun matn promptni shishirmasin.</summary>
     public const int MaxTopicChars = 300;
 
+    /// <summary>Speaking: bitta yozuv (8 MB) + forma maydonlari.</summary>
+    private const long SpeakingBodyBytes = Uploads.MaxRecordingBytes + Uploads.FormOverheadBytes;
+
     public static void MapSpeakingWritingEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapPost("/api/speaking/submit", async (
@@ -27,8 +30,16 @@ public static class SpeakingWritingEndpoints
             {
                 return Results.BadRequest(request.Error("speaking.multipart"));
             }
+            // Hajm — formani o'qishdan OLDIN (Content-Length bo'yicha).
+            if (Uploads.DeclaredTooLarge(request, SpeakingBodyBytes))
+            {
+                return Results.Json(request.Error("audio.too_big", Uploads.MaxRecordingBytes / Uploads.Mb), statusCode: StatusCodes.Status413PayloadTooLarge);
+            }
 
-            var form = await request.ReadFormAsync();
+            // "Katta so'rov" joyi — audio xotiraga o'qilishidan (va base64'dan) OLDIN.
+            var ct = request.HttpContext.RequestAborted;
+            using var slot = await Uploads.EnterIfLargeAsync(request, ct);
+            var form = await request.ReadFormAsync(ct);
             var audioFile = form.Files.GetFile("audio");
             var topic = form["topic"].ToString();
             var level = LearnerLevel.Normalize(form["level"].ToString());
@@ -47,10 +58,9 @@ public static class SpeakingWritingEndpoints
                 return Results.BadRequest(request.Error("topic.too_long", MaxTopicChars));
             }
 
-            const long maxBytes = 10 * 1024 * 1024; // 10 MB
-            if (audioFile.Length > maxBytes)
+            if (audioFile.Length > Uploads.MaxRecordingBytes)
             {
-                return Results.BadRequest(request.Error("speaking.too_big"));
+                return Results.BadRequest(request.Error("audio.too_big", Uploads.MaxRecordingBytes / Uploads.Mb));
             }
 
             // Kunlik AI limiti — Gemini'ga murojaatdan OLDIN.
@@ -59,12 +69,7 @@ public static class SpeakingWritingEndpoints
 
             var submissionId = Guid.NewGuid();
 
-            byte[] audioBytes;
-            using (var memoryStream = new MemoryStream())
-            {
-                await audioFile.CopyToAsync(memoryStream);
-                audioBytes = memoryStream.ToArray();
-            }
+            var audioBytes = await Uploads.ReadAsync(audioFile, ct);
 
             // Saqlash ikki shartga bog'liq:
             // 1) ?save=false emas — barqarorlik testi tarixni "axlat" bilan
@@ -109,14 +114,14 @@ public static class SpeakingWritingEndpoints
                 await quotas.RecordAsync(request, AiKind.Exercise);
                 return Results.Ok(new { submissionId, evaluation, saved = shouldSave, newCards });
             }
-            catch (Exception ex)
+            catch (Exception ex) when (AiErrors.Handles(ex, request))
             {
-                // Texnik sabab (masalan, Gemini band) faqat logga yoziladi;
-                // foydalanuvchiga — uning tilidagi tushunarli xabar.
+                // Texnik sabab faqat logga yoziladi; foydalanuvchiga — uning tilidagi
+                // tushunarli xabar. "AI band" (AiBusyException) — markaziy 503.
                 logger.LogError(ex, "Submission {Id}: xato", submissionId);
                 return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);
             }
-        }).RequireRateLimiting("ai");
+        }).RequireRateLimiting(RateLimits.AiPolicy).WithBodyLimit(SpeakingBodyBytes);
 
         app.MapGet("/api/speaking/history", (HttpRequest request, AppDbContext db, AuthService auth) =>
             HistoryQueries.GetHistoryAsync(ActivityType.Speaking, request, db, auth));
@@ -194,12 +199,12 @@ public static class SpeakingWritingEndpoints
                 await quotas.RecordAsync(request, AiKind.Exercise);
                 return Results.Ok(new { submissionId, evaluation, saved = shouldSave, newCards });
             }
-            catch (Exception ex)
+            catch (Exception ex) when (AiErrors.Handles(ex, request))
             {
                 logger.LogError(ex, "Writing submission {Id}: xato", submissionId);
                 return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);
             }
-        }).RequireRateLimiting("ai");
+        }).RequireRateLimiting(RateLimits.AiPolicy);
 
         app.MapGet("/api/writing/history", (HttpRequest request, AppDbContext db, AuthService auth) =>
             HistoryQueries.GetHistoryAsync(ActivityType.Writing, request, db, auth));

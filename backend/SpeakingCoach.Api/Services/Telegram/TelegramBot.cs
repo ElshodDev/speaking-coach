@@ -34,11 +34,13 @@ public partial class TelegramBot
     private readonly AdminOptions _admins;
     private readonly AuthoringRunner _runner;
     private readonly AdminService _adminStats;
+    private readonly AuthService _auth;
 
     public TelegramBot(AppDbContext db, ITelegramApi api, TelegramOptions options, ReviewService reviews,
         IWordService words, AiQuotaService quotas, TodayService today, ILogger<TelegramBot> logger,
-        AdminOptions admins, AuthoringRunner runner, AdminService adminStats)
+        AdminOptions admins, AuthoringRunner runner, AdminService adminStats, AuthService auth)
     {
+        _auth = auth;
         _adminStats = adminStats;
         _admins = admins;
         _runner = runner;
@@ -83,11 +85,29 @@ public partial class TelegramBot
     {
         var account = await _db.TelegramAccounts.FirstOrDefaultAsync(a => a.ChatId == chatId, ct);
         var user = account is null ? null : await _db.Users.FirstOrDefaultAsync(u => u.Id == account.UserId, ct);
+        await TouchLastSeenAsync(account, ct);
         // Til: ulangan hisobniki → /lang da tanlangani → Telegram ilovasi tili.
         var lang = account?.Lang
             ?? (await _db.TelegramChats.Where(t => t.ChatId == chatId).Select(t => t.Lang).FirstOrDefaultAsync(ct))
             ?? BotLogic.LangFromTelegram(from.LanguageCode);
         return new Ctx(chatId, from, account, user, lang);
+    }
+
+    /// <summary>Statistika ("botda 7 kunda faol"): oxirgi ko'rilgan vaqt — soatiga ko'pi bilan bir yozuv.</summary>
+    private async Task TouchLastSeenAsync(TelegramAccount? account, CancellationToken ct)
+    {
+        var now = DateTime.UtcNow;
+        if (account is null || !BotLogic.ShouldTouchLastSeen(account.LastSeenAtUtc, now)) return;
+        try
+        {
+            account.LastSeenAtUtc = now;
+            await _db.SaveChangesAsync(ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // Statistika uchun — xabarni qayta ishlashga xalaqit bermasin.
+            _logger.LogWarning(ex, "LastSeenAtUtc yozilmadi: chat {Chat}", account.ChatId);
+        }
     }
 
     // ---------------- Xabarlar ----------------
@@ -101,10 +121,15 @@ public partial class TelegramBot
             var start = BotLogic.StartPayload(text);
             if (start is not null)
             {
-                if (start.Length > 0) await LinkAsync(c, start, ct);
+                if (TelegramLoginRules.NonceFromStart(start) is { } nonce) await StartWebLoginAsync(c, msg.Chat, nonce, ct);
+                else if (start.StartsWith(TelegramLoginRules.StartPrefix, StringComparison.Ordinal)) await _api.SendMessageAsync(c.ChatId, c.T("tglogin.expired"), ct: ct);
+                else if (start.Length > 0) await LinkAsync(c, start, ct);
                 else await WelcomeAsync(c, ct);
                 return;
             }
+
+            // Saytga kirish: foydalanuvchi saytdagi 2 xonali raqamni yozdi.
+            if (await TryTypedWebLoginAsync(c, msg.Chat, text, ct)) return;
 
             if (BotLogic.IsCommand(text, "/guide"))
             {
@@ -135,7 +160,8 @@ public partial class TelegramBot
                 }
                 var o = await _adminStats.GetOverviewAsync(c.Account?.TzOffsetMinutes ?? -300);
                 await _api.SendMessageAsync(c.ChatId, c.T("bot.admin_stats",
-                    o.VerifiedUsers, o.TotalUsers, o.NewUsersToday, o.NewUsers7d, o.ActiveToday, o.Active7d, o.Active30d), ct: ct);
+                    o.VerifiedUsers, o.TotalUsers, o.NewUsersToday, o.NewUsers7d, o.ActiveToday, o.Active7d, o.Active30d,
+                    BotLogic.Html(AdminService.SignupSummary(o.Signups)), o.TelegramLinked, o.TelegramActive7d, o.Feedback7d), ct: ct);
                 return;
             }
 
@@ -207,6 +233,11 @@ public partial class TelegramBot
         {
             _logger.LogWarning(ex, "Telegram javobi: chat {Chat}", c.ChatId);
         }
+        catch (AiBusyException)
+        {
+            // AI band (kvota yoki saqlagich) — xato emas, foydalanuvchiga tushunarli xabar.
+            await TrySendAsync(c.ChatId, c.T("ai_busy"), ct);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Bot xabarini qayta ishlashda xato: chat {Chat}", c.ChatId);
@@ -225,7 +256,9 @@ public partial class TelegramBot
     }
 
     /// <summary>Ulanmagan foydalanuvchiga: hisobni ulash, qo'llanma va til tanlash (birinchi xabardanoq).</summary>
-    private IReadOnlyList<IReadOnlyList<TgButton>> WelcomeButtons(Ctx c) => [.. LinkButton(c), GuideRow(c), .. BotLogic.LangButtons(c.Lang)];
+    /// <remarks>"Ilovani ochish" LinkButton'da bor — qo'llanma qatorida takrorlanmaydi.</remarks>
+    private IReadOnlyList<IReadOnlyList<TgButton>> WelcomeButtons(Ctx c) =>
+        [.. LinkButton(c), [new TgButton(c.T("bot.guide_button"), BotLogic.Encode(new BotCallback.ShowGuide()))], .. BotLogic.LangButtons(c.Lang)];
 
     /// <summary>"Saytda nimalar bor?" va "Ilovani ochish".</summary>
     private TgButton[] GuideRow(Ctx c) =>
@@ -256,8 +289,16 @@ public partial class TelegramBot
         return nc.T("bot.saved");
     }
 
-    private IReadOnlyList<IReadOnlyList<TgButton>> LinkButton(Ctx c) =>
-        new[] { new[] { _options.SiteButton(c.T("bot.link_button"), "profile") } };
+    /// <summary>
+    /// Ulanmagan foydalanuvchiga: "Ilovani ochish" (Mini App — hisob Telegram
+    /// orqali avtomatik ochiladi, boshi berk ko'cha emas) va saytda hisobi
+    /// borlar uchun "Hisobni ulash".
+    /// </summary>
+    private IReadOnlyList<IReadOnlyList<TgButton>> LinkButton(Ctx c) => new[]
+    {
+        new[] { _options.SiteButton(c.T("bot.open_app"), "") },
+        new[] { _options.SiteButton(c.T("bot.link_button"), "profile") },
+    };
 
     private async Task<bool> RequireLinkAsync(Ctx c, CancellationToken ct)
     {
@@ -454,9 +495,15 @@ public partial class TelegramBot
                 await SendGuideAsync(c, ct);
                 return;
             }
-                        if (action is BotCallback.PickLang pick)
+            if (action is BotCallback.PickLang pick)
             {
                 toast = await PickLangAsync(c, pick.Lang, messageId, ct);
+                return;
+            }
+            // Saytga kirish tasdig'i — hisob ulanmagan bo'lsa ham (aynan shu yo'l bilan ochiladi).
+            if (action is BotCallback.WebLogin login)
+            {
+                toast = await HandleWebLoginAsync(c, cb, login, messageId, ct);
                 return;
             }
             if (c.User is null)
@@ -513,9 +560,20 @@ public partial class TelegramBot
 
                 case BotCallback.AddWord add:
                 {
-                    var e = RecentWords.TryGetValue((chatId, add.Word), out var cached)
-                        ? cached
-                        : await _words.ExplainAsync(add.Word, "", c.User.Level, c.Lang, ct);
+                    WordExplanation e;
+                    if (RecentWords.TryGetValue((chatId, add.Word), out var cached)) e = cached;
+                    else
+                    {
+                        // Keshda yo'q (masalan server qayta ishga tushgan) — AI chaqiriladi, demak kvota ham hisoblanadi.
+                        var denied = await _quotas.CheckAsync(c.User, $"tg:{chatId}", AiKind.Word);
+                        if (denied is not null)
+                        {
+                            toast = c.T(denied.Value.Key, denied.Value.Args);
+                            break;
+                        }
+                        e = await _words.ExplainAsync(add.Word, "", c.User.Level, c.Lang, ct);
+                        await _quotas.RecordAsync(c.User, $"tg:{chatId}", AiKind.Word);
+                    }
                     var added = await _reviews.AddCardsAsync(c.User.Id, null, new[]
                     {
                         new NewCard(ReviewCardKind.Word, e.Word, e.Translation, Vocabulary.ComposeNote(e.PartOfSpeech, e.DefinitionEn, e.Example)),
@@ -564,6 +622,10 @@ public partial class TelegramBot
         catch (TelegramApiException ex)
         {
             _logger.LogWarning(ex, "Telegram javobi (callback): chat {Chat}", chatId);
+        }
+        catch (AiBusyException)
+        {
+            toast = c.T("ai_busy");
         }
         catch (Exception ex)
         {

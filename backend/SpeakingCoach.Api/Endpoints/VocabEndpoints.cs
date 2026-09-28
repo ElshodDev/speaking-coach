@@ -83,6 +83,6 @@ public static class VocabEndpoints
             }
             await db.SaveChangesAsync();
             return Results.Ok(new { added });
-        });
+        }).RequireRateLimiting(RateLimits.WritePolicy);
     }
 }

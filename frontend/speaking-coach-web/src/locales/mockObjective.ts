@@ -19,7 +19,7 @@ export const mockObjMsg = defineMessages(
     repeatOldest: '🔁 Eng eskisini qayta ishlash',
     aiNew: '✨ AI yangi test yaratsin',
     aiShort: '✨ AI yangi test',
-    sourceNote: '📚 Listening va Reading’da avval ilovaning tayyor testlari beriladi. ✨ AI tugmasi — sunʼiy intellekt siz uchun yangi test tuzadi (kunlik limit bilan).',
+    sourceNote: '📚 Listening va Readingʼda avval ilovaning tayyor testlari beriladi. ✨ AI tugmasi — sunʼiy intellekt siz uchun yangi test tuzadi (kunlik limit bilan).',
     aiPreparing: 'Sunʼiy intellekt yangi test tuzmoqda… 30–90 soniya.',
     fromAi: '✨ Bu testni sunʼiy intellekt tuzgan.',
     passage: (n: number) => `${n}-matn`,
@@ -66,7 +66,7 @@ export const mockObjMsg = defineMessages(
     script: 'Yozuv matni (skript)',
     texts: 'Matnlar',
     bandNote:
-      'Band ielts.org’dagi oʻrtacha nuqtalar asosida hisoblangan (Listening va Academic Reading: 16 → 5, 23 → 6, 30 → 7, 35 → 8). Haqiqiy imtihonda chegara test versiyasiga qarab biroz farq qiladi.',
+      'Band ielts.orgʼdagi oʻrtacha nuqtalar asosida hisoblangan (Listening va Academic Reading: 16 → 5, 23 → 6, 30 → 7, 35 → 8). Haqiqiy imtihonda chegara test versiyasiga qarab biroz farq qiladi.',
     // To'liq imtihon
     chooseVariant: 'Qaysi IELTS turini topshirasiz?',
     fullRules: [

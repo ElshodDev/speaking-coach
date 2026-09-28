@@ -90,12 +90,12 @@ public static class ComprehensionEndpoints
                     await quotas.RecordAsync(request, AiKind.Exercise);
                     return result;
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (AiErrors.Handles(ex, request))
                 {
                     logger.LogError(ex, "{Kind} mashqini yaratishda xato", path);
                     return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);
                 }
-            }).RequireRateLimiting("ai");
+            }).RequireRateLimiting(RateLimits.AiPolicy);
 
             // Tayyor mashqlar: tanlangan darajada nechtasi bajarilgan va barcha darajalardagi ro'yxat
             // (foydalanuvchi o'zi tanlaydi). Mehmon ishlaganlari brauzerda saqlanadi.
@@ -179,36 +179,25 @@ public static class ComprehensionEndpoints
                     saved = userId is not null,
                     newCards,
                 });
-            }).RequireRateLimiting("ai");
+            }).RequireRateLimiting(RateLimits.WritePolicy); // AI'siz — javoblar serverda tekshiriladi
 
             app.MapGet($"/api/{path}/history", (HttpRequest request, AppDbContext db, AuthService auth) =>
                 HistoryQueries.GetHistoryAsync(type, request, db, auth));
         }
     }
 
-    /// <summary>Foydalanuvchi bajargan mashqlar sarlavhalari (eng yangisi birinchi) — tayyor mashqlardan hali ishlanmaganini tanlash uchun.</summary>
-    private static async Task<List<string>> DoneTitlesAsync(AppDbContext db, Guid userId, ActivityType type)
-    {
-        var prompts = await db.Activities
-            .Where(a => a.UserId == userId && a.Type == type)
-            .OrderByDescending(a => a.CreatedAtUtc)
-            .Take(300)
-            .Select(a => a.PromptData)
-            .ToListAsync();
-        var titles = new List<string>();
-        foreach (var p in prompts)
-        {
-            try
-            {
-                using var doc = JsonDocument.Parse(p);
-                if (doc.RootElement.ValueKind == JsonValueKind.Object && doc.RootElement.TryGetProperty("title", out var t) && t.ValueKind == JsonValueKind.String)
-                    titles.Add(t.GetString()!);
-            }
-            catch (JsonException)
-            {
-                // eski yoki buzilgan yozuv — o'tkazib yuboramiz
-            }
-        }
-        return titles;
-    }
+    /// <summary>
+    /// Foydalanuvchi bajargan mashqlar sarlavhalari (eng yangisi birinchi) — tayyor mashqlardan hali ishlanmaganini tanlash uchun.
+    /// Butun matn (passage, savollar) bazadan tortilmaydi: sarlavha Postgres'da jsonb'dan o'qiladi.
+    /// </summary>
+    public const string DoneTitlesSql = """
+        SELECT "PromptData"->>'title' AS "Value"
+        FROM "Activities"
+        WHERE "UserId" = {0} AND "Type" = {1} AND jsonb_typeof("PromptData"->'title') = 'string'
+        ORDER BY "CreatedAtUtc" DESC
+        LIMIT 300
+        """;
+
+    private static Task<List<string>> DoneTitlesAsync(AppDbContext db, Guid userId, ActivityType type) =>
+        db.Database.SqlQueryRaw<string>(DoneTitlesSql, userId, type.ToString()).ToListAsync();
 }

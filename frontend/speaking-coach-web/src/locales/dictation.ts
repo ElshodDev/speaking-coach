@@ -26,7 +26,7 @@ export const dictationMsg = defineMessages(
     saved: 'Natija saqlandi (+XP).',
     guestNote: 'Tizimga kirsangiz, natija XP va kunlik rejaga qoʻshiladi.',
     again: '🔁 Yana 5 ta gap',
-    noSpeech: 'Bu brauzer matnni ovoz chiqarib oʻqiy olmaydi. Chrome yoki Safari’da oching.',
+    noSpeech: 'Bu brauzer matnni ovoz chiqarib oʻqiy olmaydi. Chrome yoki Safariʼda oching.',
     enterHint: 'Enter — tekshirish',
   },
   {
