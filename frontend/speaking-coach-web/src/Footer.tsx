@@ -4,7 +4,7 @@ import { useLang, useT } from './i18n';
 import { legalMsg, type FeedbackKind } from './locales/legal';
 
 /** Aloqa emaili. Bo'sh bo'lsa — "Aloqa" qatori ko'rsatilmaydi. */
-export const CONTACT_EMAIL = 'elshodibadullayev28@gmail.com';
+export const CONTACT_EMAIL = '';
 
 export const FEEDBACK_MAX = 2000;
 const KINDS: FeedbackKind[] = ['bug', 'idea', 'content', 'ai', 'other'];
