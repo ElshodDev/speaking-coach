@@ -40,7 +40,7 @@ export const vocabMsg = defineMessages(
     notInVocab: (q: string) => `“${q}” lugʻatingizda yoʻq — “Maʼnosi” tugmasini bosib qoʻshing.`,
     nothingFound: 'Hech narsa topilmadi.',
     pronounce: (word: string) => `“${word}” talaffuzi`,
-    dueMark: ' · ⏰ navbatda',
+    dueMark: ' · navbatda',
   },
   {
     ru: {
@@ -79,7 +79,7 @@ export const vocabMsg = defineMessages(
       notInVocab: (q: string) => `Слова «${q}» нет в вашем словаре — нажмите «Значение», чтобы добавить его.`,
       nothingFound: 'Ничего не найдено.',
       pronounce: (word: string) => `Произношение слова «${word}»`,
-      dueMark: ' · ⏰ на очереди',
+      dueMark: ' · на очереди',
     },
     en: {
       status: { New: 'New', Learning: 'Learning', Known: 'Known' },
@@ -116,7 +116,7 @@ export const vocabMsg = defineMessages(
       notInVocab: (q: string) => `“${q}” is not in your vocabulary — press “Meaning” to add it.`,
       nothingFound: 'Nothing found.',
       pronounce: (word: string) => `Pronunciation of “${word}”`,
-      dueMark: ' · ⏰ due',
+      dueMark: ' · due',
     },
   },
 );

@@ -317,7 +317,7 @@ export function Comprehension({
               <div className="muted small">{t.result}</div>
               <div style={{ fontSize: '2rem', fontWeight: 800 }}>
                 {result.score}/{result.total}
-                {result.score === result.total ? ' 🎉' : ''}
+                
               </div>
               <div className="source-choice" style={{ marginTop: 8, justifyContent: 'center' }}>
                 <button className="btn btn-primary" onClick={() => generate('bank')} disabled={busy}>

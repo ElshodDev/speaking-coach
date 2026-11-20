@@ -71,7 +71,7 @@ export function DemoStart({ email, onStarted, go }: { email: string | null; onSt
         </>
       ) : (
         <>
-          <h3 style={{ marginTop: 0 }}>⏳ {t.creating}</h3>
+          <h3 style={{ marginTop: 0 }}>{t.creating}</h3>
           <p className="muted small">{t.creatingHint}</p>
         </>
       )}

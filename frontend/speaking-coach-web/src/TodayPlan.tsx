@@ -46,7 +46,7 @@ export function TodayPlan({ go }: { go: (route: string) => void }) {
       </div>
       {exam && (plan.daysToExam !== null || plan.targetScore) && (
         <p className="small" style={{ margin: '6px 0 0' }} data-testid="plan-countdown">
-          {plan.daysToExam !== null ? <strong>⏳ {t.countdown(plan.daysToExam, exam)}</strong> : <strong>{exam}</strong>}
+          {plan.daysToExam !== null ? <strong>{t.countdown(plan.daysToExam, exam)}</strong> : <strong>{exam}</strong>}
           {plan.targetScore && <span className="muted"> · {t.target(plan.targetScore)}</span>}
         </p>
       )}

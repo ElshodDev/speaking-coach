@@ -287,7 +287,7 @@ export function Vocab({
                           speakAsync(w.word);
                         }}
                       >
-                        🔊
+                        <Icon name="volume" size={18} />
                       </button>
                     )}
                   </div>

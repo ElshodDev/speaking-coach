@@ -4,6 +4,7 @@ import { useT } from './i18n';
 import { funMsg } from './locales/fun';
 import { loadBest, quizUrl, saveBest, telegramShareUrl, type QuizQuestion } from './funLogic';
 import { PageHeader } from './ui';
+import { Icon } from './Icon';
 
 interface QuizData {
   questions: QuizQuestion[];
@@ -94,7 +95,7 @@ export function Quiz({ go, loggedIn }: { go: (route: string) => void; loggedIn: 
               void navigator.clipboard?.writeText(`${text} ${url}`).then(() => setCopied(true)).catch(() => undefined);
             }}
           >
-            {copied ? t.copied : '📋'}
+            {copied ? t.copied : <Icon name="copy" size={18} />}
           </button>
         </div>
         {loggedIn && <button className="btn-link small" style={{ marginTop: 12 }} onClick={() => go('review')}>{t.review}</button>}

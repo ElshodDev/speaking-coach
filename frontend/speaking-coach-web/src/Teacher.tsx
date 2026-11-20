@@ -267,7 +267,7 @@ export function TeacherGroup({ id, go }: { id: string; go: (route: string) => vo
                       {data.assignments.map((a) => {
                         const s = data.results[a.id]?.[m.userId];
                         const cell = !s ? t.notDone
-                          : s.done ? `${s.score ?? '✅'}${s.late ? ` (${t.late})` : ''}`
+                          : s.done ? `${s.score ?? '✓'}${s.late ? ` (${t.late})` : ''}`
                           : s.progress !== null && s.target ? t.progress(s.progress, s.target)
                           : t.notDone;
                         return (

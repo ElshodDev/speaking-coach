@@ -201,7 +201,7 @@ export function CefrWriting({
             </strong>
           </span>
           <button className="btn btn-primary" onClick={confirmSubmit} disabled={status === 'submitting'}>
-            {status === 'submitting' ? '⏳' : tm.submit}
+            {status === 'submitting' ? '…' : tm.submit}
           </button>
         </div>
         <div className="chips" role="tablist" style={{ marginTop: 8 }}>
@@ -214,7 +214,7 @@ export function CefrWriting({
       </div>
 
       {error && <p className="error small" role="alert">{error}</p>}
-      {status === 'submitting' && <p className="small" role="status">⏳ {tm.submitting}</p>}
+      {status === 'submitting' && <p className="small" role="status">{tm.submitting}</p>}
 
       {(() => {
         const situation = tab !== '2' && (

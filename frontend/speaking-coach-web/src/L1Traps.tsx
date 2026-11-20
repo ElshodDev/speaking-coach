@@ -16,7 +16,7 @@ export function L1Hub({ go }: { go: (route: string) => void }) {
       <p className="muted small" style={{ margin: 0 }}>{t.subtitle}</p>
       {TRAP_SETS.map((s) => (
         <button key={s.id} className="card learn-card" style={{ textAlign: 'left' }} onClick={() => go(`learn/traps/${s.id}`)} data-testid="l1-set">
-          <strong>{s.emoji} {t.sets[s.id].title}</strong>
+          <strong>{t.sets[s.id].title}</strong>
           <span className="muted small">{t.sets[s.id].text}</span>
           <span className="tiny muted">
             {t.questions(s.items.length)}
@@ -52,7 +52,7 @@ export function L1Quiz({ setKey, go, loggedIn, onCardsAdded }: {
 
   const set = TRAP_SETS.find((s) => s.id === setKey);
   const title = set
-    ? `${set.emoji} ${t.sets[set.id].title}`
+    ? t.sets[set.id].title
     : `${t.byCategory}: ${tm.cats[setKey.slice(4)]?.name ?? setKey}`;
   const header = <PageHeader title={title} subtitle={t.title} onBack={() => go('learn/traps')} backLabel={t.back} />;
 

@@ -523,7 +523,7 @@ function App() {
             </div>
           )}
           <ErrorBoundary resetKey={route} onHome={() => go('home')}>
-            <Suspense fallback={<p className="muted" role="status" style={{ marginTop: 24 }}>⏳</p>}>{page}</Suspense>
+            <Suspense fallback={<p className="muted" role="status" style={{ marginTop: 24 }}>…</p>}>{page}</Suspense>
           </ErrorBoundary>
         </main>
         <Footer />

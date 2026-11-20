@@ -30,7 +30,7 @@ export function MockFullStart({ go, exam = 'ielts' }: { go: (route: string) => v
   if (exam === 'cefr') {
     return (
       <>
-        <PageHeader title={`${tc.title} · ${tc.full.replace(/^🏁\s*/, '')}`} subtitle={tc.fullText} onBack={() => go('mock')} backLabel={tm.title} />
+        <PageHeader title={`${tc.title} · ${tc.full}`} subtitle={tc.fullText} onBack={() => go('mock')} backLabel={tm.title} />
         <div className="card stack">
           <ul className="small" style={{ margin: 0, paddingLeft: 20 }}>
             {tc.fullRules.map((r) => <li key={r}>{r}</li>)}
@@ -87,7 +87,7 @@ export function MockFullStep({ variant, sessionId, step, go }: { variant: FullKi
           <ol className="small" style={{ margin: 0, paddingLeft: 20 }}>
             {FULL_ORDER.map((m, i) => (
               <li key={m} style={{ fontWeight: i === step ? 700 : 400, opacity: i < step ? 0.6 : 1 }}>
-                {t.moduleNames[m]} {i < step ? '✅' : ''}
+                {t.moduleNames[m]} {i < step ? '✓' : ''}
               </li>
             ))}
           </ol>
