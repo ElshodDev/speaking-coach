@@ -1,6 +1,8 @@
 // "Mening xatolarim": AI tuzatishlari turlarga ajratilgan (server hisoblaydi, AI'siz),
 // har bir tur uchun maslahat, oxirgi misollar va mos dars.
 import { useEffect, useState } from 'react';
+import { hasTrapsFor } from './l1Logic';
+import { l1Msg } from './locales/l1traps';
 import { apiJson } from './api';
 import { common, useT } from './i18n';
 import { mistakesMsg } from './locales/mistakes';
@@ -59,6 +61,7 @@ export function trendOf(c: Pick<MistakeCategory, 'last30' | 'prev30'>): number {
 
 export function Mistakes({ loggedIn, onLogin, go }: { loggedIn: boolean; onLogin: () => void; go: (route: string) => void }) {
   const t = useT(mistakesMsg);
+  const tl = useT(l1Msg);
   const cm = useT(common);
   const tp = useT(progressMsg);
   const [data, setData] = useState<MistakeReport | null>(null);
@@ -150,11 +153,18 @@ export function Mistakes({ loggedIn, onLogin, go }: { loggedIn: boolean; onLogin
                   ))}
                 </ul>
               </details>
-              {lesson && (
-                <button className="btn btn-outline btn-sm" style={{ alignSelf: 'flex-start' }} onClick={() => go(lesson)}>
-                  {lesson.startsWith('learn/words') ? t.openWords : t.openLesson}
-                </button>
-              )}
+              <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+                {lesson && (
+                  <button className="btn btn-outline btn-sm" onClick={() => go(lesson)}>
+                    {lesson.startsWith('learn/words') ? t.openWords : t.openLesson}
+                  </button>
+                )}
+                {hasTrapsFor(c.id) && (
+                  <button className="btn btn-outline btn-sm" onClick={() => go(`learn/traps/cat-${c.id}`)} data-testid="mistake-traps">
+                    🪤 {tl.fromMistakes}
+                  </button>
+                )}
+              </div>
             </section>
           );
         })}
