@@ -4,7 +4,7 @@ import { useT } from './i18n';
 import { homeMsg } from './locales/home';
 import { UsageNote } from './Usage';
 import { TelegramPromo } from './TelegramCard';
-import { GroupsShortcut, TasksCard } from './StudentTasks';
+import { TasksCard } from './StudentTasks';
 import { TodayPlan } from './TodayPlan';
 import { QuizTile, WordOfDay } from './WordOfDay';
 import { DemoHeroButton, isDemoEmail } from './Demo';
@@ -66,15 +66,15 @@ export function Home({
       <div className="card hero">
         <h1>{t.heroTitle}</h1>
         <p>{t.heroText}</p>
-        <div className="row">
-          <button className="btn btn-primary" onClick={() => open('speaking')}>
+        <div className="row hero-actions">
+          <button className="btn btn-primary" onClick={() => open('speaking')} data-testid="hero-start">
             {t.tryIt}
           </button>
-          <button className="btn-link" style={{ color: '#fff' }} onClick={() => go('register')}>
+          <button className="btn btn-ghost-light" onClick={() => go('register')}>
             {t.createAccount}
           </button>
-          <DemoHeroButton go={go} />
         </div>
+        <p className="tiny hero-note">{t.noCard} <DemoHeroButton go={go} /></p>
       </div>
     );
     const how = (
@@ -132,13 +132,14 @@ export function Home({
     );
   }
 
-  const name = displayName?.trim() || (isDemoEmail(email) ? td.name : email.split('@')[0]);
+  // Email yoki Telegram ID'ni ism sifatida ko'rsatmaymiz — ism bo'lmasa oddiy "Salom!".
+  const name = displayName?.trim() || (isDemoEmail(email) ? td.name : '');
   const goal = stats ? Math.min(100, Math.round((stats.reviewedToday / stats.dailyGoal) * 100)) : 0;
 
   const header = (
     <div className="page-header hero">
       <div>
-        <h1>{t.hello(name)}</h1>
+        <h1>{name ? t.hello(name) : t.helloAnon}</h1>
         <p>{stats && stats.reviewedToday >= stats.dailyGoal ? t.goalDone : t.goalTodo}</p>
       </div>
       {stats && (
@@ -157,7 +158,6 @@ export function Home({
     <>
       <TodayPlan go={go} />
       <TasksCard loggedIn go={go} />
-      <GroupsShortcut go={go} />
     </>
   );
   const statsCard = stats && (
@@ -194,9 +194,7 @@ export function Home({
           {t.review}
         </button>
       </div>
-    ) : (
-      stats && <div className="card soft small">{t.nothingDue}</div>
-    );
+    ) : null;
   const league = (
     <button className="card cta" style={{ width: '100%', font: 'inherit', color: 'inherit', textAlign: 'left', cursor: 'pointer' }} onClick={() => go('progress')}>
       <div>
@@ -242,13 +240,13 @@ export function Home({
     <>
       {header}
       {plan}
-      {statsCard}
       {due}
+      {practice}
+      {statsCard}
       <WordOfDay loggedIn />
       <QuizTile go={go} />
-      {promo}
       {league}
-      {practice}
+      {promo}
     </>
   );
 }

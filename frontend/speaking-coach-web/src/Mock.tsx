@@ -382,10 +382,14 @@ export function MockHub({ loggedIn, go, onLogin }: { loggedIn: boolean; go: (rou
         </p>
       )}
 
-      <p className="muted small" style={{ margin: '8px 0 0' }}>{to.sourceNote}</p>
-      <p className="muted tiny" style={{ margin: '6px 0 0' }} data-testid="mock-disclaimer">
-        {tl.disclaimer} {tl.cefrNote}
-      </p>
+      {/* Uzun izohlar yig'ilgan: kerak bo'lgan kishi ochib o'qiydi. */}
+      <details className="about-note" data-testid="mock-about">
+        <summary className="small">{to.aboutTitle}</summary>
+        <p className="muted small" style={{ margin: '8px 0 0' }}>{to.sourceNote}</p>
+        <p className="muted tiny" style={{ margin: '6px 0 0' }} data-testid="mock-disclaimer">
+          {tl.disclaimer} {tl.cefrNote}
+        </p>
+      </details>
       <div className="card-grid">
       <div className="card stack" style={{ borderColor: 'var(--primary)' }}>
         <h3 style={{ margin: 0 }}>{to.fullTitle}</h3>

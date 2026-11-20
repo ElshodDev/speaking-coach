@@ -43,11 +43,12 @@ public class TodayService(AppDbContext db, ReviewService reviews, ReadinessServi
         var lastMock = mocks.GroupBy(x => x.P.Module).ToDictionary(g => g.Key, g => g.Max(x => x.CreatedAtUtc));
 
         // Imtihonga tayyorlanayotganlar uchun — tayyorlik bahosidagi eng zaif ko'nikma rejada birinchi.
-        var focus = exam is null ? null : await readiness.ForUserAsync(user, today, now);
+        var newcomer = rows.Count(r => PlanLogic.SkillOf(r.Type) is not null || r.Type == ActivityType.MockExam) < PlanLogic.NewcomerActivities;
+        var focus = exam is null || newcomer ? null : await readiness.ForUserAsync(user, today, now);
         var plan = PlanLogic.Build(new PlanLogic.Input(
             user.Goal, user.DailyMinutes, user.ExamDate, today,
             stats.Total, stats.Due, stats.ReviewedToday, stats.DailyGoal,
-            practiced, mockedToday, lastMock, focus?.FocusSkill, focus?.FocusReason));
+            practiced, mockedToday, lastMock, focus?.FocusSkill, focus?.FocusReason, newcomer));
         return (plan, stats);
     }
 

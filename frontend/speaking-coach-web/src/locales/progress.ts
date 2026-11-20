@@ -46,6 +46,9 @@ export const progressMsg = defineMessages(
       fluency: 'Ravonlik',
     } as Record<Criterion, string>,
     badgesTitle: 'Nishonlar',
+    emptyTitle: 'Hali natija yoʻq',
+    emptyText: 'Birinchi mashqdan keyin shu yerda darajangiz, ball grafiklari, faollik kalendari va nishonlar paydo boʻladi.',
+    emptyButton: '▶ Birinchi mashqni boshlash',
     earned: 'Olindi',
     badges: {
       first_step: { title: 'Birinchi qadam', description: 'Birinchi mashqni bajaring' },
@@ -100,6 +103,9 @@ export const progressMsg = defineMessages(
         fluency: 'Беглость',
       },
       badgesTitle: 'Значки',
+      emptyTitle: 'Пока нет результатов',
+      emptyText: 'После первого упражнения здесь появятся ваш уровень, графики баллов, календарь активности и значки.',
+      emptyButton: '▶ Начать первое упражнение',
       earned: 'Получен',
       badges: {
         first_step: { title: 'Первый шаг', description: 'Выполните первое упражнение' },
@@ -152,6 +158,9 @@ export const progressMsg = defineMessages(
         fluency: 'Fluency',
       },
       badgesTitle: 'Badges',
+      emptyTitle: 'No results yet',
+      emptyText: 'After your first exercise you will see your level, score charts, an activity calendar and badges here.',
+      emptyButton: '▶ Start your first exercise',
       earned: 'Earned',
       badges: {
         first_step: { title: 'First step', description: 'Complete your first exercise' },

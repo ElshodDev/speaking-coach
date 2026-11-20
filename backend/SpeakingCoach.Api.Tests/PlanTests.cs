@@ -143,4 +143,17 @@ public class PlanTests
         Assert.True(PlanLogic.Build(In(practiced: ["shadowing"])).Items.Single(x => x.Kind == "shadowing").Done);
         Assert.Equal("shadowing", PlanLogic.SkillOf(ActivityType.Shadowing));
     }
+
+    [Fact]
+    public void Newcomer_gets_no_long_mock_or_focus_until_they_have_practised()
+    {
+        var p = PlanLogic.Build(In() with { Newcomer = true, FocusSkill = "writing", FocusReason = "missing" });
+        Assert.DoesNotContain(p.Items, x => x.Kind == "mock");
+        Assert.Null(p.FocusSkill);
+        Assert.Contains(p.Items, x => x.Kind == "practice");
+
+        // Imtihon yaqin bo'lsa — yangi bo'lsa ham mock bor.
+        var soon = PlanLogic.Build(In() with { Newcomer = true, ExamDate = Today.AddDays(5) });
+        Assert.Contains(soon.Items, x => x.Kind == "mock");
+    }
 }

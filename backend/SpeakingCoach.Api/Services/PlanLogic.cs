@@ -52,7 +52,13 @@ public static class PlanLogic
         IReadOnlyDictionary<string, DateTime> LastMockUtc, // modul → oxirgi urinish (tanlangan imtihon)
         // Tayyorlik bahosidan: eng zaif (yoki ma'lumoti yo'q) ko'nikma — rejada birinchi bo'ladi.
         string? FocusSkill = null,
-        string? FocusReason = null);
+        string? FocusReason = null,
+        // Yangi boshlovchi (oxirgi 60 kunda mashqlar juda kam): birinchi kunlardanoq 40–60 daqiqalik
+        // sinov imtihoni va "eng zaif ko'nikma" yozuvi chiqmaydi — avval oddiy qisqa mashqlar.
+        bool Newcomer = false);
+
+    /// <summary>Shuncha mashqdan kam bo'lsa — foydalanuvchi hali "yangi" (reja yengil).</summary>
+    public const int NewcomerActivities = 3;
 
     public record Item(string Key, string Kind, string Route, bool Done, int Minutes, int? Progress = null, int? Target = null);
 
@@ -75,7 +81,7 @@ public static class PlanLogic
         // Imtihonga tayyorlanayotganlarda — avval tayyorlik bahosidagi eng zaif ko'nikma.
         var day = i.Today.DayNumber;
         var practiceCount = minutes >= 30 ? 2 : 1;
-        var focus = i.Goal is "ielts" or "cefr" && i.FocusSkill is { } f && Skills.Contains(f) ? f : null;
+        var focus = !i.Newcomer && i.Goal is "ielts" or "cefr" && i.FocusSkill is { } f && Skills.Contains(f) ? f : null;
         var chosen = PracticeSkills(focus, day, practiceCount);
         foreach (var skill in chosen)
         {
@@ -97,7 +103,7 @@ public static class PlanLogic
             var recent = i.LastMockUtc.Values.Any(t => DateOnly.FromDateTime(t) > weekAgo);
             var mockedToday = i.MockedToday.Count > 0;
             // Imtihon yaqin — har kuni bitta bo'lim; aks holda haftasiga bitta (bajarilgan kuni ham ro'yxatda qoladi).
-            if (soon || !recent || mockedToday)
+            if (soon || mockedToday || (!recent && !i.Newcomer))
             {
                 // Bo'lim bo'yicha ma'lumot yo'q (tayyorlikni baholab bo'lmaydi) — avval o'sha bo'lim.
                 var module = mockedToday

@@ -2917,3 +2917,53 @@ main > *:nth-child(4) { animation-delay: 0.09s; }
     transform: translateY(-50%);
   }
 }
+
+/* Mehmon bosh sahifasi: asosiy, ikkinchi darajali va kichik havola */
+.hero-actions {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.btn-ghost-light {
+  background: transparent;
+  color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+}
+.btn-ghost-light:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+.hero .hero-note {
+  margin: 10px 0 0;
+  opacity: 0.85;
+}
+.hero-note .btn-link {
+  font-size: inherit;
+  padding: 0;
+}
+
+/* Mashqlar sahifasi: bo'lim sarlavhalari va butunlay bosiladigan kartalar */
+.section-title {
+  margin: 24px 0 4px;
+  font-size: 1.1rem;
+}
+.link-card {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  margin-top: 12px;
+}
+.link-arrow {
+  font-size: 1.3rem;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+/* Yig'iladigan izoh (masalan, Mock sahifasidagi manba va ogohlantirish) */
+.about-note {
+  margin: 8px 0 0;
+}
+.about-note summary {
+  cursor: pointer;
+  color: var(--primary);
+}

@@ -360,62 +360,15 @@ function App() {
       <>
         <PageHeader title={t.practiceTitle} subtitle={t.practiceSubtitle} />
         <UsageNote userKey={userKey} />
+        <h2 className="section-title">{t.sections.basic}</h2>
         <ExerciseTiles onOpen={(kind: ExerciseKind) => go(`practice/${kind}`)} />
+        <h2 className="section-title">{t.sections.exam}</h2>
         <div className="card-grid">
-        <div className="card cta" style={{ marginTop: 16 }} data-testid="learn-entry">
-          <div>
-            <strong>{t.tiles.learn.title}</strong>
-            <div className="muted small">{t.tiles.learn.text}</div>
-          </div>
-          <button className="btn btn-primary" onClick={() => go('learn')}>
-            {t.open}
-          </button>
+          {(['mock', 'part2'] as const).map((k) => <PracticeLink key={k} id={k} go={go} />)}
         </div>
-        <div className="card cta" style={{ marginTop: 16 }} data-testid="part2-entry">
-          <div>
-            <strong>{t.tiles.part2.title}</strong>
-            <div className="muted small">{t.tiles.part2.text}</div>
-          </div>
-          <button className="btn btn-primary" onClick={() => go('part2')}>
-            {t.open}
-          </button>
-        </div>
-        <div className="card cta" style={{ marginTop: 16 }} data-testid="talk-entry">
-          <div>
-            <strong>{t.tiles.talk.title}</strong>
-            <div className="muted small">{t.tiles.talk.text}</div>
-          </div>
-          <button className="btn btn-primary" onClick={() => go('talk')}>
-            {t.open}
-          </button>
-        </div>
-        <div className="card cta" style={{ marginTop: 16 }} data-testid="dictation-entry">
-          <div>
-            <strong>{t.tiles.dictation.title}</strong>
-            <div className="muted small">{t.tiles.dictation.text}</div>
-          </div>
-          <button className="btn btn-primary" onClick={() => go('dictation')}>
-            {t.open}
-          </button>
-        </div>
-        <div className="card cta" style={{ marginTop: 16 }} data-testid="shadowing-entry">
-          <div>
-            <strong>{t.tiles.shadowing.title}</strong>
-            <div className="muted small">{t.tiles.shadowing.text}</div>
-          </div>
-          <button className="btn btn-primary" onClick={() => go('shadowing')}>
-            {t.open}
-          </button>
-        </div>
-        <div className="card cta" style={{ marginTop: 16 }}>
-          <div>
-            <strong>{t.tiles.mock.title}</strong>
-            <div className="muted small">{t.tiles.mock.text}</div>
-          </div>
-          <button className="btn btn-primary" onClick={() => go('mock')}>
-            {t.open}
-          </button>
-        </div>
+        <h2 className="section-title">{t.sections.more}</h2>
+        <div className="card-grid">
+          {(['talk', 'dictation', 'shadowing', 'learn'] as const).map((k) => <PracticeLink key={k} id={k} go={go} />)}
         </div>
       </>
     );
@@ -720,3 +673,17 @@ function Profile({
 }
 
 export default App;
+
+/** Mashqlar sahifasidagi bo'lim kartasi: butun karta bosiladi (bir xil "Ochish" tugmalari o'rniga). */
+function PracticeLink({ id, go }: { id: 'learn' | 'part2' | 'talk' | 'dictation' | 'shadowing' | 'mock'; go: (route: string) => void }) {
+  const t = useT(appMsg);
+  return (
+    <button className="card cta link-card" onClick={() => go(id)} data-testid={`${id}-entry`}>
+      <div>
+        <strong>{t.tiles[id].title}</strong>
+        <div className="muted small">{t.tiles[id].text}</div>
+      </div>
+      <span className="link-arrow" aria-hidden>→</span>
+    </button>
+  );
+}

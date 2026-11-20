@@ -101,7 +101,7 @@ export function DemoHeroButton({ go }: { go: (route: string) => void }) {
   const enabled = useDemoEnabled();
   if (!enabled) return null;
   return (
-    <button className="btn-link" style={{ color: '#fff' }} onClick={() => go('demo')} data-testid="demo-hero">
+    <button className="btn-link" style={{ color: '#fff', textDecoration: 'underline' }} onClick={() => go('demo')} data-testid="demo-hero">
       {t.heroButton}
     </button>
   );
