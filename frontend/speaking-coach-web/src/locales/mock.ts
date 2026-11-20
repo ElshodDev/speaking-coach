@@ -5,7 +5,7 @@ type BandName = Record<number, string>;
 /** Mock imtihonlar: markaz, Speaking va Writing jarayoni, natija. */
 export const mockMsg = defineMessages(
   {
-    title: 'Mock imtihon',
+    title: 'Sinov imtihoni (mock)',
     subtitle: 'Haqiqiy imtihon formatida sinab koʻring — natija taxminiy band bilan.',
     loginNeeded: 'Mock imtihon natijasi saqlanadi — boshlash uchun tizimga kiring.',
     login: 'Kirish',
@@ -226,7 +226,7 @@ export const mockMsg = defineMessages(
       },
     },
     en: {
-      title: 'Mock exam',
+      title: 'Practice exam (mock)',
       subtitle: 'Practise in the real exam format — get an estimated band.',
       loginNeeded: 'Mock exam results are saved — log in to start.',
       login: 'Log in',

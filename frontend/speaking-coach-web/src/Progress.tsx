@@ -322,6 +322,27 @@ export function Progress({
     </>
   );
 
+  // Yangi foydalanuvchi: bo'sh grafik, kalendar va 0 ta nishon o'rniga — bitta tushunarli karta.
+  if (data.totalActivities === 0 && data.totalReviews === 0) {
+    return (
+      <>
+        <PageHeader title={t.title} />
+        <div className="card center" data-testid="progress-empty">
+          <div style={{ fontSize: '2.2rem' }} aria-hidden>🌱</div>
+          <h3 style={{ margin: '6px 0' }}>{t.emptyTitle}</h3>
+          <p className="muted small">{t.emptyText}</p>
+          <button className="btn btn-primary" onClick={() => go('practice/speaking')}>{t.emptyButton}</button>
+        </div>
+        {level}
+        <details className="about-note" style={{ margin: '16px 0' }}>
+          <summary>{t.badgesTitle} · 0/{data.badges.length}</summary>
+          {badges}
+        </details>
+        {boardCard}
+      </>
+    );
+  }
+
   // Kompyuter: chapda grafik va kalendar, o'ngda daraja, nishonlar va musobaqa.
   if (wide) {
     return (
