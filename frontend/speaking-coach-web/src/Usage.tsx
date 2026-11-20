@@ -36,7 +36,7 @@ export function UsageNote({ userKey, userLimit = 30 }: { userKey: string; userLi
   if (!text) return null;
   return (
     <p className={`usage small ${usage!.exercises.left === 0 ? 'usage-empty' : ''}`} role="status">
-      ⚡ {text}
+      {text}
     </p>
   );
 }

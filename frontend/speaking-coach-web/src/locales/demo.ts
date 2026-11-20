@@ -5,7 +5,7 @@ export const demoMsg = defineMessages(
   {
     offerTitle: 'Avval shunchaki koʻrib chiqmoqchimisiz?',
     offerText: 'Demo hisob — roʻyxatdan oʻtmasdan, tayyor natijalar, kartalar va seriya bilan. 24 soatdan keyin oʻchadi.',
-    offerButton: '👀 Demo hisob',
+    offerButton: 'Demo hisob',
     heroButton: 'Tayyor demo hisobni koʻrish →',
     creating: 'Demo hisob tayyorlanmoqda…',
     creatingHint: 'Server uxlab yotgan boʻlsa, bu 30–60 soniya olishi mumkin.',
@@ -20,7 +20,7 @@ export const demoMsg = defineMessages(
     ru: {
       offerTitle: 'Хотите сначала просто посмотреть?',
       offerText: 'Демо-аккаунт — без регистрации, с готовыми результатами, карточками и серией. Удаляется через 24 часа.',
-      offerButton: '👀 Демо-аккаунт',
+      offerButton: 'Демо-аккаунт',
       heroButton: 'Посмотреть демо-аккаунт →',
       creating: 'Готовим демо-аккаунт…',
       creatingHint: 'Если сервер спал, это может занять 30–60 секунд.',
@@ -34,7 +34,7 @@ export const demoMsg = defineMessages(
     en: {
       offerTitle: 'Just want to look around first?',
       offerText: 'A demo account — no sign-up, with results, flashcards and a streak already in place. Deleted after 24 hours.',
-      offerButton: '👀 Try the demo',
+      offerButton: 'Try the demo',
       heroButton: 'See a ready-made demo account →',
       creating: 'Preparing your demo account…',
       creatingHint: 'If the server was asleep, this can take 30–60 seconds.',

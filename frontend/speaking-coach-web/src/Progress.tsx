@@ -10,6 +10,7 @@ import { common, msg, useT } from './i18n';
 import { progressMsg, type BadgeId } from './locales/progress';
 import { PageHeader, Split } from './ui';
 import { useWide } from './layout';
+import { Icon } from './Icon';
 
 interface LevelInfo {
   level: number;
@@ -120,7 +121,7 @@ export function Progress({
       <>
         <PageHeader title={t.title} subtitle={t.guestSubtitle} />
         <div className="card center">
-          <div style={{ fontSize: '2.2rem' }}>📈</div>
+          <div className="empty-ico"><Icon name="progress" size={26} /></div>
           <p>{t.guestText}</p>
           <button className="btn btn-primary" onClick={onLogin}>
             {t.guestButton}
@@ -217,7 +218,7 @@ export function Progress({
             <div className="label">{t.statReviews}</div>
           </div>
           <div className="stat">
-            <div className="value">🔥 {data.bestStreak}</div>
+            <div className="value"><Icon name="flame" className="streak-ico" /> {data.bestStreak}</div>
             <div className="label">{t.statBestStreak}</div>
           </div>
         </div>
@@ -328,7 +329,7 @@ export function Progress({
       <>
         <PageHeader title={t.title} />
         <div className="card center" data-testid="progress-empty">
-          <div style={{ fontSize: '2.2rem' }} aria-hidden>🌱</div>
+          <div className="empty-ico"><Icon name="progress" size={26} /></div>
           <h3 style={{ margin: '6px 0' }}>{t.emptyTitle}</h3>
           <p className="muted small">{t.emptyText}</p>
           <button className="btn btn-primary" onClick={() => go('practice/speaking')}>{t.emptyButton}</button>

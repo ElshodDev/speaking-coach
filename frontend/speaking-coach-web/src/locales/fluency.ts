@@ -3,7 +3,7 @@ import { defineMessages } from '../i18n';
 /** Fluency.tsx — gapirish ravonligi o'lchovlari (Speaking natijasi va Progress). */
 export const fluencyMsg = defineMessages(
   {
-    title: '⏱ Ravonlik oʻlchovlari',
+    title: 'Ravonlik oʻlchovlari',
     subtitle: 'AI bahosidan alohida — yozuvingizdan hisoblangan sonlar.',
     wpm: 'soʻz / daqiqa',
     pace: {
@@ -37,7 +37,7 @@ export const fluencyMsg = defineMessages(
   },
   {
     ru: {
-      title: '⏱ Показатели беглости',
+      title: 'Показатели беглости',
       subtitle: 'Отдельно от оценки ИИ — цифры, посчитанные по вашей записи.',
       wpm: 'слов / мин',
       pace: {
@@ -70,7 +70,7 @@ export const fluencyMsg = defineMessages(
       estimate: 'Оценочно: посчитано автоматически по расшифровке и аудио.',
     },
     en: {
-      title: '⏱ Fluency metrics',
+      title: 'Fluency metrics',
       subtitle: 'Separate from the AI score — numbers measured from your recording.',
       wpm: 'words / min',
       pace: {

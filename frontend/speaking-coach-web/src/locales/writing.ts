@@ -4,7 +4,7 @@ import { defineMessages, enPlural, ruPlural } from '../i18n';
 export const writingMsg = defineMessages(
   {
     topic: 'Mavzu',
-    otherTopic: '🔀 Boshqa mavzu',
+    otherTopic: 'Boshqa mavzu',
     tooShort: (min: number) => `Matn juda qisqa (kamida ${min} ta belgi kerak).`,
     evaluating: 'Matn oʻqilmoqda va baholanmoqda... (5–15 soniya)',
     sendFailed: 'Matnni yuborib boʻlmadi',
@@ -12,7 +12,7 @@ export const writingMsg = defineMessages(
     essayAria: 'Insho matni',
     words: (n: number) => `${n} ta soʻz`,
     chars: (n: number, max: number) => `${n}/${max} belgi`,
-    submit: '✍️ Yuborish',
+    submit: 'Yuborish',
     draftSaved: 'Qoralama shu qurilmada saqlandi.',
     draftRestored: 'Oldingi qoralamangiz tiklandi.',
     evaluation: 'Baholash',
@@ -29,7 +29,7 @@ export const writingMsg = defineMessages(
   {
     ru: {
       topic: 'Тема',
-      otherTopic: '🔀 Другая тема',
+      otherTopic: 'Другая тема',
       tooShort: (min: number) => `Текст слишком короткий (нужно не менее ${min} ${ruPlural(min, 'символа', 'символов', 'символов')}).`,
       evaluating: 'Читаем и оцениваем текст... (5–15 секунд)',
       sendFailed: 'Не удалось отправить текст',
@@ -37,7 +37,7 @@ export const writingMsg = defineMessages(
       essayAria: 'Текст эссе',
       words: (n: number) => `${n} ${ruPlural(n, 'слово', 'слова', 'слов')}`,
       chars: (n: number, max: number) => `${n}/${max} ${ruPlural(max, 'символ', 'символа', 'символов')}`,
-      submit: '✍️ Отправить',
+      submit: 'Отправить',
       draftSaved: 'Черновик сохранён на этом устройстве.',
       draftRestored: 'Ваш прошлый черновик восстановлен.',
       evaluation: 'Оценка',
@@ -53,7 +53,7 @@ export const writingMsg = defineMessages(
     },
     en: {
       topic: 'Topic',
-      otherTopic: '🔀 Another topic',
+      otherTopic: 'Another topic',
       tooShort: (min: number) => `The text is too short (at least ${min} characters needed).`,
       evaluating: 'Reading and grading... (5–15 seconds)',
       sendFailed: 'Could not send the text',
@@ -61,7 +61,7 @@ export const writingMsg = defineMessages(
       essayAria: 'Essay text',
       words: (n: number) => `${n} ${enPlural(n, 'word', 'words')}`,
       chars: (n: number, max: number) => `${n}/${max} characters`,
-      submit: '✍️ Submit',
+      submit: 'Submit',
       draftSaved: 'Draft saved on this device.',
       draftRestored: 'Your previous draft has been restored.',
       evaluation: 'Evaluation',

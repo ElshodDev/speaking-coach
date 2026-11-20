@@ -34,6 +34,7 @@ import { setIsAdmin } from './adminFlag';
 import { confirmLeave } from './leaveGuard';
 import { common, LangSelect, useLang, useT } from './i18n';
 import { appMsg } from './locales/app';
+import { Icon } from './Icon';
 import { homeMsg } from './locales/home';
 import { planMsg } from './locales/plan';
 import { shouldOnboard } from './planLogic';
@@ -115,13 +116,7 @@ function useRoute(): [string, (route: string) => void] {
 
 // Pastki menyuda 5 ta bo'lim — telefonda undan ko'pi siqilib qoladi.
 // Profil tepadagi avatar tugmasida (ko'p ilovalardagi odatiy joy).
-const NAV = [
-  { id: 'home', icon: '🏠' },
-  { id: 'review', icon: '🔁' },
-  { id: 'vocab', icon: '📚' },
-  { id: 'practice', icon: '🎯' },
-  { id: 'progress', icon: '📈' },
-] as const;
+const NAV = [{ id: 'home' }, { id: 'review' }, { id: 'vocab' }, { id: 'practice' }, { id: 'progress' }] as const;
 
 function App() {
   const t = useT(appMsg);
@@ -344,7 +339,7 @@ function App() {
     page = (
       <>
         <PageHeader
-          title={`${exercise.emoji} ${tHome.exercises[exercise.kind].title}`}
+          title={tHome.exercises[exercise.kind].title}
           subtitle={tHome.exercises[exercise.kind].blurb}
           onBack={() => go('practice')}
         />
@@ -476,7 +471,7 @@ function App() {
           </a>
           <div className="topbar-right">
             <LangSelect />
-            {loggedIn && stats && <span className="badge streak">{t.streak(stats.streakDays)}</span>}
+            {loggedIn && stats && <span className="badge streak"><Icon name="flame" size={14} className="streak-ico" /> {t.streak(stats.streakDays)}</span>}
             {loggedIn ? (
               <button
                 className="avatar"
@@ -504,7 +499,7 @@ function App() {
             {NAV.map((n) => (
               <button key={n.id} aria-current={activeNav === n.id ? 'page' : undefined} onClick={() => go(n.id)}>
                 <span className="icon" aria-hidden>
-                  {n.icon}
+                  <Icon name={n.id} size={22} />
                 </span>
                 {t.nav[n.id]}
                 {n.id === 'review' && stats && stats.due > 0 && (
@@ -521,7 +516,7 @@ function App() {
           {isDemoEmail(email) && section !== 'demo' && <DemoBanner onRegister={leaveDemo} />}
           {sessionExpired && !loggedIn && (
             <div className="demo-banner" role="alert" data-testid="session-expired">
-              <span>🔒 {tNet.sessionExpired}</span>
+              <span>{tNet.sessionExpired}</span>
               {section !== 'login' && (
                 <button className="btn-link" onClick={toLogin}>{c.login} →</button>
               )}
@@ -679,11 +674,12 @@ function PracticeLink({ id, go }: { id: 'learn' | 'part2' | 'talk' | 'dictation'
   const t = useT(appMsg);
   return (
     <button className="card cta link-card" onClick={() => go(id)} data-testid={`${id}-entry`}>
-      <div>
+      <span className="link-icon"><Icon name={id} size={22} /></span>
+      <div style={{ flex: 1 }}>
         <strong>{t.tiles[id].title}</strong>
         <div className="muted small">{t.tiles[id].text}</div>
       </div>
-      <span className="link-arrow" aria-hidden>→</span>
+      <Icon name="arrow" className="link-arrow" />
     </button>
   );
 }

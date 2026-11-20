@@ -6,6 +6,7 @@ import { WordSheet } from './WordSheet';
 import { common, msg, useT } from './i18n';
 import { vocabMsg } from './locales/vocab';
 import { learnMsg } from './locales/learn';
+import { Icon } from './Icon';
 
 export type VocabStatus = 'New' | 'Learning' | 'Known';
 
@@ -163,7 +164,7 @@ export function Vocab({
   const topicsLink = (
     <button className="card cta" style={{ width: '100%', font: 'inherit', color: 'inherit', textAlign: 'left', cursor: 'pointer' }} onClick={() => go('learn/words')} data-testid="vocab-topics-link">
       <div>
-        <strong>🗂 {tl.words}</strong>
+        <strong>{tl.words}</strong>
         <div className="muted small">{tl.tileText}</div>
       </div>
       <span aria-hidden>→</span>
@@ -250,7 +251,7 @@ export function Vocab({
 
       {data && data.total === 0 && (
         <div className="card center">
-          <div style={{ fontSize: '2.2rem' }}>📚</div>
+          <div className="empty-ico"><Icon name="vocab" size={26} /></div>
           <p style={{ fontSize: '1.1rem', fontWeight: 600, margin: '4px 0' }}>{t.emptyTitle}</p>
           <p className="muted small" style={{ margin: '0 0 12px' }}>
             {t.emptyText}

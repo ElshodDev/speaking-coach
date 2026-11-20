@@ -158,7 +158,7 @@ p {
   height: 36px;
   border-radius: 50%;
   border: 2px solid transparent;
-  background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+  background: var(--primary);
   color: #fff;
   font: inherit;
   font-weight: 700;
@@ -450,7 +450,7 @@ textarea.input {
 /* ---------- Bosh sahifa ---------- */
 
 .hero {
-  background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+  background: var(--primary);
   color: #fff;
   border: none;
 }
@@ -891,7 +891,7 @@ table.data td {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+  background: var(--primary);
   color: #fff;
   font-weight: 800;
   font-size: 1.5rem;
@@ -2966,4 +2966,252 @@ main > *:nth-child(4) { animation-delay: 0.09s; }
 .about-note summary {
   cursor: pointer;
   color: var(--primary);
+}
+
+/* =====================================================================
+   Professional dizayn qatlami (2026-11). Yo'nalish: ELSA, Babbel, Magoosh,
+   British Council IELTS Prep kabi ilovalar — bitta asosiy rang, sokin fon,
+   chiziqli ikonkalar, emoji va binafsha gradientlarsiz, aniq tipografik
+   ierarxiya. Oldingi qoidalar ustiga yoziladi (tuzilish o'zgarmaydi).
+   ===================================================================== */
+
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #f2f4f7;
+  --border: #e4e7ec;
+  --text: #101828;
+  --muted: #5d6679;
+  --primary: #1d4ed8;
+  --primary-strong: #1e40af;
+  --primary-soft: #eef3ff;
+  --ink: #0b1b3f;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-lift: 0 1px 2px rgba(16, 24, 40, 0.06), 0 4px 12px -2px rgba(16, 24, 40, 0.08);
+  --grad: var(--primary);
+  --accent: var(--primary);
+  /* Ko'nikmalar: past to'yinganlik — faqat ikonka rangida */
+  --k-speaking: #1d4ed8;
+  --k-speaking-soft: #eef3ff;
+  --k-writing: #b45309;
+  --k-writing-soft: #fdf5e9;
+  --k-reading: #047857;
+  --k-reading-soft: #ecf8f3;
+  --k-listening: #6d28d9;
+  --k-listening-soft: #f4f0fd;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0c111b;
+    --surface: #121927;
+    --surface-2: #182132;
+    --border: #253047;
+    --text: #e8ecf3;
+    --muted: #98a2b6;
+    --primary: #6e9bff;
+    --primary-strong: #8db0ff;
+    --primary-soft: #17223a;
+    --ink: #0f1a30;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --shadow-lift: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 16px -4px rgba(0, 0, 0, 0.45);
+    --grad: var(--primary);
+    --k-speaking: #8db0ff;
+    --k-speaking-soft: #17223a;
+    --k-writing: #f0b264;
+    --k-writing-soft: #2a2114;
+    --k-reading: #5fd0a5;
+    --k-reading-soft: #11271f;
+    --k-listening: #b79cff;
+    --k-listening-soft: #221b38;
+  }
+  .btn-primary,
+  .btn-primary:hover:not(:disabled) {
+    color: #0c111b;
+  }
+}
+
+/* Tipografiya: sokinroq og'irlik, aniq o'lchamlar */
+h1 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+h2,
+h3 {
+  font-weight: 650;
+}
+.page-header h1 {
+  font-size: 1.6rem;
+}
+
+/* Kartalar */
+.card {
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  border-radius: var(--radius);
+}
+.cta {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+button.card.cta:hover,
+.link-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+  box-shadow: var(--shadow-lift);
+}
+
+/* Tugmalar: to'liq rang, soyasiz, sakramaydi */
+.btn {
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+.btn-primary,
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary);
+  box-shadow: none;
+  filter: none;
+  transform: none;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-strong);
+}
+.btn-outline {
+  border-width: 1px;
+  border-color: var(--border);
+  color: var(--text);
+  background: var(--surface);
+}
+.btn-outline:hover:not(:disabled) {
+  background: var(--surface-2);
+  border-color: color-mix(in srgb, var(--text) 25%, var(--border));
+}
+
+/* Bannerlar: binafsha gradient o'rniga to'q ko'k (rasmiy) */
+.hero,
+.page-header.hero {
+  background: var(--ink);
+  box-shadow: none;
+  border: 1px solid color-mix(in srgb, var(--ink) 80%, #fff);
+}
+.page-header.hero {
+  padding: 20px 22px;
+}
+.hero .btn-primary,
+.hero .btn-primary:hover:not(:disabled) {
+  background: #fff;
+  color: var(--ink);
+}
+.goal-ring {
+  background: conic-gradient(#7fb0ff calc(var(--p) * 1%), rgba(255, 255, 255, 0.16) 0);
+}
+.goal-ring span {
+  background: var(--ink);
+  color: #fff;
+}
+
+/* Mashq plitkalari: rangli chiziqsiz, ikonka kvadratda */
+.tile::before {
+  display: none;
+}
+.tile {
+  border-radius: var(--radius);
+}
+.tile .emoji {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  color: var(--k);
+  background: var(--k-soft);
+  margin-bottom: 8px;
+}
+.tile:hover {
+  transform: none;
+  border-color: color-mix(in srgb, var(--k) 40%, var(--border));
+}
+
+/* Bo'lim kartalari (Mashqlar sahifasi) */
+.link-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.link-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+.link-arrow {
+  color: var(--muted);
+}
+.section-title {
+  font-size: 0.8rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 28px 0 6px;
+}
+
+/* Menyu: ikonkalar chiziqli, faol bo'lim — asosiy rangda */
+.nav .icon {
+  display: grid;
+  place-items: center;
+  line-height: 0;
+}
+.nav button[aria-current='page'] {
+  color: var(--primary);
+}
+@media (min-width: 1024px) {
+  .nav button[aria-current='page']::before {
+    background: var(--primary);
+  }
+}
+
+/* Statistika va progress */
+.stat .value {
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.streak-ico {
+  color: #ea580c;
+  width: 0.85em;
+  height: 0.85em;
+}
+.progress {
+  height: 8px;
+  background: var(--surface-2);
+}
+.progress > div {
+  background: var(--primary);
+}
+
+/* Bo'sh holatlar: emoji o'rniga doira ichida ikonka */
+.empty-ico {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 8px;
+  border-radius: 50%;
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+/* Harakatlar: sokinroq */
+main > * {
+  animation-duration: 0.18s;
+}
+
+.badge.streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }

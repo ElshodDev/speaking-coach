@@ -8,6 +8,7 @@ import { common, useT } from './i18n';
 import { mistakesMsg } from './locales/mistakes';
 import { progressMsg } from './locales/progress';
 import { PageHeader } from './ui';
+import { Icon } from './Icon';
 
 export interface MistakeExample {
   original: string;
@@ -95,7 +96,7 @@ export function Mistakes({ loggedIn, onLogin, go }: { loggedIn: boolean; onLogin
       <>
         {header}
         <div className="card center" data-testid="mistakes-empty">
-          <div style={{ fontSize: '2.2rem' }}>🎯</div>
+          <div className="empty-ico"><Icon name="practice" size={26} /></div>
           <h3>{t.emptyTitle}</h3>
           <p className="muted">{t.emptyText}</p>
           <div className="row" style={{ justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -139,7 +140,7 @@ export function Mistakes({ loggedIn, onLogin, go }: { loggedIn: boolean; onLogin
                 </div>
               </div>
               {i === 0 && <span className="badge" style={{ alignSelf: 'flex-start' }}>{t.top}</span>}
-              <p className="small" style={{ margin: 0 }}>💡 {cat.tip}</p>
+              <p className="small" style={{ margin: 0 }}>{cat.tip}</p>
               <details open={i === 0}>
                 <summary className="small muted">{t.examples} ({c.examples.length})</summary>
                 <ul className="mistake-examples">
@@ -161,7 +162,7 @@ export function Mistakes({ loggedIn, onLogin, go }: { loggedIn: boolean; onLogin
                 )}
                 {hasTrapsFor(c.id) && (
                   <button className="btn btn-outline btn-sm" onClick={() => go(`learn/traps/cat-${c.id}`)} data-testid="mistake-traps">
-                    🪤 {tl.fromMistakes}
+                    {tl.fromMistakes}
                   </button>
                 )}
               </div>

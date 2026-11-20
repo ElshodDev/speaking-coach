@@ -112,7 +112,7 @@ export function DemoBanner({ onRegister }: { onRegister: () => void }) {
   const t = useT(demoMsg);
   return (
     <div className="demo-banner" role="note" data-testid="demo-banner">
-      <span>👀 {t.banner}</span>
+      <span>{t.banner}</span>
       <button className="btn-link" onClick={onRegister}>{t.bannerButton} →</button>
     </div>
   );
