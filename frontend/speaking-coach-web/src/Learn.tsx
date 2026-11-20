@@ -1,12 +1,15 @@
 // "Darslar": ilovaning o'z materiallari — grammatika darslari (qoida, misollar,
 // tipik xatolar, mashq) va mavzuli lug'at. Hammasi brauzerda, Gemini'siz;
 // foydalanuvchi xohlasa, AI qo'shimcha savollar tuzadi.
-import { useMemo, useState } from 'react';
-import { L1Hub } from './L1Traps';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { l1Msg } from './locales/l1traps';
 import { ApiError, getLevel, postJson } from './api';
-import { ALL_GRAMMAR as GRAMMAR, ALL_VOCAB_TOPICS as VOCAB_TOPICS } from './content';
-import { LEVELS, type GrammarLesson, type L3, type Level, type TopicWord } from './content/types';
+import { GRAMMAR_CATALOG as GRAMMAR, VOCAB_CATALOG as VOCAB_TOPICS } from './content/catalog';
+import { loadGrammarLesson, loadVocabTopic } from './content/load';
+import { LEVELS, type GrammarLesson, type L3, type Level, type TopicWord, type VocabTopic } from './content/types';
+
+// "Ona tili tuzoqlari" — o'z tabi ochilgandagina yuklanadi.
+const L1Hub = lazy(() => import('./L1Traps').then((m) => ({ default: m.L1Hub })));
 import { useLang, useT } from './i18n';
 import { learnMsg } from './locales/learn';
 import { isSpeechSupported, speakAsync, stopSpeaking } from './speech';
@@ -64,7 +67,9 @@ export function LearnHub({ tab, go }: { tab: 'grammar' | 'words' | 'traps'; go: 
 
       {tab === 'traps' ? (
         <div style={{ marginTop: 12 }}>
-          <L1Hub go={go} />
+          <Suspense fallback={<p className="muted" role="status">…</p>}>
+            <L1Hub go={go} />
+          </Suspense>
         </div>
       ) : tab === 'grammar' ? (
         <>
@@ -86,7 +91,7 @@ export function LearnHub({ tab, go }: { tab: 'grammar' | 'words' | 'traps'; go: 
             <button key={v.id} className="tile" onClick={() => go(`learn/words/${v.id}`)}>
               <span className="emoji" aria-hidden>{v.emoji}</span>
               <strong>{pick(v.title, lang)}</strong>
-              <span className="muted">{t.wordsCount(v.words.length)}</span>
+              <span className="muted">{t.wordsCount(v.words)}</span>
             </button>
           ))}
         </div>
@@ -174,10 +179,33 @@ function Quiz({ items, onDone }: { items: QuizItem[]; onDone?: (score: number) =
   );
 }
 
+/**
+ * Dars matnini kerak bo'lganda yuklaydi (alohida chunk). undefined — yuklanmoqda, null — topilmadi.
+ * Ro'yxat sahifasi faqat yengil katalogni oladi — Darslar bo'limi tez ochiladi.
+ */
+function useLoaded<T>(load: () => Promise<T | null>, key: string): T | null | undefined {
+  const [value, setValue] = useState<{ key: string; v: T | null } | null>(null);
+  useEffect(() => {
+    let alive = true;
+    load()
+      .then((v) => alive && setValue({ key, v }))
+      .catch(() => alive && setValue({ key, v: null }));
+    return () => {
+      alive = false;
+    };
+  }, [key]);
+  return value?.key === key ? value.v : undefined;
+}
+
 export function GrammarLessonPage({ id, go }: { id: string; go: (route: string) => void }) {
+  const lesson = useLoaded(() => loadGrammarLesson(id), id);
+  if (lesson === undefined) return <p className="muted" role="status" style={{ marginTop: 24 }}>…</p>;
+  return <GrammarLessonView lesson={lesson} go={go} />;
+}
+
+function GrammarLessonView({ lesson, go }: { lesson: GrammarLesson | null; go: (route: string) => void }) {
   const t = useT(learnMsg);
   const { lang } = useLang();
-  const lesson: GrammarLesson | undefined = GRAMMAR.find((g) => g.id === id);
   const [aiQuiz, setAiQuiz] = useState<QuizItem[] | null>(null);
   const [aiBusy, setAiBusy] = useState(false);
   const [aiError, setAiError] = useState('');
@@ -197,8 +225,8 @@ export function GrammarLessonPage({ id, go }: { id: string; go: (route: string) 
     );
   }
 
-  const idx = GRAMMAR.indexOf(lesson);
-  const next = GRAMMAR[idx + 1];
+  const idx = GRAMMAR.findIndex((g) => g.id === lesson.id);
+  const next = idx >= 0 ? GRAMMAR[idx + 1] : undefined;
 
   async function moreFromAi() {
     setAiBusy(true);
@@ -296,9 +324,14 @@ function shuffle<T>(xs: T[]): T[] {
 }
 
 export function VocabTopicPage({ id, go, loggedIn, onLogin }: { id: string; go: (route: string) => void; loggedIn: boolean; onLogin: () => void }) {
+  const topic = useLoaded(() => loadVocabTopic(id), id);
+  if (topic === undefined) return <p className="muted" role="status" style={{ marginTop: 24 }}>…</p>;
+  return <VocabTopicView topic={topic} go={go} loggedIn={loggedIn} onLogin={onLogin} />;
+}
+
+function VocabTopicView({ topic, go, loggedIn, onLogin }: { topic: VocabTopic | null; go: (route: string) => void; loggedIn: boolean; onLogin: () => void }) {
   const t = useT(learnMsg);
   const { lang } = useLang();
-  const topic = VOCAB_TOPICS.find((v) => v.id === id);
   const [added, setAdded] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState('');
