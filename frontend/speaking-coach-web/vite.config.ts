@@ -1,5 +1,7 @@
-import { defineConfig, type Plugin } from 'vite';
+import { readFileSync } from 'node:fs';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+import { connectAllowed } from './src/csp';
 
 /** Havola oldindan ko'rinishi (Open Graph) uchun saytning to'liq manzili. */
 const DEFAULT_SITE_URL = 'https://fluentuz.app';
@@ -22,8 +24,33 @@ function siteUrl(): Plugin {
   };
 }
 
+/**
+ * Build paytida: vercel.json'dagi Content-Security-Policy VITE_API_URL'ga ruxsat
+ * beradimi. Bermasa — build to'xtaydi (aks holda deploy bo'lgan sayt serverga
+ * ulana olmaydi). Lokal manzil (localhost) tekshirilmaydi — u faqat lokal ishlash uchun.
+ */
+function cspGuard(): Plugin {
+  return {
+    name: 'csp-guard',
+    apply: 'build',
+    configResolved(config) {
+      const env = loadEnv(config.mode, config.envDir || process.cwd(), 'VITE_');
+      const api = env.VITE_API_URL || process.env.VITE_API_URL;
+      if (!api || /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(api)) return;
+      const vercel = JSON.parse(readFileSync(new URL('./vercel.json', import.meta.url), 'utf8')) as {
+        headers: { headers: { key: string; value: string }[] }[];
+      };
+      const policies = vercel.headers.flatMap((h) => h.headers).filter((h) => h.key === 'Content-Security-Policy');
+      const bad = policies.find((p) => !connectAllowed(p.value, api));
+      if (bad) {
+        throw new Error(`vercel.json Content-Security-Policy connect-src ${api} ga ruxsat bermaydi — uni connect-src'ga qo'shing.`);
+      }
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), siteUrl()],
+  plugins: [react(), siteUrl(), cspGuard()],
   server: {
     port: 5173,
   },

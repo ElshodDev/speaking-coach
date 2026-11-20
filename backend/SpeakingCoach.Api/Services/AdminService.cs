@@ -24,7 +24,12 @@ public class AdminOptions
     /// <summary>Admin email'lari (normallashtirilgan) — masalan, botda admin(lar)ga xabar yuborish uchun.</summary>
     public IReadOnlyCollection<string> Emails => _emails;
 
-    public bool IsAdmin(User? user) => user is not null && _emails.Contains(user.Email);
+    /// <summary>
+    /// Admin: email ro'yxatda VA tasdiqlangan (Google, kod yoki tasdiqlash xati orqali).
+    /// Tasdiqlanmagan qatorni kimdir admin manzili bilan oldindan ochib qo'ygan bo'lishi
+    /// mumkin — email tasdiqlash keyinchalik o'chirilsa ham, u admin bo'lib qolmasin.
+    /// </summary>
+    public bool IsAdmin(User? user) => user is not null && user.EmailVerifiedAtUtc is not null && _emails.Contains(user.Email);
 }
 
 public record DailyPoint(string Date, int Signups, int ActiveUsers, int Activities, int Reviews);

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { STABILITY_RUNS, StabilityTable, computeStats, runSequentially, type DimensionStats } from './Stability';
 import { getLevel, loadHistory as fetchHistory, postJson, type HistoryItem } from './api';
+import { safeJson, scoreText, textOf } from './safeJson';
 import { initialTopic, TopicPicker, type PickedTopic } from './TopicPicker';
 import { cardsMessage } from './cards';
 import { useIsAdmin } from './adminFlag';
@@ -268,14 +269,15 @@ export function WritingCoach({
       <HistoryList
         items={history}
         renderRow={(item) => {
-          const prompt = JSON.parse(item.promptData) as { topic: string };
-          const r = JSON.parse(item.responseData) as WritingEvaluationResult;
+          const prompt = safeJson<{ topic?: unknown }>(item.promptData);
+          const r = safeJson<Partial<WritingEvaluationResult>>(item.responseData);
+          if (!prompt || !r) return null; // buzuq yozuv — o'tkazib yuboramiz
           return (
             <>
-              <div className="small">{prompt.topic}</div>
+              <div className="small">{textOf(prompt.topic)}</div>
               <div className="small muted">
-                {t.short.taskAchievement} {r.taskAchievement.score} · {t.short.coherence} {r.coherenceCohesion.score} ·{' '}
-                {t.short.grammar} {r.grammar.score} · {t.short.vocabulary} {r.vocabulary.score}
+                {t.short.taskAchievement} {scoreText(r.taskAchievement)} · {t.short.coherence} {scoreText(r.coherenceCohesion)} ·{' '}
+                {t.short.grammar} {scoreText(r.grammar)} · {t.short.vocabulary} {scoreText(r.vocabulary)}
               </div>
             </>
           );

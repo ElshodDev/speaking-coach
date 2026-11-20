@@ -42,7 +42,7 @@ Ekran to'liq ishlatiladi: chapda menyu, sahifalar ikki ustunda. Mock imtihonda e
 
 | | |
 |---|---|
-| 🎙 **Gapirish** | Mavzu bo'yicha javobingizni yozib olasiz. Gemini bitta so'rovda ovozni matnga aylantiradi va ravonlik, grammatika, so'z boyligini baholaydi. |
+| 🎙 **Gapirish** | Mavzu bo'yicha javobingizni yozib olasiz. Gemini bitta so'rovda ovozni matnga aylantiradi va ravonlik, grammatika, so'z boyligini baholaydi. **Ravonlik o'lchovlari** AI'siz hisoblanadi: daqiqasiga so'z, to'ldiruvchi so'zlar (um, uh, "anaqa", "ну"), takrorlar, o'zini tuzatish va uzun pauzalar (brauzerda audio'dan topiladi), maslahatlar va Progress sahifasida dinamika grafigi. Xuddi shu o'lchovlar Speaking imtihonidan (IELTS va CEFR, har bir javob bo'yicha va umumiy) va AI suhbat oxirida ham chiqadi. |
 | ✍️ **Yozish** | Insho yozasiz. U IELTS uslubidagi rubrika (vazifa, bog'liqlik, grammatika, lug'at) bo'yicha baholanadi va aniq tuzatishlar beriladi. |
 | 📖 🎧 **O'qish va tinglash** | Matn (yoki brauzer ovoz chiqarib o'qiydigan nutq) va to'rtta savol. Foydalanuvchi o'zi tanlaydi: **📚 tayyor mashq** — ilovadagi 88 ta original matndan (har bir daraja va ko'nikmada 11 tadan, cheksiz; ro'yxatdan tanlanadi yoki navbatdagi o'qilmagani olinadi) yoki **✨ AI yozgan yangi mashq** (kunlik limit bilan). Javoblarni server tekshiradi, to'g'ri javoblar brauzerga umuman bormaydi. Matndagi istalgan so'zni bossangiz, ma'nosi aynan shu gap ichida tushuntiriladi. |
 | 🔁 **Takrorlash** | Tuzatishlar va xato javoblar kartaga aylanadi va SM-2 algoritmi bo'yicha qaytadi. Kunlik maqsad, seriya (🔥) va quloqchin bilan qo'l tegizmasdan ishlaydigan **yo'lda rejimi** bor. |

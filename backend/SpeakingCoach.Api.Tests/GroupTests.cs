@@ -124,7 +124,12 @@ public class GroupTests
     public void Teacher_sees_nickname_or_the_local_part_of_the_email_only()
     {
         Assert.Equal("Aziza", GroupLogic.DisplayNameOf(" Aziza ", "aziza@mail.com"));
-        Assert.Equal("aziza.k", GroupLogic.DisplayNameOf(null, "aziza.k@mail.com"));
-        Assert.Equal("aziza.k", GroupLogic.DisplayNameOf("  ", "aziza.k@mail.com"));
+        // Taxallus bo'lmasa — emailning hech bir qismi ko'rsatilmaydi (Telegram ID ham).
+        var anon = GroupLogic.DisplayNameOf(null, "aziza.k@mail.com");
+        Assert.DoesNotContain("aziza", anon);
+        Assert.StartsWith("👤 ", anon);
+        Assert.Equal(anon, GroupLogic.DisplayNameOf("  ", "Aziza.K@mail.com"));
+        Assert.DoesNotContain("123456", GroupLogic.DisplayNameOf(null, "tg-123456@telegram.invalid"));
+        Assert.NotEqual(anon, GroupLogic.DisplayNameOf(null, "other@mail.com"));
     }
 }

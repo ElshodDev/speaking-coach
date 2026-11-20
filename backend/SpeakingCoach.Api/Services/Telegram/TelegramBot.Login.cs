@@ -114,13 +114,27 @@ public partial class TelegramBot
         if (confirmed == 0) return await Finish("tglogin.expired");
 
         var wasLinked = c.User is not null;
-        var (user, isNew) = await _auth.ResolveTelegramUserAsync(from, SignupMethods.Telegram, login.Lang, ct);
-        var userId = user.Id;
-        await _db.TelegramLogins
-            .Where(l => l.Id == id)
-            .ExecuteUpdateAsync(set => set
-                .SetProperty(l => l.UserId, (Guid?)userId)
-                .SetProperty(l => l.IsNewUser, isNew), ct);
+        Guid userId;
+        bool isNew;
+        try
+        {
+            (var user, isNew) = await _auth.ResolveTelegramUserAsync(from, SignupMethods.Telegram, login.Lang, ct);
+            userId = user.Id;
+            await _db.TelegramLogins
+                .Where(l => l.Id == id)
+                .ExecuteUpdateAsync(set => set
+                    .SetProperty(l => l.UserId, (Guid?)userId)
+                    .SetProperty(l => l.IsNewUser, isNew), ct);
+        }
+        catch
+        {
+            // Tasdiq yozildi, lekin hisob biriktirilmadi: urinishni yana ochiq holatga qaytaramiz —
+            // aks holda sayt 5 daqiqa "kutilmoqda" deb turar, bot esa qayta tasdiqlay olmasdi.
+            await _db.TelegramLogins
+                .Where(l => l.Id == id && l.UserId == null)
+                .ExecuteUpdateAsync(set => set.SetProperty(l => l.ConfirmedAtUtc, (DateTime?)null), CancellationToken.None);
+            throw;
+        }
         _logger.LogInformation("Telegram orqali saytga kirish tasdiqlandi: {UserId} (yangi: {IsNew})", userId, isNew);
 
         var done = await Finish("tglogin.done");

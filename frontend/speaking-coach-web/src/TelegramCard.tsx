@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { apiFetch, apiJson, postJson } from './api';
+import { apiJson, postJson } from './api';
 import { openExternal } from './tgApp';
 import { common, useLang, useT } from './i18n';
 import { telegramMsg } from './locales/telegram';
@@ -101,9 +101,15 @@ export function TelegramCard() {
 
   async function unlink() {
     if (!confirm(t.confirmUnlink)) return;
-    await apiFetch('/api/telegram/link', { method: 'DELETE' });
-    setMsg('');
-    await refresh();
+    setError('');
+    try {
+      // apiJson xato javobda otadi — "uzildi" deb faqat server tasdiqlaganda ko'rsatamiz.
+      await apiJson('/api/telegram/link', { method: 'DELETE' });
+      setMsg('');
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : cm.error);
+    }
   }
 
   const botUrl = `https://t.me/${status.botUsername}`;

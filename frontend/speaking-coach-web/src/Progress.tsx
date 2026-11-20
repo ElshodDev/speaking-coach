@@ -4,6 +4,7 @@ import { ShareCardDialog, type ShareStats } from './ShareCard';
 import { useEffect, useState } from 'react';
 import { apiJson } from './api';
 import { ActivityCalendar, LineChart, type CalendarDay, type LineSeries } from './charts';
+import { FluencyTrend } from './Fluency';
 import { common, msg, useT } from './i18n';
 import { progressMsg, type BadgeId } from './locales/progress';
 import { PageHeader, Split } from './ui';
@@ -260,6 +261,7 @@ export function Progress({
             </button>
           </p>
         )}
+        {trend === 'speaking' && <FluencyTrend />}
       </div>
 
     </>

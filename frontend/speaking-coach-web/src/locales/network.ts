@@ -11,6 +11,12 @@ export const networkMsg = defineMessages(
       seconds
         ? `Sunʼiy intellekt hozir band. ${seconds} soniyadan keyin qayta urinib koʻring.`
         : 'Sunʼiy intellekt hozir band. Birozdan keyin qayta urinib koʻring.',
+    tooMany: (seconds: number | undefined) =>
+      seconds
+        ? `Soʻrovlar juda koʻp. ${seconds} soniyadan keyin qayta urinib koʻring.`
+        : 'Soʻrovlar juda koʻp. Birozdan keyin qayta urinib koʻring.',
+    badResponse: 'Serverdan notoʻgʻri javob keldi. Birozdan keyin qayta urinib koʻring.',
+    sessionExpired: 'Sessiya muddati tugadi. Iltimos, qaytadan kiring.',
     wakeTitle: 'Server uygʻonmoqda…',
     wakeText: 'Bepul serverda birinchi soʻrov 30–60 soniya olishi mumkin.',
   },
@@ -24,6 +30,12 @@ export const networkMsg = defineMessages(
         seconds
           ? `ИИ сейчас перегружен. Попробуйте через ${seconds} ${ruPlural(seconds, 'секунду', 'секунды', 'секунд')}.`
           : 'ИИ сейчас перегружен. Попробуйте чуть позже.',
+      tooMany: (seconds: number | undefined) =>
+        seconds
+          ? `Слишком много запросов. Попробуйте через ${seconds} ${ruPlural(seconds, 'секунду', 'секунды', 'секунд')}.`
+          : 'Слишком много запросов. Попробуйте чуть позже.',
+      badResponse: 'Сервер прислал некорректный ответ. Попробуйте чуть позже.',
+      sessionExpired: 'Сессия истекла. Пожалуйста, войдите снова.',
       wakeTitle: 'Сервер просыпается…',
       wakeText: 'На бесплатном сервере первый запрос может занять 30–60 секунд.',
     },
@@ -36,6 +48,12 @@ export const networkMsg = defineMessages(
         seconds
           ? `The AI is busy right now. Try again in ${seconds} ${enPlural(seconds, 'second', 'seconds')}.`
           : 'The AI is busy right now. Please try again in a moment.',
+      tooMany: (seconds: number | undefined) =>
+        seconds
+          ? `Too many requests. Try again in ${seconds} ${enPlural(seconds, 'second', 'seconds')}.`
+          : 'Too many requests. Please try again in a moment.',
+      badResponse: 'The server sent an invalid response. Please try again in a moment.',
+      sessionExpired: 'Your session has expired. Please sign in again.',
       wakeTitle: 'Waking up the server…',
       wakeText: 'On the free server the first request can take 30–60 seconds.',
     },

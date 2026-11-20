@@ -113,10 +113,29 @@ public static class EmailCodeRules
 /// ishlaydi (Render free), shuning uchun xotiradagi hisoblagich yetarli;
 /// qayta ishga tushsa noldan boshlanadi (bu kamdan-kam va zararsiz).
 /// Sozlama: Email:DailyCap (standart 250).
+/// <para>
+/// Hujumga qarshi: tasdiqlanmagan (yangi) manzillarga xatlar kunlik limitning
+/// ko'pi bilan <see cref="UnverifiedShare"/> qismini va soatiga
+/// <see cref="UnverifiedPerHour"/> tani oladi. Tasodifiy manzillarga kod so'rab
+/// limitni tugatish mumkin bo'lsa ham, tasdiqlangan hisoblar (kirish kodi,
+/// parolni tiklash) uchun qolgan qism saqlanib qoladi.
+/// </para>
 /// </summary>
 public sealed class EmailDailyCap
 {
     public const int DefaultCap = 250;
+
+    /// <summary>Kunlik limitning tasdiqlanmagan manzillar ishlata oladigan qismi.</summary>
+    public const double UnverifiedShare = 0.6;
+
+    /// <summary>Tasdiqlanmagan manzillarga soatiga ko'pi bilan shuncha xat (butun server).</summary>
+    public const int UnverifiedPerHour = 40;
+
+    private readonly Queue<DateTime> _unverifiedSent = new();
+    private int _unverifiedToday;
+
+    /// <summary>Tasdiqlanmagan manzillar uchun kunlik chegara (limitdan).</summary>
+    public static int UnverifiedCap(int cap) => (int)Math.Floor(cap * UnverifiedShare);
 
     /// <summary>Jarayon bo'yicha yagona nusxa (DI'da ro'yxatdan o'tkazish shart emas).</summary>
     public static readonly EmailDailyCap Shared = new();
@@ -140,6 +159,7 @@ public sealed class EmailDailyCap
         {
             _day = day;
             _count = 0;
+            _unverifiedToday = 0;
         }
     }
 
@@ -162,25 +182,47 @@ public sealed class EmailDailyCap
         }
     }
 
-    /// <summary>Bitta xat uchun joy olish: limit tugagan bo'lsa — false.</summary>
-    public bool TryTake(int cap, DateTime nowUtc)
+    /// <summary>Joy bormi (olmasdan tekshirish).</summary>
+    public bool HasRoom(int cap, DateTime nowUtc, bool verifiedRecipient)
     {
         lock (_lock)
         {
             Roll(nowUtc);
             if (_count >= cap) return false;
+            if (verifiedRecipient) return true;
+            var hourAgo = nowUtc - TimeSpan.FromHours(1);
+            return _unverifiedToday < UnverifiedCap(cap) && _unverifiedSent.Count(t => t > hourAgo) < UnverifiedPerHour;
+        }
+    }
+
+    /// <summary>Bitta xat uchun joy olish: limit tugagan bo'lsa — false.</summary>
+    /// <param name="verifiedRecipient">Hisob emaili tasdiqlanganmi. Tasdiqlanmaganlar uchun qo'shimcha (qattiqroq) chegaralar.</param>
+    public bool TryTake(int cap, DateTime nowUtc, bool verifiedRecipient = true)
+    {
+        lock (_lock)
+        {
+            Roll(nowUtc);
+            if (_count >= cap) return false;
+            if (!verifiedRecipient)
+            {
+                while (_unverifiedSent.Count > 0 && nowUtc - _unverifiedSent.Peek() >= TimeSpan.FromHours(1)) _unverifiedSent.Dequeue();
+                if (_unverifiedToday >= UnverifiedCap(cap) || _unverifiedSent.Count >= UnverifiedPerHour) return false;
+                _unverifiedToday++;
+                _unverifiedSent.Enqueue(nowUtc);
+            }
             _count++;
             return true;
         }
     }
 
     /// <summary>Xat yuborilmay qolsa — joyni qaytarish (o'sha kun ichida).</summary>
-    public void Release(DateTime nowUtc)
+    public void Release(DateTime nowUtc, bool verifiedRecipient = true)
     {
         lock (_lock)
         {
             Roll(nowUtc);
             if (_count > 0) _count--;
+            if (!verifiedRecipient && _unverifiedToday > 0) _unverifiedToday--;
         }
     }
 }

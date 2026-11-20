@@ -56,13 +56,13 @@ public static class TelegramEndpoints
         });
 
         // GitHub Actions har soatda chaqiradi (.github/workflows/telegram-reminders.yml).
-        app.MapPost("/api/telegram/cron", async (HttpRequest request, TelegramOptions options, TelegramReminders reminders, AppDbContext db) =>
+        // Ish fonda bajariladi (ReminderJob) — javob darhol 202, natija logda.
+        app.MapPost("/api/telegram/cron", (HttpRequest request, TelegramOptions options, ReminderJob job) =>
         {
             if (!options.Enabled || options.CronSecret is null) return Results.NotFound();
             if (!SecretEquals(request.Headers["X-Cron-Secret"].ToString(), options.CronSecret)) return Results.Unauthorized();
-            var run = await reminders.RunAsync(DateTime.UtcNow, CancellationToken.None);
-            var cleaned = await Maintenance.CleanupAsync(db, DateTime.UtcNow);
-            return Results.Ok(new { run.Checked, run.Sent, run.SkippedGoalDone, run.Disabled, cleaned });
+            var started = job.TryStart(DateTime.UtcNow);
+            return Results.Accepted(value: new { started, alreadyRunning = !started });
         });
 
         // ---- Sayt uchun (Profil → Telegram) ----

@@ -104,11 +104,14 @@ public static class ProgressCalculator
     /// vaqt bo'yicha; bo'sh kunlar ham 0 bilan qaytadi — frontend to'liq
     /// panjara chizadi.
     /// </summary>
-    public static List<(DateOnly Day, int Count)> Calendar(IEnumerable<DateTime> eventsUtc, DateTime nowUtc, int tzOffsetMinutes, int days = 84)
-    {
-        var counts = eventsUtc
+    public static List<(DateOnly Day, int Count)> Calendar(IEnumerable<DateTime> eventsUtc, DateTime nowUtc, int tzOffsetMinutes, int days = 84) =>
+        Calendar(eventsUtc
             .GroupBy(t => ReviewScheduler.ToLocalDate(t, tzOffsetMinutes))
-            .ToDictionary(g => g.Key, g => g.Count());
+            .ToDictionary(g => g.Key, g => g.Count()), nowUtc, tzOffsetMinutes, days);
+
+    /// <summary>Kalendar — kunlar bo'yicha tayyor sanoqlardan (masalan, bazada guruhlangan takrorlashlar).</summary>
+    public static List<(DateOnly Day, int Count)> Calendar(IReadOnlyDictionary<DateOnly, int> counts, DateTime nowUtc, int tzOffsetMinutes, int days = 84)
+    {
         var today = ReviewScheduler.ToLocalDate(nowUtc, tzOffsetMinutes);
         var result = new List<(DateOnly, int)>(days);
         for (var i = days - 1; i >= 0; i--)

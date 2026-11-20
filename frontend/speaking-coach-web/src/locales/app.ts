@@ -13,6 +13,14 @@ export const appMsg = defineMessages(
     adminTitle: '🛠 Admin panel',
     adminText: 'Foydalanuvchilar, faollik va grafiklar',
     open: 'Ochish',
+    // Mashqlar sahifasidagi bo'lim kartalari (bo'limlarning o'z matnlari ular bilan birga kech yuklanadi).
+    tiles: {
+      learn: { title: '📘 Darslar: grammatika va mavzuli lugʻat', text: 'Qoidalar, tipik xatolar, mashqlar va 20 mavzuda soʻzlar' },
+      talk: { title: '🗣 AI suhbatdosh', text: 'Kafe, intervyu, IELTS imtihonchisi — ovozli rolli suhbat' },
+      dictation: { title: '🎧 Diktant', text: 'Eshiting va yozing: 60 ta gap, har bir soʻz tekshiriladi' },
+      shadowing: { title: '🎬 Shadowing', text: 'Video yoki qahramonlar gapiradi — siz takrorlaysiz' },
+      mock: { title: '🎓 Mock imtihon', text: 'IELTS va CEFR: toʻliq mock va alohida boʻlimlar. Tayyor testlar roʻyxatidan tanlang yoki AI yangisini tuzsin — taymer va taxminiy natija bilan.' },
+    },
     installTitle: '📱 Telefonga oʻrnatish',
     guestSettings: '⚙️ Kirmasdan foydalanish sozlamalari (til va daraja)',
     installText:
@@ -36,6 +44,13 @@ export const appMsg = defineMessages(
       adminTitle: '🛠 Панель администратора',
       adminText: 'Пользователи, активность и графики',
       open: 'Открыть',
+      tiles: {
+        learn: { title: '📘 Уроки: грамматика и слова по темам', text: 'Правила, типичные ошибки, упражнения и слова по 20 темам' },
+        talk: { title: '🗣 ИИ-собеседник', text: 'Кафе, собеседование, экзаменатор IELTS — ролевой диалог голосом' },
+        dictation: { title: '🎧 Диктант', text: 'Слушайте и пишите: 60 фраз, проверка каждого слова' },
+        shadowing: { title: '🎬 Shadowing', text: 'Говорят видео или персонажи — вы повторяете' },
+        mock: { title: '🎓 Пробный экзамен', text: 'IELTS и CEFR: полный пробный экзамен и отдельные разделы. Выберите готовый тест из списка или пусть ИИ составит новый — с таймером и примерным результатом.' },
+      },
       installTitle: '📱 Установить на телефон',
       guestSettings: '⚙️ Настройки без входа (язык и уровень)',
       installText:
@@ -58,6 +73,13 @@ export const appMsg = defineMessages(
       adminTitle: '🛠 Admin panel',
       adminText: 'Users, activity and charts',
       open: 'Open',
+      tiles: {
+        learn: { title: '📘 Lessons: grammar and topic vocabulary', text: 'Rules, typical mistakes, practice and words on 20 topics' },
+        talk: { title: '🗣 AI conversation partner', text: 'Café, job interview, IELTS examiner — a spoken role-play' },
+        dictation: { title: '🎧 Dictation', text: 'Listen and type: 60 sentences, every word checked' },
+        shadowing: { title: '🎬 Shadowing', text: 'A video or characters speak — you repeat' },
+        mock: { title: '🎓 Mock exam', text: 'IELTS and CEFR: full mocks and single sections. Pick a ready-made test from the list or let AI write a new one — with a timer and an estimated result.' },
+      },
       installTitle: '📱 Install on your phone',
       guestSettings: '⚙️ Settings without an account (language and level)',
       installText:

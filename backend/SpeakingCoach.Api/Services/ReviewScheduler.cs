@@ -100,6 +100,16 @@ public static class ReviewScheduler
     /// <summary>Takroriy baho oynasi: shu vaqt ichidagi ikkinchi baho — ikki marta bosish.</summary>
     public static readonly TimeSpan DuplicateGradeWindow = TimeSpan.FromSeconds(5);
 
+    /// <summary>Muddatidan shuncha oldin baholash ham qabul qilinadi (soatlar farqi, sahifa ochiq qolgani).</summary>
+    public static readonly TimeSpan EarlyGradeSlack = TimeSpan.FromMinutes(1);
+
+    /// <summary>
+    /// Karta hali navbatda emas (muddati kelmagan) — baho e'tiborsiz qoldiriladi:
+    /// aks holda bitta kartani qayta-qayta baholab XP "yig'ish" va o'qituvchining
+    /// "N ta karta takrorla" topshirig'ini soxta bajarish mumkin bo'lardi.
+    /// </summary>
+    public static bool IsTooEarly(DateTime dueAtUtc, DateTime nowUtc) => dueAtUtc - nowUtc > EarlyGradeSlack;
+
     public static bool IsDuplicateGrade(DateTime? lastReviewedUtc, DateTime nowUtc) =>
         lastReviewedUtc is { } last && nowUtc - last >= TimeSpan.Zero && nowUtc - last < DuplicateGradeWindow;
 

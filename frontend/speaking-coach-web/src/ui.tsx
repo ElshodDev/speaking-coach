@@ -106,25 +106,27 @@ export function Feedback({ encouragement, nextFocus }: { encouragement: string; 
  */
 export function HistoryList({ items, renderRow }: { items: HistoryItem[]; renderRow: (item: HistoryItem) => ReactNode }) {
   const t = useT(uiMsg);
-  if (items.length === 0) return null;
+  // Buzuq yozuvlar (renderRow null qaytaradi yoki xato otadi) — ko'rsatilmaydi va sanalmaydi.
+  const rows = items.flatMap((item) => {
+    let row: ReactNode = null;
+    try {
+      row = renderRow(item);
+    } catch {
+      row = null;
+    }
+    return row ? [{ item, row }] : [];
+  });
+  if (rows.length === 0) return null;
   return (
     <div className="card">
-      <h3>{t.history(items.length)}</h3>
+      <h3>{t.history(rows.length)}</h3>
       <ul className="history">
-        {items.map((item) => {
-          let row: ReactNode = null;
-          try {
-            row = renderRow(item);
-          } catch {
-            row = null;
-          }
-          return row ? (
-            <li key={item.id}>
-              <div className="muted tiny">{formatDateTime(item.createdAtUtc)}</div>
-              {row}
-            </li>
-          ) : null;
-        })}
+        {rows.map(({ item, row }) => (
+          <li key={item.id}>
+            <div className="muted tiny">{formatDateTime(item.createdAtUtc)}</div>
+            {row}
+          </li>
+        ))}
       </ul>
     </div>
   );

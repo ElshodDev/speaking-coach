@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
-import { apiFetch, apiJson } from './api';
+import { apiJson } from './api';
 import { isSpeechSupported, speakAsync, stopSpeaking } from './speech';
 import { PageHeader } from './ui';
 import { WordSheet } from './WordSheet';
@@ -113,7 +113,14 @@ export function Vocab({
 
   async function remove(w: VocabWord) {
     if (!confirm(t.confirmDelete(w.word))) return;
-    await apiFetch(`/api/review/cards/${w.id}`, { method: 'DELETE' });
+    try {
+      // apiJson xato javobda otadi — so'z faqat haqiqatan o'chganda ro'yxatdan ketadi.
+      await apiJson(`/api/review/cards/${w.id}`, { method: 'DELETE' });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : c.error);
+      return;
+    }
+    setError('');
     load();
     onChanged();
   }

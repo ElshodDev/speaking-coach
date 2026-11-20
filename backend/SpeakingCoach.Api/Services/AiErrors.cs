@@ -56,6 +56,12 @@ public static class AiErrors
             context.Response.StatusCode = StatusCodes.Status413PayloadTooLarge;
             await context.Response.WriteAsJsonAsync(context.Request.Error("request.too_large"));
         }
+        catch (BadHttpRequestException ex) when (ex.StatusCode == StatusCodes.Status408RequestTimeout && !context.Response.HasStarted)
+        {
+            context.Response.Clear();
+            context.Response.StatusCode = StatusCodes.Status408RequestTimeout;
+            await context.Response.WriteAsJsonAsync(context.Request.Error("request.too_slow"));
+        }
         catch (InvalidDataException ex) when (!context.Response.HasStarted && context.Request.HasFormContentType
             && ex.Message.Contains("limit", StringComparison.OrdinalIgnoreCase))
         {
