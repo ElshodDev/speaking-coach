@@ -54,6 +54,7 @@ builder.Services.AddSingleton(sp => new AiGuardOptions(sp.GetRequiredService<ICo
 builder.Services.AddSingleton<AiGuard>();
 builder.Services.AddSingleton<GeminiClient>();
 builder.Services.AddSingleton<ISpeakingEvaluationService, GeminiSpeakingService>();
+builder.Services.AddSingleton<IPart2Coach, GeminiPart2Coach>();
 builder.Services.AddSingleton<ITalkAi, GeminiTalkAi>();
 builder.Services.AddSingleton<IWritingEvaluationService, GeminiWritingService>();
 builder.Services.AddSingleton<IComprehensionService, GeminiComprehensionService>();
@@ -171,6 +172,7 @@ app.MapShadowingEndpoints();
 app.MapContentEndpoints();
 app.MapMistakeEndpoints();
 app.MapTalkEndpoints();
+app.MapPart2Endpoints();
 app.MapDictationEndpoints();
 app.MapFeedbackEndpoints();
 

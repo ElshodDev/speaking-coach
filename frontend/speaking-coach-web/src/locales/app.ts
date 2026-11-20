@@ -16,6 +16,7 @@ export const appMsg = defineMessages(
     // Mashqlar sahifasidagi bo'lim kartalari (bo'limlarning o'z matnlari ular bilan birga kech yuklanadi).
     tiles: {
       learn: { title: '📘 Darslar: grammatika va mavzuli lugʻat', text: 'Qoidalar, tipik xatolar, mashqlar va 20 mavzuda soʻzlar' },
+      part2: { title: '🃏 IELTS Speaking Part 2 trener', text: 'Kartochka, 1 daqiqa tayyorgarlik, 2 daqiqa nutq — har bir band tekshiriladi' },
       talk: { title: '🗣 AI suhbatdosh', text: 'Kafe, intervyu, IELTS imtihonchisi — ovozli rolli suhbat' },
       dictation: { title: '🎧 Diktant', text: 'Eshiting va yozing: 60 ta gap, har bir soʻz tekshiriladi' },
       shadowing: { title: '🎬 Shadowing', text: 'Video yoki qahramonlar gapiradi — siz takrorlaysiz' },
@@ -46,6 +47,7 @@ export const appMsg = defineMessages(
       open: 'Открыть',
       tiles: {
         learn: { title: '📘 Уроки: грамматика и слова по темам', text: 'Правила, типичные ошибки, упражнения и слова по 20 темам' },
+        part2: { title: '🃏 Тренажёр IELTS Speaking Part 2', text: 'Карточка, 1 минута подготовки, 2 минуты речи — проверка каждого пункта' },
         talk: { title: '🗣 ИИ-собеседник', text: 'Кафе, собеседование, экзаменатор IELTS — ролевой диалог голосом' },
         dictation: { title: '🎧 Диктант', text: 'Слушайте и пишите: 60 фраз, проверка каждого слова' },
         shadowing: { title: '🎬 Shadowing', text: 'Говорят видео или персонажи — вы повторяете' },
@@ -75,6 +77,7 @@ export const appMsg = defineMessages(
       open: 'Open',
       tiles: {
         learn: { title: '📘 Lessons: grammar and topic vocabulary', text: 'Rules, typical mistakes, practice and words on 20 topics' },
+        part2: { title: '🃏 IELTS Speaking Part 2 trainer', text: 'Cue card, 1 minute to prepare, 2 minutes to speak — every point is checked' },
         talk: { title: '🗣 AI conversation partner', text: 'Café, job interview, IELTS examiner — a spoken role-play' },
         dictation: { title: '🎧 Dictation', text: 'Listen and type: 60 sentences, every word checked' },
         shadowing: { title: '🎬 Shadowing', text: 'A video or characters speak — you repeat' },
