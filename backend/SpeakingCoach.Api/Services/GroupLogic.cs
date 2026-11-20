@@ -74,6 +74,28 @@ public static class GroupLogic
         return n.Length is >= 2 and <= 80 ? n : null;
     }
 
+    /// <summary>
+    /// Vazifalarni tekshirish uchun qaysi mashq turlarini bazadan o'qish kerak
+    /// (guruh sahifasi faqat shularni yuklaydi — o'quvchilarning boshqa urinishlarini emas).
+    /// </summary>
+    public static HashSet<ActivityType> NeededTypes(IEnumerable<Assignment> assignments)
+    {
+        var types = new HashSet<ActivityType>();
+        foreach (var a in assignments)
+        {
+            switch (a.Kind.Split(':'))
+            {
+                case ["practice", var k] when PracticeType(k) is ActivityType t:
+                    types.Add(t);
+                    break;
+                case ["mock", _, _]:
+                    types.Add(ActivityType.MockExam);
+                    break;
+            }
+        }
+        return types;
+    }
+
     private static ActivityType? PracticeType(string k) => k switch
     {
         "speaking" => ActivityType.Speaking,
@@ -144,7 +166,16 @@ public static class GroupLogic
         }
     }
 
-    /// <summary>O'qituvchiga ko'rinadigan ism: taxallus yoki emailning "@" gacha qismi.</summary>
-    public static string DisplayNameOf(string? displayName, string email) =>
-        !string.IsNullOrWhiteSpace(displayName) ? displayName.Trim() : email.Split('@')[0];
+    /// <summary>
+    /// Guruhda ko'rinadigan ism: taxallus yoki (taxallus bo'lmasa) neytral belgi "👤 A1B2".
+    /// Email (yoki uning "@" gacha qismi) ko'rsatilmaydi: Telegram hisoblarida u
+    /// "tg-&lt;Telegram ID&gt;" bo'lib, begona o'qituvchiga ID'ni oshkor qilardi.
+    /// Belgi emaildan barqaror hosil qilinadi — bir odam har doim bir xil ko'rinadi.
+    /// </summary>
+    public static string DisplayNameOf(string? displayName, string email)
+    {
+        if (!string.IsNullOrWhiteSpace(displayName)) return displayName.Trim();
+        var hash = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(email.Trim().ToLowerInvariant()));
+        return "👤 " + Convert.ToHexString(hash, 0, 2);
+    }
 }

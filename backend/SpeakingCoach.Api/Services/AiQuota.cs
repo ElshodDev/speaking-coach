@@ -38,6 +38,11 @@ public class AiQuotaOptions
     public int TalkTurns { get; }
     public int Authoring { get; }
 
+    /// <summary>Barcha mehmonlar birgalikda kuniga (har bir tur uchun) — IP almashtirib umumiy Gemini byudjetini tugatib bo'lmasin.</summary>
+    public int GuestTotalExercises { get; }
+    public int GuestTotalWords { get; }
+    public int GuestTotalShadowing { get; }
+
     public AiQuotaOptions(IConfiguration config)
     {
         int Read(string key, int fallback) => int.TryParse(config[key], out var v) && v >= 0 ? v : fallback;
@@ -49,7 +54,17 @@ public class AiQuotaOptions
         GuestShadowing = Read("Ai:GuestShadowingPerDay", 10);
         TalkTurns = Read("Ai:TalkTurnsPerDay", 40);
         Authoring = Read("Ai:AuthoringPerDay", 10);
+        GuestTotalExercises = Read("Ai:GuestTotalExercisesPerDay", 300);
+        GuestTotalWords = Read("Ai:GuestTotalWordsPerDay", 1000);
+        GuestTotalShadowing = Read("Ai:GuestTotalShadowingPerDay", 500);
     }
+
+    public int GuestTotalFor(AiKind kind) => kind switch
+    {
+        AiKind.Exercise => GuestTotalExercises,
+        AiKind.Shadowing => GuestTotalShadowing,
+        _ => GuestTotalWords,
+    };
 
     public int LimitFor(AiKind kind, bool guest) => (kind, guest) switch
     {
@@ -71,11 +86,18 @@ public class GuestQuotaStore
 {
     private readonly ConcurrentDictionary<(string Ip, DateOnly Day, AiKind Kind), int> _counts = new();
 
+    private readonly ConcurrentDictionary<(DateOnly Day, AiKind Kind), int> _totals = new();
+
     public int Get(string ip, DateOnly day, AiKind kind) => _counts.TryGetValue((ip, day, kind), out var n) ? n : 0;
+
+    /// <summary>Bugun barcha mehmonlar birgalikda.</summary>
+    public int Total(DateOnly day, AiKind kind) => _totals.TryGetValue((day, kind), out var n) ? n : 0;
 
     public void Add(string ip, DateOnly day, AiKind kind)
     {
         _counts.AddOrUpdate((ip, day, kind), 1, (_, n) => n + 1);
+        _totals.AddOrUpdate((day, kind), 1, (_, n) => n + 1);
+        foreach (var key in _totals.Keys.Where(k => k.Day < day)) _totals.TryRemove(key, out _);
         // Eski kunlarni tozalaymiz — lug'at cheksiz o'smasin.
         foreach (var key in _counts.Keys.Where(k => k.Day < day)) _counts.TryRemove(key, out _);
     }
@@ -206,7 +228,7 @@ public class AiQuotaService
     /// <summary>Limit kuni — Toshkent vaqti bilan (UTC+5): yarim tunda yangilanadi.</summary>
     public static DateOnly Today(DateTime utcNow) => TashkentTime.Today(utcNow);
 
-    private static string IpOf(HttpRequest request) => request.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+    private static string IpOf(HttpRequest request) => RateLimits.ClientKey(request.HttpContext.Connection.RemoteIpAddress);
 
     // ---- Sayt (HTTP so'rov): foydalanuvchi tokendan, mehmon — IP bo'yicha ----
 
@@ -269,15 +291,22 @@ public class AiQuotaService
             AiKind.Shadowing => status.Shadowing!,
             _ => status.Words,
         };
-        if (http is null)
+        var today = Today(DateTime.UtcNow);
+        // Mehmonlarning umumiy kunlik byudjeti (IP almashtirib Gemini kvotasini tugatishga qarshi):
+        // tugagan bo'lsa — mehmonga odatdagi "limit tugadi, hisob oching" xabari.
+        var guestPoolEmpty = status.Guest && _guests.Total(today, kind) >= _options.GuestTotalFor(kind);
+        if (!guestPoolEmpty)
         {
-            if (counter.Left > 0) return null;
-        }
-        else if (_inFlight.TryReserve(PrincipalKey(user, guestKey), Today(DateTime.UtcNow), kind, counter.Used, counter.Limit) is { } lease)
-        {
-            // So'rov tugaganda (javob yuborilgach yoki xato bilan) joy bo'shaydi.
-            http.Response.RegisterForDispose(lease);
-            return null;
+            if (http is null)
+            {
+                if (counter.Left > 0) return null;
+            }
+            else if (_inFlight.TryReserve(PrincipalKey(user, guestKey), today, kind, counter.Used, counter.Limit) is { } lease)
+            {
+                // So'rov tugaganda (javob yuborilgach yoki xato bilan) joy bo'shaydi.
+                http.Response.RegisterForDispose(lease);
+                return null;
+            }
         }
 
         var key = (kind, status.Guest) switch

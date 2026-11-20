@@ -1,20 +1,13 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { Review, statsPath, type ReviewStats } from './Review';
-import { AuthPanel } from './AuthPanel';
+import { statsPath, type ReviewStats } from './reviewStats';
 import { EXERCISES, ExerciseTiles, Home, type ExerciseKind } from './Home';
 import { JoinByCode, JoinGroup, TasksPage } from './StudentTasks';
 import { savePendingJoin, takePendingJoin } from './groupLogic';
 import { teacherMsg } from './locales/teacher';
-import { mockMsg } from './locales/mock';
 import { mockPickMsg, type MockPickTitle } from './locales/mockPick';
-import { talkMsg } from './locales/talk';
-import { dictationMsg } from './locales/dictation';
-import { MockPicker } from './MockPicker';
+import { networkMsg } from './locales/network';
 import { Logo } from './Logo';
-import { shadowingMsg } from './locales/shadowing';
-import { learnMsg } from './locales/learn';
 import { PageHeader } from './ui';
-import { Vocab } from './Vocab';
 import { UsageNote } from './Usage';
 import { TelegramCard } from './TelegramCard';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -23,6 +16,7 @@ import { cleanLaunchUrl, genuineTelegram, inTelegram, readyTelegram, syncTgBack,
 import {
   accountLabel,
   ApiError,
+  AUTH_EXPIRED_EVENT,
   apiFetch,
   apiJson,
   getSavedEmail,
@@ -31,13 +25,13 @@ import {
   setLevel,
   setSavedEmail,
   setToken,
+  sameSession,
   type Profile as ProfileData,
 } from './api';
 import { ServerWake } from './ServerWake';
 import { Footer } from './Footer';
 import { setIsAdmin } from './adminFlag';
 import { confirmLeave } from './leaveGuard';
-import { SignInMethods } from './SignInMethods';
 import { common, LangSelect, useLang, useT } from './i18n';
 import { appMsg } from './locales/app';
 import { homeMsg } from './locales/home';
@@ -45,7 +39,12 @@ import { planMsg } from './locales/plan';
 import { shouldOnboard } from './planLogic';
 
 // Kam ochiladigan og'ir sahifalar — alohida fayllarda, faqat kerak bo'lganda
-// yuklanadi (bosh sahifa, takrorlash va mashqlar tezroq ochiladi).
+// yuklanadi (bosh sahifa tezroq ochiladi). Ularning matnlari (locales) ham birga keladi.
+const AuthPanel = lazy(() => import('./AuthPanel').then((m) => ({ default: m.AuthPanel })));
+const Review = lazy(() => import('./Review').then((m) => ({ default: m.Review })));
+const Vocab = lazy(() => import('./Vocab').then((m) => ({ default: m.Vocab })));
+const MockPicker = lazy(() => import('./MockPicker').then((m) => ({ default: m.MockPicker })));
+const SignInMethods = lazy(() => import('./SignInMethods').then((m) => ({ default: m.SignInMethods })));
 const MockHub = lazy(() => import('./Mock').then((m) => ({ default: m.MockHub })));
 const MockResultView = lazy(() => import('./Mock').then((m) => ({ default: m.MockResultView })));
 const MockSpeaking = lazy(() => import('./MockSpeaking').then((m) => ({ default: m.MockSpeaking })));
@@ -125,12 +124,8 @@ const NAV = [
 function App() {
   const t = useT(appMsg);
   const tHome = useT(homeMsg);
-  const tMock = useT(mockMsg);
-  const tShadow = useT(shadowingMsg);
-  const tLearn = useT(learnMsg);
   const tMockPick = useT(mockPickMsg);
-  const tTalk = useT(talkMsg);
-  const tDict = useT(dictationMsg);
+  const tNet = useT(networkMsg);
   const c = useT(common);
   const [route, go] = useRoute();
   // Oxirgi kirgan hisob darhol tiklanadi: server uyg'onguncha (30–60 s) ham
@@ -142,6 +137,21 @@ function App() {
   }, []);
   const [stats, setStats] = useState<ReviewStats | null>(null);
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  // Sessiya tugadi (server tokenni tanimadi) — api.ts tokenni o'chirib, hodisa yuboradi.
+  // Hisobdan chiqaramiz va "qaytadan kiring" ogohlantirishini ko'rsatamiz.
+  const [sessionExpired, setSessionExpired] = useState(false);
+  useEffect(() => {
+    const onExpired = () => {
+      setEmail(null);
+      setSessionExpired(true);
+    };
+    window.addEventListener(AUTH_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(AUTH_EXPIRED_EVENT, onExpired);
+  }, [setEmail]);
+  // Qayta kirdi (yoki Telegram o'zi kiritdi) — ogohlantirish kerak emas.
+  useEffect(() => {
+    if (email) setSessionExpired(false);
+  }, [email]);
 
   // Sahifa ochilganda: brauzerda token bo'lsa — hali yaroqlimi deb serverdan
   // so'raymiz. Faqat 401 (token yaroqsiz) — chiqarib yuboramiz; tarmoq xatosi yoki
@@ -167,17 +177,20 @@ function App() {
     };
 
     const check = (attempt: number) => {
+      // Javob kelguncha foydalanuvchi chiqib (yoki boshqa hisobga kirib) ulgurgan bo'lsa — eski javobni tashlaymiz.
+      const same = sameSession();
       apiJson<{ email: string }>('/api/auth/me')
         .then((me) => {
-          if (!cancelled) setEmail(me.email);
+          if (!cancelled && same()) setEmail(me.email);
         })
         .catch(async (e) => {
           if (cancelled) return;
           if (e instanceof ApiError && e.status === 401) {
-            setToken(null);
+            // Eskirgan tokenni api.ts o'zi o'chirgan. Shu orada qayta kirgan bo'lsa — tegmaymiz.
+            if (getToken()) return;
             setEmail(null);
             await telegramLogin();
-          } else if (attempt < 4) {
+          } else if (same() && attempt < 4) {
             timer = window.setTimeout(() => check(attempt + 1), 5000 * (attempt + 1));
           }
         });
@@ -205,16 +218,27 @@ function App() {
       setProfile(null);
       return;
     }
-    apiJson<ProfileData>('/api/profile')
+    // Chiqish / demo'dan chiqish / boshqa hisob: eski so'rov bekor qilinadi, kechikkan
+    // javob oldingi foydalanuvchi profilini qaytarib qo'ymasin.
+    const controller = new AbortController();
+    const same = sameSession();
+    apiJson<ProfileData>('/api/profile', { signal: controller.signal })
       .then((p) => {
+        if (controller.signal.aborted || !same()) return;
         setProfile(p);
         setLevel(p.level);
       })
       .catch(() => undefined);
+    return () => controller.abort();
   }, [loggedIn, email]);
 
   const reloadProfile = useCallback(() => {
-    apiJson<ProfileData>('/api/profile').then(setProfile).catch(() => undefined);
+    const same = sameSession();
+    apiJson<ProfileData>('/api/profile')
+      .then((p) => {
+        if (same()) setProfile(p);
+      })
+      .catch(() => undefined);
   }, []);
 
   // Ichki vositalar (barqarorlik testi) faqat admin'ga.
@@ -232,13 +256,19 @@ function App() {
   // Streak, kunlik maqsad va navbatdagi kartalar soni — bosh sahifa va
   // menyudagi raqam uchun. Mashqdan keyin yangi kartalar qo'shilsa yoki
   // karta takrorlansa, qayta so'raladi.
+  // statsSeq: faqat eng oxirgi so'rov javobi qo'llanadi (javoblar teskari tartibda kelishi mumkin).
+  const statsSeq = useRef(0);
   const refreshStats = useCallback(() => {
+    const seq = ++statsSeq.current;
     if (!loggedIn) {
       setStats(null);
       return;
     }
+    const same = sameSession();
     apiJson<ReviewStats>(statsPath())
-      .then(setStats)
+      .then((s) => {
+        if (seq === statsSeq.current && same()) setStats(s);
+      })
       .catch(() => undefined);
   }, [loggedIn]);
 
@@ -330,8 +360,8 @@ function App() {
         <div className="card-grid">
         <div className="card cta" style={{ marginTop: 16 }} data-testid="learn-entry">
           <div>
-            <strong>{tLearn.tile}</strong>
-            <div className="muted small">{tLearn.tileText}</div>
+            <strong>{t.tiles.learn.title}</strong>
+            <div className="muted small">{t.tiles.learn.text}</div>
           </div>
           <button className="btn btn-primary" onClick={() => go('learn')}>
             {t.open}
@@ -339,8 +369,8 @@ function App() {
         </div>
         <div className="card cta" style={{ marginTop: 16 }} data-testid="talk-entry">
           <div>
-            <strong>{tTalk.tile}</strong>
-            <div className="muted small">{tTalk.tileText}</div>
+            <strong>{t.tiles.talk.title}</strong>
+            <div className="muted small">{t.tiles.talk.text}</div>
           </div>
           <button className="btn btn-primary" onClick={() => go('talk')}>
             {t.open}
@@ -348,8 +378,8 @@ function App() {
         </div>
         <div className="card cta" style={{ marginTop: 16 }} data-testid="dictation-entry">
           <div>
-            <strong>{tDict.tile}</strong>
-            <div className="muted small">{tDict.tileText}</div>
+            <strong>{t.tiles.dictation.title}</strong>
+            <div className="muted small">{t.tiles.dictation.text}</div>
           </div>
           <button className="btn btn-primary" onClick={() => go('dictation')}>
             {t.open}
@@ -357,8 +387,8 @@ function App() {
         </div>
         <div className="card cta" style={{ marginTop: 16 }} data-testid="shadowing-entry">
           <div>
-            <strong>{tShadow.tile}</strong>
-            <div className="muted small">{tShadow.tileText}</div>
+            <strong>{t.tiles.shadowing.title}</strong>
+            <div className="muted small">{t.tiles.shadowing.text}</div>
           </div>
           <button className="btn btn-primary" onClick={() => go('shadowing')}>
             {t.open}
@@ -366,8 +396,8 @@ function App() {
         </div>
         <div className="card cta" style={{ marginTop: 16 }}>
           <div>
-            <strong>{tMock.tile}</strong>
-            <div className="muted small">{tMock.tileText}</div>
+            <strong>{t.tiles.mock.title}</strong>
+            <div className="muted small">{t.tiles.mock.text}</div>
           </div>
           <button className="btn btn-primary" onClick={() => go('mock')}>
             {t.open}
@@ -521,6 +551,14 @@ function App() {
 
         <main className={pageWidth(section, sub, third)}>
           {isDemoEmail(email) && section !== 'demo' && <DemoBanner onRegister={leaveDemo} />}
+          {sessionExpired && !loggedIn && (
+            <div className="demo-banner" role="alert" data-testid="session-expired">
+              <span>🔒 {tNet.sessionExpired}</span>
+              {section !== 'login' && (
+                <button className="btn-link" onClick={toLogin}>{c.login} →</button>
+              )}
+            </div>
+          )}
           <ErrorBoundary resetKey={route} onHome={() => go('home')}>
             <Suspense fallback={<p className="muted" role="status" style={{ marginTop: 24 }}>⏳</p>}>{page}</Suspense>
           </ErrorBoundary>

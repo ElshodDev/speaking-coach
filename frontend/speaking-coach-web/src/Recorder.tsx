@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { STABILITY_RUNS, StabilityTable, computeStats, runSequentially, type DimensionStats } from './Stability';
 import { apiJson, getLevel, loadHistory as fetchHistory, type HistoryItem } from './api';
 import { cardsMessage } from './cards';
+import { safeJson, scoreText, textOf } from './safeJson';
 import { useIsAdmin } from './adminFlag';
 import { useT } from './i18n';
 import { speakingMsg } from './locales/speaking';
@@ -338,13 +339,14 @@ export function Recorder({
       <HistoryList
         items={history}
         renderRow={(item) => {
-          const prompt = JSON.parse(item.promptData) as { topic: string };
-          const r = JSON.parse(item.responseData) as EvaluationResult;
+          const prompt = safeJson<{ topic?: unknown }>(item.promptData);
+          const r = safeJson<Partial<EvaluationResult>>(item.responseData);
+          if (!prompt || !r) return null; // buzuq yozuv — o'tkazib yuboramiz
           return (
             <>
-              <div className="small">{prompt.topic}</div>
+              <div className="small">{textOf(prompt.topic)}</div>
               <div className="small muted">
-                {t.short.fluency} {r.fluency.score} · {t.short.grammar} {r.grammar.score} · {t.short.vocabulary} {r.vocabulary.score}
+                {t.short.fluency} {scoreText(r.fluency)} · {t.short.grammar} {scoreText(r.grammar)} · {t.short.vocabulary} {scoreText(r.vocabulary)}
               </div>
             </>
           );

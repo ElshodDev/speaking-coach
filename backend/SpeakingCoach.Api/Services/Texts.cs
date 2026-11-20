@@ -189,6 +189,10 @@ public static class Texts
             "Avval hisobingizga haqiqiy email qoʻshing — parol email bilan birga ishlaydi.",
             "Сначала добавьте в аккаунт настоящий email — пароль работает вместе с email.",
             "Add a real email to your account first — a password works together with an email."),
+        ["account.reauth"] = new(
+            "Xavfsizlik uchun: hisobdan chiqib, qayta kiring va {0} daqiqa ichida yana urinib koʻring.",
+            "В целях безопасности: выйдите из аккаунта, войдите снова и повторите в течение {0} минут.",
+            "For your security: sign out, sign in again and retry within {0} minutes."),
         ["account.wrong_password"] = new(
             "Joriy parol notoʻgʻri.",
             "Текущий пароль неверный.",

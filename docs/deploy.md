@@ -65,9 +65,13 @@ GitHub → Settings → Secrets → Actions: `API_URL` (Render manzili) va `CRON
 
 Root directory: `frontend/speaking-coach-web`; environment: `VITE_API_URL` (Render manzili) va `VITE_SITE_URL` (saytning o'z manzili — Telegram/Instagram havola ko'rinishidagi rasm uchun; hozir `https://fluentuz.app`). Domen o'zgarsa, `VITE_SITE_URL` va Render'dagi `FrontendOrigin`ni yangilang. Xavfsizlik sarlavhalari `vercel.json` da.
 
+**Content-Security-Policy** (`vercel.json`): API faqat `https://*.onrender.com` dan chaqirilishi mumkin. Backend boshqa manzilga (o'z domeni, Railway…) ko'chsa, uni `connect-src` ga qo'shing — aks holda `vite build` ataylab to'xtaydi (`VITE_API_URL` CSP'ga mos emasligini aytadi), sayt API'ga ulana olmay qolmasin.
+
 ## Migratsiyalar
 
 Render ularni o'zi bajarmaydi: sxemaga bog'liq kodni push qilishdan oldin lokalda `dotnet ef database update` bajariladi.
+
+`AddNicknameUniqueIndex` — taxalluslar uchun `lower("DisplayName")` noyob indeksi. Bazada allaqachon takroriy taxalluslar bo'lsa, migratsiya yiqilmaydi, faqat indeksni yaratmaydi (NOTICE). Tekshirish: `SELECT lower("DisplayName"), count(*) FROM "Users" WHERE "DisplayName" IS NOT NULL GROUP BY 1 HAVING count(*) > 1;` — takrorlarni tuzatib, migratsiyani qayta qo'llang (`dotnet ef database update 20260928090000_AddTelegramLoginAndFeedback`, keyin yana `dotnet ef database update`).
 
 ## Nechta foydalanuvchi ro'yxatdan o'tgan
 

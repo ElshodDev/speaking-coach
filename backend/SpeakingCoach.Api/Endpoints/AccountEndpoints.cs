@@ -68,7 +68,37 @@ public static class AccountEndpoints
                 .ToListAsync();
 
             var taught = await db.Groups.Where(g => g.TeacherId == user.Id).Select(g => new { g.Id, g.Name, g.CreatedAtUtc }).ToListAsync();
+            var taughtIds = taught.Select(g => g.Id).ToList();
+            var assignments = await db.Assignments
+                .Where(a => taughtIds.Contains(a.GroupId))
+                .OrderBy(a => a.CreatedAtUtc)
+                .Select(a => new { a.Id, a.GroupId, a.Kind, a.Target, a.Instructions, a.DueAtUtc, a.CreatedAtUtc })
+                .ToListAsync();
             var memberOf = await db.GroupMembers.Where(m => m.UserId == user.Id).Select(m => new { m.GroupId, m.JoinedAtUtc }).ToListAsync();
+            var feedback = await db.Feedbacks
+                .Where(f => f.UserId == user.Id)
+                .OrderBy(f => f.CreatedAtUtc)
+                .Select(f => new { f.Id, f.Kind, f.Message, f.Page, f.Lang, f.CreatedAtUtc, f.Ip })
+                .ToListAsync();
+            var telegram = await db.TelegramAccounts
+                .Where(t => t.UserId == user.Id)
+                .Select(t => new { t.ChatId, t.Username, t.Lang, t.ReminderHour, t.TzOffsetMinutes, t.LinkedAtUtc, t.LastSeenAtUtc, t.LastReminderDate })
+                .ToListAsync();
+            var sessions = await db.Sessions
+                .Where(x => x.UserId == user.Id)
+                .OrderBy(x => x.CreatedAtUtc)
+                .Select(x => new { x.CreatedAtUtc, x.ExpiresAtUtc })
+                .ToListAsync();
+            var aiUsage = await db.AiUsages
+                .Where(u => u.UserId == user.Id)
+                .OrderBy(u => u.Day)
+                .Select(u => new { u.Day, u.Exercises, u.Words, u.Shadowing })
+                .ToListAsync();
+            var authored = await db.MockTests
+                .Where(m => m.CreatedByUserId == user.Id)
+                .OrderBy(m => m.CreatedAtUtc)
+                .Select(m => new { m.Id, m.Exam, m.Module, m.Variant, m.Title, m.Status, m.CreatedAtUtc, m.Payload })
+                .ToListAsync();
 
             var export = new
             {
@@ -86,6 +116,8 @@ public static class AccountEndpoints
                     user.ExamDate,
                     user.DailyMinutes,
                     user.OnboardedAtUtc,
+                    user.SignupMethod,
+                    hasPassword = !string.IsNullOrEmpty(user.PasswordHash),
                 },
                 activities = activities.Select(a => new
                 {
@@ -111,7 +143,14 @@ public static class AccountEndpoints
                 }),
                 reviewLog = logs,
                 groupsTaught = taught,
+                assignmentsCreated = assignments,
                 groupMemberships = memberOf,
+                mockTestsAuthored = authored.Select(m => new { m.Id, m.Exam, m.Module, m.Variant, m.Title, m.Status, m.CreatedAtUtc, content = ParseJson(m.Payload) }),
+                feedback,
+                telegram,
+                // Faqat vaqtlar — token xeshlari (sir) eksportga kirmaydi.
+                sessions,
+                aiUsage,
             };
 
             var bytes = JsonSerializer.SerializeToUtf8Bytes(export, Pretty);
@@ -132,6 +171,13 @@ public static class AccountEndpoints
             {
                 return Results.BadRequest(request.ErrorWithCode(
                     AuthService.IsSyntheticEmail(user.Email) ? "account.confirm_delete_word" : "account.confirm_mismatch"));
+            }
+            // Qaytarib bo'lmaydigan amal: o'g'irlangan (eski) token bilan hisob o'chirilmasin —
+            // yaqinda qayta kirgan bo'lish shart (Telegram Mini App har ochilishda yangi sessiya oladi).
+            if (!DemoAccount.IsDemo(user.Email) && !await auth.HasRecentLoginAsync(request))
+            {
+                return Results.Json(request.ErrorWithCode("account.reauth", (int)AuthService.RecentLoginWindow.TotalMinutes),
+                    statusCode: StatusCodes.Status403Forbidden);
             }
 
             var audioIds = await db.Activities

@@ -24,6 +24,15 @@ export function getToken(): string | null {
   }
 }
 
+/**
+ * Joriy sessiyani eslab qoladi: qaytgan funksiya token hali o'sha bo'lsa — true.
+ * Kechikkan javob (chiqishdan yoki boshqa hisobga kirishdan keyin) holatni buzmasin.
+ */
+export function sameSession(): () => boolean {
+  const token = getToken();
+  return () => getToken() === token;
+}
+
 export function setToken(token: string | null) {
   try {
     if (token) localStorage.setItem(TOKEN_KEY, token);
@@ -117,6 +126,16 @@ export function networkError(timedOut: boolean, online = typeof navigator === 'u
   return new ApiError(t.unreachable, 0, { code: 'network' });
 }
 
+/** Sessiya tugaganda (token yaroqsiz) window'ga yuboriladigan hodisa — App.tsx tinglaydi. */
+export const AUTH_EXPIRED_EVENT = 'auth-expired';
+
+// Login/ro'yxatdan o'tish yo'llari: 401 — noto'g'ri parol yoki kod, sessiya emas.
+const CREDENTIAL_PATHS = /^\/api\/auth\/(login|register|verify|resend|forgot|reset|code|google|telegram|demo|logout)\b/;
+
+/** Javob "sessiya tugadi" degani-mi: 401 va kirish yo'li emas. Toza funksiya — testlanadi. */
+export const isSessionExpired = (status: number, path: string): boolean =>
+  status === 401 && !CREDENTIAL_PATHS.test(path);
+
 /**
  * fetch'ning o'zi, faqat manzil oldiga API_BASE va (bo'lsa) token qo'shiladi.
  * Qo'shimcha: kutish muddati (timeoutFor), tarmoq xatosi → ApiError(status 0),
@@ -152,6 +171,13 @@ export async function apiFetch(path: string, init: ApiInit = {}): Promise<Respon
   try {
     const response = await fetch(`${API_BASE}${path}`, { ...rest, headers, signal: controller.signal });
     noteServerResponse();
+    // Token yuborilgan, lekin server tanimadi — sessiya tugagan. Token o'chiriladi
+    // va ilova (App.tsx) hisobdan chiqaradi. Shu orada boshqa token saqlangan
+    // bo'lsa (qayta kirgan) — unga tegmaymiz.
+    if (token && isSessionExpired(response.status, path) && getToken() === token) {
+      setToken(null);
+      if (typeof window !== 'undefined') window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+    }
     return response;
   } catch (err) {
     // Chaqiruvchi o'zi bekor qilgan bo'lsa — asl AbortError (xato xabari kerak emas).
@@ -183,14 +209,27 @@ export async function errorFromResponse(response: Response): Promise<ApiError> {
     typeof body.retryAfterSeconds === 'number' && body.retryAfterSeconds > 0
       ? Math.round(body.retryAfterSeconds)
       : retryAfterHeader(response);
+  const serverText = typeof body.error === 'string' && body.error ? body.error : typeof body.detail === 'string' && body.detail ? body.detail : undefined;
+  return new ApiError(serverText ?? fallbackMessage(response.status, code, retryAfterSeconds), response.status, { code, retryAfterSeconds });
+}
+
+/** Server xabar bermaganda — status/kod bo'yicha foydalanuvchi tilidagi matn. Toza funksiya — testlanadi. */
+export function fallbackMessage(status: number, code?: string, retryAfterSeconds?: number): string {
   const t = msg(networkMsg);
-  const fallback =
-    code === 'ai_busy'
-      ? t.aiBusy(retryAfterSeconds)
-      : response.status >= 502 && response.status <= 504
-        ? t.serverDown
-        : msg(common).serverError(response.status);
-  return new ApiError(body.error ?? body.detail ?? fallback, response.status, { code, retryAfterSeconds });
+  if (code === 'ai_busy') return t.aiBusy(retryAfterSeconds);
+  if (status === 429) return t.tooMany(retryAfterSeconds);
+  if (status >= 502 && status <= 504) return t.serverDown;
+  return msg(common).serverError(status);
+}
+
+/** JSON matnini o'qish: bo'sh — undefined; buzuq (masalan HTML xato sahifasi) — tushunarli ApiError. */
+export function parseJsonBody<T>(text: string, status: number): T {
+  if (!text) return undefined as T;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new ApiError(msg(networkMsg).badResponse, status, { code: 'bad_json' });
+  }
 }
 
 /** apiFetch + JSON o'qish. Server xato qaytarsa, uning xabari bilan ApiError otiladi. */
@@ -198,8 +237,7 @@ export async function apiJson<T>(path: string, init: ApiInit = {}): Promise<T> {
   const response = await apiFetch(path, init);
   if (!response.ok) throw await errorFromResponse(response);
   // 204 / bo'sh javob — JSON yo'q.
-  const text = await response.text();
-  return (text ? JSON.parse(text) : undefined) as T;
+  return parseJsonBody<T>(await response.text(), response.status);
 }
 
 /** JSON body bilan POST — eng ko'p ishlatiladigan holat uchun qisqartma. */

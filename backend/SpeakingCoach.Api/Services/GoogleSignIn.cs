@@ -144,20 +144,34 @@ public class GoogleSignInService : IGoogleSignIn
 
     public string? ClientId { get; }
 
+    /// <summary>Majburiy qayta yuklash (noma'lum kid) ko'pi bilan shuncha vaqtda bir marta: soxta kid'li tokenlar Google'ga so'rovlar oqimini yuzaga keltirmasin.</summary>
+    public static readonly TimeSpan MinForcedReloadInterval = TimeSpan.FromMinutes(1);
+
+    public static bool CanForceReload(DateTime loadedAtUtc, DateTime nowUtc) => nowUtc - loadedAtUtc >= MinForcedReloadInterval;
+
     public async Task<GooglePayload?> ValidateAsync(string? idToken, CancellationToken ct = default)
     {
         if (ClientId is null) return null;
 
-        var keys = await GetKeysAsync(forceReload: false, ct);
-        var payload = GoogleJwt.Validate(idToken, keys, ClientId, DateTime.UtcNow, out var error);
-        if (error == "kid")
+        try
         {
-            // Google kalitlarni almashtirgan bo'lishi mumkin — bir marta qayta yuklaymiz.
-            keys = await GetKeysAsync(forceReload: true, ct);
-            payload = GoogleJwt.Validate(idToken, keys, ClientId, DateTime.UtcNow, out error);
+            var keys = await GetKeysAsync(forceReload: false, ct);
+            var payload = GoogleJwt.Validate(idToken, keys, ClientId, DateTime.UtcNow, out var error);
+            if (error == "kid" && CanForceReload(_loadedAtUtc, DateTime.UtcNow))
+            {
+                // Google kalitlarni almashtirgan bo'lishi mumkin — bir marta qayta yuklaymiz.
+                keys = await GetKeysAsync(forceReload: true, ct);
+                payload = GoogleJwt.Validate(idToken, keys, ClientId, DateTime.UtcNow, out error);
+            }
+            if (payload is null) _logger.LogWarning("Google token rad etildi: {Reason}", error);
+            return payload;
         }
-        if (payload is null) _logger.LogWarning("Google token rad etildi: {Reason}", error);
-        return payload;
+        catch (Exception ex) when ((ex is HttpRequestException or TaskCanceledException or JsonException or KeyNotFoundException or InvalidOperationException) && !ct.IsCancellationRequested)
+        {
+            // Google kalitlarini yuklab bo'lmadi — 500 emas, oddiy "kirib bo'lmadi".
+            _logger.LogWarning(ex, "Google kalitlarini yuklab bo'lmadi");
+            return null;
+        }
     }
 
     private async Task<Dictionary<string, RSAParameters>> GetKeysAsync(bool forceReload, CancellationToken ct)
@@ -167,6 +181,8 @@ public class GoogleSignInService : IGoogleSignIn
         try
         {
             if (!forceReload && DateTime.UtcNow - _loadedAtUtc < CacheFor && _keys.Count > 0) return _keys;
+            // Navbatda kutgan boshqa so'rov allaqachon yangilagan bo'lsa — qayta yuklamaymiz.
+            if (forceReload && !CanForceReload(_loadedAtUtc, DateTime.UtcNow) && _keys.Count > 0) return _keys;
             var json = await _http.GetStringAsync(JwksUrl, ct);
             _keys = GoogleJwt.ParseJwks(json);
             _loadedAtUtc = DateTime.UtcNow;

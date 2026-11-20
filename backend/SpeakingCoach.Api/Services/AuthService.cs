@@ -317,8 +317,10 @@ public class AuthService
             _db.ChangeTracker.Clear();
             var again = await _db.TelegramAccounts.FirstOrDefaultAsync(a => a.ChatId == chatId, ct);
             var existing = again is null ? null : await _db.Users.FirstOrDefaultAsync(u => u.Id == again.UserId, ct);
-            if (existing is null) throw;
-            return (existing, false);
+            if (existing is not null) return (existing, false);
+            // Shu orada boshqa hisob aynan shu taxallusni oldi (noyob indeks) — taxallussiz qayta urinamiz.
+            if (isNew && user.DisplayName is not null) return await ResolveTelegramUserAsync(tg with { FirstName = null }, signupMethod, lang, ct);
+            throw;
         }
         if (isNew) _logger.LogInformation("Telegram orqali yangi hisob: {UserId} ({Method})", userId, signupMethod);
         return (user, isNew);
@@ -390,7 +392,18 @@ public class AuthService
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId);
         if (user is null) return expired;
         var token = AddSession(user.Id);
-        await _db.SaveChangesAsync();
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch
+        {
+            // Sessiya saqlanmadi — urinishni "ishlatilmagan" holatga qaytaramiz: keyingi poll yana urinadi.
+            await _db.TelegramLogins
+                .Where(l => l.Id == id && l.ConsumedAtUtc != null)
+                .ExecuteUpdateAsync(set => set.SetProperty(l => l.ConsumedAtUtc, (DateTime?)null), CancellationToken.None);
+            throw;
+        }
         return new TelegramPollResult(TelegramLoginRules.StatusName(TelegramLoginStatus.Confirmed), token, user.Email, login.IsNewUser);
     }
 
@@ -418,6 +431,12 @@ public class AuthService
         if (IsSyntheticEmail(user.Email)) return AuthResult.Fail("account.need_email");
         var passwordError = CheckPassword(newPassword);
         if (passwordError is not null) return passwordError;
+        // Paroli yo'q hisob (Google/kod/Telegram): joriy parol so'rab bo'lmaydi — o'g'irlangan
+        // token bilan parol "ekib" qo'yilmasligi uchun yaqinda kirilgan bo'lishi shart.
+        if (string.IsNullOrEmpty(user.PasswordHash) && !await HasRecentLoginAsync(request))
+        {
+            return AuthResult.FailWith(StatusCodes.Status403Forbidden, "account.reauth", (int)RecentLoginWindow.TotalMinutes);
+        }
 
         if (!string.IsNullOrEmpty(user.PasswordHash))
         {
@@ -486,7 +505,7 @@ public class AuthService
         if (passwordError is not null) return passwordError;
 
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == NormalizeEmail(email ?? ""));
-        if (user is null) return AuthResult.Fail("code.wrong");
+        if (user is null) return AuthResult.Fail(UnknownEmailCodeError);
 
         var failure = await ConsumeCodeAsync(user, EmailCodePurpose.Verify, code);
         if (failure is not null) return failure;
@@ -552,7 +571,7 @@ public class AuthService
     public async Task<AuthResult> LoginWithCodeAsync(string email, string code)
     {
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == NormalizeEmail(email ?? ""));
-        if (user is null || IsSyntheticEmail(user.Email)) return AuthResult.Fail("code.wrong");
+        if (user is null || IsSyntheticEmail(user.Email)) return AuthResult.Fail(UnknownEmailCodeError);
 
         var failure = await ConsumeCodeAsync(user, EmailCodePurpose.Login, code);
         if (failure is not null) return failure;
@@ -589,7 +608,7 @@ public class AuthService
         if (passwordError is not null) return passwordError;
 
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == NormalizeEmail(email ?? ""));
-        if (user is null) return AuthResult.Fail("code.wrong");
+        if (user is null) return AuthResult.Fail(UnknownEmailCodeError);
 
         var failure = await ConsumeCodeAsync(user, EmailCodePurpose.ResetPassword, code);
         if (failure is not null) return failure;
@@ -683,6 +702,12 @@ public class AuthService
     /// ("Attempts &lt; 5" sharti bilan bitta UPDATE): bir vaqtda yuborilgan
     /// yuzlab so'rov ham 5 tadan ortiq taxmin qila olmaydi.
     /// </summary>
+    /// <summary>
+    /// Noma'lum email uchun kod xatosi — kod hali so'ralmagan mavjud hisobdagi bilan AYNAN bir xil
+    /// ("faol kod yo'q"): kod tekshirish endpoint'lari orqali qaysi emaillar ro'yxatdan o'tganini bilib bo'lmaydi.
+    /// </summary>
+    private const string UnknownEmailCodeError = "code.not_found";
+
     private async Task<AuthResult?> ConsumeCodeAsync(User user, EmailCodePurpose purpose, string code, string? target = null)
     {
         var now = DateTime.UtcNow;
@@ -711,6 +736,26 @@ public class AuthService
         }
         var left = EmailCodeRules.MaxAttempts - attempts;
         return left > 0 ? AuthResult.Fail("code.wrong_left", left) : AuthResult.Fail("code.too_many");
+    }
+
+    /// <summary>Saqlashda noyoblik buzildi (Postgres 23505) — masalan, parallel so'rov xuddi shu taxallus yoki a'zolikni yozib ulgurdi.</summary>
+    public static bool IsUniqueViolation(DbUpdateException ex) =>
+        ex.InnerException is Npgsql.PostgresException { SqlState: Npgsql.PostgresErrorCodes.UniqueViolation };
+
+    /// <summary>Xavfli amallar (hisobni o'chirish, parolsiz hisobga parol qo'yish) uchun: sessiya shuncha yangi bo'lsin.</summary>
+    public static readonly TimeSpan RecentLoginWindow = TimeSpan.FromMinutes(15);
+
+    /// <summary>Sessiya yaqinda (qayta kirish bilan) ochilganmi. Sirpanuvchi uzaytirish CreatedAtUtc ni o'zgartirmaydi.</summary>
+    public static bool IsRecentLogin(DateTime sessionCreatedUtc, DateTime nowUtc) =>
+        nowUtc - sessionCreatedUtc <= RecentLoginWindow;
+
+    public async Task<bool> HasRecentLoginAsync(HttpRequest request)
+    {
+        var token = ReadBearerToken(request);
+        if (token is null) return false;
+        var hash = HashToken(token);
+        var created = await _db.Sessions.Where(s => s.TokenHash == hash).Select(s => (DateTime?)s.CreatedAtUtc).FirstOrDefaultAsync();
+        return created is { } c && IsRecentLogin(c, DateTime.UtcNow);
     }
 
     public async Task LogoutAsync(HttpRequest request)

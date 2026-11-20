@@ -95,7 +95,21 @@ public static class RateLimits
         options.GlobalLimiter = PartitionedRateLimiter.CreateChained(AiGlobal(), WriteIpCeiling());
     }
 
-    public static string Ip(HttpContext http) => "ip:" + (http.Connection.RemoteIpAddress?.ToString() ?? "unknown");
+    public static string Ip(HttpContext http) => "ip:" + ClientKey(http.Connection.RemoteIpAddress);
+
+    /// <summary>
+    /// Cheklovlar kaliti: IPv4 — manzilning o'zi; IPv6 — /64 tarmoq (bitta abonent odatda
+    /// butun /64 oladi va undagi manzillarni erkin almashtira oladi — har biriga yangi limit bo'lmasin).
+    /// </summary>
+    public static string ClientKey(System.Net.IPAddress? ip)
+    {
+        if (ip is null) return "unknown";
+        if (ip.IsIPv4MappedToIPv6) ip = ip.MapToIPv4();
+        if (ip.AddressFamily != System.Net.Sockets.AddressFamily.InterNetworkV6) return ip.ToString();
+        var bytes = ip.GetAddressBytes();
+        Array.Clear(bytes, 8, 8);
+        return new System.Net.IPAddress(bytes).ToString() + "/64";
+    }
 
     /// <summary>
     /// Kirgan foydalanuvchi — token xeshi bo'yicha (sinfdagi o'quvchilar bir-birini

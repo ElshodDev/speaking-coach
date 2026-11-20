@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiJson, getLevel, loadHistory as fetchHistory, postJson, type HistoryItem } from './api';
 import { cardsMessage } from './cards';
+import { safeJson, scoreText, textOf } from './safeJson';
 import { useT } from './i18n';
 import { comprehensionMsg } from './locales/comprehension';
 import { isSpeechSupported, speakAsync, stopSpeaking } from './speech';
@@ -349,13 +350,14 @@ export function Comprehension({
       <HistoryList
         items={history}
         renderRow={(item) => {
-          const prompt = JSON.parse(item.promptData) as { title: string };
-          const r = JSON.parse(item.responseData) as { score: number; total: number };
+          const prompt = safeJson<{ title?: unknown }>(item.promptData);
+          const r = safeJson<{ score?: unknown; total?: unknown }>(item.responseData);
+          if (!prompt || !r) return null; // buzuq yozuv — o'tkazib yuboramiz
           return (
             <div className="spread small">
-              <span>{prompt.title}</span>
+              <span>{textOf(prompt.title)}</span>
               <strong>
-                {r.score}/{r.total}
+                {scoreText(r)}/{scoreText({ score: r.total })}
               </strong>
             </div>
           );

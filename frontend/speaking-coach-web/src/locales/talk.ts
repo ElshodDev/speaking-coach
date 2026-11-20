@@ -7,8 +7,6 @@ export const talkMsg = defineMessages(
   {
     title: '🗣 AI suhbatdosh',
     subtitle: 'Vaziyatni tanlang va ovoz bilan gaplashing. AI rolda javob beradi, xatolaringizni muloyim tuzatadi, oxirida xulosa beradi.',
-    tile: '🗣 AI suhbatdosh',
-    tileText: 'Kafe, intervyu, IELTS imtihonchisi — ovozli rolli suhbat',
     levelNote: (n: number) => `Bitta suhbat — ${n} tagacha javob, kunlik limitdan 1 ta mashq.`,
     loginText: 'Suhbat va tuzatishlar hisobingizda saqlanadi — boshlash uchun tizimga kiring.',
     login: 'Kirish',
@@ -57,8 +55,6 @@ export const talkMsg = defineMessages(
     ru: {
       title: '🗣 ИИ-собеседник',
       subtitle: 'Выберите ситуацию и говорите голосом. ИИ отвечает в роли, мягко исправляет ошибки и в конце подводит итог.',
-      tile: '🗣 ИИ-собеседник',
-      tileText: 'Кафе, собеседование, экзаменатор IELTS — ролевой диалог голосом',
       levelNote: (n: number) => `Один диалог — до ${n} ответов, 1 упражнение из дневного лимита.`,
       loginText: 'Диалог и исправления сохраняются в аккаунте — войдите, чтобы начать.',
       login: 'Войти',
@@ -106,8 +102,6 @@ export const talkMsg = defineMessages(
     en: {
       title: '🗣 AI conversation partner',
       subtitle: 'Pick a situation and talk out loud. The AI answers in character, gently corrects your mistakes and sums up at the end.',
-      tile: '🗣 AI conversation partner',
-      tileText: 'Café, job interview, IELTS examiner — a spoken role-play',
       levelNote: (n: number) => `One conversation — up to ${n} answers, counts as 1 exercise of your daily limit.`,
       loginText: 'The conversation and corrections are saved to your account — log in to start.',
       login: 'Log in',
