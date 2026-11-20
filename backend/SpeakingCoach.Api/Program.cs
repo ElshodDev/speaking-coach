@@ -69,6 +69,7 @@ builder.Services.AddSingleton<IGoogleSignIn, GoogleSignInService>();
 builder.Services.AddSingleton<AiQuotaOptions>();
 builder.Services.AddSingleton<GuestQuotaStore>();
 builder.Services.AddSingleton<AiDailyCaps>();
+builder.Services.AddSingleton<AiInFlight>();
 builder.Services.AddSingleton<TalkLocks>();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton(new DemoGate());

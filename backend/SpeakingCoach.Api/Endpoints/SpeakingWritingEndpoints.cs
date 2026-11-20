@@ -38,8 +38,8 @@ public static class SpeakingWritingEndpoints
 
             // "Katta so'rov" joyi — audio xotiraga o'qilishidan (va base64'dan) OLDIN.
             var ct = request.HttpContext.RequestAborted;
+            var form = await Uploads.ReadFormAsync(request, ct);
             using var slot = await Uploads.EnterIfLargeAsync(request, ct);
-            var form = await request.ReadFormAsync(ct);
             var audioFile = form.Files.GetFile("audio");
             var topic = form["topic"].ToString();
             var level = LearnerLevel.Normalize(form["level"].ToString());

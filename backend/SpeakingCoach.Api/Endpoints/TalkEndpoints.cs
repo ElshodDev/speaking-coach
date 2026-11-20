@@ -99,8 +99,8 @@ public static class TalkEndpoints
 
             var ct = request.HttpContext.RequestAborted;
             // Audio xotiraga o'qilishidan oldin — "katta so'rov" joyi.
+            var form = await Uploads.ReadFormAsync(request, ct);
             using var slot = await Uploads.EnterIfLargeAsync(request, ct);
-            var form = await request.ReadFormAsync(ct);
             var typed = form["text"].ToString().Trim();
             var file = form.Files.GetFile("audio");
             byte[]? audio = null;
@@ -192,6 +192,9 @@ public static class TalkEndpoints
                 ResponseData = JsonSerializer.Serialize(summary with { TopCorrections = corrections }, Talk.Json),
             });
             db.PendingExercises.Remove(row);
+            // Kartalar suhbat yozuvi bilan bitta SaveChanges'da saqlanadi:
+            // AddCardsAsync faqat kontekstga qo'shadi, o'zi saqlamaydi.
+            var newCards = await reviews.AddCardsAsync(user.Id, ActivityType.Conversation, ReviewCardFactory.FromCorrections(corrections));
             try
             {
                 await db.SaveChangesAsync();
@@ -200,7 +203,6 @@ public static class TalkEndpoints
             {
                 return Results.Conflict(request.Error("talk.not_found"));
             }
-            var newCards = await reviews.AddCardsAsync(user.Id, ActivityType.Conversation, ReviewCardFactory.FromCorrections(corrections));
             return Results.Ok(new { id = activityId, result = summary with { TopCorrections = corrections }, turns = Talk.UserTurns(state), newCards });
         }).RequireRateLimiting(RateLimits.AiPolicy);
     }

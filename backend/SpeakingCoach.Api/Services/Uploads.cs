@@ -6,7 +6,10 @@ namespace SpeakingCoach.Api.Services;
 /// Audio yuklash qoidalari (Render: 512 MB xotira). Tartib muhim:
 /// <list type="number">
 /// <item>Content-Length — forma o'qilishidan OLDIN tekshiriladi (katta so'rov darhol 413);</item>
-/// <item>"katta so'rov" joyi (1 MB dan katta so'rovlar uchun, bir vaqtda ko'pi bilan 3 ta) — audio xotiraga o'qilishidan OLDIN olinadi;</item>
+/// <item>forma <see cref="ReadFormAsync"/> bilan, joy olinishidan OLDIN o'qiladi (fayllar 64 KB dan oshsa vaqtinchalik
+/// diskka yoziladi — xotiraga emas), muddati — <see cref="FormReadTimeout"/>: juda sekin yuboruvchi mijoz joyni band qila olmaydi;</item>
+/// <item>"katta so'rov" joyi (1 MB dan katta so'rovlar uchun, bir vaqtda ko'pi bilan 3 ta) — audio xotiraga o'qilishidan OLDIN olinadi;
+/// <see cref="SlotWait"/> ichida bo'shamasa — 503 (AiBusyException, Retry-After);</item>
 /// <item>har bir yozuv — ko'pi bilan 8 MB (brauzer ~1 daqiqaga 0,5–1 MB yozadi).</item>
 /// </list>
 /// Umumiy (Kestrel) chegara — 2 MB; audio endpoint'lar o'z chegarasini metadata bilan beradi.
@@ -29,6 +32,30 @@ public static class Uploads
 
     private static readonly SemaphoreSlim Slots = new(MaxConcurrent, MaxConcurrent);
 
+    /// <summary>Joy shuncha kutiladi; bo'shamasa — 503 "AI band" (so'rovlar cheksiz navbatga yig'ilmasin).</summary>
+    public static readonly TimeSpan SlotWait = TimeSpan.FromSeconds(20);
+
+    /// <summary>Formani (audio bilan) to'liq qabul qilish muddati. 15 MB sekin mobil internetda ham bu vaqtga sig'adi.</summary>
+    public static readonly TimeSpan FormReadTimeout = TimeSpan.FromMinutes(2);
+
+    /// <summary>
+    /// Formani muddat bilan o'qiydi. Muddat o'tsa — 408 (BadHttpRequestException, UseAiErrors JSON qiladi);
+    /// mijozning o'zi uzgani — odatdagi OperationCanceledException.
+    /// </summary>
+    public static async Task<IFormCollection> ReadFormAsync(HttpRequest request, CancellationToken ct)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeout.CancelAfter(FormReadTimeout);
+        try
+        {
+            return await request.ReadFormAsync(timeout.Token);
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            throw new BadHttpRequestException("Form upload timed out", StatusCodes.Status408RequestTimeout);
+        }
+    }
+
     /// <summary>Content-Length ma'lum va chegaradan katta — formani o'qimasdan rad etamiz.</summary>
     public static bool DeclaredTooLarge(HttpRequest request, long maxBodyBytes) =>
         request.ContentLength is long n && n > maxBodyBytes;
@@ -39,7 +66,8 @@ public static class Uploads
     /// <summary>"Katta so'rov" joyi: Dispose qilinganda bo'shaydi.</summary>
     public static async Task<IDisposable> EnterAsync(CancellationToken ct)
     {
-        await Slots.WaitAsync(ct);
+        if (!await Slots.WaitAsync(SlotWait, ct))
+            throw new AiBusyException(DateTime.UtcNow.AddSeconds(15), "uploads");
         return new Slot();
     }
 

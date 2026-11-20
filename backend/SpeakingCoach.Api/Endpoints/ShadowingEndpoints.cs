@@ -62,8 +62,8 @@ public static class ShadowingEndpoints
                 return Results.Json(request.Error("shadowing.bad_audio"), statusCode: StatusCodes.Status413PayloadTooLarge);
             var ct = request.HttpContext.RequestAborted;
             // "Katta so'rov" joyi — audio xotiraga o'qilishidan oldin.
+            var form = await Uploads.ReadFormAsync(request, ct);
             using var slot = await Uploads.EnterIfLargeAsync(request, ct);
-            var form = await request.ReadFormAsync(ct);
             var audio = form.Files.GetFile("audio");
             if (audio is null || audio.Length == 0 || audio.Length > MaxAudioBytes) return Results.BadRequest(request.Error("shadowing.bad_audio"));
 

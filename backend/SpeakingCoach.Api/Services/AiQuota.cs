@@ -125,6 +125,58 @@ public class AiDailyCaps
 }
 
 /// <summary>
+/// Hozir bajarilayotgan (hali hisobga yozilmagan) AI so'rovlari — xotirada.
+/// "Joy bormi" tekshiruvi Gemini javobidan OLDIN, hisobga yozish esa KEYIN
+/// bo'ladi; oradagi bir necha soniyada parallel so'rovlar limitni aylanib
+/// o'tmasligi uchun tekshiruv "ishlatilgan + bajarilayotgan" ni hisoblaydi va
+/// joyni atomar band qiladi. Band qilingan joy so'rov tugaganda (muvaffaqiyatli
+/// yoki xato) bo'shatiladi — muvaffaqiyatli bo'lsa, u allaqachon bazaga yozilgan.
+/// </summary>
+public class AiInFlight
+{
+    private readonly object _lock = new();
+    private readonly Dictionary<(string Key, DateOnly Day, AiKind Kind), int> _counts = new();
+
+    public int Count(string key, DateOnly day, AiKind kind)
+    {
+        lock (_lock) return _counts.TryGetValue((key, day, kind), out var n) ? n : 0;
+    }
+
+    /// <summary>Joy bo'lsa — band qiladi va bo'shatish uchun lease qaytaradi; aks holda null.</summary>
+    public IDisposable? TryReserve(string key, DateOnly day, AiKind kind, int used, int limit)
+    {
+        lock (_lock)
+        {
+            var slot = (key, day, kind);
+            var n = _counts.TryGetValue(slot, out var v) ? v : 0;
+            if (used + n >= limit) return null;
+            _counts[slot] = n + 1;
+            return new Lease(this, slot);
+        }
+    }
+
+    private void Release((string Key, DateOnly Day, AiKind Kind) slot)
+    {
+        lock (_lock)
+        {
+            if (!_counts.TryGetValue(slot, out var n)) return;
+            if (n <= 1) _counts.Remove(slot);
+            else _counts[slot] = n - 1;
+        }
+    }
+
+    private sealed class Lease(AiInFlight owner, (string Key, DateOnly Day, AiKind Kind) slot) : IDisposable
+    {
+        private int _released;
+
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _released, 1) == 0) owner.Release(slot);
+        }
+    }
+}
+
+/// <summary>
 /// Tekshirish ikki qadamda: avval "joy bormi" (so'rovdan OLDIN), keyin
 /// "hisobga yozish" (faqat MUVAFFAQIYATLI javobdan keyin). Gemini xato
 /// qaytarsa, foydalanuvchining limiti kamaymaydi.
@@ -136,15 +188,20 @@ public class AiQuotaService
     private readonly AdminOptions _admins;
     private readonly AiQuotaOptions _options;
     private readonly GuestQuotaStore _guests;
+    private readonly AiInFlight _inFlight;
 
-    public AiQuotaService(AppDbContext db, AuthService auth, AdminOptions admins, AiQuotaOptions options, GuestQuotaStore guests)
+    public AiQuotaService(AppDbContext db, AuthService auth, AdminOptions admins, AiQuotaOptions options, GuestQuotaStore guests, AiInFlight inFlight)
     {
         _db = db;
         _auth = auth;
         _admins = admins;
         _options = options;
         _guests = guests;
+        _inFlight = inFlight;
     }
+
+    /// <summary>Bajarilayotgan so'rovlar hisoblagichi kaliti: foydalanuvchi ID'si yoki mehmon kaliti (IP / "tg:CHAT").</summary>
+    public static string PrincipalKey(User? user, string guestKey) => user is null ? "g:" + guestKey : "u:" + user.Id.ToString("N");
 
     /// <summary>Limit kuni — Toshkent vaqti bilan (UTC+5): yarim tunda yangilanadi.</summary>
     public static DateOnly Today(DateTime utcNow) => TashkentTime.Today(utcNow);
@@ -156,10 +213,13 @@ public class AiQuotaService
     public async Task<QuotaStatus> GetStatusAsync(HttpRequest request) =>
         await GetStatusAsync(await _auth.GetCurrentUserAsync(request), IpOf(request));
 
-    /// <summary>Limit tugagan bo'lsa — 429 va tushunarli xabar; aks holda null (davom etaverish mumkin).</summary>
+    /// <summary>
+    /// Limit tugagan bo'lsa — 429 va tushunarli xabar; aks holda null (davom etaverish mumkin).
+    /// Ruxsat berilsa, joy so'rov oxirigacha band qilinadi (parallel so'rovlar limitdan oshmaydi).
+    /// </summary>
     public async Task<IResult?> CheckAsync(HttpRequest request, AiKind kind)
     {
-        var denied = await CheckAsync(await _auth.GetCurrentUserAsync(request), IpOf(request), kind);
+        var denied = await CheckCoreAsync(await _auth.GetCurrentUserAsync(request), IpOf(request), kind, request.HttpContext);
         return denied is null
             ? null
             : Results.Json(request.Error(denied.Value.Key, denied.Value.Args), statusCode: StatusCodes.Status429TooManyRequests);
@@ -196,7 +256,10 @@ public class AiQuotaService
     }
 
     /// <summary>null — ruxsat; aks holda xabar kaliti (Texts) va parametrlari.</summary>
-    public async Task<(string Key, object?[] Args)?> CheckAsync(User? user, string guestKey, AiKind kind)
+    public Task<(string Key, object?[] Args)?> CheckAsync(User? user, string guestKey, AiKind kind) =>
+        CheckCoreAsync(user, guestKey, kind, http: null);
+
+    private async Task<(string Key, object?[] Args)?> CheckCoreAsync(User? user, string guestKey, AiKind kind, HttpContext? http)
     {
         var status = await GetStatusAsync(user, guestKey);
         if (status.Unlimited) return null;
@@ -206,7 +269,16 @@ public class AiQuotaService
             AiKind.Shadowing => status.Shadowing!,
             _ => status.Words,
         };
-        if (counter.Left > 0) return null;
+        if (http is null)
+        {
+            if (counter.Left > 0) return null;
+        }
+        else if (_inFlight.TryReserve(PrincipalKey(user, guestKey), Today(DateTime.UtcNow), kind, counter.Used, counter.Limit) is { } lease)
+        {
+            // So'rov tugaganda (javob yuborilgach yoki xato bilan) joy bo'shaydi.
+            http.Response.RegisterForDispose(lease);
+            return null;
+        }
 
         var key = (kind, status.Guest) switch
         {
@@ -229,28 +301,40 @@ public class AiQuotaService
             return;
         }
 
-        var usage = await _db.AiUsages.FirstOrDefaultAsync(u => u.UserId == user.Id && u.Day == day);
-        if (usage is null)
+        // Atomar oshirish (o'qib-oshirib-yozish emas): parallel so'rovlar bir-birining
+        // hisobini yo'qotmaydi. Qator bo'lmasa — yaratamiz; shu paytda parallel so'rov
+        // ham yaratgan bo'lsa — qayta oshiramiz.
+        for (var attempt = 0; attempt < 3; attempt++)
         {
-            usage = new AiUsage { UserId = user.Id, Day = day };
-            _db.AiUsages.Add(usage);
+            if (await IncrementAsync(user.Id, day, kind) > 0) return;
+            try
+            {
+                _db.AiUsages.Add(new AiUsage
+                {
+                    UserId = user.Id,
+                    Day = day,
+                    Exercises = kind == AiKind.Exercise ? 1 : 0,
+                    Shadowing = kind == AiKind.Shadowing ? 1 : 0,
+                    Words = kind == AiKind.Word ? 1 : 0,
+                });
+                await _db.SaveChangesAsync();
+                return;
+            }
+            catch (DbUpdateException)
+            {
+                _db.ChangeTracker.Clear();
+            }
         }
-        switch (kind)
-        {
-            case AiKind.Exercise: usage.Exercises++; break;
-            case AiKind.Shadowing: usage.Shadowing++; break;
-            default: usage.Words++; break;
-        }
+    }
 
-        try
+    private Task<int> IncrementAsync(Guid userId, DateOnly day, AiKind kind)
+    {
+        var row = _db.AiUsages.Where(u => u.UserId == userId && u.Day == day);
+        return kind switch
         {
-            await _db.SaveChangesAsync();
-        }
-        catch (DbUpdateException)
-        {
-            // Shu soniyada parallel so'rov xuddi shu qatorni yaratgan — bu
-            // hisobni o'tkazib yuboramiz (limit uchun bitta farq muhim emas).
-            _db.ChangeTracker.Clear();
-        }
+            AiKind.Exercise => row.ExecuteUpdateAsync(x => x.SetProperty(u => u.Exercises, u => u.Exercises + 1)),
+            AiKind.Shadowing => row.ExecuteUpdateAsync(x => x.SetProperty(u => u.Shadowing, u => u.Shadowing + 1)),
+            _ => row.ExecuteUpdateAsync(x => x.SetProperty(u => u.Words, u => u.Words + 1)),
+        };
     }
 }

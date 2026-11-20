@@ -20,6 +20,10 @@ public static class XpGuard
     /// <summary>Diktant: XP beradigan natijalar Toshkent kuniga ko'pi bilan.</summary>
     public const int DictationsPerDay = 30;
 
+    /// <summary>O'qish/Tinglash: har bir tur uchun XP beradigan natijalar Toshkent kuniga ko'pi bilan.
+    /// Tayyor (bank) mashqlar AI kvotasini sarflamaydi va cheksiz takrorlanadi — XP cheksiz o'smasin.</summary>
+    public const int ComprehensionPerDay = 30;
+
     public const int DictationMaxSentences = 50;
 
     /// <summary>Diktant gapida ko'pi bilan shuncha so'z (haqiqiy gaplar 5–25 so'z).</summary>

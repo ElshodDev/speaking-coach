@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiJson, postJson } from './api';
 import { msg, useT } from './i18n';
+import { useLeaveGuard } from './leaveGuard';
 import { cefrMsg } from './locales/cefr';
 import { mockMsg } from './locales/mock';
 import { mockObjMsg } from './locales/mockObjective';
@@ -124,15 +125,8 @@ export function MockListening({
     };
   }, [exam, src, testId]);
 
-  useEffect(() => {
-    if (phase === 'loading' || phase === 'intro' || phase === 'error') return;
-    const warn = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = msg(mockMsg).leaveWarning;
-    };
-    window.addEventListener('beforeunload', warn);
-    return () => window.removeEventListener('beforeunload', warn);
-  }, [phase]);
+  // Imtihon davomida chiqib ketish (sahifani yopish, "Orqaga", menyu) — avval so'raymiz.
+  useLeaveGuard(phase === 'read' || phase === 'play' || phase === 'review', msg(mockMsg).leaveWarning);
 
   const submit = useCallback(async () => {
     if (!test || submittedRef.current) return;

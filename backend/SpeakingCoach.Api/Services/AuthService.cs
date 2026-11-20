@@ -534,7 +534,8 @@ public class AuthService
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
         if (user is null)
         {
-            if (EmailCapReached) return CapError();
+            // Yangi manzil uchun joy bo'lmasa — hisob ham ochilmaydi (bo'sh qatorlar yig'ilmasin).
+            if (!_cap.HasRoom(_dailyCap, DateTime.UtcNow, verifiedRecipient: false)) return CapError();
             user = new User { Id = Guid.NewGuid(), Email = normalized, CreatedAtUtc = DateTime.UtcNow, PasswordHash = "", SignupMethod = SignupMethods.Code };
             _db.Users.Add(user);
             await _db.SaveChangesAsync();
@@ -638,7 +639,10 @@ public class AuthService
         }
 
         // Butun server bo'yicha kunlik limit (Brevo bepul tarifi).
-        if (!_cap.TryTake(_dailyCap, now)) return CapError();
+        // Tasdiqlanmagan manzil (yangi hisob, begona odam kiritgan manzil) — limitning faqat bir qismi.
+        // Emailni almashtirishda yangi manzil hali tasdiqlanmagan.
+        var verifiedRecipient = user.EmailVerifiedAtUtc is not null && purpose != EmailCodePurpose.ChangeEmail;
+        if (!_cap.TryTake(_dailyCap, now, verifiedRecipient)) return CapError();
 
         // Eskirgan kodlarni tozalaymiz — jadval o'smasin.
         _db.EmailCodes.RemoveRange(await _db.EmailCodes
@@ -667,7 +671,7 @@ public class AuthService
         }
         catch (Exception ex)
         {
-            _cap.Release(now);
+            _cap.Release(now, verifiedRecipient);
             _logger.LogError(ex, "Kod xatini yuborib bo'lmadi: {UserId}", user.Id);
             return AuthResult.FailWith(StatusCodes.Status502BadGateway, "email.send_failed");
         }

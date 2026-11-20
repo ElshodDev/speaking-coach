@@ -111,6 +111,9 @@ export function TalkSession({
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const aliveRef = useRef(true);
+  // Mikrofon ruxsati so'ralayotganda ikkinchi bosish ikkinchi oqim/yozuvchi ochmasin.
+  const startingRef = useRef(false);
+  const [starting, setStarting] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -171,6 +174,9 @@ export function TalkSession({
     setError('');
     setMicProblem(null);
     stopSpeaking();
+    if (startingRef.current || recorderRef.current?.state === 'recording') return;
+    startingRef.current = true;
+    setStarting(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       if (!aliveRef.current) {
@@ -199,6 +205,9 @@ export function TalkSession({
       // Mikrofon bo'lmasa ham suhbat to'xtamaydi — yozib javob berish rejimiga o'tadi.
       setMicProblem(micProblemOf(err, currentMicEnv()));
       setTyping(true);
+    } finally {
+      startingRef.current = false;
+      if (aliveRef.current) setStarting(false);
     }
   }
 
@@ -306,7 +315,7 @@ export function TalkSession({
                 <button className="btn btn-danger block" onClick={stopRecording} data-testid="talk-stop">{t.stop}</button>
               </>
             ) : (
-              <button className="btn btn-primary block" onClick={startRecording} disabled={busy} data-testid="talk-record">
+              <button className="btn btn-primary block" onClick={startRecording} disabled={busy || starting} data-testid="talk-record">
                 {t.record}
               </button>
             )

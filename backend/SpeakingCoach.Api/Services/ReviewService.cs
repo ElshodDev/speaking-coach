@@ -116,6 +116,8 @@ public class ReviewService
         // Ikki marta bosish (yoki tarmoq qayta yuborgani) — kartani ikki
         // bosqich oldinga surib yubormasin: bir necha soniya ichidagi takror — e'tiborsiz.
         if (ReviewScheduler.IsDuplicateGrade(card.LastReviewedAtUtc, now)) return card;
+        // Muddati kelmagan karta: jadval ham, XP (ReviewLog) ham o'zgarmaydi.
+        if (ReviewScheduler.IsTooEarly(card.DueAtUtc, now)) return card;
 
         var next = ReviewScheduler.Next(
             new ReviewSchedule(card.Repetitions, card.IntervalDays, card.Ease, card.Lapses, card.DueAtUtc), grade, now);

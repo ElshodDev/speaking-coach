@@ -35,6 +35,10 @@ public static class Texts
             "Слишком большой аудиофайл (не более {0} МБ).",
             "The audio file is too large (max {0} MB)."),
         ["request.too_large"] = new("Soʻrov hajmi juda katta.", "Слишком большой запрос.", "The request is too large."),
+        ["request.too_slow"] = new(
+            "Yozuv juda sekin yuklandi — internetni tekshirib, qayta yuboring.",
+            "Запись загружалась слишком медленно — проверьте интернет и отправьте снова.",
+            "The recording uploaded too slowly — check your connection and send it again."),
         ["talk.busy"] = new(
             "Oldingi javobingiz hali tekshirilmoqda — biroz kuting.",
             "Предыдущий ответ ещё обрабатывается — подождите немного.",

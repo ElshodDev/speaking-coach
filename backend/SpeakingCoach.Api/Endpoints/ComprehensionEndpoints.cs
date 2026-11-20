@@ -140,7 +140,14 @@ public static class ComprehensionEndpoints
 
                 var userId = await auth.GetCurrentUserIdAsync(request);
                 var newCards = 0;
+                var capped = false;
                 if (userId is not null)
+                {
+                    var dayStart = TashkentTime.DayStartUtc(DateTime.UtcNow);
+                    var today = await db.Activities.CountAsync(a => a.UserId == userId && a.Type == type && a.CreatedAtUtc >= dayStart);
+                    capped = today >= XpGuard.ComprehensionPerDay;
+                }
+                if (userId is not null && !capped)
                 {
                     // Xato javob berilgan savollar takrorlash kartalariga aylanadi.
                     newCards = await reviews.AddCardsAsync(
@@ -176,7 +183,8 @@ public static class ComprehensionEndpoints
                     result.Results,
                     // Listening'da matn javobdan keyingina ko'rsatiladi.
                     passage = exercise.Passage,
-                    saved = userId is not null,
+                    saved = userId is not null && !capped,
+                    capped,
                     newCards,
                 });
             }).RequireRateLimiting(RateLimits.WritePolicy); // AI'siz — javoblar serverda tekshiriladi

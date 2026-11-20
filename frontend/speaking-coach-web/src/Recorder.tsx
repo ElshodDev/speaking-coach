@@ -76,6 +76,9 @@ export function Recorder({
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const aliveRef = useRef(true);
+  // Mikrofon ruxsati so'ralayotganda ikkinchi bosish ikkinchi oqim/yozuvchi ochmasin.
+  const startingRef = useRef(false);
+  const [starting, setStarting] = useState(false);
 
   useEffect(() => {
     loadHistory();
@@ -123,6 +126,9 @@ export function Recorder({
       setMicProblem(pre);
       return;
     }
+    if (startingRef.current || mediaRecorderRef.current?.state === 'recording') return;
+    startingRef.current = true;
+    setStarting(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       if (!aliveRef.current) {
@@ -160,6 +166,9 @@ export function Recorder({
       setStatus('error');
       setMessage('');
       setMicProblem(micProblemOf(err, env));
+    } finally {
+      startingRef.current = false;
+      if (aliveRef.current) setStarting(false);
     }
   }
 
@@ -258,7 +267,7 @@ export function Recorder({
         <button
           className={`btn block ${isRecording ? 'btn-danger' : 'btn-primary'}`}
           onClick={isRecording ? () => stopRecording() : startRecording}
-          disabled={isBusy}
+          disabled={isBusy || starting}
           style={{ minHeight: 56, fontSize: '1.05rem' }}
         >
           {isRecording ? (

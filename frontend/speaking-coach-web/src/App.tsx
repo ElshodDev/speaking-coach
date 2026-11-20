@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Review, statsPath, type ReviewStats } from './Review';
 import { AuthPanel } from './AuthPanel';
 import { EXERCISES, ExerciseTiles, Home, type ExerciseKind } from './Home';
@@ -36,6 +36,7 @@ import {
 import { ServerWake } from './ServerWake';
 import { Footer } from './Footer';
 import { setIsAdmin } from './adminFlag';
+import { confirmLeave } from './leaveGuard';
 import { SignInMethods } from './SignInMethods';
 import { common, LangSelect, useLang, useT } from './i18n';
 import { appMsg } from './locales/app';
@@ -84,10 +85,19 @@ const VocabTopicPage = lazy(() => import('./Learn').then((m) => ({ default: m.Vo
 function useRoute(): [string, (route: string) => void] {
   const read = () => window.location.hash.replace(/^#\/?/, '') || 'home';
   const [route, setRoute] = useState(read);
+  const routeRef = useRef(route);
 
   useEffect(() => {
     const onChange = () => {
-      setRoute(read());
+      const next = read();
+      // Ochiq imtihon (leaveGuard): "Orqaga", Telegram BackButton, havola — avval so'raymiz.
+      // Rad etilsa — manzilni joyiga qaytaramiz (replaceState hashchange chaqirmaydi).
+      if (next !== routeRef.current && !confirmLeave()) {
+        window.history.replaceState(null, '', `#/${routeRef.current}`);
+        return;
+      }
+      routeRef.current = next;
+      setRoute(next);
       window.scrollTo(0, 0);
     };
     window.addEventListener('hashchange', onChange);
@@ -95,6 +105,7 @@ function useRoute(): [string, (route: string) => void] {
   }, []);
 
   const go = useCallback((next: string) => {
+    if (next !== routeRef.current && !confirmLeave()) return;
     window.location.hash = `/${next}`;
   }, []);
 

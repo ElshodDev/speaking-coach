@@ -32,6 +32,9 @@ public static class MockLimit
     /// <summary>Sessiya identifikatori: faqat GUID ko'rinishidagi qator (aks holda e'tiborsiz).</summary>
     public static string? CleanSession(string? s) => Guid.TryParse(s, out var g) ? g.ToString("N") : null;
 
+    /// <summary>Bajarilayotgan (hali saqlanmagan) Speaking/Writing mock'lar hisoblagichi kaliti.</summary>
+    public static string InFlightKey(Guid userId) => "mock:" + userId.ToString("N");
+
     public static (bool Allowed, DateTime? RetryAtUtc) Check(IEnumerable<DateTime> startsUtc, int perDay, DateTime nowUtc)
     {
         var window = startsUtc.Where(t => t > nowUtc.AddHours(-24)).OrderBy(t => t).ToList();
@@ -67,8 +70,23 @@ public static class MockEndpoints
             if (admins.IsAdmin(user)) return null;
             var perDay = MockLimit.PerDay(config);
             var recent = await RecentAsync(db, user.Id);
-            var (allowed, retryAt) = MockLimit.Check(recent.Where(r => MockLimit.IsAiAssessed(r.Module)).Select(r => r.At), perDay, DateTime.UtcNow);
-            return allowed ? null : Results.Json(
+            var now = DateTime.UtcNow;
+            var starts = recent.Where(r => MockLimit.IsAiAssessed(r.Module)).Select(r => r.At).ToList();
+            var (allowed, retryAt) = MockLimit.Check(starts, perDay, now);
+            if (allowed)
+            {
+                // Natija faqat baholashdan keyin saqlanadi (bir necha Gemini chaqiruvi) —
+                // shu orada parallel yuborilgan imtihonlar ham limitga kirsin: joy so'rov
+                // oxirigacha band qilinadi.
+                var inFlight = request.HttpContext.RequestServices.GetRequiredService<AiInFlight>();
+                var used = starts.Count(t => t > now.AddHours(-24));
+                if (inFlight.TryReserve(MockLimit.InFlightKey(user.Id), DateOnly.MinValue, AiKind.Exercise, used, perDay) is { } lease)
+                {
+                    request.HttpContext.Response.RegisterForDispose(lease);
+                    return null;
+                }
+            }
+            return Results.Json(
                 new { error = request.T("mock.limit", perDay), retryAtUtc = retryAt },
                 statusCode: StatusCodes.Status429TooManyRequests);
         }
@@ -138,8 +156,8 @@ public static class MockEndpoints
 
             var ct = request.HttpContext.RequestAborted;
             // "Katta so'rov" joyi — audio xotiraga o'qilishidan oldin.
+            var form = await Uploads.ReadFormAsync(request, ct);
             using var slot = await Uploads.EnterAsync(ct);
-            var form = await request.ReadFormAsync(ct);
             var set = await sets.FindIeltsSpeakingAsync(form["setId"].ToString());
             if (set is null) return Results.BadRequest(request.Error("mock.bad_set"));
 
@@ -468,8 +486,8 @@ public static class MockEndpoints
             if (Uploads.DeclaredTooLarge(request, MaxSpeakingBodyBytes))
                 return Results.Json(request.Error("mock.too_big", MaxAudioMb), statusCode: StatusCodes.Status413PayloadTooLarge);
             var ct = request.HttpContext.RequestAborted;
+            var form = await Uploads.ReadFormAsync(request, ct);
             using var slot = await Uploads.EnterAsync(ct);
-            var form = await request.ReadFormAsync(ct);
             var set = await sets.FindCefrSpeakingAsync(form["setId"].ToString());
             if (set is null) return Results.BadRequest(request.Error("mock.bad_set"));
             var sizeError = CheckAudioSizes(request, form);

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiJson, postJson } from './api';
 import { msg, useT } from './i18n';
+import { useLeaveGuard } from './leaveGuard';
 import { cefrMsg } from './locales/cefr';
 import { mockMsg } from './locales/mock';
 import { countWords, formatClock, wordRangeStatus } from './mockLogic';
@@ -119,18 +120,13 @@ export function CefrWriting({
     if (status === 'exam' && set) saveDraft({ setId: set.id, startedAt, texts });
   }, [status, set, startedAt, texts]);
 
+  // Imtihon davomida chiqib ketish (sahifani yopish, "Orqaga", menyu) — avval so'raymiz.
+  useLeaveGuard(status === 'exam', msg(mockMsg).leaveWarning);
+
   useEffect(() => {
     if (status !== 'exam') return;
     const id = setInterval(() => setNow(Date.now()), 1000);
-    const warn = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = msg(mockMsg).leaveWarning;
-    };
-    window.addEventListener('beforeunload', warn);
-    return () => {
-      clearInterval(id);
-      window.removeEventListener('beforeunload', warn);
-    };
+    return () => clearInterval(id);
   }, [status]);
 
   const submit = useCallback(async () => {
