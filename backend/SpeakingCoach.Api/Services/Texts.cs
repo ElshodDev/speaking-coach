@@ -35,6 +35,10 @@ public static class Texts
             "Слишком большой аудиофайл (не более {0} МБ).",
             "The audio file is too large (max {0} MB)."),
         ["request.too_large"] = new("Soʻrov hajmi juda katta.", "Слишком большой запрос.", "The request is too large."),
+        ["part2.bad_card"] = new(
+            "Bunday kartochka topilmadi — roʻyxatdan boshqasini tanlang.",
+            "Такая карточка не найдена — выберите другую из списка.",
+            "That cue card was not found — pick another one from the list."),
         ["request.too_slow"] = new(
             "Yozuv juda sekin yuklandi — internetni tekshirib, qayta yuboring.",
             "Запись загружалась слишком медленно — проверьте интернет и отправьте снова.",

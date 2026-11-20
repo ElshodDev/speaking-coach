@@ -61,6 +61,14 @@ AI limitlari Toshkent vaqti bilan yarim tunda yangilanadi.
 
 GitHub → Settings → Secrets → Actions: `API_URL` (Render manzili) va `CRON_SECRET` (`Telegram__CronSecret` bilan bir xil) — eslatmalar workflow'i uchun. Eslatma: repoda 60 kun commit bo'lmasa, GitHub rejalashtirilgan workflow'larni o'chirib qo'yadi — Actions sahifasida qayta yoqing.
 
+**Muhim — GitHub'ning soatlik cron'i ishonchsiz.** Bepul repolarda GitHub rejalashtirilgan workflow'larni kechiktiradi va tashlab yuboradi: 2026-noyabrda "har soatda" o'rniga kuniga 3–4 marta ishlagan, kechqurungi (masalan 20:00) eslatmalar 11 kunning 7 tasida umuman yuborilmagan. Ishonchli yo'l — tashqi bepul cron xizmati, masalan [cron-job.org](https://cron-job.org):
+
+1. Yangi cron job: URL `https://<Render manzili>/api/telegram/cron`, **Every hour**, minut — `7`.
+2. Advanced → Request method: **POST**; Headers: `X-Cron-Secret: <Telegram__CronSecret qiymati>`.
+3. Saqlang va "Test run" — javob `202` (`{"started":true}`) bo'lishi kerak.
+
+Ikki manbadan chaqirish xavfsiz: bir kunda bitta foydalanuvchiga faqat bitta eslatma ketadi (LastReminderDate), parallel yurish esa bittaga cheklangan. GitHub workflow'ini zaxira sifatida qoldirish mumkin.
+
 ## Vercel (frontend)
 
 Root directory: `frontend/speaking-coach-web`; environment: `VITE_API_URL` (Render manzili) va `VITE_SITE_URL` (saytning o'z manzili — Telegram/Instagram havola ko'rinishidagi rasm uchun; hozir `https://fluentuz.app`). Domen o'zgarsa, `VITE_SITE_URL` va Render'dagi `FrontendOrigin`ni yangilang. Xavfsizlik sarlavhalari `vercel.json` da.

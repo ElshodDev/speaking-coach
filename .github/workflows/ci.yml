@@ -8,6 +8,10 @@ on:
     branches: [main]
   pull_request:
 
+# Faqat kodni o'qish: CI hech narsa yozmaydi (token o'g'irlansa ham zarar yo'q).
+permissions:
+  contents: read
+
 jobs:
   backend:
     name: Backend (build + unit tests)

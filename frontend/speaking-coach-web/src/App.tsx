@@ -64,6 +64,7 @@ const Admin = lazy(() => import('./Admin').then((m) => ({ default: m.Admin })));
 const Quiz = lazy(() => import('./Quiz').then((m) => ({ default: m.Quiz })));
 const Mistakes = lazy(() => import('./Mistakes').then((m) => ({ default: m.Mistakes })));
 const TalkHub = lazy(() => import('./Talk').then((m) => ({ default: m.TalkHub })));
+const Part2Page = lazy(() => import('./Part2').then((m) => ({ default: m.Part2Page })));
 const TalkSession = lazy(() => import('./Talk').then((m) => ({ default: m.TalkSession })));
 const Dictation = lazy(() => import('./Dictation').then((m) => ({ default: m.Dictation })));
 const Recorder = lazy(() => import('./Recorder').then((m) => ({ default: m.Recorder })));
@@ -367,6 +368,15 @@ function App() {
             {t.open}
           </button>
         </div>
+        <div className="card cta" style={{ marginTop: 16 }} data-testid="part2-entry">
+          <div>
+            <strong>{t.tiles.part2.title}</strong>
+            <div className="muted small">{t.tiles.part2.text}</div>
+          </div>
+          <button className="btn btn-primary" onClick={() => go('part2')}>
+            {t.open}
+          </button>
+        </div>
         <div className="card cta" style={{ marginTop: 16 }} data-testid="talk-entry">
           <div>
             <strong>{t.tiles.talk.title}</strong>
@@ -453,6 +463,8 @@ function App() {
     page = <TalkSession key={`${sub}-${userKey}`} scenario={sub} loggedIn={loggedIn} onLogin={toLogin} onCardsAdded={refreshStats} go={go} />;
   } else if (section === 'talk') {
     page = <TalkHub go={go} />;
+  } else if (section === 'part2') {
+    page = <Part2Page key={`${sub ?? ''}-${userKey}`} cardId={sub} loggedIn={loggedIn} onLogin={toLogin} onCardsAdded={refreshStats} go={go} />;
   } else if (section === 'dictation') {
     page = <Dictation key={userKey} loggedIn={loggedIn} go={go} />;
   } else if (section === 'mistakes') {
@@ -488,7 +500,7 @@ function App() {
     ? null
     : section === 'review' && sub === 'vocab'
       ? 'vocab'
-      : section === 'mock' || section === 'shadowing' || section === 'learn' || section === 'talk' || section === 'dictation'
+      : section === 'mock' || section === 'shadowing' || section === 'learn' || section === 'talk' || section === 'dictation' || section === 'part2'
         ? 'practice'
       : section === 'mistakes'
         ? 'progress'
