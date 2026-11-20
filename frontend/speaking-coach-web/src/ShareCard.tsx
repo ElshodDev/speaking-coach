@@ -18,7 +18,6 @@ export interface ShareStats {
 }
 
 export interface ShareTile {
-  emoji: string;
   value: string;
   label: string;
 }
@@ -35,10 +34,10 @@ type ShareText = {
 export function shareTiles(s: ShareStats, t: ShareText): ShareTile[] {
   const streak = s.streak > 0 ? { value: s.streak, label: t.streak } : { value: s.bestStreak, label: t.bestStreak };
   return [
-    { emoji: '🔥', value: String(streak.value), label: streak.label },
-    { emoji: '📚', value: String(s.activities), label: t.activities },
-    { emoji: '🔁', value: String(s.reviews), label: t.reviews },
-    { emoji: '🏅', value: `${s.badges}/${s.badgesTotal}`, label: t.badges },
+    { value: String(streak.value), label: streak.label },
+    { value: String(s.activities), label: t.activities },
+    { value: String(s.reviews), label: t.reviews },
+    { value: `${s.badges}/${s.badgesTotal}`, label: t.badges },
   ];
 }
 
@@ -112,14 +111,13 @@ export async function drawShareCard(s: ShareStats, t: (typeof shareMsg)['uz'], s
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('canvas');
 
-  // Fon: ko'k → binafsha gradient va yumshoq doiralar.
-  const bg = ctx.createLinearGradient(0, 0, W, H);
-  bg.addColorStop(0, '#1d4ed8');
-  bg.addColorStop(0.55, '#4f46e5');
-  bg.addColorStop(1, '#7c3aed');
+  // Fon: to'q ko'k (ilovaning rasmiy rangi) va juda yengil doiralar.
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#0b1b3f');
+  bg.addColorStop(1, '#13306e');
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.fillStyle = 'rgba(255,255,255,0.04)';
   for (const [x, y, r] of [[980, 180, 260], [80, 1500, 320], [900, 1750, 180]]) {
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
@@ -150,7 +148,7 @@ export async function drawShareCard(s: ShareStats, t: (typeof shareMsg)['uz'], s
   roundRect(ctx, 90, 600, lw, 92, 46);
   ctx.fillStyle = '#fff';
   ctx.fill();
-  ctx.fillStyle = '#3730a3';
+  ctx.fillStyle = '#0b1b3f';
   ctx.fillText(levelText, 126, 663);
 
   // 2×2 ko'rsatkichlar.
@@ -160,15 +158,16 @@ export async function drawShareCard(s: ShareStats, t: (typeof shareMsg)['uz'], s
   tiles.forEach((tile, i) => {
     const x = 90 + (i % 2) * (tw + 40);
     const y = 800 + Math.floor(i / 2) * (th + 40);
-    roundRect(ctx, x, y, tw, th, 44);
-    ctx.fillStyle = 'rgba(255,255,255,0.14)';
+    roundRect(ctx, x, y, tw, th, 28);
+    ctx.fillStyle = 'rgba(255,255,255,0.07)';
     ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.16)';
     ctx.lineWidth = 2;
     ctx.stroke();
+    // Emoji o'rniga qisqa ko'k chiziq — rasmiy uslub.
+    ctx.fillStyle = '#7fb0ff';
+    ctx.fillRect(x + 44, y + 70, 64, 8);
     ctx.fillStyle = '#fff';
-    ctx.font = `76px ${FONT}`;
-    ctx.fillText(tile.emoji, x + 44, y + 110);
     fitText(ctx, tile.value, 800, 110, tw - 88);
     ctx.fillText(tile.value, x + 44, y + 235);
     ctx.font = `500 40px ${FONT}`;

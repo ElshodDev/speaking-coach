@@ -76,7 +76,7 @@ describe('mistakes and share card', () => {
   it('shows the best streak when the current one is zero', () => {
     const t = { streak: 'streak', bestStreak: 'best', activities: 'a', reviews: 'r', badges: 'b' };
     const base = { name: 'A', level: 3, xp: 420, streak: 0, bestStreak: 9, activities: 31, reviews: 118, badges: 5, badgesTotal: 12 };
-    expect(shareTiles(base, t)[0]).toEqual({ emoji: '🔥', value: '9', label: 'best' });
+    expect(shareTiles(base, t)[0]).toEqual({ value: '9', label: 'best' });
     expect(shareTiles({ ...base, streak: 4 }, t)[0].value).toBe('4');
     expect(shareTiles(base, t)[3].value).toBe('5/12');
   });

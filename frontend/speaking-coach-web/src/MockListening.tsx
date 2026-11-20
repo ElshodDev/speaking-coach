@@ -208,7 +208,7 @@ export function MockListening({
   const title = exam === 'cefr' ? tc.listeningTitle : t.listeningTitle;
   const header = <PageHeader title={title} onBack={phase === 'intro' || phase === 'error' || phase === 'loading' || phase === 'exhausted' ? back : undefined} backLabel={tm.title} />;
 
-  if (phase === 'loading') return <>{header}<p className="muted" role="status">⏳ {src === 'ai' ? t.aiPreparing : t.preparing}</p></>;
+  if (phase === 'loading') return <>{header}<p className="muted" role="status">{src === 'ai' ? t.aiPreparing : t.preparing}</p></>;
   if (phase === 'exhausted') return <>{header}<BankExhausted bankCount={bankCount} onPick={setSrc} /></>;
   if (phase === 'error' || !test) return <>{header}<div className="card"><p className="error" role="alert">{error}</p></div></>;
 
@@ -273,7 +273,7 @@ export function MockListening({
               {phase === 'read' && t.readQuestions(countdown)}
               {phase === 'play' && (listenAgain ? tc.listenAgain : t.playing)}
               {phase === 'review' && t.review(formatClock(countdown))}
-              {phase === 'submitting' && '⏳'}
+              {phase === 'submitting' && '…'}
             </span>
           </span>
           {phase === 'read' && (

@@ -168,7 +168,7 @@ export function MockReading({
     return (
       <>
         <PageHeader title={title} onBack={back} backLabel={tm.title} />
-        <p className="muted" role="status">⏳ {src === 'ai' ? t.aiPreparing : t.preparing}</p>
+        <p className="muted" role="status">{src === 'ai' ? t.aiPreparing : t.preparing}</p>
       </>
     );
   }
@@ -238,7 +238,7 @@ export function MockReading({
             <span className="muted tiny" style={{ display: 'block' }}>{t.answered(answered, all.length)}</span>
           </span>
           <button className="btn btn-primary" onClick={confirmSubmit} disabled={status === 'submitting'}>
-            {status === 'submitting' ? '⏳' : t.submit}
+            {status === 'submitting' ? '…' : t.submit}
           </button>
         </div>
         <div className="chips" style={{ marginTop: 8 }}>

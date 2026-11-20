@@ -1379,7 +1379,7 @@ table.data td {
   align-items: center;
   gap: 6px;
   padding: 8px 8px 10px;
-  background: linear-gradient(var(--primary-soft), var(--surface));
+  background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
 }
@@ -3214,4 +3214,55 @@ main > * {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+}
+
+/* --- Professional qatlam: qolgan sahifalar --- */
+/* Monogramma: mavzu va xato turi belgisi (emoji o'rniga bosh harf) */
+.tile .emoji.mono,
+.mistake-icon {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-soft);
+  text-transform: uppercase;
+}
+.mistake-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+}
+/* Admin tizim holati: rangli nuqta */
+.status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.status-dot.ok { background: var(--success); }
+.status-dot.bad { background: var(--warning); }
+.status-dot.off { background: var(--border); }
+/* Gradientlar o'rniga sokin to'liq rang */
+.pick-progress-bar span {
+  background: var(--primary);
+}
+.ico {
+  vertical-align: -0.2em;
+  flex: none;
+}
+/* Ikkinchi "yashil" tugma o'rniga yagona asosiy rang */
+.btn-teal,
+.btn-teal:hover:not(:disabled) {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+/* Shadowing ro'yxati: multfilm qahramonlari o'rniga sokin muqova, darajalar neytral */
+.shadow-thumb-chars {
+  color: var(--primary);
+  opacity: 0.8;
+}
+.shadow-level {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
 }

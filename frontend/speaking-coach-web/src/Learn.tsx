@@ -7,6 +7,7 @@ import { ApiError, getLevel, postJson } from './api';
 import { GRAMMAR_CATALOG as GRAMMAR, VOCAB_CATALOG as VOCAB_TOPICS } from './content/catalog';
 import { loadGrammarLesson, loadVocabTopic } from './content/load';
 import { LEVELS, type GrammarLesson, type L3, type Level, type TopicWord, type VocabTopic } from './content/types';
+import { Icon } from './Icon';
 
 // "Ona tili tuzoqlari" — o'z tabi ochilgandagina yuklanadi.
 const L1Hub = lazy(() => import('./L1Traps').then((m) => ({ default: m.L1Hub })));
@@ -23,13 +24,13 @@ function Speak({ text }: { text: string }) {
   return (
     <button
       className="btn-link small"
-      aria-label={`🔊 ${text}`}
+      aria-label={text}
       onClick={() => {
         stopSpeaking();
         void speakAsync(text);
       }}
     >
-      🔊
+      <Icon name="volume" size={18} />
     </button>
   );
 }
@@ -89,7 +90,7 @@ export function LearnHub({ tab, go }: { tab: 'grammar' | 'words' | 'traps'; go: 
         <div className="tiles learn-topics" data-testid="topic-list">
           {VOCAB_TOPICS.map((v) => (
             <button key={v.id} className="tile" onClick={() => go(`learn/words/${v.id}`)}>
-              <span className="emoji" aria-hidden>{v.emoji}</span>
+              <span className="emoji mono" aria-hidden>{pick(v.title, lang).charAt(0)}</span>
               <strong>{pick(v.title, lang)}</strong>
               <span className="muted">{t.wordsCount(v.words)}</span>
             </button>
@@ -383,7 +384,7 @@ function VocabTopicView({ topic, go, loggedIn, onLogin }: { topic: VocabTopic | 
 
   return (
     <>
-      <PageHeader title={`${topic.emoji} ${pick(topic.title, lang)}`} subtitle={t.wordsCount(topic.words.length)} onBack={() => go('learn/words')} backLabel={t.back} />
+      <PageHeader title={pick(topic.title, lang)} subtitle={t.wordsCount(topic.words.length)} onBack={() => go('learn/words')} backLabel={t.back} />
 
       <div className="row" style={{ marginTop: 8 }}>
         <button className="btn btn-primary" onClick={startQuiz} data-testid="words-quiz">{t.quiz}</button>

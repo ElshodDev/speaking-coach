@@ -42,19 +42,6 @@ export const LESSON_FOR: Record<string, string | undefined> = {
   word_choice: 'learn/words',
 };
 
-const ICON: Record<string, string> = {
-  articles: '🅰️',
-  prepositions: '📍',
-  agreement: '🤝',
-  tense: '⏳',
-  plural: '👥',
-  comparatives: '📏',
-  word_order: '🔀',
-  spelling: '🔤',
-  word_choice: '💬',
-  other: '🧩',
-};
-
 /** Oxirgi 30 kun va undan oldingi 30 kun farqi: manfiy — kamaydi (yaxshi). */
 export function trendOf(c: Pick<MistakeCategory, 'last30' | 'prev30'>): number {
   return c.last30 - c.prev30;
@@ -123,7 +110,7 @@ export function Mistakes({ loggedIn, onLogin, go }: { loggedIn: boolean; onLogin
           return (
             <section key={c.id} className={`card mistake-card${i === 0 ? ' top' : ''}`} data-testid="mistake-card" data-cat={c.id}>
               <div className="mistake-head">
-                <span className="mistake-icon" aria-hidden>{ICON[c.id] ?? '🧩'}</span>
+                <span className="mistake-icon" aria-hidden>{cat.name.charAt(0)}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h3 style={{ margin: 0 }}>{cat.name}</h3>
                   <div className="mistake-bar" aria-hidden>

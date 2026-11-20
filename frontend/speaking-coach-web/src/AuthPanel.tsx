@@ -6,6 +6,7 @@ import { authMsg } from './locales/auth';
 import { GoogleButton } from './GoogleButton';
 import { chromeIntent, currentInApp, isAndroid, isIos } from './inApp';
 import { inTelegram } from './tgApp';
+import { Icon } from './Icon';
 
 /** Server javobi: yo token (kirildi), yo "kodni kiriting", yo shunchaki ok. */
 interface AuthResponse {
@@ -484,7 +485,7 @@ export function AuthPanel({
             aria-pressed={showPassword}
             onClick={() => setShowPassword((v) => !v)}
           >
-            <span aria-hidden="true">{showPassword ? '🙈' : '👁'}</span>
+            <Icon name={showPassword ? 'eyeOff' : 'eye'} size={18} />
           </button>
         </span>
         {register && <span id="auth-password-hint" className="muted tiny">{t.passwordHint}</span>}

@@ -362,7 +362,7 @@ export function MockSpeaking({
       <>
         {header}
         <div className="card" role="status">
-          <p style={{ margin: 0 }}>⏳ {t.submitting}</p>
+          <p style={{ margin: 0 }}>{t.submitting}</p>
         </div>
       </>
     );

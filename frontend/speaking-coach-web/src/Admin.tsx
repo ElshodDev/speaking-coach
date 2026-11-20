@@ -176,7 +176,7 @@ export function Admin() {
                 <tr key={i}>
                   <td className="break">
                     {u.contact ?? u.email}{' '}
-                    {!u.email.endsWith('.invalid') && <span title={u.verified ? t.verified : t.unverified}>{u.verified ? '✅' : '⏳'}</span>}
+                    {!u.email.endsWith('.invalid') && <span title={u.verified ? t.verified : t.unverified}>{u.verified ? '✓' : '…'}</span>}
                     <div className="muted tiny">
                       {new Date(u.createdAtUtc).toLocaleDateString(locale)}
                       {u.method ? ` · ${t.methods[u.method as keyof typeof t.methods] ?? u.method}` : ''}

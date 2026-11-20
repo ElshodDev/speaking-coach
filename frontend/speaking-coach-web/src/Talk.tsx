@@ -13,6 +13,7 @@ import { TALK_SCENARIOS, talkMsg } from './locales/talk';
 import { audioExt } from './shadowLogic';
 import { isSpeechSupported, speakAsync, stopSpeaking } from './speech';
 import { PageHeader } from './ui';
+import { Icon } from './Icon';
 
 interface Correction {
   original: string;
@@ -300,12 +301,12 @@ export function TalkSession({
               <span className="tiny muted who">{m.who === 'ai' ? t.partner : t.you}</span>
               <span>{m.text}</span>
               {m.who === 'ai' && isSpeechSupported() && (
-                <button className="btn-link tiny" onClick={() => say(m.text)} aria-label={t.listenAgain}>🔊</button>
+                <button className="btn-link tiny" onClick={() => say(m.text)} aria-label={t.listenAgain}><Icon name="volume" size={16} /></button>
               )}
             </div>
             {m.tip && (
               <div className="talk-tip small" data-testid="talk-tip">
-                💡 <s>{m.tip.original}</s> → <strong>{m.tip.corrected}</strong>
+                <s>{m.tip.original}</s> → <strong>{m.tip.corrected}</strong>
                 {m.tip.explanation && <div className="muted tiny">{m.tip.explanation}</div>}
               </div>
             )}
@@ -390,7 +391,7 @@ export function TalkSession({
                 {summary.usefulPhrases.map((p, i) => (
                   <li key={i}>
                     <span>{p}</span>
-                    {isSpeechSupported() && <button className="btn-link tiny" onClick={() => say(p)} aria-label={t.listenAgain}>🔊</button>}
+                    {isSpeechSupported() && <button className="btn-link tiny" onClick={() => say(p)} aria-label={t.listenAgain}><Icon name="volume" size={16} /></button>}
                   </li>
                 ))}
               </ul>

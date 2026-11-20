@@ -10,6 +10,7 @@ import { legalMsg } from './locales/legal';
 import { choiceLabel, type ClientGroup } from './ObjectiveQuestions';
 import { bandKey, cefrLevel, formatBand } from './mockLogic';
 import { Corrections, PageHeader, type CorrectionItem } from './ui';
+import { Icon } from './Icon';
 
 interface MockStatus {
   perDay: number;
@@ -298,7 +299,7 @@ function ObjectiveResultView({ r, test }: { r: ObjectiveResult; test: TestConten
           {shown.map((q) => (
             <li key={q.number} style={{ padding: '8px 0', borderTop: '1px solid var(--border)' }} className="small">
               <div>
-                {q.correct ? '✅' : '❌'} <strong>{q.number}.</strong> {questions.get(q.number)?.q.prompt ?? ''}
+                <Icon name={q.correct ? 'check' : 'x'} size={16} className={q.correct ? 'txt-great' : 'txt-low'} /> <strong>{q.number}.</strong> {questions.get(q.number)?.q.prompt ?? ''}
               </div>
               <div>
                 {to.your}: <span className={q.correct ? 'txt-great' : 'txt-low'}>{q.given ? label(q.number, q.given) : to.empty}</span>

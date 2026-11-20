@@ -30,7 +30,7 @@ export function overallOk(s: SystemStatus): boolean {
 
 /** 🟢 ishlayapti · 🟠 muammo · ⚪ ixtiyoriy va o'chiq (muammo emas). */
 function Dot({ ok, optional = false }: { ok: boolean; optional?: boolean }) {
-  return <span aria-hidden="true">{ok ? '🟢' : optional ? '⚪' : '🟠'}</span>;
+  return <span aria-hidden="true" className={`status-dot ${ok ? 'ok' : optional ? 'off' : 'bad'}`} />;
 }
 
 /**
@@ -71,7 +71,7 @@ export function AdminSystem() {
       </div>
 
       {error && <p className="error small" role="alert">{error}</p>}
-      {data && overallOk(data) && <p className="success small" style={{ margin: 0 }}>✅ {t.allGood}</p>}
+      {data && overallOk(data) && <p className="success small" style={{ margin: 0 }}>{t.allGood}</p>}
 
       {db && tg && data && (
         <div className="table-wrap">

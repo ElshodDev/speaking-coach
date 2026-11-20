@@ -50,6 +50,7 @@ import { isSpeechSupported, pickVoices, sleep } from './speech';
 import { PageHeader } from './ui';
 import { focusedButton, typingTarget, useWide } from './layout';
 import { normalizeWord, WordSheet } from './WordSheet';
+import { Icon } from './Icon';
 
 const loadProgress = () => apiJson<ShadowProgress[]>('/api/shadowing/progress').catch(() => [] as ShadowProgress[]);
 
@@ -99,8 +100,8 @@ export function ShadowingList({ go }: { go: (route: string) => void }) {
                         {l.kind === 'youtube' && l.videoId ? (
                           <img src={thumbnail(l.videoId)} alt="" loading="lazy" />
                         ) : (
-                          <div className="shadow-thumb-chars">
-                            {l.characters.map((c) => <Character key={c} name={c} size={52} label={t.names[c]} />)}
+                          <div className="shadow-thumb-chars" aria-hidden>
+                            <Icon name="shadowing" size={34} />
                           </div>
                         )}
                         <span className="shadow-ep">{t.episode(l.episode)}</span>
@@ -1047,7 +1048,7 @@ export function ShadowingLessonPage({ id, go, loggedIn, onLogin }: { id: string;
             <small>{t.next}</small>
           </button>
           <button className="shadow-ctl" aria-pressed={loop !== 0} onClick={() => setLoop((v) => nextLoop(v))} aria-label={t.loop(loopKey)} disabled={mode === 'free'}>
-            <span aria-hidden="true">🔁</span>
+            <span aria-hidden="true"><Icon name="review" size={18} /></span>
             <small>{t.loop(loopKey)}</small>
           </button>
         </div>
