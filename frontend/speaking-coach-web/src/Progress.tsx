@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { apiJson } from './api';
 import { ActivityCalendar, LineChart, type CalendarDay, type LineSeries } from './charts';
 import { FluencyTrend } from './Fluency';
+import { ReadinessCard } from './Readiness';
 import { common, msg, useT } from './i18n';
 import { progressMsg, type BadgeId } from './locales/progress';
 import { PageHeader, Split } from './ui';
@@ -328,7 +329,7 @@ export function Progress({
         <PageHeader title={t.title} />
         {links}
         <Split
-          main={<>{statsCard}{trendCard}{activity}{hardest}</>}
+          main={<><ReadinessCard go={go} />{statsCard}{trendCard}{activity}{hardest}</>}
           side={<>{level}{boardCard}{badges}</>}
         />
         {shareDialog}
@@ -340,6 +341,7 @@ export function Progress({
     <>
       <PageHeader title={t.title} />
       {level}
+      <ReadinessCard go={go} />
       {links}
       {statsCard}
       {activity}

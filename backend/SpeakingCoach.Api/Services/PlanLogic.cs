@@ -49,11 +49,14 @@ public static class PlanLogic
         int DailyGoal,
         IReadOnlySet<string> PracticedToday,      // "speaking", "writing", ...
         IReadOnlySet<string> MockedToday,         // "listening", "reading", ... (tanlangan imtihon bo'yicha)
-        IReadOnlyDictionary<string, DateTime> LastMockUtc); // modul → oxirgi urinish (tanlangan imtihon)
+        IReadOnlyDictionary<string, DateTime> LastMockUtc, // modul → oxirgi urinish (tanlangan imtihon)
+        // Tayyorlik bahosidan: eng zaif (yoki ma'lumoti yo'q) ko'nikma — rejada birinchi bo'ladi.
+        string? FocusSkill = null,
+        string? FocusReason = null);
 
     public record Item(string Key, string Kind, string Route, bool Done, int Minutes, int? Progress = null, int? Target = null);
 
-    public record Plan(string? Goal, int? DaysToExam, List<Item> Items);
+    public record Plan(string? Goal, int? DaysToExam, List<Item> Items, string? FocusSkill = null, string? FocusReason = null);
 
     public static Plan Build(Input i)
     {
@@ -69,11 +72,13 @@ public static class PlanLogic
         }
 
         // 2) Kunning ko'nikmasi (har kuni boshqa), vaqt ko'p bo'lsa — ikkinchisi ham.
+        // Imtihonga tayyorlanayotganlarda — avval tayyorlik bahosidagi eng zaif ko'nikma.
         var day = i.Today.DayNumber;
         var practiceCount = minutes >= 30 ? 2 : 1;
-        for (var k = 0; k < practiceCount; k++)
+        var focus = i.Goal is "ielts" or "cefr" && i.FocusSkill is { } f && Skills.Contains(f) ? f : null;
+        var chosen = PracticeSkills(focus, day, practiceCount);
+        foreach (var skill in chosen)
         {
-            var skill = Skills[(day + k) % Skills.Length];
             items.Add(new Item($"practice:{skill}", "practice", $"practice/{skill}", i.PracticedToday.Contains(skill), 10));
         }
 
@@ -94,14 +99,28 @@ public static class PlanLogic
             // Imtihon yaqin — har kuni bitta bo'lim; aks holda haftasiga bitta (bajarilgan kuni ham ro'yxatda qoladi).
             if (soon || !recent || mockedToday)
             {
+                // Bo'lim bo'yicha ma'lumot yo'q (tayyorlikni baholab bo'lmaydi) — avval o'sha bo'lim.
                 var module = mockedToday
                     ? Skills.First(i.MockedToday.Contains)
-                    : NextMockModule(i.LastMockUtc);
+                    : focus is not null && i.FocusReason == "missing" ? focus : NextMockModule(i.LastMockUtc);
                 items.Add(new Item($"mock:{i.Goal}:{module}", "mock", MockRoute(i.Goal, module), mockedToday, module is "listening" ? 40 : module is "speaking" ? 15 : 60));
             }
         }
 
-        return new Plan(i.Goal, daysToExam, items);
+        return new Plan(i.Goal, daysToExam, items, focus, focus is null ? null : i.FocusReason);
+    }
+
+    /// <summary>Kunning ko'nikmalari: fokus bo'lsa — u birinchi, qolgani odatdagi aylanish bo'yicha (takrorlanmasdan).</summary>
+    public static List<string> PracticeSkills(string? focus, int dayNumber, int count)
+    {
+        var list = new List<string>();
+        if (focus is not null) list.Add(focus);
+        for (var k = 0; list.Count < count && k < Skills.Length * 2; k++)
+        {
+            var s = Skills[(dayNumber + k) % Skills.Length];
+            if (!list.Contains(s)) list.Add(s);
+        }
+        return list.Take(count).ToList();
     }
 
     /// <summary>Hali topshirilmagan bo'lim, bo'lmasa — eng uzoq vaqt oldin topshirilgani.</summary>

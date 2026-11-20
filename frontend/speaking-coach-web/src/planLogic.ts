@@ -23,6 +23,9 @@ export interface TodayPlan {
   targetScore: string | null;
   examDate: string | null;
   daysToExam: number | null;
+  /** Tayyorlik bahosidagi eng zaif (yoki ma'lumoti yo'q) ko'nikma — rejada birinchi. */
+  focusSkill?: 'listening' | 'reading' | 'writing' | 'speaking' | null;
+  focusReason?: 'missing' | 'weakest' | null;
   dailyMinutes: number;
   onboarded: boolean;
   items: PlanItem[];

@@ -56,6 +56,9 @@ export const planMsg = defineMessages(
     },
     moduleNames: { speaking: 'Speaking', writing: 'Writing', reading: 'Reading', listening: 'Listening' } as Record<string, string>,
     aboutMinutes: (n: number) => `≈${n} daq`,
+    focusWeakest: (s: string) => `Bugungi fokus: ${s} — eng zaif koʻnikmangiz.`,
+    focusMissing: (s: string) => `Bugungi fokus: ${s} — bu boʻlim boʻyicha hali baho yoʻq.`,
+    focusMore: 'Tayyorlik →',
     countdown: (days: number, exam: string) =>
       days === 0 ? `${exam} imtihoni — bugun! Omad! 🍀` : `${exam} imtihonigacha ${days} kun`,
     target: (t: string) => `maqsad: ${t}`,
@@ -119,6 +122,9 @@ export const planMsg = defineMessages(
       },
       moduleNames: { speaking: 'Speaking', writing: 'Writing', reading: 'Reading', listening: 'Listening' } as Record<string, string>,
       aboutMinutes: (n: number) => `≈${n} мин`,
+      focusWeakest: (s: string) => `Фокус дня: ${s} — ваш самый слабый навык.`,
+      focusMissing: (s: string) => `Фокус дня: ${s} — по этому разделу ещё нет оценки.`,
+      focusMore: 'Готовность →',
       countdown: (days: number, exam: string) =>
         days === 0 ? `Экзамен ${exam} — сегодня! Удачи! 🍀` : `До экзамена ${exam}: ${days} ${ruPlural(days, 'день', 'дня', 'дней')}`,
       target: (t: string) => `цель: ${t}`,
@@ -180,6 +186,9 @@ export const planMsg = defineMessages(
       },
       moduleNames: { speaking: 'Speaking', writing: 'Writing', reading: 'Reading', listening: 'Listening' } as Record<string, string>,
       aboutMinutes: (n: number) => `≈${n} min`,
+      focusWeakest: (s: string) => `Today's focus: ${s} — your weakest skill.`,
+      focusMissing: (s: string) => `Today's focus: ${s} — no estimate for this section yet.`,
+      focusMore: 'Readiness →',
       countdown: (days: number, exam: string) =>
         days === 0 ? `${exam} exam — today! Good luck! 🍀` : `${days} ${enPlural(days, 'day', 'days')} to your ${exam} exam`,
       target: (t: string) => `target: ${t}`,
