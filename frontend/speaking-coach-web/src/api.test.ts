@@ -1,5 +1,23 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { AI_TIMEOUT_MS, ApiError, apiFetch, apiJson, DEFAULT_TIMEOUT_MS, isAiPath, networkError, timeoutFor } from './api';
+import {
+  AI_TIMEOUT_MS,
+  ApiError,
+  AUTH_EXPIRED_EVENT,
+  apiFetch,
+  apiJson,
+  DEFAULT_TIMEOUT_MS,
+  fallbackMessage,
+  getToken,
+  isAiPath,
+  isSessionExpired,
+  networkError,
+  parseJsonBody,
+  sameSession,
+  setToken,
+  timeoutFor,
+} from './api';
+import { msg } from './i18n';
+import { networkMsg } from './locales/network';
 import { getSlowCount, noteServerResponse, resetNetStatus, SLOW_AFTER_MS, subscribeSlow, trackRequest } from './netStatus';
 
 describe('timeouts', () => {
@@ -109,6 +127,98 @@ describe('server errors', () => {
     const err = (await apiJson('/api/profile').catch((e: unknown) => e)) as ApiError;
     expect(err.status).toBe(502);
     expect(err.message).not.toMatch(/html/i);
+  });
+});
+
+describe('429 and broken JSON', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('explains 429 with the wait time from Retry-After or the body', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('', { status: 429, headers: { 'Retry-After': '30' } })));
+    const err = (await apiJson('/api/profile').catch((e: unknown) => e)) as ApiError;
+    expect(err.status).toBe(429);
+    expect(err.retryAfterSeconds).toBe(30);
+    expect(err.message).toBe(msg(networkMsg).tooMany(30));
+    expect(fallbackMessage(429)).toBe(msg(networkMsg).tooMany(undefined));
+  });
+
+  it('prefers the server text for 429', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: 'Kunlik limit tugadi' }), { status: 429 })));
+    const err = (await apiJson('/api/profile').catch((e: unknown) => e)) as ApiError;
+    expect(err.message).toBe('Kunlik limit tugadi');
+  });
+
+  it('turns an HTML page with status 200 into a friendly error', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('<!doctype html><html></html>', { status: 200 })));
+    const err = (await apiJson('/api/profile').catch((e: unknown) => e)) as ApiError;
+    expect(err).toBeInstanceOf(ApiError);
+    expect(err.code).toBe('bad_json');
+    expect(err.message).toBe(msg(networkMsg).badResponse);
+    expect(err.message).not.toMatch(/Unexpected token/);
+  });
+
+  it('parses empty and valid bodies', () => {
+    expect(parseJsonBody('', 204)).toBeUndefined();
+    expect(parseJsonBody<{ a: number }>('{"a":1}', 200)).toEqual({ a: 1 });
+  });
+});
+
+describe('expired session', () => {
+  const store = new Map<string, string>();
+  const fakeStorage = {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => void store.set(k, v),
+    removeItem: (k: string) => void store.delete(k),
+  };
+  let events: number;
+  beforeEach(() => {
+    store.clear();
+    events = 0;
+    const win = new EventTarget();
+    win.addEventListener(AUTH_EXPIRED_EVENT, () => events++);
+    vi.stubGlobal('localStorage', fakeStorage);
+    vi.stubGlobal('window', win);
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  const respond = (status: number) => vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}', { status })));
+
+  it('knows which 401s mean "session expired"', () => {
+    expect(isSessionExpired(401, '/api/profile')).toBe(true);
+    expect(isSessionExpired(401, '/api/auth/me')).toBe(true);
+    expect(isSessionExpired(401, '/api/auth/login')).toBe(false);
+    expect(isSessionExpired(401, '/api/auth/code/verify')).toBe(false);
+    expect(isSessionExpired(401, '/api/auth/google')).toBe(false);
+    expect(isSessionExpired(401, '/api/auth/telegram')).toBe(false);
+    expect(isSessionExpired(403, '/api/profile')).toBe(false);
+  });
+
+  it('clears the token and notifies the app on 401 with a token', async () => {
+    setToken('t1');
+    respond(401);
+    await apiFetch('/api/profile');
+    expect(getToken()).toBeNull();
+    expect(events).toBe(1);
+  });
+
+  it('does nothing for a guest or for a wrong password', async () => {
+    respond(401);
+    await apiFetch('/api/profile');
+    expect(events).toBe(0);
+    setToken('t1');
+    await apiFetch('/api/auth/login', { method: 'POST' });
+    expect(getToken()).toBe('t1');
+    expect(events).toBe(0);
+  });
+
+  it('sameSession notices logout and account switches', () => {
+    setToken('a');
+    const same = sameSession();
+    expect(same()).toBe(true);
+    setToken('b');
+    expect(same()).toBe(false);
+    setToken(null);
+    expect(same()).toBe(false);
   });
 });
 

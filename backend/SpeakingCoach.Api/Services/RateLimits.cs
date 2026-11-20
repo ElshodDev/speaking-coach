@@ -36,6 +36,17 @@ public static class RateLimits
     /// Wi-Fi ortida bir vaqtda qo'shila oladi, kodlarni terib chiqish esa amalda imkonsiz (31⁶ variant).</summary>
     public const string JoinPolicy = "join";
 
+    /// <summary>Fikr-mulohaza (mehmon ham yuboradi, har biri adminlarga Telegram xabar):
+    /// IP uchun 10 daqiqada 5 ta VA kuniga 20 ta.</summary>
+    public const string FeedbackPolicy = "feedback";
+
+    /// <summary>"write" siyosatining IP darajasidagi yuqori chegarasi (daqiqasiga).
+    /// Token bo'yicha bucket tokenni tekshirmaydi (rate limiter autentifikatsiyadan oldin
+    /// ishlaydi), shuning uchun har so'rovda yangi soxta token yuborish bilan aylanib
+    /// o'tmaslik uchun IP bo'yicha umumiy chegara ham qo'yiladi. Sinf bitta Wi-Fi
+    /// ortida bo'lishi mumkin — chegara keng.</summary>
+    public const int WritePerIpPerMinute = 300;
+
     private static FixedWindowRateLimiterOptions PerWindow(int limit, TimeSpan window) =>
         new() { PermitLimit = limit, Window = window, QueueLimit = 0 };
 
@@ -73,13 +84,32 @@ public static class RateLimits
         options.AddPolicy(AiPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
             User(http), _ => PerWindow(30, TimeSpan.FromMinutes(1))));
 
+        options.AddPolicy(FeedbackPolicy, http => RateLimitPartition.Get(
+            Ip(http), _ => RateLimiter.CreateChained(
+                new FixedWindowRateLimiter(PerWindow(5, TimeSpan.FromMinutes(10))),
+                new FixedWindowRateLimiter(PerWindow(20, TimeSpan.FromDays(1))))));
+
         options.AddPolicy(JoinPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
             Ip(http), _ => PerWindow(60, TimeSpan.FromMinutes(1))));
 
-        options.GlobalLimiter = AiGlobal();
+        options.GlobalLimiter = PartitionedRateLimiter.CreateChained(AiGlobal(), WriteIpCeiling());
     }
 
-    public static string Ip(HttpContext http) => "ip:" + (http.Connection.RemoteIpAddress?.ToString() ?? "unknown");
+    public static string Ip(HttpContext http) => "ip:" + ClientKey(http.Connection.RemoteIpAddress);
+
+    /// <summary>
+    /// Cheklovlar kaliti: IPv4 — manzilning o'zi; IPv6 — /64 tarmoq (bitta abonent odatda
+    /// butun /64 oladi va undagi manzillarni erkin almashtira oladi — har biriga yangi limit bo'lmasin).
+    /// </summary>
+    public static string ClientKey(System.Net.IPAddress? ip)
+    {
+        if (ip is null) return "unknown";
+        if (ip.IsIPv4MappedToIPv6) ip = ip.MapToIPv4();
+        if (ip.AddressFamily != System.Net.Sockets.AddressFamily.InterNetworkV6) return ip.ToString();
+        var bytes = ip.GetAddressBytes();
+        Array.Clear(bytes, 8, 8);
+        return new System.Net.IPAddress(bytes).ToString() + "/64";
+    }
 
     /// <summary>
     /// Kirgan foydalanuvchi — token xeshi bo'yicha (sinfdagi o'quvchilar bir-birini
@@ -99,8 +129,18 @@ public static class RateLimits
         return Ip(http);
     }
 
-    public static bool IsAi(HttpContext http) =>
-        http.GetEndpoint()?.Metadata.GetMetadata<EnableRateLimitingAttribute>()?.PolicyName == AiPolicy;
+    public static bool IsAi(HttpContext http) => PolicyOf(http) == AiPolicy;
+
+    public static bool IsWrite(HttpContext http) => PolicyOf(http) is WritePolicy or FeedbackPolicy;
+
+    private static string? PolicyOf(HttpContext http) =>
+        http.GetEndpoint()?.Metadata.GetMetadata<EnableRateLimitingAttribute>()?.PolicyName;
+
+    /// <summary>"write"/"feedback" endpoint'lari uchun IP bo'yicha umumiy chegara (soxta tokenlar bilan aylanib o'tishga qarshi).</summary>
+    public static PartitionedRateLimiter<HttpContext> WriteIpCeiling() =>
+        PartitionedRateLimiter.Create<HttpContext, string>(http => IsWrite(http)
+            ? RateLimitPartition.GetFixedWindowLimiter(Ip(http), _ => PerWindow(WritePerIpPerMinute, TimeSpan.FromMinutes(1)))
+            : RateLimitPartition.GetNoLimiter(""));
 
     /// <summary>Faqat AI endpoint'lariga ta'sir qiladigan umumiy cheklov (qolganlari — cheklovsiz).</summary>
     public static PartitionedRateLimiter<HttpContext> AiGlobal() => PartitionedRateLimiter.CreateChained(

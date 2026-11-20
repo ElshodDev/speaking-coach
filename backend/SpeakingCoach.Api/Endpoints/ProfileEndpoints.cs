@@ -136,7 +136,15 @@ public static partial class ProfileEndpoints
             user.DisplayName = name;
             if (body.Level is not null) user.Level = LearnerLevel.Normalize(body.Level);
             user.ShowOnLeaderboard = body.ShowOnLeaderboard;
-            await db.SaveChangesAsync();
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (AuthService.IsUniqueViolation(ex))
+            {
+                // Tekshiruvdan keyin, saqlashdan oldin boshqa kimdir shu taxallusni oldi (noyob indeks).
+                return Results.BadRequest(request.Error("profile.nickname_taken"));
+            }
             return Results.Ok(new { displayName = user.DisplayName, level = user.Level, showOnLeaderboard = user.ShowOnLeaderboard });
         }).RequireRateLimiting(RateLimits.WritePolicy);
 

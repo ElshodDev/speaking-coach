@@ -5,8 +5,6 @@ export const dictationMsg = defineMessages(
   {
     title: '🎧 Diktant',
     subtitle: 'Gapni eshiting va aynan yozing. Ilova har bir soʻzni tekshiradi — AI limiti sarflanmaydi.',
-    tile: '🎧 Diktant',
-    tileText: 'Eshiting va yozing: 60 ta gap, har bir soʻz tekshiriladi',
     level: 'Daraja',
     round: (n: number) => `${n} ta gap`,
     start: '▶ Boshlash',
@@ -33,8 +31,6 @@ export const dictationMsg = defineMessages(
     ru: {
       title: '🎧 Диктант',
       subtitle: 'Послушайте фразу и запишите её точно. Приложение проверит каждое слово — лимит ИИ не тратится.',
-      tile: '🎧 Диктант',
-      tileText: 'Слушайте и пишите: 60 фраз, проверка каждого слова',
       level: 'Уровень',
       round: (n: number) => `${n} фраз`,
       start: '▶ Начать',
@@ -60,8 +56,6 @@ export const dictationMsg = defineMessages(
     en: {
       title: '🎧 Dictation',
       subtitle: 'Listen to a sentence and type it exactly. The app checks every word — no AI limit used.',
-      tile: '🎧 Dictation',
-      tileText: 'Listen and type: 60 sentences, every word checked',
       level: 'Level',
       round: (n: number) => `${n} sentences`,
       start: '▶ Start',

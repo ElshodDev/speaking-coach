@@ -2,11 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import { STABILITY_RUNS, StabilityTable, computeStats, runSequentially, type DimensionStats } from './Stability';
 import { apiJson, getLevel, loadHistory as fetchHistory, type HistoryItem } from './api';
 import { cardsMessage } from './cards';
+import { safeJson, scoreText, textOf } from './safeJson';
 import { useIsAdmin } from './adminFlag';
 import { useT } from './i18n';
 import { speakingMsg } from './locales/speaking';
 import { currentMicEnv, micPrecheck, micProblemOf, type MicProblem } from './micErrors';
 import { MicProblemNote } from './MicProblem';
+import { FluencyCard } from './Fluency';
+import { measurePauses } from './fluencyAudio';
+import type { FluencyStats, PauseStats } from './fluencyLogic';
 import { audioExt } from './shadowLogic';
 import { initialTopic, TopicPicker, type PickedTopic } from './TopicPicker';
 import { stabilityMsg } from './locales/stability';
@@ -38,6 +42,8 @@ interface EvaluationResult {
 interface SubmitResponse {
   submissionId: string;
   evaluation: EvaluationResult;
+  /** Ravonlik o'lchovlari (eski server versiyasida — yo'q). */
+  metrics?: FluencyStats;
   saved: boolean;
   newCards: number;
 }
@@ -69,6 +75,9 @@ export function Recorder({
   // qayta-qayta yuboriladi (serverda audio doimiy saqlanmaydi, shuning uchun
   // uni brauzerda ushlab turamiz).
   const [lastBlob, setLastBlob] = useState<Blob | null>(null);
+  // Yozuv uzunligi va pauzalar — ravonlik o'lchovlari uchun (qayta yuborishda ham o'sha qiymatlar).
+  const timingRef = useRef<{ seconds: number; pauses: PauseStats | null } | null>(null);
+  const startedAtRef = useRef(0);
   const [stability, setStability] = useState<{ stats: DimensionStats[]; failed: number } | null>(null);
   const [testProgress, setTestProgress] = useState('');
   const [isTesting, setIsTesting] = useState(false);
@@ -76,6 +85,9 @@ export function Recorder({
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const aliveRef = useRef(true);
+  // Mikrofon ruxsati so'ralayotganda ikkinchi bosish ikkinchi oqim/yozuvchi ochmasin.
+  const startingRef = useRef(false);
+  const [starting, setStarting] = useState(false);
 
   useEffect(() => {
     loadHistory();
@@ -123,6 +135,9 @@ export function Recorder({
       setMicProblem(pre);
       return;
     }
+    if (startingRef.current || mediaRecorderRef.current?.state === 'recording') return;
+    startingRef.current = true;
+    setStarting(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       if (!aliveRef.current) {
@@ -143,11 +158,16 @@ export function Recorder({
         stream.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
         if (!aliveRef.current) return;
+        const seconds = (Date.now() - startedAtRef.current) / 1000;
+        const pauses = await measurePauses(blob);
+        if (!aliveRef.current) return;
+        timingRef.current = { seconds, pauses };
         setLastBlob(blob);
         await uploadAudio(blob);
       };
 
       recorder.start();
+      startedAtRef.current = Date.now();
       mediaRecorderRef.current = recorder;
       setStatus('recording');
       setMessage('');
@@ -160,6 +180,9 @@ export function Recorder({
       setStatus('error');
       setMessage('');
       setMicProblem(micProblemOf(err, env));
+    } finally {
+      startingRef.current = false;
+      if (aliveRef.current) setStarting(false);
     }
   }
 
@@ -192,6 +215,14 @@ export function Recorder({
     formData.append('audio', blob, `recording.${audioExt(blob.type)}`);
     formData.append('topic', topic);
     formData.append('level', getLevel());
+    const timing = timingRef.current;
+    if (timing) {
+      formData.append('seconds', timing.seconds.toFixed(1));
+      if (timing.pauses) {
+        formData.append('longPauses', String(timing.pauses.longPauses));
+        formData.append('pauseSeconds', String(timing.pauses.pauseSeconds));
+      }
+    }
 
     const path = save ? '/api/speaking/submit' : '/api/speaking/submit?save=false';
     return apiJson<SubmitResponse>(path, { method: 'POST', body: formData });
@@ -258,7 +289,7 @@ export function Recorder({
         <button
           className={`btn block ${isRecording ? 'btn-danger' : 'btn-primary'}`}
           onClick={isRecording ? () => stopRecording() : startRecording}
-          disabled={isBusy}
+          disabled={isBusy || starting}
           style={{ minHeight: 56, fontSize: '1.05rem' }}
         >
           {isRecording ? (
@@ -301,6 +332,7 @@ export function Recorder({
           <ScoreBar label={t.criteria.fluency} data={result.evaluation.fluency} />
           <ScoreBar label={t.criteria.grammar} data={result.evaluation.grammar} />
           <ScoreBar label={t.criteria.vocabulary} data={result.evaluation.vocabulary} />
+          {result.metrics && <FluencyCard metrics={result.metrics} />}
 
           <Corrections items={result.evaluation.topCorrections} />
           <Feedback encouragement={result.evaluation.encouragement} nextFocus={result.evaluation.nextFocus} />
@@ -329,13 +361,14 @@ export function Recorder({
       <HistoryList
         items={history}
         renderRow={(item) => {
-          const prompt = JSON.parse(item.promptData) as { topic: string };
-          const r = JSON.parse(item.responseData) as EvaluationResult;
+          const prompt = safeJson<{ topic?: unknown }>(item.promptData);
+          const r = safeJson<Partial<EvaluationResult>>(item.responseData);
+          if (!prompt || !r) return null; // buzuq yozuv — o'tkazib yuboramiz
           return (
             <>
-              <div className="small">{prompt.topic}</div>
+              <div className="small">{textOf(prompt.topic)}</div>
               <div className="small muted">
-                {t.short.fluency} {r.fluency.score} · {t.short.grammar} {r.grammar.score} · {t.short.vocabulary} {r.vocabulary.score}
+                {t.short.fluency} {scoreText(r.fluency)} · {t.short.grammar} {scoreText(r.grammar)} · {t.short.vocabulary} {scoreText(r.vocabulary)}
               </div>
             </>
           );

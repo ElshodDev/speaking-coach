@@ -34,6 +34,32 @@ public static class FeedbackRules
         message.Length > max ? message[..max] + "…" : message;
 }
 
+/// <summary>
+/// Adminlarga fikr haqida Telegram xabarlari uchun server darajasidagi chegara:
+/// soatiga <see cref="MaxPerHour"/> ta. Fikrlarning o'zi bazaga baribir yoziladi
+/// (admin paneli ko'rsatadi) — faqat bildirishnomalar oqimi to'xtaydi.
+/// </summary>
+public sealed class FeedbackNotifyThrottle
+{
+    public const int MaxPerHour = 30;
+    private static readonly FeedbackNotifyThrottle Shared = new();
+    private readonly Queue<DateTime> _sent = new();
+    private readonly object _lock = new();
+
+    public static bool TryTake(DateTime nowUtc) => Shared.Take(nowUtc);
+
+    public bool Take(DateTime nowUtc)
+    {
+        lock (_lock)
+        {
+            while (_sent.Count > 0 && nowUtc - _sent.Peek() >= TimeSpan.FromHours(1)) _sent.Dequeue();
+            if (_sent.Count >= MaxPerHour) return false;
+            _sent.Enqueue(nowUtc);
+            return true;
+        }
+    }
+}
+
 public static class FeedbackEndpoints
 {
     public static void MapFeedbackEndpoints(this IEndpointRouteBuilder app)
@@ -66,7 +92,7 @@ public static class FeedbackEndpoints
             // Adminlarga Telegram'da qisqa xabar: Telegram:Admins ID'lari va Admin:Emails
             // hisoblari ulangan chatlar. Chatlar ro'yxati hozir (so'rov ichida) olinadi,
             // yuborish esa javobni kutdirmaydi (fire-and-forget, xatolar faqat logga).
-            if (telegram.Enabled)
+            if (telegram.Enabled && FeedbackNotifyThrottle.TryTake(DateTime.UtcNow))
             {
                 try
                 {
@@ -110,7 +136,7 @@ public static class FeedbackEndpoints
             }
 
             return Results.Ok(new { ok = true, id = feedback.Id });
-        }).RequireRateLimiting("write");
+        }).RequireRateLimiting(RateLimits.FeedbackPolicy);
 
         // Admin: oxirgi fikrlar (eng yangisi birinchi). 401 — kirmagan; 403 — admin emas.
         app.MapGet("/api/admin/feedback", async (HttpRequest request, AuthService auth, AdminOptions admins, AppDbContext db, int take = 50) =>

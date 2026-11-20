@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiJson, postJson } from './api';
 import { msg, useT } from './i18n';
+import { useLeaveGuard } from './leaveGuard';
 import { mockMsg } from './locales/mock';
 import { MockChart, type ChartData } from './MockChart';
 import { countWords, draftUsable, formatClock, readDraft, writeDraft, type WritingDraft } from './mockLogic';
@@ -86,18 +87,13 @@ export function MockWriting({
     writeDraft(d);
   }, [status, set, variant, startedAt, task1, task2]);
 
+  // Imtihon davomida chiqib ketish (sahifani yopish, "Orqaga", menyu) — avval so'raymiz.
+  useLeaveGuard(status === 'exam', msg(mockMsg).leaveWarning);
+
   useEffect(() => {
     if (status !== 'exam') return;
     const id = setInterval(() => setNow(Date.now()), 1000);
-    const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = msg(mockMsg).leaveWarning;
-    };
-    window.addEventListener('beforeunload', onBeforeUnload);
-    return () => {
-      clearInterval(id);
-      window.removeEventListener('beforeunload', onBeforeUnload);
-    };
+    return () => clearInterval(id);
   }, [status]);
 
   const submit = useCallback(

@@ -69,6 +69,7 @@ builder.Services.AddSingleton<IGoogleSignIn, GoogleSignInService>();
 builder.Services.AddSingleton<AiQuotaOptions>();
 builder.Services.AddSingleton<GuestQuotaStore>();
 builder.Services.AddSingleton<AiDailyCaps>();
+builder.Services.AddSingleton<AiInFlight>();
 builder.Services.AddSingleton<TalkLocks>();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton(new DemoGate());
@@ -81,6 +82,7 @@ builder.Services.AddSingleton<SpeakingCoach.Api.Services.Telegram.ITelegramApi, 
 builder.Services.AddScoped<SpeakingCoach.Api.Services.Telegram.TelegramBot>();
 builder.Services.AddSingleton<SpeakingCoach.Api.Services.Telegram.AuthoringRunner>();
 builder.Services.AddScoped<SpeakingCoach.Api.Services.Telegram.TelegramReminders>();
+builder.Services.AddSingleton<SpeakingCoach.Api.Services.Telegram.ReminderJob>();
 builder.Services.AddScoped<SpeakingCoach.Api.Services.Telegram.AssignmentNotifier>();
 builder.Services.AddHostedService<SpeakingCoach.Api.Services.Telegram.TelegramStartup>();
 

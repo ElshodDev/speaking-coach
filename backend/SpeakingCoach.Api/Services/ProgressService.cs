@@ -67,16 +67,27 @@ public class ProgressService
                 a.Response is null ? null : ProgressCalculator.ReadCorrectAnswers(a.Type, a.Response)))
             .ToList();
 
-        var reviewTimes = await _db.ReviewLogs
+        // Takrorlashlar eng tez o'sadigan jadval — har bir yozuvni emas, kunlar
+        // bo'yicha (foydalanuvchining mahalliy kuni) bazaning o'zida guruhlaymiz.
+        var shift = TimeSpan.FromMinutes(-tzOffsetMinutes);
+        var reviewDays = await _db.ReviewLogs
             .Where(l => l.UserId == userId)
-            .Select(l => l.ReviewedAtUtc)
+            .GroupBy(l => (l.ReviewedAtUtc + shift).Date)
+            .Select(g => new { Day = g.Key, Count = g.Count() })
             .ToListAsync();
+        var reviewCount = reviewDays.Sum(d => d.Count);
 
-        var allTimes = facts.Select(f => f.CreatedAtUtc).Concat(reviewTimes).ToList();
-        var bestStreak = ProgressCalculator.BestStreak(
-            allTimes.Select(t => ReviewScheduler.ToLocalDate(t, tzOffsetMinutes)));
+        var perDay = facts
+            .GroupBy(f => ReviewScheduler.ToLocalDate(f.CreatedAtUtc, tzOffsetMinutes))
+            .ToDictionary(g => g.Key, g => g.Count());
+        foreach (var d in reviewDays)
+        {
+            var day = DateOnly.FromDateTime(d.Day);
+            perDay[day] = perDay.GetValueOrDefault(day) + d.Count;
+        }
+        var bestStreak = ProgressCalculator.BestStreak(perDay.Keys);
 
-        var calendar = ProgressCalculator.Calendar(allTimes, now, tzOffsetMinutes)
+        var calendar = ProgressCalculator.Calendar(perDay, now, tzOffsetMinutes)
             .Select(d => new CalendarDay(d.Day.ToString("yyyy-MM-dd"), d.Count))
             .ToList();
 
@@ -88,15 +99,15 @@ public class ProgressService
             .ToListAsync();
 
         return new ProgressDto(
-            ProgressCalculator.LevelFor(ProgressCalculator.TotalXp(facts, reviewTimes.Count)),
+            ProgressCalculator.LevelFor(ProgressCalculator.TotalXp(facts, reviewCount)),
             bestStreak,
             facts.Count,
-            reviewTimes.Count,
+            reviewCount,
             facts.GroupBy(f => f.Type.ToString()).ToDictionary(g => g.Key, g => g.Count()),
             calendar,
             await TrendAsync(userId, ActivityType.Speaking, "fluency", "grammar", "vocabulary"),
             await TrendAsync(userId, ActivityType.Writing, "taskAchievement", "coherenceCohesion", "grammar", "vocabulary"),
-            ProgressCalculator.Badges(facts, reviewTimes.Count, bestStreak),
+            ProgressCalculator.Badges(facts, reviewCount, bestStreak),
             hardest);
     }
 

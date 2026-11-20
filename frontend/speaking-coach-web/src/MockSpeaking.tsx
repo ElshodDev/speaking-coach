@@ -3,6 +3,8 @@ import { currentMicEnv, micProblemOf, type MicProblem } from './micErrors';
 import { MicProblemNote } from './MicProblem';
 import { apiJson } from './api';
 import { msg, useT } from './i18n';
+import { useLeaveGuard } from './leaveGuard';
+import { measurePauses } from './fluencyAudio';
 import { cefrMsg } from './locales/cefr';
 import { mockMsg } from './locales/mock';
 import {
@@ -121,8 +123,13 @@ export function MockSpeaking({
   const answersRef = useRef<Map<number, Recorded>>(new Map());
   const startedAtRef = useRef(0);
   const cancelledRef = useRef(false);
+  const startingRef = useRef(false);
+  const [starting, setStarting] = useState(false);
 
   useEffect(() => {
+    // StrictMode (dev) effektni ikki marta ishga tushiradi: oldingi cleanup
+    // qo'ygan belgini tiklaymiz, aks holda yozish hech qachon boshlanmaydi.
+    cancelledRef.current = false;
     const q = setId ? `?setId=${encodeURIComponent(setId)}` : '';
     const load =
       exam === 'cefr'
@@ -146,27 +153,33 @@ export function MockSpeaking({
     };
   }, [exam, setId]);
 
-  // Imtihon davomida sahifani yopmoqchi bo'lsa — ogohlantiramiz.
-  useEffect(() => {
-    if (phase !== 'running') return;
-    const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = msg(mockMsg).leaveWarning;
-    };
-    window.addEventListener('beforeunload', onBeforeUnload);
-    return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, [phase]);
+  // Imtihon davomida chiqib ketish (sahifani yopish, "Orqaga", menyu) — avval so'raymiz.
+  useLeaveGuard(phase === 'running', msg(mockMsg).leaveWarning);
 
   async function begin() {
+    // Ruxsat so'ralayotganda ikkinchi bosish ikkinchi oqim ochmasin.
+    if (startingRef.current || streamRef.current) return;
+    startingRef.current = true;
+    setStarting(true);
     setMicProblem(null);
     setError('');
     try {
-      streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Ruxsat oynasi ochiq turganda sahifadan chiqib ketilgan bo'lsa — cleanup
+      // allaqachon ishlagan: mikrofonni shu yerda o'chiramiz (yoqiq qolmasin).
+      if (cancelledRef.current) {
+        stream.getTracks().forEach((tr) => tr.stop());
+        return;
+      }
+      streamRef.current = stream;
       stepIndexRef.current = 0;
       setStepIndex(0);
       setPhase('running');
     } catch (err) {
-      setMicProblem(micProblemOf(err, currentMicEnv()));
+      if (!cancelledRef.current) setMicProblem(micProblemOf(err, currentMicEnv()));
+    } finally {
+      startingRef.current = false;
+      if (!cancelledRef.current) setStarting(false);
     }
   }
 
@@ -176,6 +189,7 @@ export function MockSpeaking({
     submittedRef.current = true;
     setPhase('submitting');
     streamRef.current?.getTracks().forEach((tr) => tr.stop());
+    streamRef.current = null;
     const form = new FormData();
     form.append('setId', set.id);
     if (sessionId) form.append('sessionId', sessionId);
@@ -185,6 +199,15 @@ export function MockSpeaking({
       form.append(`s${index}`, String(a.seconds));
     });
     try {
+      // Ravonlik uchun har bir javobdagi uzun pauzalar — brauzerda, parallel (har biri ≤ 4 s).
+      const entries = [...answersRef.current.entries()];
+      const pauses = await Promise.all(entries.map(([, a]) => measurePauses(a.blob)));
+      entries.forEach(([index], i) => {
+        const p = pauses[i];
+        if (!p) return;
+        form.append(`p${index}`, String(p.longPauses));
+        form.append(`ps${index}`, String(p.pauseSeconds));
+      });
       const res = await apiJson<{ id: string }>(`/api/mock/${exam}/speaking`, { method: 'POST', body: form });
       if (onSubmitted) onSubmitted(res.id);
       else go(`mock/result/${res.id}`);
@@ -325,7 +348,7 @@ export function MockSpeaking({
           </ul>
           {error && <p className="error small" role="alert">{error}</p>}
           {micProblem && <MicProblemNote problem={micProblem} onRetry={begin} />}
-          <button className="btn btn-primary block" onClick={begin} style={{ minHeight: 52 }}>
+          <button className="btn btn-primary block" onClick={begin} disabled={starting} style={{ minHeight: 52 }}>
             🎙 {t.allowMic}
           </button>
           <p className="muted tiny" style={{ margin: 0 }}>{exam === 'cefr' ? c.disclaimer : t.disclaimer}</p>

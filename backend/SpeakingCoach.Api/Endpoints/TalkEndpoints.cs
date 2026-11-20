@@ -99,8 +99,8 @@ public static class TalkEndpoints
 
             var ct = request.HttpContext.RequestAborted;
             // Audio xotiraga o'qilishidan oldin — "katta so'rov" joyi.
+            var form = await Uploads.ReadFormAsync(request, ct);
             using var slot = await Uploads.EnterIfLargeAsync(request, ct);
-            var form = await request.ReadFormAsync(ct);
             var typed = form["text"].ToString().Trim();
             var file = form.Files.GetFile("audio");
             byte[]? audio = null;
@@ -142,6 +142,15 @@ public static class TalkEndpoints
             }
 
             state.Lines.Add(new TalkLine("user", result.Heard));
+            // Ovozli javob — ravonlik o'lchovi (yozib yuborilgan javobda vaqt va pauza ma'nosiz).
+            FluencyStats? turnMetrics = null;
+            if (audio is not null)
+            {
+                var (sec, pauses, pauseSec) = FluencyMetrics.Sanitize(
+                    form["seconds"].ToString(), form["longPauses"].ToString(), form["pauseSeconds"].ToString());
+                turnMetrics = FluencyMetrics.Analyze(result.Heard, sec, pauses, pauseSec);
+                state = state with { Fluency = [.. state.Fluency ?? [], turnMetrics] };
+            }
             state.Lines.Add(new TalkLine("ai", result.Reply));
             if (result.Tip is not null) state.Tips.Add(result.Tip);
             row.Payload = JsonSerializer.Serialize(state, Talk.Json);
@@ -176,6 +185,7 @@ public static class TalkEndpoints
             }
 
             // Xulosadagi tuzatishlar + suhbat davomidagi maslahatlar (takrorlanmasin).
+            var metrics = FluencyMetrics.Combine(state.Fluency ?? []);
             var corrections = summary.TopCorrections
                 .Concat(state.Tips)
                 .DistinctBy(c => c.Original.Trim().ToLowerInvariant())
@@ -189,9 +199,14 @@ public static class TalkEndpoints
                 UserId = user.Id,
                 CreatedAtUtc = DateTime.UtcNow,
                 PromptData = JsonSerializer.Serialize(new { scenario = scenario.Id, level = state.Level, lines = state.Lines }, Talk.Json),
-                ResponseData = JsonSerializer.Serialize(summary with { TopCorrections = corrections }, Talk.Json),
+                ResponseData = metrics is null
+                    ? JsonSerializer.Serialize(summary with { TopCorrections = corrections }, Talk.Json)
+                    : FluencyMetrics.WithMetrics(summary with { TopCorrections = corrections }, metrics, Talk.Json),
             });
             db.PendingExercises.Remove(row);
+            // Kartalar suhbat yozuvi bilan bitta SaveChanges'da saqlanadi:
+            // AddCardsAsync faqat kontekstga qo'shadi, o'zi saqlamaydi.
+            var newCards = await reviews.AddCardsAsync(user.Id, ActivityType.Conversation, ReviewCardFactory.FromCorrections(corrections));
             try
             {
                 await db.SaveChangesAsync();
@@ -200,8 +215,7 @@ public static class TalkEndpoints
             {
                 return Results.Conflict(request.Error("talk.not_found"));
             }
-            var newCards = await reviews.AddCardsAsync(user.Id, ActivityType.Conversation, ReviewCardFactory.FromCorrections(corrections));
-            return Results.Ok(new { id = activityId, result = summary with { TopCorrections = corrections }, turns = Talk.UserTurns(state), newCards });
+            return Results.Ok(new { id = activityId, result = summary with { TopCorrections = corrections }, turns = Talk.UserTurns(state), newCards, metrics });
         }).RequireRateLimiting(RateLimits.AiPolicy);
     }
 }

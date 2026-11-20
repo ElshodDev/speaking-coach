@@ -35,6 +35,10 @@ public static class Texts
             "Слишком большой аудиофайл (не более {0} МБ).",
             "The audio file is too large (max {0} MB)."),
         ["request.too_large"] = new("Soʻrov hajmi juda katta.", "Слишком большой запрос.", "The request is too large."),
+        ["request.too_slow"] = new(
+            "Yozuv juda sekin yuklandi — internetni tekshirib, qayta yuboring.",
+            "Запись загружалась слишком медленно — проверьте интернет и отправьте снова.",
+            "The recording uploaded too slowly — check your connection and send it again."),
         ["talk.busy"] = new(
             "Oldingi javobingiz hali tekshirilmoqda — biroz kuting.",
             "Предыдущий ответ ещё обрабатывается — подождите немного.",
@@ -185,6 +189,10 @@ public static class Texts
             "Avval hisobingizga haqiqiy email qoʻshing — parol email bilan birga ishlaydi.",
             "Сначала добавьте в аккаунт настоящий email — пароль работает вместе с email.",
             "Add a real email to your account first — a password works together with an email."),
+        ["account.reauth"] = new(
+            "Xavfsizlik uchun: hisobdan chiqib, qayta kiring va {0} daqiqa ichida yana urinib koʻring.",
+            "В целях безопасности: выйдите из аккаунта, войдите снова и повторите в течение {0} минут.",
+            "For your security: sign out, sign in again and retry within {0} minutes."),
         ["account.wrong_password"] = new(
             "Joriy parol notoʻgʻri.",
             "Текущий пароль неверный.",

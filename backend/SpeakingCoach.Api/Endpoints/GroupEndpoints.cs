@@ -249,7 +249,15 @@ public static class GroupEndpoints
             if (await db.GroupMembers.CountAsync(m => m.UserId == user.Id) >= GroupLogic.MaxGroupsPerStudent)
                 return Results.BadRequest(request.Error("group.student_limit", GroupLogic.MaxGroupsPerStudent));
             db.GroupMembers.Add(new GroupMember { GroupId = group.Id, UserId = user.Id, JoinedAtUtc = DateTime.UtcNow });
-            await db.SaveChangesAsync();
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (AuthService.IsUniqueViolation(ex))
+            {
+                // Ikki marta bosildi: parallel so'rov a'zolikni allaqachon yozdi (kalit — GroupId+UserId).
+                return Results.Ok(new { group.Id, joined = false });
+            }
             return Results.Ok(new { group.Id, joined = true });
         }).RequireRateLimiting(RateLimits.JoinPolicy);
 
@@ -301,12 +309,14 @@ public static class GroupEndpoints
         }
 
         var since = assignments.Min(a => a.CreatedAtUtc);
-        var rows = await db.Activities
-            .Where(x => x.UserId != null && userIds.Contains(x.UserId.Value) && x.CreatedAtUtc >= since)
-            // PromptData (writing'da butun insho) faqat mock imtihonlarda kerak — qolganlarida o'qilmaydi.
-            .Select(x => new { x.Id, UserId = x.UserId!.Value, x.Type, x.CreatedAtUtc, PromptData = x.Type == ActivityType.MockExam ? x.PromptData : null, x.ResponseData })
+        // Faqat vazifalarga mos turlar va faqat kerakli ustunlar: ResponseData (baholar,
+        // insho tahlili) bu yerda o'qilmaydi — ball pastda faqat topilgan urinishlar uchun olinadi.
+        var types = GroupLogic.NeededTypes(assignments).ToList();
+        var rows = types.Count == 0 ? [] : await db.Activities
+            .Where(x => x.UserId != null && userIds.Contains(x.UserId.Value) && x.CreatedAtUtc >= since && types.Contains(x.Type))
+            .Select(x => new { x.Id, UserId = x.UserId!.Value, x.Type, x.CreatedAtUtc, PromptData = x.Type == ActivityType.MockExam ? x.PromptData : null })
             .ToListAsync();
-        var refs = rows.Select(x =>
+        var byUser = rows.Select(x =>
         {
             string? exam = null, module = null;
             if (x.Type == ActivityType.MockExam)
@@ -314,21 +324,36 @@ public static class GroupEndpoints
                 var p = MockEndpoints.ParsePrompt(x.PromptData ?? "");
                 (exam, module) = (p.Exam, p.Module);
             }
-            return (x.UserId, Ref: new ActivityRef(x.Id, x.Type, x.CreatedAtUtc, exam, module, GroupLogic.ScoreText(x.ResponseData)));
-        }).ToList();
+            return (x.UserId, Ref: new ActivityRef(x.Id, x.Type, x.CreatedAtUtc, exam, module, null));
+        }).ToLookup(x => x.UserId, x => x.Ref);
 
-        var reviews = new List<(Guid UserId, DateTime ReviewedAtUtc)>();
+        var reviewsByUser = Enumerable.Empty<(Guid UserId, DateTime At)>().ToLookup(r => r.UserId, r => r.At);
         if (assignments.Any(a => a.Kind == "review"))
         {
             var logs = await db.ReviewLogs.Where(l => userIds.Contains(l.UserId) && l.ReviewedAtUtc >= since).Select(l => new { l.UserId, l.ReviewedAtUtc }).ToListAsync();
-            reviews = logs.Select(l => (l.UserId, l.ReviewedAtUtc)).ToList();
+            reviewsByUser = logs.ToLookup(l => l.UserId, l => l.ReviewedAtUtc);
         }
 
         foreach (var u in userIds)
         {
-            var mine = refs.Where(r => r.UserId == u).Select(r => r.Ref).ToList();
-            var myReviews = reviews.Where(r => r.UserId == u).Select(r => r.ReviewedAtUtc).ToList();
+            var mine = byUser[u].ToList();
+            var myReviews = reviewsByUser[u].ToList();
             foreach (var a in assignments) map[a.Id][u] = GroupLogic.StatusFor(a, mine, myReviews);
+        }
+
+        // Ball — faqat jadvalda ko'rsatiladigan (vazifaga hisoblangan) urinishlar uchun.
+        var hitIds = map.Values.SelectMany(m => m.Values).Where(st => st.ActivityId is not null).Select(st => st.ActivityId!.Value).Distinct().ToList();
+        if (hitIds.Count > 0)
+        {
+            var scores = new Dictionary<Guid, string?>();
+            foreach (var chunk in hitIds.Chunk(500))
+            {
+                var part = await db.Activities.Where(x => chunk.Contains(x.Id)).Select(x => new { x.Id, x.ResponseData }).ToListAsync();
+                foreach (var r in part) scores[r.Id] = GroupLogic.ScoreText(r.ResponseData);
+            }
+            foreach (var m in map.Values)
+                foreach (var u in m.Keys.ToList())
+                    if (m[u].ActivityId is Guid aid && scores.TryGetValue(aid, out var sc)) m[u] = m[u] with { Score = sc };
         }
         return map;
     }

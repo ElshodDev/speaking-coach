@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { apiFetch, apiJson, postJson } from './api';
+import { apiJson, postJson } from './api';
 import { isSpeechSupported, sleep, speakAsync, stopSpeaking } from './speech';
 import { PageHeader } from './ui';
 import { common, msg, useT } from './i18n';
 import { reviewMsg } from './locales/review';
 import { parseNote } from './Vocab';
 import { focusedButton, typingTarget, useWide } from './layout';
+import { statsPath, type ReviewStats } from './reviewStats';
+
+export { statsPath, type ReviewStats };
 
 export interface ReviewCard {
   id: string;
@@ -15,18 +18,6 @@ export interface ReviewCard {
   back: string;
   note: string;
 }
-
-export interface ReviewStats {
-  due: number;
-  total: number;
-  reviewedToday: number;
-  dailyGoal: number;
-  streakDays: number;
-}
-
-// JavaScript'ning getTimezoneOffset() qiymati (Toshkent uchun -300) —
-// server "bugun" va "ketma-ket kunlar"ni mahalliy vaqt bo'yicha hisoblaydi.
-export const statsPath = () => `/api/review/stats?tzOffsetMinutes=${new Date().getTimezoneOffset()}`;
 
 // Baho tugmalari: matnlari (label/hint) reviewMsg.grades'da, shu tartibda.
 const GRADES = [
@@ -85,6 +76,9 @@ export function Review({
   const wide = useWide();
   // Klaviatura (kompyuter): Probel/Enter — javob, 1–4 — baho. Ishlovchi har renderda yangilanadi.
   const keyHandler = useRef<(e: KeyboardEvent) => void>(() => undefined);
+  // Baho/o'chirish yuborilmoqda: `busy` holati keyingi renderda yangilanadi, shuning
+  // uchun tez ikki bosish bitta kartani ikki marta baholab (keyingisini o'tkazib) yubormasin.
+  const pendingRef = useRef(false);
   useEffect(() => {
     const on = (e: KeyboardEvent) => keyHandler.current(e);
     window.addEventListener('keydown', on);
@@ -152,24 +146,35 @@ export function Review({
 
   const current = cards[0];
 
+  // Karta bajarildi (baholandi yoki o'chirildi): keyingisiga o'tamiz, statistika yangilanadi.
+  // Statistika kelmasa — xato ko'rsatmaymiz, karta baribir saqlangan.
+  async function cardDone(id: string) {
+    setRevealed(false);
+    setCards((prev) => prev.filter((card) => card.id !== id));
+    onChanged();
+    const s = await apiJson<ReviewStats>(statsPath()).catch(() => null);
+    if (s) setStats(s);
+  }
+
   async function grade(value: number) {
-    if (!current) return;
+    if (!current || pendingRef.current) return;
+    pendingRef.current = true;
     setBusy(true);
     try {
       await postJson(`/api/review/cards/${current.id}/grade`, { grade: value });
-      setRevealed(false);
-      setCards((prev) => prev.slice(1));
-      setStats(await apiJson<ReviewStats>(statsPath()));
-      onChanged();
+      setError('');
+      await cardDone(current.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : c.error);
     } finally {
+      pendingRef.current = false;
       setBusy(false);
     }
   }
 
   keyHandler.current = (e: KeyboardEvent) => {
-    if (!current || busy || e.ctrlKey || e.metaKey || e.altKey || typingTarget(e)) return;
+    // e.repeat: tugma bosib turilsa — bir nechta kartani baholab yubormasin.
+    if (e.repeat || !current || busy || e.ctrlKey || e.metaKey || e.altKey || typingTarget(e)) return;
     const onButton = focusedButton(e);
     if (!revealed && (e.key === ' ' || e.key === 'Enter')) {
       if (onButton) return; // tugmaning o'zi bajaradi
@@ -185,12 +190,20 @@ export function Review({
   };
 
   async function remove() {
-    if (!current || !confirm(t.confirmDelete)) return;
-    await apiFetch(`/api/review/cards/${current.id}`, { method: 'DELETE' });
-    setRevealed(false);
-    setCards((prev) => prev.slice(1));
-    setStats(await apiJson<ReviewStats>(statsPath()));
-    onChanged();
+    if (!current || pendingRef.current || !confirm(t.confirmDelete)) return;
+    pendingRef.current = true;
+    setBusy(true);
+    try {
+      // apiJson xato javobda (4xx/5xx) otadi — karta faqat haqiqatan o'chganda yo'qoladi.
+      await apiJson(`/api/review/cards/${current.id}`, { method: 'DELETE' });
+      setError('');
+      await cardDone(current.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : c.error);
+    } finally {
+      pendingRef.current = false;
+      setBusy(false);
+    }
   }
 
   const vocab = scope === 'vocab';

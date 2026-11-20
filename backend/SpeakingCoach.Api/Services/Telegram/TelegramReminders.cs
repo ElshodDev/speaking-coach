@@ -6,6 +6,46 @@ namespace SpeakingCoach.Api.Services.Telegram;
 public record ReminderRun(int Checked, int Sent, int SkippedGoalDone, int Disabled);
 
 /// <summary>
+/// Cron so'rovi eslatmalarni kutmaydi: ish fonda (alohida DI scope'da) bajariladi, javob — darhol 202.
+/// Foydalanuvchilar ko'p bo'lsa, ketma-ket yuborish GitHub Actions'ning 90 soniyalik
+/// muddatidan oshib ketardi. Bir vaqtda faqat bitta yurish (takroriy cron — e'tiborsiz).
+/// </summary>
+public sealed class ReminderJob(IServiceScopeFactory scopes, ILogger<ReminderJob> logger)
+{
+    private int _running;
+
+    public bool IsRunning => Volatile.Read(ref _running) == 1;
+
+    /// <summary>Fonda boshlaydi; allaqachon ishlayotgan bo'lsa — false.</summary>
+    public bool TryStart(DateTime nowUtc)
+    {
+        if (Interlocked.CompareExchange(ref _running, 1, 0) != 0) return false;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                using var scope = scopes.CreateScope();
+                var reminders = scope.ServiceProvider.GetRequiredService<TelegramReminders>();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                var run = await reminders.RunAsync(nowUtc, CancellationToken.None);
+                var cleaned = await Maintenance.CleanupAsync(db, DateTime.UtcNow);
+                logger.LogInformation("Eslatmalar: tekshirildi {Checked}, yuborildi {Sent}, maqsad bajarilgan {Done}, o'chirildi {Disabled}; tozalandi {Cleaned}",
+                    run.Checked, run.Sent, run.SkippedGoalDone, run.Disabled, cleaned);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Eslatmalar yurishi xato bilan tugadi");
+            }
+            finally
+            {
+                Volatile.Write(ref _running, 0);
+            }
+        });
+        return true;
+    }
+}
+
+/// <summary>
 /// Kunlik eslatmalar. Render'ning bepul serveri uxlab qoladi va o'zi
 /// taymer bilan ishlay olmaydi — shuning uchun GitHub Actions har soatda
 /// /api/telegram/cron'ni chaqiradi (serverni uyg'otadi), bu yerda esa

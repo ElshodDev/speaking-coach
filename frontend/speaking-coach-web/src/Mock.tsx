@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { apiJson } from './api';
 import { localeOf, useLang, useT } from './i18n';
+import { FluencyCard } from './Fluency';
+import type { FluencyStats } from './fluencyLogic';
 import { mockMsg } from './locales/mock';
 import { mockObjMsg } from './locales/mockObjective';
 import { cefrMsg } from './locales/cefr';
@@ -130,6 +132,12 @@ interface CefrWritingResult {
 type CefrResult = CefrSpeakingResult | CefrWritingResult;
 
 type MockResult = SpeakingResult | WritingResult | ObjectiveResult;
+
+/** Speaking natijasidagi ravonlik o'lchovlari (bu funksiyadan oldingi natijalarda — yo'q). */
+const metricsOf = (r: unknown): FluencyStats | null => {
+  const m = (r as { metrics?: FluencyStats } | null)?.metrics;
+  return m && typeof m.words === 'number' ? m : null;
+};
 
 /** CEFR natijasi: 0–75 ball, daraja, qism/vazifa ballari va maslahatlar. */
 function CefrResultView({ r }: { r: CefrResult }) {
@@ -587,6 +595,9 @@ export function MockResultView({ id, go }: { id: string; go: (route: string) => 
       <>
         {header}
         <CefrResultView r={cr} />
+        {cr.module === 'speaking' && metricsOf(data.result) && (
+          <div className="card"><FluencyCard metrics={metricsOf(data.result)!} /></div>
+        )}
         <div className="row">
           {data.sessionId && (
             <button className="btn btn-primary" onClick={() => go(`mock/session/${data.sessionId}`)}>🏁 {to.sessionTitle}</button>
@@ -620,6 +631,7 @@ export function MockResultView({ id, go }: { id: string; go: (route: string) => 
             <BandRow label={t.speakingCriteria.lexicalResource} data={r.lexicalResource} />
             <BandRow label={t.speakingCriteria.grammaticalRange} data={r.grammaticalRange} />
             <BandRow label={t.speakingCriteria.pronunciation} data={r.pronunciation} />
+            {metricsOf(r) && <FluencyCard metrics={metricsOf(r)!} />}
           </div>
           <Advice result={r} />
           <div className="card">
