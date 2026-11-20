@@ -349,7 +349,7 @@ export function MockSpeaking({
           {error && <p className="error small" role="alert">{error}</p>}
           {micProblem && <MicProblemNote problem={micProblem} onRetry={begin} />}
           <button className="btn btn-primary block" onClick={begin} disabled={starting} style={{ minHeight: 52 }}>
-            🎙 {t.allowMic}
+            {t.allowMic}
           </button>
           <p className="muted tiny" style={{ margin: 0 }}>{exam === 'cefr' ? c.disclaimer : t.disclaimer}</p>
         </div>

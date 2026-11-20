@@ -3,7 +3,7 @@ import { defineMessages, enPlural, ruPlural } from '../i18n';
 /** Stability.tsx (barqarorlik jadvali) va Gapirish/Yozish ekranlaridagi barqarorlik testi. */
 export const stabilityMsg = defineMessages(
   {
-    checkButton: (runs: number) => `🔁 Barqarorlikni tekshirish (${runs}x)`,
+    checkButton: (runs: number) => `Barqarorlikni tekshirish (${runs}x)`,
     progress: (done: number, total: number, failed: number) =>
       `${done}/${total} bajarildi${failed ? ` (${failed} ta xato)` : ''}...`,
     allFailed: 'Birorta ham urinish muvaffaqiyatli boʻlmadi — keyinroq qayta urinib koʻring.',
@@ -21,7 +21,7 @@ export const stabilityMsg = defineMessages(
   },
   {
     ru: {
-      checkButton: (runs: number) => `🔁 Проверить стабильность (${runs}x)`,
+      checkButton: (runs: number) => `Проверить стабильность (${runs}x)`,
       progress: (done: number, total: number, failed: number) =>
         `Выполнено ${done}/${total}${failed ? ` (${failed} ${ruPlural(failed, 'ошибка', 'ошибки', 'ошибок')})` : ''}...`,
       allFailed: 'Ни одна попытка не удалась — попробуйте ещё раз позже.',
@@ -38,7 +38,7 @@ export const stabilityMsg = defineMessages(
       notSavedAfter: '). Разброс ≤5 — стабильно, 6–15 — средне, >15 — нестабильно.',
     },
     en: {
-      checkButton: (runs: number) => `🔁 Check stability (${runs}x)`,
+      checkButton: (runs: number) => `Check stability (${runs}x)`,
       progress: (done: number, total: number, failed: number) =>
         `${done}/${total} done${failed ? ` (${failed} ${enPlural(failed, 'error', 'errors')})` : ''}...`,
       allFailed: 'None of the attempts succeeded — please try again later.',

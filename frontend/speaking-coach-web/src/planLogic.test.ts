@@ -42,7 +42,7 @@ describe('bugungi reja', () => {
     expect(planMsg.uz.countdown(12, 'IELTS')).toBe('IELTS imtihonigacha 12 kun');
     expect(planMsg.ru.countdown(2, 'CEFR')).toBe('До экзамена CEFR: 2 дня');
     expect(planMsg.en.countdown(1, 'IELTS')).toBe('1 day to your IELTS exam');
-    expect(planMsg.en.items.review(3, 10)).toBe('🔁 Review — 3/10 cards');
+    expect(planMsg.en.items.review(3, 10)).toBe('Review — 3/10 cards');
     for (const m of [planMsg.uz, planMsg.ru, planMsg.en]) {
       expect(Object.keys(m.goals)).toEqual(['ielts', 'cefr', 'general']);
       expect(Object.keys(m.levels)).toEqual(['A2', 'B1', 'B2', 'C1']);

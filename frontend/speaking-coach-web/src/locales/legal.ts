@@ -11,7 +11,7 @@ export const legalMsg = defineMessages(
     disclaimer:
       'IELTS — University of Cambridge, British Council va IDP Education ning savdo belgisi. Ilova ular bilan bogʻliq emas; ballar taxminiy.',
     cefrNote: 'CEFR natijalari ham taxminiy — rasmiy sertifikat oʻrnini bosmaydi.',
-    feedback: '💬 Fikr bildirish',
+    feedback: 'Fikr bildirish',
     feedbackTitle: 'Fikr bildirish',
     feedbackIntro: 'Xato topdingizmi yoki gʻoyangiz bormi? Yozing — oʻqiymiz.',
     kindLabel: 'Mavzu',
@@ -41,7 +41,7 @@ export const legalMsg = defineMessages(
       disclaimer:
         'IELTS — товарный знак University of Cambridge, British Council и IDP Education. Приложение с ними не связано; баллы примерные.',
       cefrNote: 'Результаты CEFR тоже примерные — они не заменяют официальный сертификат.',
-      feedback: '💬 Обратная связь',
+      feedback: 'Обратная связь',
       feedbackTitle: 'Обратная связь',
       feedbackIntro: 'Нашли ошибку или есть идея? Напишите — мы прочитаем.',
       kindLabel: 'Тема',
@@ -70,7 +70,7 @@ export const legalMsg = defineMessages(
       disclaimer:
         'IELTS is a trademark of the University of Cambridge, the British Council and IDP Education. This app is not affiliated with them; scores are estimates.',
       cefrNote: 'CEFR results are estimates too — they do not replace an official certificate.',
-      feedback: '💬 Send feedback',
+      feedback: 'Send feedback',
       feedbackTitle: 'Send feedback',
       feedbackIntro: 'Found a bug or have an idea? Tell us — we read everything.',
       kindLabel: 'Topic',

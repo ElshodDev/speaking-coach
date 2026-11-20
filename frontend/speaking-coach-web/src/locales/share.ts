@@ -3,12 +3,12 @@ import { defineMessages } from '../i18n';
 /** ShareCard.tsx — natijani Instagram/Telegram story uchun rasm qilib ulashish. */
 export const shareMsg = defineMessages(
   {
-    tile: '📸 Natijani ulashish',
+    tile: 'Natijani ulashish',
     tileText: 'Story uchun chiroyli rasm: daraja, seriya va mashqlar',
     title: 'Natija kartasi',
     making: 'Rasm tayyorlanmoqda…',
-    share: '📤 Ulashish',
-    download: '⬇️ Yuklab olish',
+    share: 'Ulashish',
+    download: 'Yuklab olish',
     close: 'Yopish',
     hint: 'Rasmni Instagram yoki Telegram storyʼga joylang.',
     level: (n: number, xp: number) => `${n}-daraja · ${xp} XP`,
@@ -24,12 +24,12 @@ export const shareMsg = defineMessages(
   },
   {
     ru: {
-      tile: '📸 Поделиться результатом',
+      tile: 'Поделиться результатом',
       tileText: 'Красивая картинка для сторис: уровень, серия и упражнения',
       title: 'Карточка результата',
       making: 'Готовим картинку…',
-      share: '📤 Поделиться',
-      download: '⬇️ Скачать',
+      share: 'Поделиться',
+      download: 'Скачать',
       close: 'Закрыть',
       hint: 'Опубликуйте картинку в сторис Instagram или Telegram.',
       level: (n: number, xp: number) => `Уровень ${n} · ${xp} XP`,
@@ -44,12 +44,12 @@ export const shareMsg = defineMessages(
       fileName: 'speaking-coach-result.png',
     },
     en: {
-      tile: '📸 Share my progress',
+      tile: 'Share my progress',
       tileText: 'A story-ready image: level, streak and exercises',
       title: 'Progress card',
       making: 'Making the image…',
-      share: '📤 Share',
-      download: '⬇️ Download',
+      share: 'Share',
+      download: 'Download',
       close: 'Close',
       hint: 'Post the image to your Instagram or Telegram story.',
       level: (n: number, xp: number) => `Level ${n} · ${xp} XP`,

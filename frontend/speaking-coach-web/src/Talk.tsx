@@ -281,7 +281,7 @@ export function TalkSession({
           <p className="muted small" style={{ margin: 0 }}>{t.levelNote(8)}</p>
           {error && <p className="error small" role="alert">{error}</p>}
           <button className="btn btn-primary" onClick={start} disabled={phase === 'starting'} data-testid="talk-start">
-            {phase === 'starting' ? t.starting : `🎙 ${t.start}`}
+            {phase === 'starting' ? t.starting : t.start}
           </button>
         </div>
       </>
@@ -368,11 +368,11 @@ export function TalkSession({
           <h3 style={{ margin: 0 }}>{t.summaryTitle}</h3>
           <p style={{ margin: 0 }}>{summary.summary}</p>
           {summary.strengths && (
-            <p className="small" style={{ margin: 0 }}><strong>✅ {t.strengths}:</strong> {summary.strengths}</p>
+            <p className="small" style={{ margin: 0 }}><strong>{t.strengths}:</strong> {summary.strengths}</p>
           )}
           {summary.topCorrections.length > 0 && (
             <div>
-              <strong className="small">✏️ {t.corrections}</strong>
+              <strong className="small">{t.corrections}</strong>
               <ul className="mistake-examples">
                 {summary.topCorrections.map((c, i) => (
                   <li key={i}>
@@ -385,7 +385,7 @@ export function TalkSession({
           )}
           {summary.usefulPhrases.length > 0 && (
             <div>
-              <strong className="small">💬 {t.phrases}</strong>
+              <strong className="small">{t.phrases}</strong>
               <ul className="talk-phrases">
                 {summary.usefulPhrases.map((p, i) => (
                   <li key={i}>
@@ -396,7 +396,7 @@ export function TalkSession({
               </ul>
             </div>
           )}
-          {summary.nextFocus && <p className="small" style={{ margin: 0 }}><strong>🎯 {t.nextFocus}:</strong> {summary.nextFocus}</p>}
+          {summary.nextFocus && <p className="small" style={{ margin: 0 }}><strong>{t.nextFocus}:</strong> {summary.nextFocus}</p>}
           {metrics && <FluencyCard metrics={metrics} />}
           {cardsNote && <p className="success small" style={{ margin: 0 }}>{cardsNote}</p>}
           <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>

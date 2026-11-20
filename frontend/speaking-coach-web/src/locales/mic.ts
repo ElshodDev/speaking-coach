@@ -7,7 +7,7 @@ export const micMsg = defineMessages(
       'Mikrofonga ruxsat berilmagan. Manzil satridagi 🔒 (yoki ⓘ) belgisini bosing → Mikrofon → Ruxsat berish, soʻng “Qayta urinish”ni bosing.',
     deniedInApp: (app: string) =>
       `${app} ichidagi brauzer mikrofonni koʻpincha bloklaydi. Saytni Chrome yoki Safariʼda oching: ⋮ / ⋯ menyu → “Brauzerda ochish”.`,
-    openChrome: '🌐 Chromeʼda ochish',
+    openChrome: 'Chromeʼda ochish',
     notFound: 'Mikrofon topilmadi. Naushnik yoki mikrofonni ulang va qayta urining.',
     busy: 'Mikrofon boshqa ilovada band (masalan, qoʻngʻiroq yoki ovoz yozish). Uni yoping va qayta urining.',
     insecure: 'Mikrofon faqat xavfsiz (https://) sahifada ishlaydi. Saytni https:// manzili bilan oching.',
@@ -21,7 +21,7 @@ export const micMsg = defineMessages(
         'Нет доступа к микрофону. Нажмите на значок 🔒 (или ⓘ) в адресной строке → Микрофон → Разрешить, затем нажмите «Повторить».',
       deniedInApp: (app: string) =>
         `Встроенный браузер ${app} часто блокирует микрофон. Откройте сайт в Chrome или Safari: меню ⋮ / ⋯ → «Открыть в браузере».`,
-      openChrome: '🌐 Открыть в Chrome',
+      openChrome: 'Открыть в Chrome',
       notFound: 'Микрофон не найден. Подключите наушники или микрофон и попробуйте снова.',
       busy: 'Микрофон занят другим приложением (например, звонком или диктофоном). Закройте его и попробуйте снова.',
       insecure: 'Микрофон работает только на защищённой странице (https://). Откройте сайт по адресу https://.',
@@ -34,7 +34,7 @@ export const micMsg = defineMessages(
         'Microphone access is blocked. Tap the 🔒 (or ⓘ) icon in the address bar → Microphone → Allow, then tap “Try again”.',
       deniedInApp: (app: string) =>
         `The ${app} in-app browser often blocks the microphone. Open the site in Chrome or Safari: ⋮ / ⋯ menu → “Open in browser”.`,
-      openChrome: '🌐 Open in Chrome',
+      openChrome: 'Open in Chrome',
       notFound: 'No microphone found. Connect headphones or a microphone and try again.',
       busy: 'The microphone is busy in another app (e.g. a call or voice recorder). Close it and try again.',
       insecure: 'The microphone only works on a secure (https://) page. Open the site with an https:// address.',

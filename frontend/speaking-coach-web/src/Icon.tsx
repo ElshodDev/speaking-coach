@@ -1,0 +1,52 @@
+// Chiziqli (outline) ikonkalar — emoji o'rniga. 24×24, rang matndan (currentColor) olinadi,
+// shuning uchun tungi rejimda ham, tugma ichida ham o'zi moslashadi.
+
+const PATHS = {
+  home: ['M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z'],
+  review: ['M3 12a9 9 0 1 0 3-6.7L3 8', 'M3 3v5h5'],
+  vocab: ['M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z', 'M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5'],
+  practice: ['M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z', 'M12 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12z', 'M12 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4z'],
+  progress: ['M3 3v18h18', 'm7 14 4-4 4 4 5-6'],
+  speaking: ['M9 5a3 3 0 0 1 6 0v6a3 3 0 0 1-6 0z', 'M5 10v1a7 7 0 0 0 14 0v-1', 'M12 18v4'],
+  writing: ['M12 20h9', 'M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z'],
+  reading: ['M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z', 'M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z'],
+  listening: [
+    'M3 18v-6a9 9 0 0 1 18 0v6',
+    'M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z',
+    'M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z',
+  ],
+  mock: ['M9 2h6a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z', 'M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2', 'm9 14 2 2 4-4'],
+  part2: ['M5 5h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z', 'M7 2h12a2 2 0 0 1 2 2v13'],
+  talk: ['M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'],
+  dictation: ['M4 7V4h16v3', 'M9 20h6', 'M12 4v16'],
+  shadowing: ['M2 12h2', 'M6 8v8', 'M10 4v16', 'M14 7v10', 'M18 10v4', 'M22 12h0'],
+  learn: ['M22 10 12 5 2 10l10 5z', 'M6 12v5c3 2 9 2 12 0v-5'],
+  arrow: ['M5 12h14', 'm13 6 6 6-6 6'],
+  flame: [
+    'M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.4-.5-2-1-3-1.1-2.1-.2-4 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.2.4-2.3 1-3a2.5 2.5 0 0 0 2.5 2.5z',
+  ],
+  check: ['M20 6 9 17l-5-5'],
+} as const;
+
+export type IconName = keyof typeof PATHS;
+
+export function Icon({ name, size = 20, className }: { name: IconName; size?: number; className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className ? `ico ${className}` : 'ico'}
+      aria-hidden
+    >
+      {PATHS[name].map((d) => (
+        <path key={d} d={d} />
+      ))}
+    </svg>
+  );
+}

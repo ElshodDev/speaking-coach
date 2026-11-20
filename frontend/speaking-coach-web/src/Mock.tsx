@@ -495,7 +495,7 @@ export function MockHub({ loggedIn, go, onLogin }: { loggedIn: boolean; go: (rou
                     {h.variant ? ` · ${h.variant === 'general' ? t.general : t.academic}` : ''}
                     {h.sessionId && (
                       <button className="btn-link tiny" style={{ marginLeft: 6 }} onClick={() => go(`mock/session/${h.sessionId}`)}>
-                        🏁 {to.fullTitle.replace(/^🏁\s*/, '')}
+                        {to.fullTitle}
                       </button>
                     )}
                     <div className="muted tiny">{new Date(h.createdAtUtc).toLocaleString(locale)}</div>
@@ -585,7 +585,7 @@ export function MockResultView({ id, go }: { id: string; go: (route: string) => 
         <p className="muted tiny">{tcefr.disclaimer}</p>
         <div className="row">
           {data.sessionId && (
-            <button className="btn btn-primary" onClick={() => go(`mock/session/${data.sessionId}`)}>🏁 {to.sessionTitle}</button>
+            <button className="btn btn-primary" onClick={() => go(`mock/session/${data.sessionId}`)}>{to.sessionTitle}</button>
           )}
           <button className={data.sessionId ? 'btn btn-outline' : 'btn btn-primary'} onClick={() => go(`mock/cefr-${module}`)}>{t.again}</button>
           <button className="btn btn-outline" onClick={() => go('mock')}>{t.backToMock}</button>
@@ -604,7 +604,7 @@ export function MockResultView({ id, go }: { id: string; go: (route: string) => 
         )}
         <div className="row">
           {data.sessionId && (
-            <button className="btn btn-primary" onClick={() => go(`mock/session/${data.sessionId}`)}>🏁 {to.sessionTitle}</button>
+            <button className="btn btn-primary" onClick={() => go(`mock/session/${data.sessionId}`)}>{to.sessionTitle}</button>
           )}
           <button className={data.sessionId ? 'btn btn-outline' : 'btn btn-primary'} onClick={() => go(cr.module === 'speaking' ? 'mock/cefr-speaking' : 'mock/cefr-writing')}>{t.again}</button>
           <button className="btn btn-outline" onClick={() => go('mock')}>{t.backToMock}</button>
@@ -679,7 +679,7 @@ export function MockResultView({ id, go }: { id: string; go: (route: string) => 
       <p className="muted tiny">{t.disclaimer}</p>
       <div className="row">
         {data.sessionId && (
-          <button className="btn btn-primary" onClick={() => go(`mock/session/${data.sessionId}`)}>🏁 {to.sessionTitle}</button>
+          <button className="btn btn-primary" onClick={() => go(`mock/session/${data.sessionId}`)}>{to.sessionTitle}</button>
         )}
         <button className={data.sessionId ? 'btn btn-outline' : 'btn btn-primary'} onClick={() => go(againRoute)}>{t.again}</button>
         <button className="btn btn-outline" onClick={() => go('mock')}>{t.backToMock}</button>

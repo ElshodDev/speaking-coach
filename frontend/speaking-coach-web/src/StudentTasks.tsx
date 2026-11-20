@@ -70,7 +70,7 @@ export function TasksCard({ loggedIn, go }: { loggedIn: boolean; go: (route: str
   return (
     <div className="card" data-testid="tasks-card">
       <div className="spread">
-        <h3 style={{ margin: 0 }}>📚 {t.pending(pending.length)}</h3>
+        <h3 style={{ margin: 0 }}>{t.pending(pending.length)}</h3>
         <button className="btn-link small" onClick={() => go('tasks')}>{t.all}</button>
       </div>
       {pending.slice(0, 3).map((a) => <TaskRow key={a.id} task={a} go={go} />)}

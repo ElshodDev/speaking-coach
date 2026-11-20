@@ -91,7 +91,7 @@ export function Feedback({ encouragement, nextFocus }: { encouragement: string; 
   const t = useT(uiMsg);
   return (
     <div className="stack" style={{ marginTop: 16 }}>
-      <div className="encourage">💬 {encouragement}</div>
+      <div className="encourage">{encouragement}</div>
       <p className="small">
         <strong>{t.nextFocus}</strong> {nextFocus}
       </p>

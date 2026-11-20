@@ -5,6 +5,7 @@ import { homeMsg } from './locales/home';
 import { UsageNote } from './Usage';
 import { TelegramPromo } from './TelegramCard';
 import { TasksCard } from './StudentTasks';
+import { Icon } from './Icon';
 import { TodayPlan } from './TodayPlan';
 import { QuizTile, WordOfDay } from './WordOfDay';
 import { DemoHeroButton, isDemoEmail } from './Demo';
@@ -14,12 +15,7 @@ import { useWide } from './layout';
 export type ExerciseKind = 'speaking' | 'writing' | 'reading' | 'listening';
 
 /** Mashq turlari; nomi va tavsifi tanlangan tilda homeMsg.exercises'dan olinadi. */
-export const EXERCISES: { kind: ExerciseKind; emoji: string }[] = [
-  { kind: 'speaking', emoji: '🎙' },
-  { kind: 'writing', emoji: '✍️' },
-  { kind: 'reading', emoji: '📖' },
-  { kind: 'listening', emoji: '🎧' },
-];
+export const EXERCISES: { kind: ExerciseKind }[] = [{ kind: 'speaking' }, { kind: 'writing' }, { kind: 'reading' }, { kind: 'listening' }];
 
 export function ExerciseTiles({ onOpen }: { onOpen: (kind: ExerciseKind) => void }) {
   const t = useT(homeMsg);
@@ -28,7 +24,7 @@ export function ExerciseTiles({ onOpen }: { onOpen: (kind: ExerciseKind) => void
       {EXERCISES.map((e) => (
         <button key={e.kind} className="tile" data-kind={e.kind} onClick={() => onOpen(e.kind)}>
           <span className="emoji" aria-hidden>
-            {e.emoji}
+            <Icon name={e.kind} size={22} />
           </span>
           <strong>{t.exercises[e.kind].title}</strong>
           <span className="muted">{t.exercises[e.kind].blurb}</span>
@@ -164,7 +160,7 @@ export function Home({
     <div className="card">
       <div className="stats">
         <div className="stat">
-          <div className="value">🔥 {stats.streakDays}</div>
+          <div className="value"><Icon name="flame" className="streak-ico" /> {stats.streakDays}</div>
           <div className="label">{t.streakLabel}</div>
         </div>
         <div className="stat">

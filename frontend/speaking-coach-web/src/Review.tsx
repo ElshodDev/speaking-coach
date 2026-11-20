@@ -7,6 +7,7 @@ import { reviewMsg } from './locales/review';
 import { parseNote } from './Vocab';
 import { focusedButton, typingTarget, useWide } from './layout';
 import { statsPath, type ReviewStats } from './reviewStats';
+import { Icon } from './Icon';
 
 export { statsPath, type ReviewStats };
 
@@ -288,7 +289,7 @@ export function Review({
       ) : vocab ? (
         stats && (
           <div className="card center">
-            <div style={{ fontSize: '2.2rem' }}>✅</div>
+            <div className="empty-ico"><Icon name="check" size={26} /></div>
             <p style={{ fontSize: '1.1rem', fontWeight: 600, margin: '4px 0' }}>{t.vocabDoneTitle}</p>
             <p className="muted small" style={{ margin: '0 0 12px' }}>
               {t.vocabDoneText}
@@ -303,7 +304,7 @@ export function Review({
       ) : (
         stats && (
           <div className="card center">
-            <div style={{ fontSize: '2.2rem' }}>{stats.total === 0 ? '🗂' : '✅'}</div>
+            <div className="empty-ico"><Icon name={stats.total === 0 ? 'review' : 'check'} size={26} /></div>
             <p style={{ fontSize: '1.1rem', fontWeight: 600, margin: '4px 0' }}>
               {stats.total === 0 ? t.noCardsTitle : t.allDoneTitle}
             </p>
@@ -352,7 +353,7 @@ function StatsBar({ stats }: { stats: ReviewStats }) {
     <div className="card">
       <div className="stats">
         <div className="stat">
-          <div className="value">🔥 {stats.streakDays}</div>
+          <div className="value"><Icon name="flame" className="streak-ico" /> {stats.streakDays}</div>
           <div className="label">{t.streak}</div>
         </div>
         <div className="stat">

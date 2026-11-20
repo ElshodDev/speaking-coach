@@ -78,7 +78,7 @@ export function AccountData({ email, onDeleted }: { email: string; onDeleted: ()
       ) : (
         <div className="danger-zone stack">
           <p className="small" style={{ margin: 0 }}>
-            ⚠️ {t.deleteWarn}
+            {t.deleteWarn}
           </p>
           <label className="small" htmlFor="confirm-email">
             {wordMode ? t.deleteConfirmWord : t.deleteConfirmLabel(email)}

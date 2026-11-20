@@ -9,7 +9,7 @@ export const accountMsg = defineMessages(
     usageEmpty: 'Bugungi mashqlar limiti tugadi. Takrorlash va lugʻat cheklanmagan — ertaga yana davom etasiz.',
     dataTitle: 'Maʼlumotlaringiz',
     dataText: 'Mashqlar, baholar, kartalar va lugʻatingizning toʻliq nusxasini yuklab olishingiz yoki hisobni butunlay oʻchirishingiz mumkin.',
-    download: '⬇️ Maʼlumotlarni yuklab olish (JSON)',
+    download: 'Maʼlumotlarni yuklab olish (JSON)',
     downloading: 'Tayyorlanmoqda...',
     deleteOpen: 'Hisobni oʻchirish',
     deleteWarn:
@@ -29,7 +29,7 @@ export const accountMsg = defineMessages(
       usageEmpty: 'Лимит упражнений на сегодня исчерпан. Повторение и словарь без ограничений — продолжите завтра.',
       dataTitle: 'Ваши данные',
       dataText: 'Вы можете скачать полную копию упражнений, оценок, карточек и словаря или полностью удалить аккаунт.',
-      download: '⬇️ Скачать данные (JSON)',
+      download: 'Скачать данные (JSON)',
       downloading: 'Подготовка...',
       deleteOpen: 'Удалить аккаунт',
       deleteWarn:
@@ -48,7 +48,7 @@ export const accountMsg = defineMessages(
       usageEmpty: "You've used today's exercises. Review and vocabulary are unlimited — see you tomorrow.",
       dataTitle: 'Your data',
       dataText: 'Download a full copy of your exercises, scores, cards and vocabulary, or delete your account for good.',
-      download: '⬇️ Download my data (JSON)',
+      download: 'Download my data (JSON)',
       downloading: 'Preparing...',
       deleteOpen: 'Delete account',
       deleteWarn:
