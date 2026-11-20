@@ -613,6 +613,19 @@ textarea.input {
   color: var(--success);
 }
 
+/* "Javobimni yaxshila" — natija kartasi ichidagi bo'lim. */
+.upgrade {
+  border-top: 1px solid var(--border);
+  margin-top: 16px;
+  padding-top: 14px;
+}
+.upgrade mark {
+  background: var(--warning-soft);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
 .quote {
   background: var(--surface-2);
   border-radius: var(--radius-sm);

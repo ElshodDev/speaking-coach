@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiJson, getLevel } from './api';
 import { cardsMessage } from './cards';
 import { FluencyCard } from './Fluency';
+import { UpgradeAnswer } from './Upgrade';
 import { measurePauses } from './fluencyAudio';
 import { msg, useT } from './i18n';
 import { useLeaveGuard } from './leaveGuard';
@@ -382,6 +383,13 @@ export function Part2Page({ loggedIn, onLogin, onCardsAdded, go, cardId }: {
               {result.metrics && <FluencyCard metrics={result.metrics} />}
               <Corrections items={result.evaluation.topCorrections} />
               <Feedback encouragement={result.evaluation.encouragement} nextFocus={result.evaluation.nextFocus} />
+              <UpgradeAnswer
+                key={result.submissionId}
+                activityId={result.saved ? result.submissionId : null}
+                original={result.evaluation.transcript}
+                loggedIn={loggedIn}
+                onCardsAdded={onCardsAdded}
+              />
 
               <details style={{ marginTop: 10 }}>
                 <summary className="small">{t.transcript}</summary>
