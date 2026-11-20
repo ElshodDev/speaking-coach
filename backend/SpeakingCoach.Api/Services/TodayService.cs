@@ -12,7 +12,7 @@ public record PendingTask(Guid Id, string GroupName, string Kind, int? Target, s
 /// (/api/plan/today), Telegram bot (📋 Bugun) va kechki eslatma bir xil
 /// hisobni ishlatadi — natijalar hamma joyda bir xil.
 /// </summary>
-public class TodayService(AppDbContext db, ReviewService reviews)
+public class TodayService(AppDbContext db, ReviewService reviews, ReadinessService readiness)
 {
     public async Task<(PlanLogic.Plan Plan, ReviewStats Stats)> PlanAsync(User user, int tzOffsetMinutes)
     {
@@ -42,10 +42,12 @@ public class TodayService(AppDbContext db, ReviewService reviews)
         var mockedToday = mocks.Where(x => ReviewScheduler.ToLocalDate(x.CreatedAtUtc, offset) == today).Select(x => x.P.Module).ToHashSet();
         var lastMock = mocks.GroupBy(x => x.P.Module).ToDictionary(g => g.Key, g => g.Max(x => x.CreatedAtUtc));
 
+        // Imtihonga tayyorlanayotganlar uchun — tayyorlik bahosidagi eng zaif ko'nikma rejada birinchi.
+        var focus = exam is null ? null : await readiness.ForUserAsync(user, today, now);
         var plan = PlanLogic.Build(new PlanLogic.Input(
             user.Goal, user.DailyMinutes, user.ExamDate, today,
             stats.Total, stats.Due, stats.ReviewedToday, stats.DailyGoal,
-            practiced, mockedToday, lastMock));
+            practiced, mockedToday, lastMock, focus?.FocusSkill, focus?.FocusReason));
         return (plan, stats);
     }
 

@@ -1,0 +1,68 @@
+// Imtihonga tayyorlik bahosi — server javobi turlari va ko'rsatish uchun toza funksiyalar.
+
+export type Skill = 'listening' | 'reading' | 'writing' | 'speaking';
+export type Confidence = 'none' | 'low' | 'medium' | 'high';
+export type Status = 'no_goal' | 'unknown' | 'no_target' | 'on_track' | 'close' | 'behind';
+
+export interface SkillReadiness {
+  skill: Skill;
+  estimate: number | null;
+  low: number | null;
+  high: number | null;
+  confidence: Confidence;
+  mocks: number;
+  practice: number;
+  lastAtUtc: string | null;
+}
+
+export interface Readiness {
+  exam: 'ielts' | 'cefr' | null;
+  max: number;
+  overall: number | null;
+  overallLow: number | null;
+  overallHigh: number | null;
+  overallLevel: string | null;
+  target: string | null;
+  targetValue: number | null;
+  gap: number | null;
+  status: Status;
+  daysToExam: number | null;
+  focusSkill: Skill | null;
+  focusReason: 'missing' | 'weakest' | null;
+  skills: SkillReadiness[];
+}
+
+/** IELTS — bitta kasr (6.5), CEFR — butun ball (51). */
+export function formatScore(exam: Readiness['exam'], v: number | null): string {
+  if (v === null) return '—';
+  return exam === 'cefr' ? String(Math.round(v)) : v.toFixed(1);
+}
+
+/** Shkala bo'yicha foiz (0–100) — chiziqlar uchun. */
+export function pct(v: number | null, max: number): number {
+  if (v === null || max <= 0) return 0;
+  return Math.max(0, Math.min(100, (100 * v) / max));
+}
+
+/** Oraliq ("5.5–6.5"); bir xil bo'lsa — bitta qiymat. */
+export function formatRange(exam: Readiness['exam'], low: number | null, high: number | null): string {
+  if (low === null || high === null) return '';
+  const a = formatScore(exam, low);
+  const b = formatScore(exam, high);
+  return a === b ? a : `${a}–${b}`;
+}
+
+/** Fokus ko'nikma uchun yo'nalish: ma'lumot yo'q — shu bo'limning mock'i; zaif — oddiy mashq. */
+export function focusRoute(r: Readiness): string | null {
+  if (!r.focusSkill || !r.exam) return null;
+  if (r.focusReason === 'missing') {
+    if (r.exam === 'cefr') return `mock/cefr-${r.focusSkill}`;
+    return r.focusSkill === 'reading' ? 'mock/reading-academic' : r.focusSkill === 'writing' ? 'mock/writing-academic' : `mock/${r.focusSkill}`;
+  }
+  return `practice/${r.focusSkill}`;
+}
+
+/** Holat rangi (mavjud .txt-good / .txt-mid / .txt-low sinflari). */
+export function statusTone(s: Status): 'good' | 'mid' | 'low' | null {
+  return s === 'on_track' ? 'good' : s === 'close' ? 'mid' : s === 'behind' ? 'low' : null;
+}

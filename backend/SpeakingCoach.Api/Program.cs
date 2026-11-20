@@ -105,6 +105,7 @@ builder.Services.AddSingleton(new SpeakingCoach.Api.Services.Mock.GenerationGate
 builder.Services.AddScoped<SpeakingCoach.Api.Services.Mock.ShadowingService>();
 builder.Services.AddSingleton<SpeakingCoach.Api.Services.Mock.IShadowingCoach, SpeakingCoach.Api.Services.Mock.GeminiShadowingCoach>();
 builder.Services.AddScoped<ProgressService>();
+builder.Services.AddScoped<ReadinessService>();
 builder.Services.AddScoped<AdminService>();
 
 // Ulanish satri (connection string) standart ASP.NET Core konvensiyasi

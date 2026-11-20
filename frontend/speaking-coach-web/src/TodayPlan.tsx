@@ -50,6 +50,12 @@ export function TodayPlan({ go }: { go: (route: string) => void }) {
           {plan.targetScore && <span className="muted"> · {t.target(plan.targetScore)}</span>}
         </p>
       )}
+      {exam && plan.focusSkill && (
+        <p className="small" style={{ margin: '4px 0 0' }} data-testid="plan-focus">
+          🎯 {plan.focusReason === 'missing' ? t.focusMissing(t.moduleNames[plan.focusSkill]) : t.focusWeakest(t.moduleNames[plan.focusSkill])}{' '}
+          <button className="btn-link small" onClick={() => go('progress')}>{t.focusMore}</button>
+        </p>
+      )}
       {!plan.onboarded || !plan.goal ? (
         <p className="small" style={{ margin: '6px 0 0' }}>
           <button className="btn-link small" onClick={() => go('welcome')}>{t.setGoal} →</button>

@@ -665,7 +665,7 @@ public static class MockEndpoints
         LIMIT {1}
         """;
 
-    private static Task<List<MockRow>> MockRowsAsync(AppDbContext db, Guid userId, int take) =>
+    public static Task<List<MockRow>> MockRowsAsync(AppDbContext db, Guid userId, int take) =>
         db.Database.SqlQueryRaw<MockRow>(MockRowsSql, userId, take).ToListAsync();
 
     public static object ClientPayload(string module, Guid id, string payload) => module == "reading"

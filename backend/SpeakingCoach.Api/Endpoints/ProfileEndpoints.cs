@@ -86,6 +86,16 @@ public static partial class ProfileEndpoints
         }).RequireRateLimiting(RateLimits.WritePolicy);
 
         // Bugungi reja: takrorlash, kunning ko'nikmasi, (imtihonga tayyorlanayotganlarga) mock.
+        // Imtihonga tayyorlik bahosi (Progress sahifasi): ko'nikmalar bo'yicha taxminiy natija, maqsadgacha farq, fokus.
+        app.MapGet("/api/readiness", async (HttpRequest request, AuthService auth, ReadinessService readiness, int tzOffsetMinutes = 0) =>
+        {
+            var user = await auth.GetCurrentUserAsync(request);
+            if (user is null) return Unauthorized(request);
+            var now = DateTime.UtcNow;
+            var today = ReviewScheduler.ToLocalDate(now, Math.Clamp(tzOffsetMinutes, -840, 840));
+            return Results.Ok(await readiness.ForUserAsync(user, today, now));
+        });
+
         app.MapGet("/api/plan/today", async (HttpRequest request, AuthService auth, TodayService todayService, int tzOffsetMinutes = 0) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
@@ -97,6 +107,8 @@ public static partial class ProfileEndpoints
                 user.TargetScore,
                 examDate = user.ExamDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
                 plan.DaysToExam,
+                plan.FocusSkill,
+                plan.FocusReason,
                 dailyMinutes = user.DailyMinutes ?? PlanLogic.DefaultMinutes,
                 onboarded = user.OnboardedAtUtc is not null,
                 items = plan.Items,
