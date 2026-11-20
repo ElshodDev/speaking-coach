@@ -8,6 +8,9 @@ import { useT } from './i18n';
 import { speakingMsg } from './locales/speaking';
 import { currentMicEnv, micPrecheck, micProblemOf, type MicProblem } from './micErrors';
 import { MicProblemNote } from './MicProblem';
+import { FluencyCard } from './Fluency';
+import { measurePauses } from './fluencyAudio';
+import type { FluencyStats, PauseStats } from './fluencyLogic';
 import { audioExt } from './shadowLogic';
 import { initialTopic, TopicPicker, type PickedTopic } from './TopicPicker';
 import { stabilityMsg } from './locales/stability';
@@ -39,6 +42,8 @@ interface EvaluationResult {
 interface SubmitResponse {
   submissionId: string;
   evaluation: EvaluationResult;
+  /** Ravonlik o'lchovlari (eski server versiyasida — yo'q). */
+  metrics?: FluencyStats;
   saved: boolean;
   newCards: number;
 }
@@ -70,6 +75,9 @@ export function Recorder({
   // qayta-qayta yuboriladi (serverda audio doimiy saqlanmaydi, shuning uchun
   // uni brauzerda ushlab turamiz).
   const [lastBlob, setLastBlob] = useState<Blob | null>(null);
+  // Yozuv uzunligi va pauzalar — ravonlik o'lchovlari uchun (qayta yuborishda ham o'sha qiymatlar).
+  const timingRef = useRef<{ seconds: number; pauses: PauseStats | null } | null>(null);
+  const startedAtRef = useRef(0);
   const [stability, setStability] = useState<{ stats: DimensionStats[]; failed: number } | null>(null);
   const [testProgress, setTestProgress] = useState('');
   const [isTesting, setIsTesting] = useState(false);
@@ -150,11 +158,16 @@ export function Recorder({
         stream.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
         if (!aliveRef.current) return;
+        const seconds = (Date.now() - startedAtRef.current) / 1000;
+        const pauses = await measurePauses(blob);
+        if (!aliveRef.current) return;
+        timingRef.current = { seconds, pauses };
         setLastBlob(blob);
         await uploadAudio(blob);
       };
 
       recorder.start();
+      startedAtRef.current = Date.now();
       mediaRecorderRef.current = recorder;
       setStatus('recording');
       setMessage('');
@@ -202,6 +215,14 @@ export function Recorder({
     formData.append('audio', blob, `recording.${audioExt(blob.type)}`);
     formData.append('topic', topic);
     formData.append('level', getLevel());
+    const timing = timingRef.current;
+    if (timing) {
+      formData.append('seconds', timing.seconds.toFixed(1));
+      if (timing.pauses) {
+        formData.append('longPauses', String(timing.pauses.longPauses));
+        formData.append('pauseSeconds', String(timing.pauses.pauseSeconds));
+      }
+    }
 
     const path = save ? '/api/speaking/submit' : '/api/speaking/submit?save=false';
     return apiJson<SubmitResponse>(path, { method: 'POST', body: formData });
@@ -311,6 +332,7 @@ export function Recorder({
           <ScoreBar label={t.criteria.fluency} data={result.evaluation.fluency} />
           <ScoreBar label={t.criteria.grammar} data={result.evaluation.grammar} />
           <ScoreBar label={t.criteria.vocabulary} data={result.evaluation.vocabulary} />
+          {result.metrics && <FluencyCard metrics={result.metrics} />}
 
           <Corrections items={result.evaluation.topCorrections} />
           <Feedback encouragement={result.evaluation.encouragement} nextFocus={result.evaluation.nextFocus} />

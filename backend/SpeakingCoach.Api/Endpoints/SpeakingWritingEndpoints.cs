@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using SpeakingCoach.Api.Data;
 using SpeakingCoach.Api.Services;
 
@@ -43,6 +44,9 @@ public static class SpeakingWritingEndpoints
             var audioFile = form.Files.GetFile("audio");
             var topic = form["topic"].ToString();
             var level = LearnerLevel.Normalize(form["level"].ToString());
+            // Ravonlik o'lchovlari uchun: yozuv uzunligi va uzun pauzalar (brauzer audio'dan hisoblaydi).
+            var (seconds, longPauses, pauseSeconds) = FluencyMetrics.Sanitize(
+                form["seconds"].ToString(), form["longPauses"].ToString(), form["pauseSeconds"].ToString());
 
             if (audioFile is null || audioFile.Length == 0)
             {
@@ -89,6 +93,8 @@ public static class SpeakingWritingEndpoints
             {
                 logger.LogInformation("Submission {Id}: Gemini'ga yuborilmoqda ({Size} bayt)", submissionId, audioBytes.Length);
                 var evaluation = await evaluationService.EvaluateAsync(topic, audioBytes, audioFile.ContentType, level);
+                // AI'siz, transkript va vaqtdan: daqiqasiga so'z, to'ldiruvchi so'zlar, takrorlar, pauzalar.
+                var metrics = FluencyMetrics.Analyze(evaluation.Transcript, seconds, longPauses, pauseSeconds);
 
                 // Natijani bazaga yozamiz. Bu Gemini so'rovidan KEYIN qilinadi —
                 // agar Gemini xato qaytarsa (masalan 503), hech narsa saqlanmaydi,
@@ -102,7 +108,7 @@ public static class SpeakingWritingEndpoints
                         UserId = userId,
                         CreatedAtUtc = DateTime.UtcNow,
                         PromptData = System.Text.Json.JsonSerializer.Serialize(new { topic }),
-                        ResponseData = System.Text.Json.JsonSerializer.Serialize(evaluation),
+                        ResponseData = FluencyMetrics.WithMetrics(evaluation, metrics),
                     });
                     // Tuzatishlar avtomatik takrorlash kartalariga aylanadi —
                     // urinish bilan bitta tranzaksiyada saqlanadi.
@@ -112,7 +118,7 @@ public static class SpeakingWritingEndpoints
                 }
 
                 await quotas.RecordAsync(request, AiKind.Exercise);
-                return Results.Ok(new { submissionId, evaluation, saved = shouldSave, newCards });
+                return Results.Ok(new { submissionId, evaluation, metrics, saved = shouldSave, newCards });
             }
             catch (Exception ex) when (AiErrors.Handles(ex, request))
             {
@@ -125,6 +131,27 @@ public static class SpeakingWritingEndpoints
 
         app.MapGet("/api/speaking/history", (HttpRequest request, AppDbContext db, AuthService auth) =>
             HistoryQueries.GetHistoryAsync(ActivityType.Speaking, request, db, auth));
+
+        // Ravonlik dinamikasi (Progress grafigi): oxirgi urinishlardagi o'lchovlar, eski → yangi.
+        // O'lchovsiz (bu funksiyadan oldingi) yozuvlar tushirib qoldiriladi.
+        app.MapGet("/api/speaking/fluency", async (HttpRequest request, AppDbContext db, AuthService auth, int take = 20) =>
+        {
+            var userId = await auth.GetCurrentUserIdAsync(request);
+            if (userId is null) return Results.Ok(Array.Empty<FluencyPoint>());
+            var rows = await db.Activities
+                .Where(a => a.UserId == userId && a.Type == ActivityType.Speaking)
+                .OrderByDescending(a => a.CreatedAtUtc)
+                .Take(Math.Clamp(take, 1, 50))
+                .Select(a => new { a.CreatedAtUtc, a.ResponseData })
+                .ToListAsync();
+            var points = rows
+                .OrderBy(r => r.CreatedAtUtc)
+                .Select(r => (r.CreatedAtUtc, M: FluencyMetrics.FromResponse(r.ResponseData)))
+                .Where(x => x.M?.Wpm is not null)
+                .Select(x => new FluencyPoint(x.CreatedAtUtc, x.M!.Wpm, x.M.FillersPerMinute, x.M.LongPauses))
+                .ToList();
+            return Results.Ok(points);
+        });
 
         app.MapPost("/api/writing/submit", async (
             WritingSubmitRequest body,
