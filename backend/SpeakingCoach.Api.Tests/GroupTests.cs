@@ -127,9 +127,17 @@ public class GroupTests
         // Taxallus bo'lmasa — emailning hech bir qismi ko'rsatilmaydi (Telegram ID ham).
         var anon = GroupLogic.DisplayNameOf(null, "aziza.k@mail.com");
         Assert.DoesNotContain("aziza", anon);
-        Assert.StartsWith("👤 ", anon);
+        Assert.StartsWith("#", anon);
         Assert.Equal(anon, GroupLogic.DisplayNameOf("  ", "Aziza.K@mail.com"));
         Assert.DoesNotContain("123456", GroupLogic.DisplayNameOf(null, "tg-123456@telegram.invalid"));
         Assert.NotEqual(anon, GroupLogic.DisplayNameOf(null, "other@mail.com"));
+    }
+
+    [Fact]
+    public void Student_sees_teacher_nickname_or_nothing()
+    {
+        Assert.Equal("Aziza opa", GroupLogic.TeacherNameOf(" Aziza opa "));
+        Assert.Null(GroupLogic.TeacherNameOf(null));
+        Assert.Null(GroupLogic.TeacherNameOf("   "));
     }
 }

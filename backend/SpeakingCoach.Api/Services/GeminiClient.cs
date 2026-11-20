@@ -16,6 +16,7 @@ public class GeminiClient
 {
     private readonly HttpClient _http;
     private readonly string _apiKey;
+    private readonly string _baseUrl;
     private readonly AiGuard _guard;
     private readonly ILogger<GeminiClient> _logger;
 
@@ -42,6 +43,8 @@ public class GeminiClient
             ?? throw new InvalidOperationException(
                 "Gemini:ApiKey sozlanmagan. Lokalda: dotnet user-secrets set \"Gemini:ApiKey\" \"...\". " +
                 "Railway/Render'da: Gemini__ApiKey environment variable (qo'sh pastki chiziq).");
+        // Faqat lokal/e2e test uchun: soxta (stub) Gemini serveriga yo'naltirish. Production'da bo'sh qoldiriladi.
+        _baseUrl = (config["Gemini:BaseUrl"] is { Length: > 0 } b ? b : "https://generativelanguage.googleapis.com").TrimEnd('/');
         _guard = guard;
         _logger = logger;
         _http = httpClientFactory.CreateClient();
@@ -106,7 +109,7 @@ public class GeminiClient
 
             // Kalit URL'da emas, sarlavhada: URL'lar loglarga (HttpClient,
             // proksi) yozilib qolishi mumkin.
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent";
+            var url = $"{_baseUrl}/v1beta/models/{model}:generateContent";
 
             for (var attempt = 0; attempt < 2; attempt++)
             {

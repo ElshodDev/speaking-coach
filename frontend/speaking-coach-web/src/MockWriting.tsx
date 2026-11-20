@@ -176,7 +176,7 @@ export function MockWriting({
             </strong>
           </span>
           <button className="btn btn-primary" onClick={confirmAndSubmit} disabled={status === 'submitting'}>
-            {status === 'submitting' ? '⏳' : t.submit}
+            {status === 'submitting' ? '…' : t.submit}
           </button>
         </div>
         <div className="chips" role="tablist" style={{ marginTop: 8 }}>
@@ -190,7 +190,7 @@ export function MockWriting({
 
       {note && <p className="small" role="status">{note}</p>}
       {error && <p className="error small" role="alert">{error}</p>}
-      {status === 'submitting' && <p className="small" role="status">⏳ {t.submitting}</p>}
+      {status === 'submitting' && <p className="small" role="status">{t.submitting}</p>}
 
       {(() => {
         const head = (

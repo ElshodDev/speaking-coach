@@ -259,6 +259,7 @@ public static class Texts
         ["bot.reminder_tasks"] = new("📚 {0} ta vazifa kutmoqda.", "📚 Ждут выполнения заданий: {0}.", "📚 {0} assignments are waiting."),
         ["bot.reminder_tasks_overdue"] = new("📚 {0} ta vazifa kutmoqda, {1} tasining muddati oʻtdi.", "📚 Ждут выполнения заданий: {0}, у {1} срок прошёл.", "📚 {0} assignments are waiting, {1} overdue."),
         ["bot.new_task"] = new("👩‍🏫 <b>{0}</b> ({1}) yangi vazifa berdi:", "👩‍🏫 <b>{0}</b> ({1}) дал(а) новое задание:", "👩‍🏫 <b>{0}</b> ({1}) gave a new assignment:"),
+        ["bot.your_teacher"] = new("Oʻqituvchingiz", "Ваш преподаватель", "Your teacher"),
         ["bot.new_task_due"] = new("⏰ Muddat: {0}", "⏰ Срок: {0}", "⏰ Due: {0}"),
         ["bot.task_do"] = new("▶️ Bajarish", "▶️ Выполнить", "▶️ Do it"),
         ["bot.today_button"] = new("📋 Bugungi reja", "📋 План на сегодня", "📋 Today's plan"),

@@ -176,6 +176,10 @@ public static class GroupLogic
     {
         if (!string.IsNullOrWhiteSpace(displayName)) return displayName.Trim();
         var hash = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(email.Trim().ToLowerInvariant()));
-        return "👤 " + Convert.ToHexString(hash, 0, 2);
+        return "#" + Convert.ToHexString(hash, 0, 2);
     }
+
+    /// <summary>O'quvchiga ko'rsatiladigan o'qituvchi ismi: taxallus bo'lmasa — null (frontend "O'qituvchingiz" deydi, tasodifiy kod emas).</summary>
+    public static string? TeacherNameOf(string? displayName) =>
+        string.IsNullOrWhiteSpace(displayName) ? null : displayName.Trim();
 }

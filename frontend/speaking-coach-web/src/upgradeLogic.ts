@@ -14,6 +14,9 @@ export interface UpgradeResult {
   summary: string;
 }
 
+/** Server bilan bir xil (AnswerUpgrade.MinWords): bundan qisqa javob yaxshilanmaydi. */
+export const MIN_WORDS = 15;
+
 export const TARGETS = ['B1', 'B2', 'C1'] as const;
 export type Target = (typeof TARGETS)[number];
 

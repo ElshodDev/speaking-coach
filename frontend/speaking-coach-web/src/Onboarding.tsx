@@ -147,7 +147,7 @@ export function Onboarding({ profile, go, onSaved }: { profile: Profile | null; 
             <button type="button" className="btn-link small quiet" onClick={() => void save(true)} disabled={busy}>{t.later}</button>
           )}
           {last ? (
-            <button type="button" className="btn btn-primary" onClick={() => void save(false)} disabled={busy || !goal || !level}>{busy ? '⏳' : t.finish}</button>
+            <button type="button" className="btn btn-primary" onClick={() => void save(false)} disabled={busy || !goal || !level}>{busy ? '…' : t.finish}</button>
           ) : (
             <button type="button" className="btn btn-primary" onClick={() => setStep(step + 1)} disabled={!canNext}>{t.next}</button>
           )}

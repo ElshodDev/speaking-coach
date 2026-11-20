@@ -1,3 +1,4 @@
+import { MIN_WORDS } from '../upgradeLogic';
 import { defineMessages } from '../i18n';
 
 /** Upgrade.tsx — "Javobimni yaxshila": javobni maqsadli darajada qayta yozish. */
@@ -20,6 +21,7 @@ export const upgradeMsg = defineMessages(
     copy: 'Nusxa olish',
     copied: 'Nusxa olindi',
     login: 'Javobni yaxshilash uchun tizimga kiring — natija hisobingizda saqlanadi.',
+    tooShort: (n: number) => `Javob juda qisqa (${n} ta soʻz). Yaxshilash uchun kamida ${MIN_WORDS} ta soʻz kerak — keyingi safar biroz uzunroq gapiring yoki yozing.`,
   },
   {
     ru: {
@@ -40,6 +42,7 @@ export const upgradeMsg = defineMessages(
       copy: 'Копировать',
       copied: 'Скопировано',
       login: 'Войдите, чтобы улучшить ответ — результат сохранится в аккаунте.',
+      tooShort: (n: number) => `Ответ слишком короткий (${n} сл.). Для улучшения нужно хотя бы ${MIN_WORDS} слов — в следующий раз скажите или напишите чуть больше.`,
     },
     en: {
       title: 'Improve my answer',
@@ -59,6 +62,7 @@ export const upgradeMsg = defineMessages(
       copy: 'Copy',
       copied: 'Copied',
       login: 'Log in to improve your answer — the result is saved to your account.',
+      tooShort: (n: number) => `The answer is too short (${n} words). At least ${MIN_WORDS} words are needed — say or write a little more next time.`,
     },
   },
 );

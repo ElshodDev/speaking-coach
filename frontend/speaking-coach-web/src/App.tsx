@@ -471,7 +471,7 @@ function App() {
           </a>
           <div className="topbar-right">
             <LangSelect />
-            {loggedIn && stats && <span className="badge streak"><Icon name="flame" size={14} className="streak-ico" /> {t.streak(stats.streakDays)}</span>}
+            {loggedIn && stats && stats.streakDays > 0 && <span className="badge streak"><Icon name="flame" size={14} className="streak-ico" /> {t.streak(stats.streakDays)}</span>}
             {loggedIn ? (
               <button
                 className="avatar"
