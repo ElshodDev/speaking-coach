@@ -31,7 +31,9 @@ public record FluencyPoint(
     [property: JsonPropertyName("at")] DateTime At,
     [property: JsonPropertyName("wpm")] int? Wpm,
     [property: JsonPropertyName("fillersPerMinute")] double? FillersPerMinute,
-    [property: JsonPropertyName("longPauses")] int? LongPauses);
+    [property: JsonPropertyName("longPauses")] int? LongPauses,
+    // Qayerdan: "speaking" (mashq), "mock" (Speaking imtihoni), "talk" (AI suhbat).
+    [property: JsonPropertyName("source")] string Source = "speaking");
 
 /// <summary>
 /// Ravonlik o'lchovlari transkript (Gemini uni to'ldiruvchi so'zlar va takrorlar bilan
@@ -191,11 +193,65 @@ public static partial class FluencyMetrics
     }
 
     /// <summary>Baholash natijasi + "metrics" — bitta JSON obyekt (ResponseData uchun).</summary>
-    public static string WithMetrics<T>(T evaluation, FluencyStats metrics)
+    public static string WithMetrics<T>(T evaluation, FluencyStats metrics, JsonSerializerOptions? options = null) =>
+        WithMetricsNode(evaluation, metrics, options).ToJsonString(options);
+
+    /// <summary>
+    /// Natija + "metrics" JSON obyekt sifatida. options — natijaning o'z nomlash qoidasi
+    /// (mock natijalari camelCase bilan saqlanadi); "metrics" maydonlari doim bir xil nomda.
+    /// </summary>
+    public static System.Text.Json.Nodes.JsonObject WithMetricsNode<T>(T evaluation, FluencyStats metrics, JsonSerializerOptions? options = null)
     {
-        var node = JsonSerializer.SerializeToNode(evaluation)!.AsObject();
+        var node = JsonSerializer.SerializeToNode(evaluation, options)!.AsObject();
         node["metrics"] = JsonSerializer.SerializeToNode(metrics);
-        return node.ToJsonString();
+        return node;
+    }
+
+    /// <summary>Bir nechta javob (mock savollari, suhbat navbatlari) — bitta umumiy o'lchov.</summary>
+    public static FluencyStats? Combine(IReadOnlyCollection<FluencyStats> parts)
+    {
+        if (parts.Count == 0) return null;
+        var timed = parts.Where(p => p.Seconds is not null && p.Wpm is not null).ToList();
+        double? seconds = timed.Count > 0 ? Math.Round(timed.Sum(p => p.Seconds!.Value), 1) : null;
+        var minutes = seconds / 60.0;
+        int? wpm = seconds is not null ? (int)Math.Round(timed.Sum(p => p.Words) / minutes!.Value) : null;
+        double? fpm = seconds is not null ? Math.Round(timed.Sum(p => p.Fillers) / minutes!.Value, 1) : null;
+        // Pauzalar — faqat hammasi o'lchangan bo'lsa (aks holda yig'indi kam ko'rinardi).
+        var allPauses = timed.Count > 0 && timed.All(p => p.LongPauses is not null);
+        return new FluencyStats(
+            Words: parts.Sum(p => p.Words),
+            Seconds: seconds,
+            Wpm: wpm,
+            Pace: PaceOf(wpm),
+            Fillers: parts.Sum(p => p.Fillers),
+            FillersPerMinute: fpm,
+            TopFillers: parts.SelectMany(p => p.TopFillers)
+                .GroupBy(f => f.Word)
+                .Select(g => new FluencyFiller(g.Key, g.Sum(f => f.Count)))
+                .OrderByDescending(f => f.Count).ThenBy(f => f.Word, StringComparer.Ordinal)
+                .Take(5).ToList(),
+            Repetitions: parts.Sum(p => p.Repetitions),
+            SelfCorrections: parts.Sum(p => p.SelfCorrections),
+            LongPauses: allPauses ? timed.Sum(p => p.LongPauses!.Value) : null,
+            PauseSeconds: allPauses ? Math.Round(timed.Sum(p => p.PauseSeconds ?? 0), 1) : null);
+    }
+
+    /// <summary>
+    /// Mock imtihon javoblari: har bir javob (transkript + soniyalar) alohida o'lchanadi, keyin
+    /// birlashtiriladi. Pauzalar formada "p{i}" (soni) va "ps{i}" (soniyalari) — brauzerdan.
+    /// </summary>
+    public static FluencyStats? ForAnswers(IEnumerable<(int Index, string Transcript, int Seconds)> answers, Func<string, string?> form)
+    {
+        var parts = answers
+            .Where(a => !string.IsNullOrWhiteSpace(a.Transcript) && a.Seconds > 0)
+            .Select(a =>
+            {
+                var (sec, pauses, pauseSec) = Sanitize(
+                    a.Seconds.ToString(CultureInfo.InvariantCulture), form($"p{a.Index}"), form($"ps{a.Index}"));
+                return Analyze(a.Transcript, sec, pauses, pauseSec);
+            })
+            .ToList();
+        return Combine(parts);
     }
 
     private static string Canonical(string filler) => filler switch

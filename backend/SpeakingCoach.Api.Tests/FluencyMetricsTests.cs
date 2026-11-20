@@ -102,4 +102,65 @@ public class FluencyMetricsTests
         Assert.Null(FluencyMetrics.FromResponse("{\"transcript\":\"old row\"}"));
         Assert.Null(FluencyMetrics.FromResponse("not json"));
     }
+
+    [Fact]
+    public void Combine_weights_by_time_not_by_answer()
+    {
+        var a = FluencyMetrics.Analyze(string.Join(' ', Enumerable.Repeat("word", 60)), 60, 1, 1.5); // 60 so'z/daq
+        var b = FluencyMetrics.Analyze("um uh " + string.Join(' ', Enumerable.Repeat("word", 30)), 10, 0, 0); // 180 so'z/daq
+        var c = FluencyMetrics.Combine([a, b])!;
+        Assert.Equal(90, c.Words);
+        Assert.Equal(70, c.Seconds);
+        Assert.Equal(77, c.Wpm);           // 90 / (70/60) — oddiy o'rtacha (120) emas
+        Assert.Equal("slow", c.Pace);
+        Assert.Equal(2, c.Fillers);
+        Assert.Equal(1, c.LongPauses);
+        Assert.Equal(1.5, c.PauseSeconds);
+        Assert.Null(FluencyMetrics.Combine([]));
+    }
+
+    [Fact]
+    public void Combine_hides_pauses_unless_every_part_was_measured()
+    {
+        var a = FluencyMetrics.Analyze("one two three four five six", 10, 2, 3);
+        var b = FluencyMetrics.Analyze("one two three four five six", 10);
+        Assert.Null(FluencyMetrics.Combine([a, b])!.LongPauses);
+    }
+
+    [Fact]
+    public void Mock_answers_use_per_answer_pause_fields_and_skip_empty_answers()
+    {
+        var form = new Dictionary<string, string> { ["p0"] = "2", ["ps0"] = "3.5", ["p2"] = "1", ["ps2"] = "1.2" };
+        var m = FluencyMetrics.ForAnswers(
+            [(0, "I live in Tashkent, um, with my family", 20), (1, "", 0), (2, "I like reading books", 15)],
+            k => form.GetValueOrDefault(k))!;
+        Assert.Equal(35, m.Seconds);
+        Assert.Equal(3, m.LongPauses);
+        Assert.Equal(4.7, m.PauseSeconds);
+        Assert.Equal(1, m.Fillers);
+        Assert.Null(FluencyMetrics.ForAnswers([(0, "", 0)], _ => null));
+    }
+
+    [Fact]
+    public void Mock_results_keep_camel_case_names_with_metrics()
+    {
+        var web = new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web);
+        var node = FluencyMetrics.WithMetricsNode(new { Overall = 6.5m, TopCorrections = Array.Empty<string>() }, FluencyMetrics.Analyze("hello there my friend", 6), web);
+        var json = System.Text.Json.JsonSerializer.Serialize<object>(node, web);
+        Assert.Contains("\"overall\":6.5", json);
+        Assert.Contains("\"metrics\":{\"words\":4", json);
+        Assert.NotNull(FluencyMetrics.FromResponse(json));
+    }
+
+    [Fact]
+    public void Talk_state_without_fluency_still_loads()
+    {
+        var old = """{"scenario":"cafe","level":"B1","userId":"00000000-0000-0000-0000-000000000001","lines":[],"tips":[]}""";
+        var state = System.Text.Json.JsonSerializer.Deserialize<TalkState>(old, Talk.Json)!;
+        Assert.Null(state.Fluency);
+        var next = state with { Fluency = [FluencyMetrics.Analyze("um yes", 6)] };
+        var back = System.Text.Json.JsonSerializer.Deserialize<TalkState>(System.Text.Json.JsonSerializer.Serialize(next, Talk.Json), Talk.Json)!;
+        Assert.Single(back.Fluency!);
+        Assert.Equal(1, back.Fluency![0].Fillers);
+    }
 }

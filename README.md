@@ -42,7 +42,7 @@ The whole screen is used: a sidebar menu, two-column pages, and in mock exams th
 
 | | |
 |---|---|
-| 🎙 **Speaking** | Record an answer to a topic. One multimodal Gemini call transcribes the audio and grades fluency, grammar and vocabulary. **Fluency metrics** are measured without AI: words per minute, filler words (um, uh, “anaqa”, “ну”), repetitions, self-corrections and long pauses (detected in the browser from the audio), with tips and a trend chart on the Progress page. |
+| 🎙 **Speaking** | Record an answer to a topic. One multimodal Gemini call transcribes the audio and grades fluency, grammar and vocabulary. **Fluency metrics** are measured without AI: words per minute, filler words (um, uh, “anaqa”, “ну”), repetitions, self-corrections and long pauses (detected in the browser from the audio), with tips and a trend chart on the Progress page. The same metrics appear after Speaking mock exams (IELTS and CEFR, per answer and combined) and at the end of an AI conversation. |
 | ✍️ **Writing** | Write an essay; it is graded on an IELTS-style rubric (task, coherence, grammar, vocabulary) with exact corrections. |
 | 📖 🎧 **Reading & Listening** | A passage (or a script read aloud by the browser) with four questions. The learner chooses: **📚 a ready-made exercise** from the app's library (88 original texts, 11 per level for each skill, unlimited; pick one from the list or take the next unread one) or **✨ a new one written by AI** (daily limit). The server grades the answers; the key never reaches the browser. Tap any word in a passage for its meaning in context. |
 | 🔁 **Spaced repetition** | Corrections and wrong answers become flashcards scheduled with SM-2, with a daily goal, a streak and a hands-free **commute mode** for earphones. |

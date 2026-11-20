@@ -174,8 +174,11 @@ public static class MockEndpoints
             try
             {
                 var result = await evaluator.EvaluateSpeakingAsync(set, answers, Texts.LangOf(request), ct);
-                var id = await SaveAsync(db, reviews, user.Id, "speaking", set.Id, null, MockLimit.CleanSession(form["sessionId"].ToString()), result, result.TopCorrections, ActivityType.Speaking);
-                return Results.Ok(new { id, result });
+                // Ravonlik o'lchovlari — har bir javobning transkripti, vaqti va pauzalaridan (AI'siz).
+                var metrics = FluencyMetrics.ForAnswers(result.Answers.Select(a => (a.Index, a.Transcript, a.Seconds)), k => form[k].ToString());
+                var id = await SaveAsync(db, reviews, user.Id, "speaking", set.Id, null, MockLimit.CleanSession(form["sessionId"].ToString()),
+                    WithMetrics(result, metrics), result.TopCorrections, ActivityType.Speaking);
+                return Results.Ok(new { id, result, metrics });
             }
             catch (Exception ex) when (AiErrors.Handles(ex, request))
             {
@@ -499,9 +502,10 @@ public static class MockEndpoints
             try
             {
                 var result = await evaluator.EvaluateSpeakingAsync(set, answers, Texts.LangOf(request), ct);
+                var metrics = FluencyMetrics.ForAnswers(result.Answers.Select(a => (a.Index, a.Transcript, a.Seconds)), k => form[k].ToString());
                 var id = await SaveAsync(db, reviews, "cefr", user.Id, "speaking", set.Id, null, MockLimit.CleanSession(form["sessionId"].ToString()),
-                    result, result.TopCorrections, ActivityType.Speaking);
-                return Results.Ok(new { id, result });
+                    WithMetrics(result, metrics), result.TopCorrections, ActivityType.Speaking);
+                return Results.Ok(new { id, result, metrics });
             }
             catch (Exception ex) when (AiErrors.Handles(ex, request))
             {
@@ -601,6 +605,10 @@ public static class MockEndpoints
     }
 
     /// <summary>Speaking javoblari: "a{i}" audio fayllari va "s{i}" soniyalar (IELTS va CEFR uchun umumiy).</summary>
+    /// <summary>Saqlanadigan natija: o'lchov bo'lsa — ichida "metrics" maydoni bilan (natija o'z camelCase nomlarida).</summary>
+    private static object WithMetrics<T>(T result, FluencyStats? metrics) =>
+        metrics is null ? result! : FluencyMetrics.WithMetricsNode(result, metrics, Web);
+
     public static async Task<List<SpokenAnswer>> ReadAnswersAsync(IFormCollection form, int count, CancellationToken ct = default)
     {
         var answers = new List<SpokenAnswer>();

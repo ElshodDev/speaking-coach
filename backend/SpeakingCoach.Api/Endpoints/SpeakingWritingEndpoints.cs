@@ -132,23 +132,26 @@ public static class SpeakingWritingEndpoints
         app.MapGet("/api/speaking/history", (HttpRequest request, AppDbContext db, AuthService auth) =>
             HistoryQueries.GetHistoryAsync(ActivityType.Speaking, request, db, auth));
 
-        // Ravonlik dinamikasi (Progress grafigi): oxirgi urinishlardagi o'lchovlar, eski → yangi.
-        // O'lchovsiz (bu funksiyadan oldingi) yozuvlar tushirib qoldiriladi.
+        // Ravonlik dinamikasi (Progress grafigi): Speaking mashqi, Speaking imtihoni va AI suhbat —
+        // oxirgi urinishlardagi o'lchovlar, eski → yangi. Faqat o'lchovli yozuvlar ("metrics" kaliti
+        // bazada tekshiriladi — boshqa mock natijalarining katta JSON'i o'qilmaydi).
         app.MapGet("/api/speaking/fluency", async (HttpRequest request, AppDbContext db, AuthService auth, int take = 20) =>
         {
             var userId = await auth.GetCurrentUserIdAsync(request);
             if (userId is null) return Results.Ok(Array.Empty<FluencyPoint>());
+            ActivityType[] types = [ActivityType.Speaking, ActivityType.MockExam, ActivityType.Conversation];
             var rows = await db.Activities
-                .Where(a => a.UserId == userId && a.Type == ActivityType.Speaking)
+                .Where(a => a.UserId == userId && types.Contains(a.Type) && EF.Functions.JsonExists(a.ResponseData, "metrics"))
                 .OrderByDescending(a => a.CreatedAtUtc)
                 .Take(Math.Clamp(take, 1, 50))
-                .Select(a => new { a.CreatedAtUtc, a.ResponseData })
+                .Select(a => new { a.CreatedAtUtc, a.Type, a.ResponseData })
                 .ToListAsync();
             var points = rows
                 .OrderBy(r => r.CreatedAtUtc)
-                .Select(r => (r.CreatedAtUtc, M: FluencyMetrics.FromResponse(r.ResponseData)))
+                .Select(r => (r.CreatedAtUtc, r.Type, M: FluencyMetrics.FromResponse(r.ResponseData)))
                 .Where(x => x.M?.Wpm is not null)
-                .Select(x => new FluencyPoint(x.CreatedAtUtc, x.M!.Wpm, x.M.FillersPerMinute, x.M.LongPauses))
+                .Select(x => new FluencyPoint(x.CreatedAtUtc, x.M!.Wpm, x.M.FillersPerMinute, x.M.LongPauses,
+                    x.Type switch { ActivityType.MockExam => "mock", ActivityType.Conversation => "talk", _ => "speaking" }))
                 .ToList();
             return Results.Ok(points);
         });

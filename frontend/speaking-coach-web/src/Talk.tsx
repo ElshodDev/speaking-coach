@@ -6,6 +6,9 @@ import { MicProblemNote } from './MicProblem';
 import { apiJson, getLevel, postJson } from './api';
 import { cardsMessage } from './cards';
 import { common, useT } from './i18n';
+import { FluencyCard } from './Fluency';
+import { measurePauses } from './fluencyAudio';
+import type { FluencyStats } from './fluencyLogic';
 import { TALK_SCENARIOS, talkMsg } from './locales/talk';
 import { audioExt } from './shadowLogic';
 import { isSpeechSupported, speakAsync, stopSpeaking } from './speech';
@@ -106,6 +109,9 @@ export function TalkSession({
   const [error, setError] = useState('');
   const [micProblem, setMicProblem] = useState<MicProblem | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
+  // Suhbat bo'yicha ravonlik (ovozli navbatlar birlashtirilgan); faqat yozib javob berilgan bo'lsa — null.
+  const [metrics, setMetrics] = useState<FluencyStats | null>(null);
+  const recStartedRef = useRef(0);
   const [cardsNote, setCardsNote] = useState('');
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -144,6 +150,7 @@ export function TalkSession({
       setTurn(0);
       setMessages([{ who: 'ai', text: d.opening }]);
       setSummary(null);
+      setMetrics(null);
       setPhase('chat');
       say(d.opening);
     } catch (e) {
@@ -189,16 +196,26 @@ export function TalkSession({
       rec.ondataavailable = (ev) => {
         if (ev.data.size > 0) chunksRef.current.push(ev.data);
       };
-      rec.onstop = () => {
+      rec.onstop = async () => {
         const blob = new Blob(chunksRef.current, { type: rec.mimeType || 'audio/webm' });
         stream.getTracks().forEach((tr) => tr.stop());
         streamRef.current = null;
         if (!aliveRef.current) return;
+        const seconds = (Date.now() - recStartedRef.current) / 1000;
+        // Ravonlik uchun: javob uzunligi va uzun pauzalar (brauzerda, audio'dan).
+        const pauses = await measurePauses(blob);
+        if (!aliveRef.current) return;
         const form = new FormData();
         form.append('audio', blob, `answer.${audioExt(blob.type)}`);
+        form.append('seconds', seconds.toFixed(1));
+        if (pauses) {
+          form.append('longPauses', String(pauses.longPauses));
+          form.append('pauseSeconds', String(pauses.pauseSeconds));
+        }
         void sendTurn(form);
       };
       rec.start();
+      recStartedRef.current = Date.now();
       recorderRef.current = rec;
       setPhase('recording');
     } catch (err) {
@@ -230,8 +247,9 @@ export function TalkSession({
     setPhase('finishing');
     setError('');
     try {
-      const d = await postJson<{ result: Summary; newCards: number }>(`/api/talk/${talkId}/finish`, {});
+      const d = await postJson<{ result: Summary; newCards: number; metrics?: FluencyStats | null }>(`/api/talk/${talkId}/finish`, {});
       setSummary(d.result);
+      setMetrics(d.metrics ?? null);
       setCardsNote(d.newCards > 0 ? cardsMessage(d.newCards) : '');
       if (d.newCards > 0) onCardsAdded?.();
       setPhase('done');
@@ -379,6 +397,7 @@ export function TalkSession({
             </div>
           )}
           {summary.nextFocus && <p className="small" style={{ margin: 0 }}><strong>🎯 {t.nextFocus}:</strong> {summary.nextFocus}</p>}
+          {metrics && <FluencyCard metrics={metrics} />}
           {cardsNote && <p className="success small" style={{ margin: 0 }}>{cardsNote}</p>}
           <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
             <button className="btn btn-primary" onClick={start}>{t.again}</button>

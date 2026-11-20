@@ -82,7 +82,8 @@ export function FluencyTrend() {
   const fillers = points.filter((p) => p.fillersPerMinute !== null).map((p) => ({ date: p.at, value: p.fillersPerMinute! }));
   return (
     <div style={{ marginTop: 16 }} data-testid="fluency-trend">
-      <h4 style={{ margin: '0 0 6px' }}>{t.trendTitle}</h4>
+      <h4 style={{ margin: '0 0 2px' }}>{t.trendTitle}</h4>
+      <p className="muted tiny" style={{ margin: '0 0 6px' }}>{t.trendSources}</p>
       {wpm.length >= 2 ? (
         <>
           <p className="muted tiny" style={{ margin: '0 0 4px' }}>{t.trendWpm} · {t.paceHint}</p>

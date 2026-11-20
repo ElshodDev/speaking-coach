@@ -4,6 +4,7 @@ import { MicProblemNote } from './MicProblem';
 import { apiJson } from './api';
 import { msg, useT } from './i18n';
 import { useLeaveGuard } from './leaveGuard';
+import { measurePauses } from './fluencyAudio';
 import { cefrMsg } from './locales/cefr';
 import { mockMsg } from './locales/mock';
 import {
@@ -198,6 +199,15 @@ export function MockSpeaking({
       form.append(`s${index}`, String(a.seconds));
     });
     try {
+      // Ravonlik uchun har bir javobdagi uzun pauzalar — brauzerda, parallel (har biri ≤ 4 s).
+      const entries = [...answersRef.current.entries()];
+      const pauses = await Promise.all(entries.map(([, a]) => measurePauses(a.blob)));
+      entries.forEach(([index], i) => {
+        const p = pauses[i];
+        if (!p) return;
+        form.append(`p${index}`, String(p.longPauses));
+        form.append(`ps${index}`, String(p.pauseSeconds));
+      });
       const res = await apiJson<{ id: string }>(`/api/mock/${exam}/speaking`, { method: 'POST', body: form });
       if (onSubmitted) onSubmitted(res.id);
       else go(`mock/result/${res.id}`);

@@ -21,6 +21,8 @@ export interface FluencyPoint {
   wpm: number | null;
   fillersPerMinute: number | null;
   longPauses: number | null;
+  /** Qayerdan: Speaking mashqi, Speaking imtihoni yoki AI suhbat. */
+  source?: 'speaking' | 'mock' | 'talk';
 }
 
 export interface PauseStats {

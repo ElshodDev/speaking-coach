@@ -20,7 +20,9 @@ public record TalkState(
     [property: JsonPropertyName("level")] string Level,
     [property: JsonPropertyName("userId")] Guid UserId,
     [property: JsonPropertyName("lines")] List<TalkLine> Lines,
-    [property: JsonPropertyName("tips")] List<CorrectionItem> Tips);
+    [property: JsonPropertyName("tips")] List<CorrectionItem> Tips,
+    // Ovozli navbatlarning ravonlik o'lchovlari (yozib yuborilganlar — yo'q). Eski holatlarda null.
+    [property: JsonPropertyName("fluency")] List<FluencyStats>? Fluency = null);
 
 /// <summary>Bitta navbatga AI javobi: nima eshitdi, keyingi gapi va (bo'lsa) qisqa tuzatish.</summary>
 public record TalkTurnResult(
@@ -79,7 +81,7 @@ public static class Talk
         foreach (var line in history) sb.AppendLine($"{(line.Who == "ai" ? "YOU" : "LEARNER")}: {line.Text}");
         sb.AppendLine();
         sb.AppendLine(typed is null
-            ? "The learner's new answer is in the attached audio. Transcribe it exactly as spoken into \"heard\" (keep their mistakes; do not correct them). If the audio is silent or not English, set \"heard\" to \"\"."
+            ? "The learner's new answer is in the attached audio. Transcribe it exactly as spoken into \"heard\" (keep their mistakes, hesitations such as \"uh\"/\"um\", repeated words and self-corrections; do not correct or tidy them). If the audio is silent or not English, set \"heard\" to \"\"."
             : $"The learner typed this answer: \"{typed}\". Copy it exactly into \"heard\".");
         sb.AppendLine("Then reply in character to what they said.");
         sb.AppendLine($"If their answer has a clear grammar or word-choice mistake, put the single most useful one in \"tip\" with \"original\" (their exact words), \"corrected\" and a one-sentence \"explanation\" in {GeminiIeltsEvaluator.FeedbackLanguage(lang)}. If there is no real mistake, set \"tip\" to null. Do not correct pronunciation or punctuation.");
