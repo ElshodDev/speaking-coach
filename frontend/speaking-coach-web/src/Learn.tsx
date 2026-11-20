@@ -2,6 +2,8 @@
 // tipik xatolar, mashq) va mavzuli lug'at. Hammasi brauzerda, Gemini'siz;
 // foydalanuvchi xohlasa, AI qo'shimcha savollar tuzadi.
 import { useMemo, useState } from 'react';
+import { L1Hub } from './L1Traps';
+import { l1Msg } from './locales/l1traps';
 import { ApiError, getLevel, postJson } from './api';
 import { ALL_GRAMMAR as GRAMMAR, ALL_VOCAB_TOPICS as VOCAB_TOPICS } from './content';
 import { LEVELS, type GrammarLesson, type L3, type Level, type TopicWord } from './content/types';
@@ -43,8 +45,9 @@ function LevelChips({ value, onChange }: { value: Level | null; onChange: (l: Le
 
 // ---------------- Ro'yxat ----------------
 
-export function LearnHub({ tab, go }: { tab: 'grammar' | 'words'; go: (route: string) => void }) {
+export function LearnHub({ tab, go }: { tab: 'grammar' | 'words' | 'traps'; go: (route: string) => void }) {
   const t = useT(learnMsg);
+  const tl = useT(l1Msg);
   const { lang } = useLang();
   const userLevel = getLevel() as Level;
   const [level, setLevel] = useState<Level | null>(LEVELS.includes(userLevel) ? userLevel : null);
@@ -56,9 +59,14 @@ export function LearnHub({ tab, go }: { tab: 'grammar' | 'words'; go: (route: st
       <div className="segmented" role="group" style={{ marginTop: 8 }}>
         <button aria-pressed={tab === 'grammar'} onClick={() => go('learn')}>{t.grammar}</button>
         <button aria-pressed={tab === 'words'} onClick={() => go('learn/words')}>{t.words}</button>
+        <button aria-pressed={tab === 'traps'} onClick={() => go('learn/traps')} data-testid="learn-traps-tab">{tl.tab}</button>
       </div>
 
-      {tab === 'grammar' ? (
+      {tab === 'traps' ? (
+        <div style={{ marginTop: 12 }}>
+          <L1Hub go={go} />
+        </div>
+      ) : tab === 'grammar' ? (
         <>
           <LevelChips value={level} onChange={setLevel} />
           <p className="muted small" style={{ margin: '8px 0 0' }}>{t.lessons(lessons.length)}</p>

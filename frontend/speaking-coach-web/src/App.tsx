@@ -76,6 +76,7 @@ const AccountData = lazy(() => import('./AccountData').then((m) => ({ default: m
 const LearnHub = lazy(() => import('./Learn').then((m) => ({ default: m.LearnHub })));
 const GrammarLessonPage = lazy(() => import('./Learn').then((m) => ({ default: m.GrammarLessonPage })));
 const VocabTopicPage = lazy(() => import('./Learn').then((m) => ({ default: m.VocabTopicPage })));
+const L1Quiz = lazy(() => import('./L1Traps').then((m) => ({ default: m.L1Quiz })));
 
 /**
  * Oddiy "hash" marshrutlash: manzil #/review, #/practice/writing kabi.
@@ -318,8 +319,10 @@ function App() {
     page = <GrammarLessonPage key={third} id={third} go={go} />;
   } else if (section === 'learn' && sub === 'words' && third) {
     page = <VocabTopicPage key={`${third}-${userKey}`} id={third} go={go} loggedIn={loggedIn} onLogin={toLogin} />;
+  } else if (section === 'learn' && sub === 'traps' && third) {
+    page = <L1Quiz key={`${third}-${userKey}`} setKey={third} go={go} loggedIn={loggedIn} onCardsAdded={refreshStats} />;
   } else if (section === 'learn') {
-    page = <LearnHub tab={sub === 'words' ? 'words' : 'grammar'} go={go} />;
+    page = <LearnHub tab={sub === 'words' ? 'words' : sub === 'traps' ? 'traps' : 'grammar'} go={go} />;
   } else if (section === 'review' && sub === 'vocab') {
     page = (
       <Review
