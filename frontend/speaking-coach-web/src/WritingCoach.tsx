@@ -9,6 +9,7 @@ import { clearDraft, draftKey, latestDraft, loadDraft, saveDraft } from './writi
 import { useT } from './i18n';
 import { stabilityMsg } from './locales/stability';
 import { writingMsg } from './locales/writing';
+import { UpgradeAnswer } from './Upgrade';
 import { Corrections, Feedback, GuestNote, HistoryList, ScoreBar, type CorrectionItem, type ScoreWithReasoning } from './ui';
 
 // Mavzular endi ilovaning tayyor bankida (content/topics.ts) — TopicPicker orqali.
@@ -244,6 +245,7 @@ export function WritingCoach({
 
           <Corrections items={result.evaluation.topCorrections} />
           <Feedback encouragement={result.evaluation.encouragement} nextFocus={result.evaluation.nextFocus} />
+          <UpgradeAnswer key={result.submissionId} activityId={result.saved ? result.submissionId : null} original={lastSubmittedText ?? ''} loggedIn={loggedIn} onCardsAdded={onCardsAdded} />
 
           {/* Barqarorlik testi — ichki tekshiruv vositasi (5× AI so'rovi), faqat admin uchun. */}
           {isAdmin && (

@@ -9,6 +9,7 @@ import { speakingMsg } from './locales/speaking';
 import { currentMicEnv, micPrecheck, micProblemOf, type MicProblem } from './micErrors';
 import { MicProblemNote } from './MicProblem';
 import { FluencyCard } from './Fluency';
+import { UpgradeAnswer } from './Upgrade';
 import { measurePauses } from './fluencyAudio';
 import type { FluencyStats, PauseStats } from './fluencyLogic';
 import { audioExt } from './shadowLogic';
@@ -336,6 +337,7 @@ export function Recorder({
 
           <Corrections items={result.evaluation.topCorrections} />
           <Feedback encouragement={result.evaluation.encouragement} nextFocus={result.evaluation.nextFocus} />
+          <UpgradeAnswer key={result.submissionId} activityId={result.saved ? result.submissionId : null} original={result.evaluation.transcript} loggedIn={loggedIn} onCardsAdded={onCardsAdded} />
 
           {/* Barqarorlik testi — ichki tekshiruv vositasi (5× AI so'rovi), faqat admin uchun. */}
           {isAdmin && (

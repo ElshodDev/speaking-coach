@@ -35,6 +35,18 @@ public static class Texts
             "Слишком большой аудиофайл (не более {0} МБ).",
             "The audio file is too large (max {0} MB)."),
         ["request.too_large"] = new("Soʻrov hajmi juda katta.", "Слишком большой запрос.", "The request is too large."),
+        ["upgrade.not_found"] = new(
+            "Bu urinish topilmadi (yoki u sizniki emas).",
+            "Эта попытка не найдена (или она не ваша).",
+            "This attempt was not found (or it is not yours)."),
+        ["upgrade.no_text"] = new(
+            "Bu urinishda yaxshilanadigan matn yoʻq.",
+            "В этой попытке нет текста для улучшения.",
+            "There is no text to improve in this attempt."),
+        ["upgrade.too_short"] = new(
+            "Javob juda qisqa — kamida {0} ta soʻz kerak.",
+            "Ответ слишком короткий — нужно хотя бы {0} слов.",
+            "The answer is too short — at least {0} words are needed."),
         ["part2.bad_card"] = new(
             "Bunday kartochka topilmadi — roʻyxatdan boshqasini tanlang.",
             "Такая карточка не найдена — выберите другую из списка.",

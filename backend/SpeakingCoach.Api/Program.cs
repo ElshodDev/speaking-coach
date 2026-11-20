@@ -55,6 +55,7 @@ builder.Services.AddSingleton<AiGuard>();
 builder.Services.AddSingleton<GeminiClient>();
 builder.Services.AddSingleton<ISpeakingEvaluationService, GeminiSpeakingService>();
 builder.Services.AddSingleton<IPart2Coach, GeminiPart2Coach>();
+builder.Services.AddSingleton<IAnswerUpgrader, GeminiAnswerUpgrader>();
 builder.Services.AddSingleton<ITalkAi, GeminiTalkAi>();
 builder.Services.AddSingleton<IWritingEvaluationService, GeminiWritingService>();
 builder.Services.AddSingleton<IComprehensionService, GeminiComprehensionService>();
@@ -173,6 +174,7 @@ app.MapContentEndpoints();
 app.MapMistakeEndpoints();
 app.MapTalkEndpoints();
 app.MapPart2Endpoints();
+app.MapUpgradeEndpoints();
 app.MapDictationEndpoints();
 app.MapFeedbackEndpoints();
 
