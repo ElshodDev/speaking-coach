@@ -8,16 +8,35 @@
     <UserSecretsId>speaking-coach-api-secrets</UserSecretsId>
   </PropertyGroup>
 
-  <!-- Gemini uchun hali ham oddiy HttpClient ishlatiladi (tashqi paket
-       kerak emas). Quyidagi ikkita paket esa ma'lumotlar bazasi (Postgres)
-       bilan ishlash uchun — bular EF Core'ning "stable" (preview emas)
-       versiyalari, .NET 10 bilan mos. -->
+  <!-- Api (taqdimot qatlami): HTTP endpointlar, autentifikatsiya sarlavhalari,
+       limitlar va DI'ni yig'ish (composition root). Biznes mantiq — Application'da,
+       baza va tashqi xizmatlar — Infrastructure'da. -->
   <ItemGroup>
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <ProjectReference Include="..\SpeakingCoach.Infrastructure\SpeakingCoach.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- `dotnet ef` startup loyihasida Design paketi bo'lishini talab qiladi. -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.15">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="SpeakingCoach.Domain.Entities" />
+    <Using Include="SpeakingCoach.Domain.Rules" />
+    <Using Include="SpeakingCoach.Application" />
+    <Using Include="SpeakingCoach.Application.Abstractions" />
+    <Using Include="SpeakingCoach.Application.Content" />
+    <Using Include="SpeakingCoach.Application.Mock" />
+    <Using Include="SpeakingCoach.Application.Telegram" />
+    <Using Include="SpeakingCoach.Infrastructure" />
+    <Using Include="SpeakingCoach.Infrastructure.Persistence" />
+    <Using Include="SpeakingCoach.Infrastructure.Ai" />
+    <Using Include="SpeakingCoach.Infrastructure.Identity" />
+    <Using Include="SpeakingCoach.Infrastructure.Telegram" />
+    <Using Include="SpeakingCoach.Infrastructure.Jobs" />
+    <Using Include="SpeakingCoach.Api.Web" />
+    <Using Include="SpeakingCoach.Api.Endpoints" />
   </ItemGroup>
 
 </Project>

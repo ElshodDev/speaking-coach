@@ -1,0 +1,220 @@
+using Microsoft.EntityFrameworkCore;
+
+namespace SpeakingCoach.Infrastructure.Persistence;
+
+public class AppDbContext : DbContext, IAppDbContext
+{
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    {
+    }
+
+    public DbSet<Activity> Activities => Set<Activity>();
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Session> Sessions => Set<Session>();
+    public DbSet<PendingExercise> PendingExercises => Set<PendingExercise>();
+    public DbSet<ReviewCard> ReviewCards => Set<ReviewCard>();
+    public DbSet<ReviewLog> ReviewLogs => Set<ReviewLog>();
+    public DbSet<EmailCode> EmailCodes => Set<EmailCode>();
+    public DbSet<AiUsage> AiUsages => Set<AiUsage>();
+    public DbSet<TelegramAccount> TelegramAccounts => Set<TelegramAccount>();
+    public DbSet<TelegramLinkToken> TelegramLinkTokens => Set<TelegramLinkToken>();
+    public DbSet<TelegramChat> TelegramChats => Set<TelegramChat>();
+    public DbSet<MockTest> MockTests => Set<MockTest>();
+    public DbSet<Group> Groups => Set<Group>();
+    public DbSet<GroupMember> GroupMembers => Set<GroupMember>();
+    public DbSet<Assignment> Assignments => Set<Assignment>();
+    public DbSet<TelegramLogin> TelegramLogins => Set<TelegramLogin>();
+    public DbSet<Feedback> Feedbacks => Set<Feedback>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<ReviewCard>(entity =>
+        {
+            entity.Property(c => c.Kind).HasConversion<string>().HasMaxLength(20);
+            entity.Property(c => c.Source).HasConversion<string>().HasMaxLength(20);
+            entity.Property(c => c.Front).HasMaxLength(500);
+            entity.Property(c => c.Back).HasMaxLength(500);
+            entity.Property(c => c.Note).HasMaxLength(1000);
+            entity.HasOne<User>().WithMany().HasForeignKey(c => c.UserId).OnDelete(DeleteBehavior.Cascade);
+
+            // "Navbatdagi kartalar" so'rovi: WHERE UserId = ? AND DueAtUtc <= now ORDER BY DueAtUtc.
+            entity.HasIndex(c => new { c.UserId, c.DueAtUtc });
+            // Takror qo'shmaslik uchun tekshiruv: WHERE UserId = ? AND Front IN (...).
+            // Unique EMAS: bir vaqtda kelgan ikki so'rov tufayli butun mashq
+            // natijasi saqlanmay qolmasin — takrorni kod oldini oladi.
+            entity.HasIndex(c => new { c.UserId, c.Front });
+        });
+
+        modelBuilder.Entity<ReviewLog>(entity =>
+        {
+            entity.HasOne<ReviewCard>().WithMany().HasForeignKey(l => l.CardId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(l => new { l.UserId, l.ReviewedAtUtc });
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.Property(u => u.Email).HasMaxLength(256);
+            entity.Property(u => u.DisplayName).HasMaxLength(30);
+            // Mavjud foydalanuvchilar migratsiyada bo'sh satr emas, "B1" olsin.
+            entity.Property(u => u.Level).HasMaxLength(2).HasDefaultValue(LearnerLevel.Default);
+            // Bitta email bilan ikki marta ro'yxatdan o'tib bo'lmasin — bu
+            // cheklov bazaning o'zida (unique index), faqat C# kodida emas:
+            // bir vaqtda kelgan ikki so'rov ham ikkinchi nusxani yarata olmaydi.
+            entity.HasIndex(u => u.Email).IsUnique();
+            entity.Property(u => u.Goal).HasMaxLength(16);
+            entity.Property(u => u.TargetScore).HasMaxLength(8);
+            entity.Property(u => u.SignupMethod).HasMaxLength(16);
+        });
+
+        modelBuilder.Entity<TelegramAccount>(entity =>
+        {
+            entity.HasKey(t => t.ChatId);
+            // ChatId — Telegram beradi, biz yaratmaymiz.
+            entity.Property(t => t.ChatId).ValueGeneratedNever();
+            entity.Property(t => t.Username).HasMaxLength(64);
+            entity.Property(t => t.Lang).HasMaxLength(2);
+            entity.Property(t => t.BotState).HasMaxLength(100);
+            entity.HasIndex(t => t.UserId).IsUnique();
+            entity.HasOne<User>().WithMany().HasForeignKey(t => t.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TelegramLogin>(entity =>
+        {
+            entity.Property(t => t.NonceHash).HasMaxLength(64);
+            entity.Property(t => t.PollTokenHash).HasMaxLength(64);
+            entity.Property(t => t.Code).HasMaxLength(2);
+            entity.Property(t => t.TgUsername).HasMaxLength(64);
+            entity.Property(t => t.TgFirstName).HasMaxLength(64);
+            entity.Property(t => t.Ip).HasMaxLength(64);
+            entity.Property(t => t.Lang).HasMaxLength(5);
+            entity.HasIndex(t => t.NonceHash).IsUnique();
+            entity.HasIndex(t => t.PollTokenHash).IsUnique();
+            // Eski urinishlarni tozalash: WHERE CreatedAtUtc < ?.
+            entity.HasIndex(t => t.CreatedAtUtc);
+            entity.HasOne<User>().WithMany().HasForeignKey(t => t.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Feedback>(entity =>
+        {
+            entity.Property(f => f.Kind).HasMaxLength(16);
+            entity.Property(f => f.Message).HasMaxLength(2000);
+            entity.Property(f => f.Page).HasMaxLength(200);
+            entity.Property(f => f.Lang).HasMaxLength(5);
+            entity.Property(f => f.Ip).HasMaxLength(64);
+            entity.HasIndex(f => f.CreatedAtUtc);
+            // Hisob o'chirilsa — uning fikrlari ham (maxfiylik va'dasi: hamma ma'lumot o'chadi).
+            entity.HasOne<User>().WithMany().HasForeignKey(f => f.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TelegramChat>(entity =>
+        {
+            entity.HasKey(t => t.ChatId);
+            entity.Property(t => t.ChatId).ValueGeneratedNever();
+            entity.Property(t => t.Lang).HasMaxLength(2);
+        });
+
+        modelBuilder.Entity<TelegramLinkToken>(entity =>
+        {
+            entity.HasKey(t => t.TokenHash);
+            entity.Property(t => t.TokenHash).HasMaxLength(64);
+            entity.Property(t => t.Lang).HasMaxLength(2);
+            entity.HasOne<User>().WithMany().HasForeignKey(t => t.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AiUsage>(entity =>
+        {
+            entity.HasKey(u => new { u.UserId, u.Day });
+            entity.HasOne<User>().WithMany().HasForeignKey(u => u.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<EmailCode>(entity =>
+        {
+            entity.Property(c => c.Purpose).HasConversion<string>().HasMaxLength(20);
+            entity.Property(c => c.CodeHash).HasMaxLength(64);
+            entity.HasIndex(c => new { c.UserId, c.Purpose, c.CreatedAtUtc });
+            entity.HasOne<User>().WithMany().HasForeignKey(c => c.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Session>(entity =>
+        {
+            entity.Property(s => s.TokenHash).HasMaxLength(64); // SHA-256 = 64 ta hex belgi
+            entity.HasIndex(s => s.TokenHash).IsUnique();
+            entity.HasOne<User>().WithMany().HasForeignKey(s => s.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PendingExercise>(entity =>
+        {
+            entity.Property(p => p.Type).HasConversion<string>().HasMaxLength(20);
+            entity.Property(p => p.Payload).HasColumnType("jsonb");
+            entity.HasIndex(p => p.CreatedAtUtc);
+        });
+
+        modelBuilder.Entity<Group>(entity =>
+        {
+            entity.Property(g => g.Name).HasMaxLength(80);
+            entity.Property(g => g.JoinCode).HasMaxLength(12);
+            entity.HasIndex(g => g.JoinCode).IsUnique();
+            entity.HasIndex(g => g.TeacherId);
+            // O'qituvchi hisobini o'chirsa — uning guruhlari ham o'chadi.
+            entity.HasOne<User>().WithMany().HasForeignKey(g => g.TeacherId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<GroupMember>(entity =>
+        {
+            entity.HasKey(m => new { m.GroupId, m.UserId });
+            entity.HasIndex(m => m.UserId);
+            entity.HasOne<Group>().WithMany().HasForeignKey(m => m.GroupId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<User>().WithMany().HasForeignKey(m => m.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Assignment>(entity =>
+        {
+            entity.Property(a => a.Kind).HasMaxLength(40);
+            entity.Property(a => a.Instructions).HasMaxLength(1000);
+            entity.HasIndex(a => new { a.GroupId, a.CreatedAtUtc });
+            entity.HasOne<Group>().WithMany().HasForeignKey(a => a.GroupId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<MockTest>(entity =>
+        {
+            entity.Property(t => t.Exam).HasMaxLength(10);
+            entity.Property(t => t.Module).HasMaxLength(20);
+            entity.Property(t => t.Variant).HasMaxLength(20);
+            entity.Property(t => t.Payload).HasColumnType("jsonb");
+            // Mavjud testlar migratsiyada "published" bo'lib qoladi.
+            entity.Property(t => t.Status).HasMaxLength(16).HasDefaultValue(MockTestStatus.Published);
+            entity.Property(t => t.Title).HasMaxLength(200);
+            // "Shu turdagi testlar" so'rovi: WHERE Exam = ? AND Module = ? AND Variant = ?.
+            entity.HasIndex(t => new { t.Exam, t.Module, t.Variant, t.CreatedAtUtc });
+            // Foydalanuvchi o'chirilsa, test bankda qoladi (boshqalar ishlatadi) — faqat bog'lanish uziladi.
+            entity.HasOne<User>().WithMany().HasForeignKey(t => t.CreatedByUserId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<Activity>(entity =>
+        {
+            // Enum'ni raqam o'rniga matn sifatida saqlaymiz (masalan "Speaking"
+            // emas 0) — jadvalni to'g'ridan-to'g'ri ko'rganda tushunarli bo'lishi
+            // uchun, va kelajakda enum tartibi o'zgarsa ham mavjud qatorlar
+            // buzilmasligi uchun (raqamli enum bo'lsa, tartib o'zgarganda barcha
+            // eski qatorlar noto'g'ri qiymatga aylanib qoladi).
+            entity.Property(a => a.Type).HasConversion<string>().HasMaxLength(20);
+
+            // jsonb — Postgres'ning maxsus JSON ustun turi: oddiy matn (text)
+            // emas, ichidagi JSON'ni so'rovlarda filtrlash/indekslash mumkin
+            // bo'lgan tur. Hozircha shunchaki saqlash uchun ishlatyapmiz,
+            // lekin kelajakda "faqat grammatika balli 70 dan past bo'lgan
+            // urinishlarni topish" kabi so'rovlar kerak bo'lsa, shu tur asqotadi.
+            entity.Property(a => a.PromptData).HasColumnType("jsonb");
+            entity.Property(a => a.ResponseData).HasColumnType("jsonb");
+
+            entity.HasIndex(a => a.CreatedAtUtc);
+
+            // Har bir yozuv (ixtiyoriy) foydalanuvchiga bog'lanadi. Tarix
+            // so'rovi aynan shu uchta ustun bo'yicha filtrlaydi va saralaydi
+            // (WHERE UserId = ? AND Type = ? ORDER BY CreatedAtUtc), shuning
+            // uchun ular uchun bitta birlashgan (composite) indeks.
+            entity.HasOne<User>().WithMany().HasForeignKey(a => a.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(a => new { a.UserId, a.Type, a.CreatedAtUtc });
+        });
+    }
+}

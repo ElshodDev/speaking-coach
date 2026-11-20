@@ -1,0 +1,211 @@
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+namespace SpeakingCoach.Application;
+
+public record CalendarDay(string Date, int Count);
+public record TrendPoint(DateTime At, Dictionary<string, int> Scores);
+public record HardCard(string Front, string Back, int Lapses);
+
+public record ProgressDto(
+    LevelInfo Level,
+    int BestStreak,
+    int TotalActivities,
+    int TotalReviews,
+    Dictionary<string, int> ActivitiesByType,
+    List<CalendarDay> Calendar,
+    List<TrendPoint> SpeakingTrend,
+    List<TrendPoint> WritingTrend,
+    IReadOnlyList<Badge> Badges,
+    List<HardCard> HardestCards);
+
+public record LeaderboardEntry(int Rank, string Name, int Xp, bool IsMe);
+public record LeaderboardDto(DateTime WeekStartUtc, List<LeaderboardEntry> Entries, int MyXp, int? MyRank, bool OptedIn, bool HasDisplayName);
+
+/// <summary>
+/// Progress sahifasi va haftalik musobaqa uchun ma'lumotlarni bazadan
+/// yig'adi. Hisob-kitob qoidalari ProgressCalculator'da (toza, testlangan);
+/// bu yerda faqat so'rovlar.
+/// </summary>
+public class ProgressService
+{
+    private const int TrendLength = 20;
+
+    /// <summary>Haftalik reyting hamma uchun bir xil — shuncha vaqt xotirada saqlanadi (har so'rovda qayta hisoblanmaydi).</summary>
+    public static readonly TimeSpan LeaderboardCacheFor = TimeSpan.FromSeconds(60);
+
+    private readonly IAppDbContext _db;
+    private readonly IMemoryCache _cache;
+
+    public ProgressService(IAppDbContext db, IMemoryCache cache)
+    {
+        _db = db;
+        _cache = cache;
+    }
+
+    public async Task<ProgressDto> GetProgressAsync(Guid userId, int tzOffsetMinutes)
+    {
+        var now = DateTime.UtcNow;
+
+        // Faqat O'qish/Tinglash javoblari kerak (XP'dagi to'g'ri javob bonusi
+        // uchun). Qolganlari uchun katta JSON'ni bazadan tortib o'tirmaymiz —
+        // CASE ifodasi SQL'ning o'zida bajariladi.
+        var activities = await _db.Activities
+            .Where(a => a.UserId == userId)
+            .Select(a => new
+            {
+                a.Type,
+                a.CreatedAtUtc,
+                Response = a.Type == ActivityType.Reading || a.Type == ActivityType.Listening ? a.ResponseData : null,
+            })
+            .ToListAsync();
+
+        var facts = activities
+            .Select(a => new ActivityFact(a.Type, a.CreatedAtUtc,
+                a.Response is null ? null : ProgressCalculator.ReadCorrectAnswers(a.Type, a.Response)))
+            .ToList();
+
+        // Takrorlashlar eng tez o'sadigan jadval — har bir yozuvni emas, kunlar
+        // bo'yicha (foydalanuvchining mahalliy kuni) bazaning o'zida guruhlaymiz.
+        var shift = TimeSpan.FromMinutes(-tzOffsetMinutes);
+        var reviewDays = await _db.ReviewLogs
+            .Where(l => l.UserId == userId)
+            .GroupBy(l => (l.ReviewedAtUtc + shift).Date)
+            .Select(g => new { Day = g.Key, Count = g.Count() })
+            .ToListAsync();
+        var reviewCount = reviewDays.Sum(d => d.Count);
+
+        var perDay = facts
+            .GroupBy(f => ReviewScheduler.ToLocalDate(f.CreatedAtUtc, tzOffsetMinutes))
+            .ToDictionary(g => g.Key, g => g.Count());
+        foreach (var d in reviewDays)
+        {
+            var day = DateOnly.FromDateTime(d.Day);
+            perDay[day] = perDay.GetValueOrDefault(day) + d.Count;
+        }
+        var bestStreak = ProgressCalculator.BestStreak(perDay.Keys);
+
+        var calendar = ProgressCalculator.Calendar(perDay, now, tzOffsetMinutes)
+            .Select(d => new CalendarDay(d.Day.ToString("yyyy-MM-dd"), d.Count))
+            .ToList();
+
+        var hardest = await _db.ReviewCards
+            .Where(c => c.UserId == userId && c.Lapses > 0)
+            .OrderByDescending(c => c.Lapses)
+            .Take(5)
+            .Select(c => new HardCard(c.Front, c.Back, c.Lapses))
+            .ToListAsync();
+
+        return new ProgressDto(
+            ProgressCalculator.LevelFor(ProgressCalculator.TotalXp(facts, reviewCount)),
+            bestStreak,
+            facts.Count,
+            reviewCount,
+            facts.GroupBy(f => f.Type.ToString()).ToDictionary(g => g.Key, g => g.Count()),
+            calendar,
+            await TrendAsync(userId, ActivityType.Speaking, "fluency", "grammar", "vocabulary"),
+            await TrendAsync(userId, ActivityType.Writing, "taskAchievement", "coherenceCohesion", "grammar", "vocabulary"),
+            ProgressCalculator.Badges(facts, reviewCount, bestStreak),
+            hardest);
+    }
+
+    /// <summary>Oxirgi 20 ta urinishdagi ballar — eski → yangi tartibida (grafik uchun).</summary>
+    private async Task<List<TrendPoint>> TrendAsync(Guid userId, ActivityType type, params string[] criteria)
+    {
+        var rows = await _db.Activities
+            .Where(a => a.UserId == userId && a.Type == type)
+            .OrderByDescending(a => a.CreatedAtUtc)
+            .Take(TrendLength)
+            .Select(a => new { a.CreatedAtUtc, a.ResponseData })
+            .ToListAsync();
+
+        var points = new List<TrendPoint>();
+        foreach (var r in rows.OrderBy(r => r.CreatedAtUtc))
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(r.ResponseData);
+                var scores = new Dictionary<string, int>();
+                foreach (var c in criteria)
+                {
+                    if (doc.RootElement.TryGetProperty(c, out var el) && el.TryGetProperty("score", out var s) && s.TryGetInt32(out var v))
+                    {
+                        scores[c] = v;
+                    }
+                }
+                if (scores.Count == criteria.Length) points.Add(new TrendPoint(r.CreatedAtUtc, scores));
+            }
+            catch (JsonException)
+            {
+                // Eski yoki buzilgan yozuv — grafikdan tushirib qoldiramiz.
+            }
+        }
+        return points;
+    }
+
+    public async Task<LeaderboardDto> GetLeaderboardAsync(Guid meId)
+    {
+        var weekStart = ProgressCalculator.WeekStartUtc(DateTime.UtcNow);
+
+        // Umumiy jadval (ishtirokchilar va ularning XP'si) — 60 soniyalik keshdan.
+        var ranked = await _cache.GetOrCreateAsync(("leaderboard", weekStart), entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = LeaderboardCacheFor;
+            return RankParticipantsAsync(weekStart);
+        }) ?? [];
+
+        var me = await _db.Users
+            .Where(u => u.Id == meId)
+            .Select(u => new { u.ShowOnLeaderboard, u.DisplayName })
+            .FirstAsync();
+        var mine = ranked.FirstOrDefault(r => r.UserId == meId);
+        // Ro'yxatda bo'lmasam (yoki kesh eskirgan bo'lsa ham) — o'z XP'm alohida, yangi hisoblanadi.
+        var myXp = mine?.Xp ?? (await WeeklyXpAsync([meId], weekStart)).GetValueOrDefault(meId);
+
+        return new LeaderboardDto(
+            weekStart,
+            ranked.Take(20).Select(r => new LeaderboardEntry(r.Rank, r.Name, r.Xp, r.UserId == meId)).ToList(),
+            myXp,
+            mine?.Rank,
+            me.ShowOnLeaderboard,
+            !string.IsNullOrWhiteSpace(me.DisplayName));
+    }
+
+    private async Task<List<RankedRow>> RankParticipantsAsync(DateTime weekStart)
+    {
+        var participants = await _db.Users
+            .Where(u => u.ShowOnLeaderboard && u.DisplayName != null)
+            .Select(u => new { u.Id, Name = u.DisplayName! })
+            .ToListAsync();
+        if (participants.Count == 0) return [];
+        var xp = await WeeklyXpAsync(participants.Select(p => p.Id).ToList(), weekStart);
+        return ProgressCalculator.Rank(participants.Select(p => new LeaderboardRow(p.Id, p.Name, xp.GetValueOrDefault(p.Id))));
+    }
+
+    /// <summary>Shu haftadagi XP: faoliyatlar (JSON faqat O'qish/Tinglash uchun) va takrorlashlar soni.</summary>
+    private async Task<Dictionary<Guid, int>> WeeklyXpAsync(List<Guid> ids, DateTime weekStart)
+    {
+        var acts = await _db.Activities
+            .Where(a => a.UserId != null && ids.Contains(a.UserId.Value) && a.CreatedAtUtc >= weekStart)
+            .Select(a => new
+            {
+                UserId = a.UserId!.Value,
+                a.Type,
+                a.CreatedAtUtc,
+                Response = a.Type == ActivityType.Reading || a.Type == ActivityType.Listening ? a.ResponseData : null,
+            })
+            .ToListAsync();
+        var reviews = await _db.ReviewLogs
+            .Where(l => ids.Contains(l.UserId) && l.ReviewedAtUtc >= weekStart)
+            .GroupBy(l => l.UserId)
+            .Select(g => new { UserId = g.Key, Count = g.Count() })
+            .ToListAsync();
+        var reviewCounts = reviews.ToDictionary(r => r.UserId, r => r.Count);
+        var byUser = acts.ToLookup(a => a.UserId);
+
+        return ids.Distinct().ToDictionary(id => id, id => ProgressCalculator.TotalXp(
+            byUser[id].Select(a => new ActivityFact(a.Type, a.CreatedAtUtc,
+                a.Response is null ? null : ProgressCalculator.ReadCorrectAnswers(a.Type, a.Response))),
+            reviewCounts.GetValueOrDefault(id)));
+    }
+}

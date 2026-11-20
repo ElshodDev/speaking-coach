@@ -1,7 +1,3 @@
-using SpeakingCoach.Api.Endpoints;
-using SpeakingCoach.Api.Services;
-using SpeakingCoach.Api.Services.Mock;
-
 namespace SpeakingCoach.Api.Tests;
 
 public class Part2Tests

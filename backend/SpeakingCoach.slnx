@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="SpeakingCoach.Api.Tests/SpeakingCoach.Api.Tests.csproj" />
+  <Project Path="SpeakingCoach.Api/SpeakingCoach.Api.csproj" />
+  <Project Path="SpeakingCoach.Application/SpeakingCoach.Application.csproj" />
+  <Project Path="SpeakingCoach.Domain/SpeakingCoach.Domain.csproj" />
+  <Project Path="SpeakingCoach.Infrastructure/SpeakingCoach.Infrastructure.csproj" />
+</Solution>

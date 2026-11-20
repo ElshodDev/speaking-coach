@@ -1,10 +1,5 @@
 using System.Text;
 using System.Text.Json;
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Services;
-using SpeakingCoach.Api.Services.Mock;
-using SpeakingCoach.Api.Services.Telegram;
-
 namespace SpeakingCoach.Api.Tests;
 
 /// <summary>Bot orqali test qo'shish: holat, tugmalar, ruxsatlar, material qabul qilish, ko'rib chiqish matni.</summary>

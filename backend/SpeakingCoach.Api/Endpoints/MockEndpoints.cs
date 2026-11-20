@@ -1,10 +1,5 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Services;
-using SpeakingCoach.Api.Services.Mock;
-using SpeakingCoach.Api.Services.Content;
-
 namespace SpeakingCoach.Api.Endpoints;
 
 public record WritingMockRequest(string SetId, string? Task1, string? Task2, int SecondsUsed, string? SessionId = null);
@@ -49,6 +44,10 @@ public static class MockEndpoints
     /// <summary>Mock speaking: barcha javoblar birga (IELTS ~14 daqiqagacha nutq) va har bir javob alohida (8 MB).</summary>
     private const int MaxAudioMb = 15;
     private const long MaxSpeakingBodyBytes = MaxAudioMb * Uploads.Mb + Uploads.FormOverheadBytes;
+
+    // Postgres jsonb so'rovi Infrastructure'da (MockRowsQuery); bu yerda qisqa yo'l.
+    private static Task<List<MockQueries.MockRow>> MockRowsAsync(AppDbContext db, Guid userId, int take) =>
+        new MockRowsQuery(db).ForUserAsync(userId, take);
 
     public static void MapMockEndpoints(this IEndpointRouteBuilder app)
     {
@@ -173,7 +172,7 @@ public static class MockEndpoints
 
             try
             {
-                var result = await evaluator.EvaluateSpeakingAsync(set, answers, Texts.LangOf(request), ct);
+                var result = await evaluator.EvaluateSpeakingAsync(set, answers, RequestTexts.LangOf(request), ct);
                 // Ravonlik o'lchovlari — har bir javobning transkripti, vaqti va pauzalaridan (AI'siz).
                 var metrics = FluencyMetrics.ForAnswers(result.Answers.Select(a => (a.Index, a.Transcript, a.Seconds)), k => form[k].ToString());
                 var id = await SaveAsync(db, reviews, user.Id, "speaking", set.Id, null, MockLimit.CleanSession(form["sessionId"].ToString()),
@@ -208,7 +207,7 @@ public static class MockEndpoints
             try
             {
                 var seconds = Math.Clamp(body.SecondsUsed, 0, 3 * 60 * 60);
-                var result = await evaluator.EvaluateWritingAsync(set, t1, t2, seconds, Texts.LangOf(request), request.HttpContext.RequestAborted);
+                var result = await evaluator.EvaluateWritingAsync(set, t1, t2, seconds, RequestTexts.LangOf(request), request.HttpContext.RequestAborted);
                 var id = await SaveAsync(db, reviews, user.Id, "writing", set.Id, set.Variant, MockLimit.CleanSession(body.SessionId), result, result.TopCorrections, ActivityType.Writing);
                 return Results.Ok(new { id, result });
             }
@@ -395,7 +394,7 @@ public static class MockEndpoints
                 .Select(a => new { a.Id, a.CreatedAtUtc, a.PromptData, Response = a.CreatedAtUtc >= dupSince ? a.ResponseData : null })
                 .ToListAsync();
             var recent = todayRows
-                .Select(r => (Row: r, P: ParsePrompt(r.PromptData)))
+                .Select(r => (Row: r, P: MockQueries.ParsePrompt(r.PromptData)))
                 .Select(x => new XpGuard.RecentResult(x.Row.Id, x.Row.CreatedAtUtc, x.P.SetId, x.P.Module, x.Row.Response))
                 .ToList();
             // Aynan shu javoblar yaqinda yuborilgan — o'sha natija (ikki marta bosish yoki qayta yuborish).
@@ -501,7 +500,7 @@ public static class MockEndpoints
             if (answers.All(a => a.Audio is null)) return Results.BadRequest(request.Error("mock.no_answers"));
             try
             {
-                var result = await evaluator.EvaluateSpeakingAsync(set, answers, Texts.LangOf(request), ct);
+                var result = await evaluator.EvaluateSpeakingAsync(set, answers, RequestTexts.LangOf(request), ct);
                 var metrics = FluencyMetrics.ForAnswers(result.Answers.Select(a => (a.Index, a.Transcript, a.Seconds)), k => form[k].ToString());
                 var id = await SaveAsync(db, reviews, "cefr", user.Id, "speaking", set.Id, null, MockLimit.CleanSession(form["sessionId"].ToString()),
                     WithMetrics(result, metrics), result.TopCorrections, ActivityType.Speaking);
@@ -531,7 +530,7 @@ public static class MockEndpoints
             try
             {
                 var seconds = Math.Clamp(body.SecondsUsed, 0, 3 * 60 * 60);
-                var result = await evaluator.EvaluateWritingAsync(set, texts[0], texts[1], texts[2], seconds, Texts.LangOf(request), request.HttpContext.RequestAborted);
+                var result = await evaluator.EvaluateWritingAsync(set, texts[0], texts[1], texts[2], seconds, RequestTexts.LangOf(request), request.HttpContext.RequestAborted);
                 var id = await SaveAsync(db, reviews, "cefr", user.Id, "writing", set.Id, null, MockLimit.CleanSession(body.SessionId),
                     result, result.TopCorrections, ActivityType.Writing);
                 return Results.Ok(new { id, result });
@@ -565,7 +564,7 @@ public static class MockEndpoints
             using var doc = JsonDocument.Parse(row.ResponseData);
             // Listening/Reading: natija bilan birga testning o'zi (matn/skript, javoblar) — tahlil uchun.
             JsonElement? test = null;
-            var prompt = ParsePrompt(row.PromptData);
+            var prompt = MockQueries.ParsePrompt(row.PromptData);
             if (prompt.Module is "listening" or "reading" && Guid.TryParse(prompt.SetId, out var testId))
             {
                 var t = await db.MockTests.FirstOrDefaultAsync(x => x.Id == testId);
@@ -632,41 +631,7 @@ public static class MockEndpoints
         return null;
     }
 
-    /// <summary>
-    /// Mock natijalarining yengil ko'rinishi: katta JSON (javoblar, izohlar) bazadan
-    /// tortilmaydi — kerakli maydonlar (exam, module, setId, overall...) Postgres'ning
-    /// o'zida jsonb'dan o'qiladi.
-    /// </summary>
-    public sealed class MockRow
-    {
-        public Guid Id { get; set; }
-        public DateTime CreatedAtUtc { get; set; }
-        public string? Exam { get; set; }
-        public string? Module { get; set; }
-        public string? SetId { get; set; }
-        public string? Variant { get; set; }
-        public string? SessionId { get; set; }
-        public decimal? Overall { get; set; }
 
-        public MockPrompt Prompt => new(Exam ?? "ielts", Module ?? "", SetId ?? "", Variant, SessionId);
-    }
-
-    public const string MockRowsSql = """
-        SELECT "Id", "CreatedAtUtc",
-               "PromptData"->>'exam' AS "Exam",
-               "PromptData"->>'module' AS "Module",
-               "PromptData"->>'setId' AS "SetId",
-               "PromptData"->>'variant' AS "Variant",
-               "PromptData"->>'sessionId' AS "SessionId",
-               CASE WHEN jsonb_typeof("ResponseData"->'overall') = 'number' THEN ("ResponseData"->>'overall')::numeric END AS "Overall"
-        FROM "Activities"
-        WHERE "UserId" = {0} AND "Type" = 'MockExam'
-        ORDER BY "CreatedAtUtc" DESC
-        LIMIT {1}
-        """;
-
-    public static Task<List<MockRow>> MockRowsAsync(AppDbContext db, Guid userId, int take) =>
-        db.Database.SqlQueryRaw<MockRow>(MockRowsSql, userId, take).ToListAsync();
 
     public static object ClientPayload(string module, Guid id, string payload) => module == "reading"
         ? ClientView.Reading(id, JsonSerializer.Deserialize<ReadingTest>(payload, GeminiMockGenerator.Web)!)
@@ -707,33 +672,5 @@ public static class MockEndpoints
         var parts = layout.Select(l => new CefrPartScore(l.Part,
             review.Count(q => q.Correct && q.Number >= l.First && q.Number < l.First + l.Count), l.Count)).ToList();
         return new CefrObjectiveResult("cefr", module, test.Id.ToString(), "", score, review.Count, overall, CefrScale.Level(overall), seconds, parts, review);
-    }
-
-    public record MockPrompt(string Exam, string Module, string SetId, string? Variant, string? SessionId = null);
-
-    public static MockPrompt ParsePrompt(string json)
-    {
-        try
-        {
-            var p = JsonSerializer.Deserialize<MockPrompt>(json, Web);
-            return p is null ? new("ielts", "", "", null) : p with { Exam = p.Exam ?? "ielts", Module = p.Module ?? "", SetId = p.SetId ?? "" };
-        }
-        catch (JsonException)
-        {
-            return new("ielts", "", "", null);
-        }
-    }
-
-    public static decimal? ReadOverall(string json)
-    {
-        try
-        {
-            using var doc = JsonDocument.Parse(json);
-            return doc.RootElement.TryGetProperty("overall", out var o) && o.TryGetDecimal(out var d) ? d : null;
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
     }
 }

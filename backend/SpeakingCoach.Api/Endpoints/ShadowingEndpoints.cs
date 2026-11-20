@@ -1,9 +1,5 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Services;
-using SpeakingCoach.Api.Services.Mock;
-
 namespace SpeakingCoach.Api.Endpoints;
 
 public record ShadowingDoneRequest(int Lines, int? Average);
@@ -17,19 +13,6 @@ public static class ShadowingEndpoints
 {
     public const long MaxAudioBytes = 2 * 1024 * 1024;
     private const long MaxBodyBytes = MaxAudioBytes + Uploads.FormOverheadBytes;
-
-    public static string? LessonIdOf(string promptJson)
-    {
-        try
-        {
-            using var doc = JsonDocument.Parse(promptJson);
-            return doc.RootElement.TryGetProperty("lessonId", out var v) ? v.GetString() : null;
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
-    }
 
     public static void MapShadowingEndpoints(this IEndpointRouteBuilder app)
     {
@@ -79,7 +62,7 @@ public static class ShadowingEndpoints
             var bytes = await Uploads.ReadAsync(audio, ct);
             try
             {
-                var result = await coach.CheckAsync(lesson.Lines[index].Text, bytes, audio.ContentType, Texts.LangOf(request), ct);
+                var result = await coach.CheckAsync(lesson.Lines[index].Text, bytes, audio.ContentType, RequestTexts.LangOf(request), ct);
                 await quotas.RecordAsync(request, AiKind.Shadowing);
                 return Results.Ok(result);
             }
@@ -112,7 +95,7 @@ public static class ShadowingEndpoints
                 .Select(a => a.PromptData)
                 .ToListAsync();
             // jsonb o'z formatida qaytaradi (bo'shliqlar bilan) — matn qidiruvi emas, JSON o'qiymiz.
-            if (recent.Any(p => LessonIdOf(p) == lesson.Id))
+            if (recent.Any(p => ShadowingService.LessonIdOf(p) == lesson.Id))
             {
                 return Results.Ok(new { saved = false });
             }

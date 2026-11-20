@@ -1,8 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using SpeakingCoach.Api.Services;
-
 namespace SpeakingCoach.Api.Tests;
 
 public class GoogleJwtTests

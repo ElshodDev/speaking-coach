@@ -1,9 +1,4 @@
 using System.Text.Json;
-using SpeakingCoach.Api.Endpoints;
-using SpeakingCoach.Api.Services;
-using SpeakingCoach.Api.Services.Mock;
-using SpeakingCoach.Api.Services.Telegram;
-
 namespace SpeakingCoach.Api.Tests;
 
 /// <summary>Shadowing: YouTube havolasi, vaqtlar, dars tekshiruvi, talaffuz natijasini moslash, bot oqimi.</summary>
@@ -214,15 +209,15 @@ public class ShadowingTests
     [Fact]
     public void Lesson_id_is_read_from_jsonb_in_any_formatting()
     {
-        Assert.Equal("c-cafe", ShadowingEndpoints.LessonIdOf("{\"kind\": \"character\", \"lessonId\": \"c-cafe\"}"));
-        Assert.Null(ShadowingEndpoints.LessonIdOf("{}"));
-        Assert.Null(ShadowingEndpoints.LessonIdOf("not json"));
+        Assert.Equal("c-cafe", ShadowingService.LessonIdOf("{\"kind\": \"character\", \"lessonId\": \"c-cafe\"}"));
+        Assert.Null(ShadowingService.LessonIdOf("{}"));
+        Assert.Null(ShadowingService.LessonIdOf("not json"));
     }
 
     [Fact]
     public void Shadowing_counts_toward_xp()
     {
-        Assert.Equal(ProgressCalculator.ShadowingXp, ProgressCalculator.XpFor(new ActivityFact(Data.ActivityType.Shadowing, DateTime.UtcNow, null)));
+        Assert.Equal(ProgressCalculator.ShadowingXp, ProgressCalculator.XpFor(new ActivityFact(ActivityType.Shadowing, DateTime.UtcNow, null)));
     }
 
     // ---------------- Bot ----------------

@@ -1,9 +1,5 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Services;
-using SpeakingCoach.Api.Services.Content;
-
 namespace SpeakingCoach.Api.Endpoints;
 
 public record ComprehensionSubmitRequest(Guid ExerciseId, List<int> Answers);
@@ -123,7 +119,7 @@ public static class ComprehensionEndpoints
                     return Results.NotFound(request.Error("exercise.not_found"));
                 }
 
-                var exercise = GeminiClient.DeserializeStrict<ComprehensionExercise>(pending.Payload);
+                var exercise = GeminiJson.DeserializeStrict<ComprehensionExercise>(pending.Payload);
 
                 ComprehensionResult result;
                 try

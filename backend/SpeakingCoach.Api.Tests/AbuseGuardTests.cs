@@ -1,7 +1,4 @@
 using Microsoft.AspNetCore.Http;
-using SpeakingCoach.Api.Endpoints;
-using SpeakingCoach.Api.Services;
-
 namespace SpeakingCoach.Api.Tests;
 
 /// <summary>
@@ -68,7 +65,7 @@ public class AbuseGuardTests
     [Fact]
     public void Principal_key_separates_users_and_guests()
     {
-        var user = new Data.User { Id = Guid.NewGuid(), Email = "a@b.uz", PasswordHash = "" };
+        var user = new User { Id = Guid.NewGuid(), Email = "a@b.uz", PasswordHash = "" };
         Assert.StartsWith("u:", AiQuotaService.PrincipalKey(user, "10.0.0.1"));
         Assert.Equal("g:10.0.0.1", AiQuotaService.PrincipalKey(null, "10.0.0.1"));
         Assert.NotEqual(MockLimit.InFlightKey(user.Id), AiQuotaService.PrincipalKey(user, ""));

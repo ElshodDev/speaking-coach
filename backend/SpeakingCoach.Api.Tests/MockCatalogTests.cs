@@ -1,7 +1,4 @@
 using System.Text.Json;
-using SpeakingCoach.Api.Services.Content;
-using SpeakingCoach.Api.Services.Mock;
-
 namespace SpeakingCoach.Api.Tests;
 
 public class MockCatalogTests

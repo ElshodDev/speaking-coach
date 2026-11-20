@@ -1,8 +1,5 @@
 using System.Net;
 using Microsoft.Extensions.Configuration;
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Services;
-
 namespace SpeakingCoach.Api.Tests;
 
 /// <summary>Audit 10–30: admin, IPv6 kalitlari, qayta kirish, guruh turlari, kalendar, Google kalitlari.</summary>

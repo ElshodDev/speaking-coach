@@ -1,7 +1,4 @@
 using System.Text.Json;
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Services;
-
 namespace SpeakingCoach.Api.Tests;
 
 public class DemoTests
@@ -46,16 +43,16 @@ public class DemoTests
             switch (a.Type)
             {
                 case ActivityType.Speaking:
-                    GeminiClient.DeserializeStrict<SpeakingEvaluationResult>(a.ResponseData);
+                    GeminiJson.DeserializeStrict<SpeakingEvaluationResult>(a.ResponseData);
                     Assert.False(string.IsNullOrEmpty(JsonDocument.Parse(a.PromptData).RootElement.GetProperty("topic").GetString()));
                     break;
                 case ActivityType.Writing:
-                    GeminiClient.DeserializeStrict<WritingEvaluationResult>(a.ResponseData);
+                    GeminiJson.DeserializeStrict<WritingEvaluationResult>(a.ResponseData);
                     break;
                 case ActivityType.Reading or ActivityType.Listening:
-                    var r = GeminiClient.DeserializeStrict<ComprehensionResult>(a.ResponseData);
+                    var r = GeminiJson.DeserializeStrict<ComprehensionResult>(a.ResponseData);
                     Assert.Equal(4, r.Total);
-                    GeminiClient.DeserializeStrict<ComprehensionExercise>(a.PromptData);
+                    GeminiJson.DeserializeStrict<ComprehensionExercise>(a.PromptData);
                     break;
             }
         }

@@ -1,7 +1,4 @@
 using Microsoft.Extensions.Configuration;
-using SpeakingCoach.Api.Services;
-using SpeakingCoach.Api.Services.Telegram;
-
 namespace SpeakingCoach.Api.Tests;
 
 public class BotLogicTests

@@ -24,6 +24,21 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Using Include="SpeakingCoach.Domain.Entities" />
+    <Using Include="SpeakingCoach.Domain.Rules" />
+    <Using Include="SpeakingCoach.Application" />
+    <Using Include="SpeakingCoach.Application.Abstractions" />
+    <Using Include="SpeakingCoach.Application.Content" />
+    <Using Include="SpeakingCoach.Application.Mock" />
+    <Using Include="SpeakingCoach.Application.Telegram" />
+    <Using Include="SpeakingCoach.Infrastructure" />
+    <Using Include="SpeakingCoach.Infrastructure.Persistence" />
+    <Using Include="SpeakingCoach.Infrastructure.Ai" />
+    <Using Include="SpeakingCoach.Infrastructure.Identity" />
+    <Using Include="SpeakingCoach.Infrastructure.Telegram" />
+    <Using Include="SpeakingCoach.Infrastructure.Jobs" />
+    <Using Include="SpeakingCoach.Api.Web" />
+    <Using Include="SpeakingCoach.Api.Endpoints" />
     <ProjectReference Include="..\SpeakingCoach.Api\SpeakingCoach.Api.csproj" />
   </ItemGroup>
 

@@ -1,9 +1,4 @@
 using Microsoft.AspNetCore.Http;
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Services;
-using SpeakingCoach.Api.Services.Mock;
-using SpeakingCoach.Api.Services.Telegram;
-
 namespace SpeakingCoach.Api.Tests;
 
 /// <summary>Xavfsizlik va barqarorlik qoidalari (audit tuzatishlari).</summary>

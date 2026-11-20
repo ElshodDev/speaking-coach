@@ -1,6 +1,3 @@
-using SpeakingCoach.Api.Services;
-using SpeakingCoach.Api.Services.Mock;
-
 namespace SpeakingCoach.Api.Tests;
 
 /// <summary>CEFR (Multilevel) — Bilim va malakalarni baholash agentligining rasmiy hujjatlari bo'yicha.</summary>

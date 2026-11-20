@@ -1,0 +1,6 @@
+**/bin/
+**/obj/
+SpeakingCoach.Api.Tests/
+**/*.user
+**/appsettings.Development.json
+**/uploads/

@@ -1,7 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Services;
-
 namespace SpeakingCoach.Api.Endpoints;
 
 // Writing so'rov shakli — Speaking'dan farqli, JSON body sifatida keladi

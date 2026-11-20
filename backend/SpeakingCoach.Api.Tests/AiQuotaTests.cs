@@ -1,6 +1,4 @@
 using Microsoft.Extensions.Configuration;
-using SpeakingCoach.Api.Services;
-
 namespace SpeakingCoach.Api.Tests;
 
 public class AiQuotaTests

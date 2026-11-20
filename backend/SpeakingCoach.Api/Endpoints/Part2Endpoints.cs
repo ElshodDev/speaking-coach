@@ -1,9 +1,5 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Services;
-using SpeakingCoach.Api.Services.Mock;
-
 namespace SpeakingCoach.Api.Endpoints;
 
 /// <summary>
@@ -73,7 +69,7 @@ public static class Part2Endpoints
             var submissionId = Guid.NewGuid();
             try
             {
-                var evaluation = await coach.EvaluateAsync(card, audio, audioFile.ContentType, level, Texts.LangOf(request), ct);
+                var evaluation = await coach.EvaluateAsync(card, audio, audioFile.ContentType, level, RequestTexts.LangOf(request), ct);
                 var metrics = FluencyMetrics.Analyze(evaluation.Transcript, seconds, longPauses, pauseSeconds);
                 var newCards = 0;
                 if (userId is not null)

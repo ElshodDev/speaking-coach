@@ -14,7 +14,8 @@ dotnet user-secrets set "Gemini:ApiKey" "<kalit>"
 dotnet user-secrets set "ConnectionStrings:Default" "Host=...;Database=...;Username=...;Password=...;SSL Mode=Require"
 dotnet user-secrets set "Admin:Emails" "siz@example.com"   # ixtiyoriy: admin panel kimga ko'rinadi
 dotnet tool update --global dotnet-ef
-dotnet ef database update
+# Migratsiyalar Infrastructure loyihasida, sozlamalar esa Api'da (startup):
+dotnet ef database update --project ../SpeakingCoach.Infrastructure --startup-project .
 dotnet run                      # http://localhost:5000
 
 # frontend (ikkinchi terminal)
@@ -26,13 +27,13 @@ npm run dev                     # http://localhost:5173
 Testlar:
 
 ```bash
-dotnet test backend/SpeakingCoach.Api.Tests
+dotnet test backend/SpeakingCoach.slnx     # barcha qatlamlar + arxitektura testlari
 cd frontend/speaking-coach-web && npm test
 ```
 
 ## Render (backend)
 
-Root directory: `backend/SpeakingCoach.Api`, Docker. **Health check path: `/health/live`** (bazaga tegmaydi — Neon uxlab qolganda Render serverni behuda qayta ishga tushirmaydi; `/health` esa bazani ham tekshiradi, monitoring uchun). Environment:
+Root directory: **`backend`**, Dockerfile path: **`./Dockerfile`**, Docker. (Backend 4 ta loyihadan iborat — qarang: [ARCHITECTURE.md](ARCHITECTURE.md) — shuning uchun build konteksti butun `backend` papkasi.) **Health check path: `/health/live`** (bazaga tegmaydi — Neon uxlab qolganda Render serverni behuda qayta ishga tushirmaydi; `/health` esa bazani ham tekshiradi, monitoring uchun). Environment:
 
 | O'zgaruvchi | Nima uchun |
 |---|---|
@@ -77,7 +78,7 @@ Root directory: `frontend/speaking-coach-web`; environment: `VITE_API_URL` (Rend
 
 ## Migratsiyalar
 
-Render ularni o'zi bajarmaydi: sxemaga bog'liq kodni push qilishdan oldin lokalda `dotnet ef database update` bajariladi.
+Render ularni o'zi bajarmaydi: sxemaga bog'liq kodni push qilishdan oldin lokalda `dotnet ef database update --project backend/SpeakingCoach.Infrastructure --startup-project backend/SpeakingCoach.Api` bajariladi. Yangi migratsiya: `dotnet ef migrations add <Nom> --project backend/SpeakingCoach.Infrastructure --startup-project backend/SpeakingCoach.Api`.
 
 `AddNicknameUniqueIndex` — taxalluslar uchun `lower("DisplayName")` noyob indeksi. Bazada allaqachon takroriy taxalluslar bo'lsa, migratsiya yiqilmaydi, faqat indeksni yaratmaydi (NOTICE). Tekshirish: `SELECT lower("DisplayName"), count(*) FROM "Users" WHERE "DisplayName" IS NOT NULL GROUP BY 1 HAVING count(*) > 1;` — takrorlarni tuzatib, migratsiyani qayta qo'llang (`dotnet ef database update 20260928090000_AddTelegramLoginAndFeedback`, keyin yana `dotnet ef database update`).
 
