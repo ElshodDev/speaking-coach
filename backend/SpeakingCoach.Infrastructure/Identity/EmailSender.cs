@@ -31,7 +31,7 @@ public class BrevoEmailSender : IEmailSender
         _logger = logger;
         _apiKey = config["Email:BrevoApiKey"];
         _fromAddress = config["Email:FromAddress"];
-        _fromName = config["Email:FromName"] ?? "Speaking Coach";
+        _fromName = config["Email:FromName"] ?? "FluentUZ";
         // DevMode faqat Development muhitida — production'da tasodifan yoqilib,
         // kodlar logga tushib qolmasin.
         _devMode = env.IsDevelopment() && string.Equals(config["Email:DevMode"], "true", StringComparison.OrdinalIgnoreCase);

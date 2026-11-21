@@ -131,15 +131,15 @@ export async function drawShareCard(s: ShareStats, t: (typeof shareMsg)['uz'], s
   // Logotip va nom.
   drawLogo(ctx, 90, 150, 96);
   ctx.font = `700 52px ${FONT}`;
-  ctx.fillText('Speaking Coach', 214, 214);
+  ctx.fillText('FluentUZ', 214, 214);
 
   ctx.font = `500 44px ${FONT}`;
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
   ctx.fillText(t.tagline, 90, 400);
 
   ctx.fillStyle = '#fff';
-  fitText(ctx, s.name ?? 'Speaking Coach', 800, 120, W - 180);
-  ctx.fillText(s.name ?? 'Speaking Coach', 90, 540);
+  fitText(ctx, s.name ?? 'FluentUZ', 800, 120, W - 180);
+  ctx.fillText(s.name ?? 'FluentUZ', 90, 540);
 
   // Daraja "tabletkasi".
   const levelText = t.level(s.level, s.xp);
