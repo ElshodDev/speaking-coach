@@ -13,3 +13,37 @@ frontend/**/.env.local
 .vscode/
 *.user
 frontend/**/*.tsbuildinfo
+
+# Secrets and local configuration — the repository is public, never commit these.
+# (.env.example stays tracked: it contains placeholders only.)
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.local.json
+secrets.json
+*.pfx
+*.pem
+*.key
+*.p12
+id_rsa*
+
+# Logs, coverage and test output
+*.log
+coverage/
+playwright-report/
+test-results/
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+
+# Local assistant settings
+.claude/settings.local.json
+
