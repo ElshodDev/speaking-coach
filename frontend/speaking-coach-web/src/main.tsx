@@ -5,11 +5,13 @@ import { LangProvider } from './i18n';
 import { installChunkReload } from './ErrorBoundary';
 import { initAnalytics } from './analytics';
 import { initMonitoring } from './monitoring';
+import { captureInvite } from './referral';
 // Inter (o'zgaruvchan shrift): lotin, kirill va o'zbekcha ʻ belgilari; brauzer faqat kerakli qismini yuklaydi.
 import '@fontsource-variable/inter';
 import './styles.css';
 import './auth.css';
 
+captureInvite();
 installChunkReload();
 initAnalytics();
 void initMonitoring();

@@ -2,10 +2,11 @@ using Microsoft.EntityFrameworkCore;
 namespace SpeakingCoach.Api.Endpoints;
 
 public record AuthRequest(string Email, string Password);
+public record RegisterRequest(string Email, string Password, string? Ref = null);
 public record VerifyRequest(string Email, string Code, string? Password = null);
 public record EmailRequest(string Email);
 public record ResetRequest(string Email, string Code, string NewPassword);
-public record GoogleRequest(string Credential);
+public record GoogleRequest(string Credential, string? Ref = null);
 public record TelegramAuthRequest(string InitData);
 public record DemoRequest(int TzOffsetMinutes = -300);
 public record TelegramLoginStartRequest(string? Lang = null);
@@ -33,8 +34,8 @@ public static class AuthEndpoints
                 : Results.Ok(new { ok = true });
         }
 
-        app.MapPost("/api/auth/register", async (AuthRequest body, HttpRequest request, AuthService auth) =>
-            ToResult(request, await auth.RegisterAsync(body.Email, body.Password, RequestTexts.LangOf(request))))
+        app.MapPost("/api/auth/register", async (RegisterRequest body, HttpRequest request, AuthService auth) =>
+            ToResult(request, await auth.RegisterAsync(body.Email, body.Password, RequestTexts.LangOf(request), body.Ref)))
             .RequireRateLimiting("auth");
 
         app.MapPost("/api/auth/login", async (AuthRequest body, HttpRequest request, AuthService auth) =>
@@ -78,7 +79,7 @@ public static class AuthEndpoints
             var payload = await google.ValidateAsync(body.Credential);
             return payload is null
                 ? Results.Json(request.Error("google.invalid"), statusCode: StatusCodes.Status401Unauthorized)
-                : ToResult(request, await auth.GoogleSignInAsync(payload));
+                : ToResult(request, await auth.GoogleSignInAsync(payload, body.Ref));
         }).RequireRateLimiting("auth");
 
         // Telegram Mini App: sayt Telegram ichida ochilganda imzolangan initData

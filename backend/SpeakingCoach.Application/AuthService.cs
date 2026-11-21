@@ -54,9 +54,12 @@ public class AuthService
     private readonly int _dailyCap;
     private readonly EmailDailyCap _cap = EmailDailyCap.Shared;
 
+    private readonly bool _referralEnabled;
+
     public AuthService(IAppDbContext db, IPasswordHasher<User> hasher, IEmailSender email, ILogger<AuthService> logger, AdminOptions admins, IConfiguration config)
     {
         _admins = admins;
+        _referralEnabled = new FeatureFlags(config).Referral;
         _dailyCap = EmailDailyCap.CapFrom(config);
         _db = db;
         _hasher = hasher;
@@ -111,7 +114,11 @@ public class AuthService
     public static DateTime? RenewedExpiry(DateTime expiresAtUtc, DateTime nowUtc) =>
         expiresAtUtc > nowUtc && expiresAtUtc - nowUtc < RenewBelow ? nowUtc.Add(SessionLifetime) : null;
 
-    public async Task<AuthResult> RegisterAsync(string email, string password, string lang = Texts.DefaultLang)
+    /// <summary>Yangi hisob uchun taklif qilgan odam (feature flag o'chiq yoki kod noto'g'ri bo'lsa — null). Faqat hisob ochilganda chaqiriladi.</summary>
+    private Task<Guid?> ReferrerForNewUserAsync(string? code, string newEmail) =>
+        _referralEnabled && !string.IsNullOrWhiteSpace(code) ? ReferralService.ResolveReferrerAsync(_db, code, newEmail) : Task.FromResult<Guid?>(null);
+
+    public async Task<AuthResult> RegisterAsync(string email, string password, string lang = Texts.DefaultLang, string? referralCode = null)
     {
         var normalized = NormalizeEmail(email ?? "");
         if (!IsValidEmail(normalized))
@@ -150,6 +157,7 @@ public class AuthService
         }
 
         var user = new User { Id = Guid.NewGuid(), Email = normalized, CreatedAtUtc = DateTime.UtcNow, SignupMethod = SignupMethods.Email };
+        user.ReferredByUserId = await ReferrerForNewUserAsync(referralCode, normalized);
         user.PasswordHash = _hasher.HashPassword(user, password);
         _db.Users.Add(user);
 
@@ -216,13 +224,14 @@ public class AuthService
     /// hisobga kiriladi (va email tasdiqlangan deb belgilanadi); bo'lmasa —
     /// parolsiz yangi hisob ochiladi.
     /// </summary>
-    public async Task<AuthResult> GoogleSignInAsync(GooglePayload google)
+    public async Task<AuthResult> GoogleSignInAsync(GooglePayload google, string? referralCode = null)
     {
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == google.Email);
         var now = DateTime.UtcNow;
         if (user is null)
         {
             user = new User { Id = Guid.NewGuid(), Email = google.Email, CreatedAtUtc = now, PasswordHash = "", SignupMethod = SignupMethods.Google };
+            user.ReferredByUserId = await ReferrerForNewUserAsync(referralCode, google.Email);
             _db.Users.Add(user);
         }
         else if (ShouldWipePasswordOnGoogle(user.EmailVerifiedAtUtc is not null, VerificationRequired))

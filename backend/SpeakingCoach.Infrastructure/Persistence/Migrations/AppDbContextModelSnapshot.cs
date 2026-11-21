@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using SpeakingCoach.Infrastructure.Persistence;
+
 #nullable disable
 
 namespace SpeakingCoach.Infrastructure.Persistence.Migrations
@@ -649,6 +651,9 @@ namespace SpeakingCoach.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("ReferredByUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<bool>("ShowOnLeaderboard")
                         .HasColumnType("boolean");
 
@@ -664,6 +669,8 @@ namespace SpeakingCoach.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("Email")
                         .IsUnique();
+
+                    b.HasIndex("ReferredByUserId");
 
                     b.ToTable("Users");
                 });

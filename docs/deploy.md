@@ -148,3 +148,14 @@ Internet bo'lmaganda ham bugungi kartalarni takrorlash mumkin (faqat frontend; A
 - **Qaytarish (feature flag):** Vercel'da `VITE_OFFLINE_REVIEW=off` va Redeploy — hech narsa saqlanmaydi, eskisi o'chadi.
 - **Diqqat:** baho oflaynda berilgan vaqt emas, serverga yetib kelgan vaqt bo'yicha hisoblanadi (oraliqlar bir necha soatga siljishi mumkin).
 
+## Taklif (referral)
+
+Doʻstni taklif qilish: profilda havola (`https://fluentuz.app/?ref=KOD`), doʻst shu havola bilan roʻyxatdan oʻtsa (email yoki Google), **ikkalasiga ham 7 kun davomida kuniga +5 ta qoʻshimcha AI mashq** beriladi.
+
+- **MIGRATSIYA AVVAL (muhim):** bu yangilanish `Users` jadvaliga nullable `ReferredByUserId` ustuni va indeks qoʻshadi. Backend'ni Render'ga deploy qilishdan **oldin** Neon'da migratsiyani qoʻllang: `dotnet ef database update --project backend/SpeakingCoach.Infrastructure --startup-project backend/SpeakingCoach.Api` (yoki `dotnet ef migrations script 20261120120000_AddNicknameUniqueIndex -i` chiqargan SQL'ni Neon konsolida ishga tushiring). Aks holda yangi kod mavjud boʻlmagan ustunni soʻraydi va hamma narsa 500 beradi.
+- **Feature flag:** Render'da `Features__Referral=false` — taklif kodi qabul qilinmaydi, mukofot berilmaydi, profilda karta koʻrinmaydi (`GET /api/referral` → `enabled:false`). Standart — yoqiq.
+- **Qaytarish (rollback):** 1) `Features__Referral=false`; 2) kerak boʻlsa kodni oldingi versiyaga qaytaring; 3) shundan keyingina ustunni oʻchiring: `dotnet ef database update 20261120120000_AddNicknameUniqueIndex` (yoki `DROP INDEX "IX_Users_ReferredByUserId"; ALTER TABLE "Users" DROP COLUMN "ReferredByUserId";`). Ustun oʻchirilgach yangi kod ishlamaydi — tartibni buzmang.
+- **API (additiv):** `GET /api/referral` (yangi); `POST /api/auth/register` va `/api/auth/google` ixtiyoriy `ref` maydonini qabul qiladi. Mavjud maydonlar oʻzgarmagan.
+- **Hisoblash (bazada alohida mukofot jadvali yoʻq):** kod = foydalanuvchi ID'sining base64url koʻrinishi (22 belgi). Taklif qilingan hisob uchun mukofot — hisob ochilganidan 7 kun; taklif qilgan uchun — oxirgi 7 kunda **emaili tasdiqlangan** doʻsti qoʻshilgan boʻlsa. Mukofotlar **qoʻshilmaydi** (nechta doʻst boʻlsa ham +5), shuning uchun suiisteʼmol chegaralangan. Demo hisoblar qatnashmaydi.
+- **Hozircha qamrab olinmagan:** Telegram orqali kirish/roʻyxatdan oʻtishda taklif kodi hisobga olinmaydi (faqat email va Google). Kod Plausible'ga yuborilmaydi.
+
