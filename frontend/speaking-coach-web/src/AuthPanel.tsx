@@ -7,7 +7,7 @@ import { GoogleButton } from './GoogleButton';
 import { chromeIntent, currentInApp, isAndroid, isIos } from './inApp';
 import { inTelegram } from './tgApp';
 import { Icon } from './Icon';
-import { clearRef, refPayload } from './referral';
+import { claimReferral, clearRef, refPayload } from './referral';
 
 /** Server javobi: yo token (kirildi), yo "kodni kiriting", yo shunchaki ok. */
 interface AuthResponse {
@@ -166,6 +166,8 @@ export function AuthPanel({
 
   function telegram(r: TelegramLoginResult) {
     setToken(r.token);
+    // Yangi hisob bo'lsa — saqlangan taklif kodi biriktiriladi (fonda; kirishni kutdirmaydi).
+    void claimReferral(r.isNew, (path, body) => postJson(path, body));
     onChange(r.email, r.isNew);
   }
 

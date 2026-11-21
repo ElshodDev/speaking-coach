@@ -52,4 +52,21 @@ public class ReferralService(IAppDbContext db, FeatureFlags flags)
         if (referrer is null || referrer.Email == newEmail || DemoAccount.IsDemo(referrer.Email)) return null;
         return referrer.Id;
     }
+
+    /// <summary>
+    /// Telegram orqali yangi ochilgan hisobga taklifni biriktiradi (bir marta, atomar: faqat ReferredByUserId hali bo'sh bo'lsa).
+    /// true — biriktirildi; false — qoidalarga to'g'ri kelmadi (flag o'chiq, eski hisob, noto'g'ri kod va h.k.) — xato emas.
+    /// </summary>
+    public async Task<bool> ClaimAsync(User user, string? code)
+    {
+        if (!Enabled || DemoAccount.IsDemo(user.Email)) return false;
+        var now = DateTime.UtcNow;
+        if (!ReferralRules.CanClaim(user.ReferredByUserId, user.SignupMethod, user.CreatedAtUtc, now)) return false;
+        var referrerId = await ResolveReferrerAsync(db, code, user.Email);
+        if (referrerId is null || referrerId == user.Id) return false;
+        var updated = await db.Users
+            .Where(u => u.Id == user.Id && u.ReferredByUserId == null)
+            .ExecuteUpdateAsync(x => x.SetProperty(u => u.ReferredByUserId, referrerId));
+        return updated > 0;
+    }
 }

@@ -87,4 +87,26 @@ public class ReferralTests
         Assert.True(DemoAccount.IsDemo(DemoAccount.NewEmail()));
         Assert.False(DemoAccount.IsDemo("real@gmail.com"));
     }
+
+    // ---- Telegram: hisob ochilgandan keyin taklifni biriktirish -------------
+
+    [Theory]
+    [InlineData("telegram", 5, true)]
+    [InlineData("telegram_app", 59, true)]
+    [InlineData("telegram", 61, false)]   // oyna (1 soat) tugagan
+    [InlineData("email", 5, false)]       // email/Google'da kod ro'yxatdan o'tishning o'zida ketadi
+    [InlineData("google", 5, false)]
+    [InlineData("demo", 5, false)]
+    [InlineData(null, 5, false)]
+    public void Claim_is_only_for_fresh_telegram_accounts(string? method, int minutesOld, bool expected)
+    {
+        Assert.Equal(expected, ReferralRules.CanClaim(null, method, Now.AddMinutes(-minutesOld), Now));
+    }
+
+    [Fact]
+    public void Claim_never_overwrites_an_existing_referrer_or_accepts_future_dates()
+    {
+        Assert.False(ReferralRules.CanClaim(Guid.NewGuid(), "telegram", Now.AddMinutes(-1), Now));
+        Assert.False(ReferralRules.CanClaim(null, "telegram", Now.AddMinutes(5), Now));
+    }
 }

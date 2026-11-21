@@ -13,6 +13,7 @@ import { PageHeader } from './ui';
 import { UsageNote } from './Usage';
 import { TelegramCard } from './TelegramCard';
 import { ReferralCard } from './ReferralCard';
+import { claimReferral } from './referral';
 import { ErrorBoundary } from './ErrorBoundary';
 import { DemoBanner, DemoOffer, DemoStart, isDemoEmail } from './Demo';
 import { cleanLaunchUrl, genuineTelegram, inTelegram, readyTelegram, syncTgBack, telegramLaunch } from './tgApp';
@@ -169,10 +170,11 @@ function App() {
       // Faqat haqiqiy Telegram ichida — begona havola orqali boshqa hisobga kiritib bo'lmasin.
       if (!launch?.initData || !genuineTelegram()) return;
       try {
-        const r = await postJson<{ token: string; email: string }>('/api/auth/telegram', { initData: launch.initData });
+        const r = await postJson<{ token: string; email: string; isNew?: boolean }>('/api/auth/telegram', { initData: launch.initData });
         if (cancelled) return;
         setToken(r.token);
         setEmail(r.email);
+        void claimReferral(r.isNew, (path, body) => postJson(path, body));
       } catch {
         // Telegram tasdiqlamadi yoki server javob bermadi — mehmon sifatida davom etadi.
       }

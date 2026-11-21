@@ -14,6 +14,9 @@ public static class ReferralRules
     /// <summary>Mukofot: kuniga qo'shimcha AI mashq (baholash) urinishlari. Bir necha taklif qo'shilmaydi.</summary>
     public const int BonusExtraExercises = 5;
 
+    /// <summary>Telegram orqali ochilgan hisob taklifni shuncha vaqt ichida "da'vo qila oladi" (hisob ochilganidan keyin).</summary>
+    public static readonly TimeSpan ClaimWindow = TimeSpan.FromHours(1);
+
     public static string Encode(Guid userId) =>
         Convert.ToBase64String(userId.ToByteArray()).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
@@ -50,4 +53,15 @@ public static class ReferralRules
     /// </summary>
     public static int ExtraExercises(bool referred, DateTime createdAtUtc, bool hasRecentVerifiedReferral, DateTime nowUtc) =>
         (referred && BonusWindowOpen(createdAtUtc, nowUtc)) || hasRecentVerifiedReferral ? BonusExtraExercises : 0;
+
+    /// <summary>
+    /// Hisob ochilgandan KEYIN taklifni biriktirish (Telegram orqali kirishda kod hisob ochilgan paytda serverga yetmaydi):
+    /// faqat Telegram orqali yangi ochilgan, hali taklif biriktirilmagan va ClaimWindow ichidagi hisob uchun.
+    /// Eski hisob taklifni keyin biriktira olmaydi.
+    /// </summary>
+    public static bool CanClaim(Guid? existingReferrer, string? signupMethod, DateTime createdAtUtc, DateTime nowUtc) =>
+        existingReferrer is null
+        && (signupMethod == SignupMethods.Telegram || signupMethod == SignupMethods.TelegramApp)
+        && nowUtc >= createdAtUtc
+        && nowUtc - createdAtUtc <= ClaimWindow;
 }
