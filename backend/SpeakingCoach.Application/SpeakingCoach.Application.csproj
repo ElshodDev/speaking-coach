@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Application: foydalanish holatlari (use case) va servislar. Faqat Domain'ga
+       bog'liq. Tashqi dunyo (baza, Gemini, Telegram, email) shu yerdagi
+       interfeyslar orqali ko'rinadi — ularni Infrastructure amalga oshiradi. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SpeakingCoach.Domain\SpeakingCoach.Domain.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- IAppDbContext (DbSet, LINQ so'rovlari) uchun EF Core yadrosi — provayder (Npgsql) emas. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.15" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.15" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.15" />
+    <!-- PasswordHasher (parol xeshi) — ASP.NET Identity'ning web'siz yadrosi. -->
+    <PackageReference Include="Microsoft.Extensions.Identity.Core" Version="10.0.15" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Microsoft.Extensions.Configuration" />
+    <Using Include="Microsoft.Extensions.DependencyInjection" />
+    <Using Include="Microsoft.Extensions.Logging" />
+    <Using Include="SpeakingCoach.Domain.Entities" />
+    <Using Include="SpeakingCoach.Domain.Rules" />
+    <Using Include="SpeakingCoach.Application" />
+    <Using Include="SpeakingCoach.Application.Abstractions" />
+    <Using Include="SpeakingCoach.Application.Content" />
+    <Using Include="SpeakingCoach.Application.Mock" />
+    <Using Include="SpeakingCoach.Application.Telegram" />
+  </ItemGroup>
+</Project>

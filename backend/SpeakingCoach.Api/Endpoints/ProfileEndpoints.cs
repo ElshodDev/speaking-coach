@@ -1,8 +1,5 @@
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Services;
-
 namespace SpeakingCoach.Api.Endpoints;
 
 public record ProfileUpdateRequest(string? DisplayName, string? Level, bool ShowOnLeaderboard);
@@ -152,7 +149,7 @@ public static partial class ProfileEndpoints
             {
                 await db.SaveChangesAsync();
             }
-            catch (DbUpdateException ex) when (AuthService.IsUniqueViolation(ex))
+            catch (DbUpdateException ex) when (DbErrors.IsUniqueViolation(ex))
             {
                 // Tekshiruvdan keyin, saqlashdan oldin boshqa kimdir shu taxallusni oldi (noyob indeks).
                 return Results.BadRequest(request.Error("profile.nickname_taken"));
@@ -188,8 +185,8 @@ public static partial class ProfileEndpoints
 
         // Tizim holati: baza sxemasi, Telegram bot, sozlamalar. Sirlar qaytarilmaydi.
         app.MapGet("/api/admin/system", async (
-            HttpRequest request, AuthService auth, AdminOptions admins, AppDbContext db,
-            SpeakingCoach.Api.Services.Telegram.ITelegramApi telegram, SpeakingCoach.Api.Services.Telegram.TelegramOptions tg,
+            HttpRequest request, AuthService auth, AdminOptions admins, AppDbContext db, ISchemaInspector schema,
+            ITelegramApi telegram, TelegramOptions tg,
             IEmailSender email, IGoogleSignIn google, IConfiguration config) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
@@ -198,7 +195,7 @@ public static partial class ProfileEndpoints
             {
                 return Results.Json(request.Error("admin.only"), statusCode: StatusCodes.Status403Forbidden);
             }
-            return Results.Ok(await SystemHealth.GetAsync(db, telegram, tg, email, google, config, request.HttpContext.RequestAborted));
+            return Results.Ok(await SystemHealth.GetAsync(db, schema, telegram, tg, email, google, config, request.HttpContext.RequestAborted));
         });
 
         // So'z ma'nosi — mehmonga ham ochiq (faqat kartaga saqlash uchun kirish kerak).
@@ -212,7 +209,7 @@ public static partial class ProfileEndpoints
             try
             {
                 var explanation = await words.ExplainAsync(
-                    clean.Value.Word, clean.Value.Sentence, LearnerLevel.Normalize(body.Level), Texts.LangOf(request));
+                    clean.Value.Word, clean.Value.Sentence, LearnerLevel.Normalize(body.Level), RequestTexts.LangOf(request));
                 await quotas.RecordAsync(request, AiKind.Word);
                 return Results.Ok(explanation);
             }

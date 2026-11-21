@@ -1,7 +1,4 @@
 using System.Text.Json;
-using SpeakingCoach.Api.Services;
-using SpeakingCoach.Api.Services.Telegram;
-
 namespace SpeakingCoach.Api.Tests;
 
 public class SystemHealthTests

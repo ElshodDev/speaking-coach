@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Domain: entitylar va toza biznes qoidalari. Hech qanday tashqi paket yoki
+       boshqa loyihaga bog'liq emas (Clean Architecture markazi). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <Using Include="SpeakingCoach.Domain.Entities" />
+    <Using Include="SpeakingCoach.Domain.Rules" />
+  </ItemGroup>
+</Project>

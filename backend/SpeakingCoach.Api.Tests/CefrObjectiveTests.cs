@@ -1,8 +1,4 @@
 using System.Text.Json;
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Endpoints;
-using SpeakingCoach.Api.Services.Mock;
-
 namespace SpeakingCoach.Api.Tests;
 
 public class CefrObjectiveTests
@@ -196,7 +192,7 @@ public class CefrObjectiveTests
 
         // Guruh vazifasi ballni "41/75 · B1" ko'rinishida ko'rsatadi.
         var json = JsonSerializer.Serialize(r, new JsonSerializerOptions(JsonSerializerDefaults.Web));
-        Assert.Equal($"{r.Overall}/75 · B1", SpeakingCoach.Api.Services.GroupLogic.ScoreText(json));
+        Assert.Equal($"{r.Overall}/75 · B1", GroupLogic.ScoreText(json));
     }
 
     [Fact]

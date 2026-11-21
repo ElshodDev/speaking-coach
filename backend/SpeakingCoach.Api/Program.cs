@@ -1,10 +1,7 @@
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using SpeakingCoach.Api.Data;
 using SpeakingCoach.Api.Endpoints;
-using SpeakingCoach.Api.Services;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Bir nechta manzil bo'lishi mumkin (vergul bilan): birinchisi — asosiy (masalan, o'z domen),
@@ -38,88 +35,17 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 
 // So'rovlar sonini cheklash (rate limiting) — nomli siyosatlar ("auth", "code",
 // "poll", "write", "ai", "join") va AI uchun umumiy bir vaqtdagi cheklov:
-// batafsil Services/RateLimits.cs da. Rad etilsa — 429 + Retry-After.
+// batafsil Web/RateLimits.cs da. Rad etilsa — 429 + Retry-After.
 builder.Services.AddRateLimiter(RateLimits.Configure);
 
-// So'rov hajmi: umumiy 2 MB (JSON), audio endpoint'lar o'z chegarasini beradi (Services/Uploads.cs).
+// So'rov hajmi: umumiy 2 MB (JSON), audio endpoint'lar o'z chegarasini beradi (Web/Uploads.cs).
 Uploads.ConfigureDefaults(builder);
 
-builder.Services.AddHttpClient();
-
-// GeminiClient — barcha servislar shu bitta klass orqali Gemini'ga so'rov
-// yuboradi (model fallback + retry + qat'iy JSON o'qish bir joyda).
-builder.Services.AddSingleton(TimeProvider.System);
-// Butun server bo'yicha Gemini byudjeti va saqlagich (Ai:GlobalPerMinute, Ai:GlobalPerDay, Ai:Models...).
-builder.Services.AddSingleton(sp => new AiGuardOptions(sp.GetRequiredService<IConfiguration>()));
-builder.Services.AddSingleton<AiGuard>();
-builder.Services.AddSingleton<GeminiClient>();
-builder.Services.AddSingleton<ISpeakingEvaluationService, GeminiSpeakingService>();
-builder.Services.AddSingleton<IPart2Coach, GeminiPart2Coach>();
-builder.Services.AddSingleton<IAnswerUpgrader, GeminiAnswerUpgrader>();
-builder.Services.AddSingleton<ITalkAi, GeminiTalkAi>();
-builder.Services.AddSingleton<IWritingEvaluationService, GeminiWritingService>();
-builder.Services.AddSingleton<IComprehensionService, GeminiComprehensionService>();
-builder.Services.AddSingleton<IWordService, GeminiWordService>();
-builder.Services.AddSingleton<SpeakingCoach.Api.Services.Mock.IIeltsEvaluator, SpeakingCoach.Api.Services.Mock.GeminiIeltsEvaluator>();
-builder.Services.AddSingleton<SpeakingCoach.Api.Services.Mock.IMockGenerator, SpeakingCoach.Api.Services.Mock.GeminiMockGenerator>();
-// Bot orqali test qo'shish — o'sha generator (bitta nusxa, ikki interfeys).
-builder.Services.AddSingleton<SpeakingCoach.Api.Services.Mock.IMockAuthoring>(sp => (SpeakingCoach.Api.Services.Mock.GeminiMockGenerator)sp.GetRequiredService<SpeakingCoach.Api.Services.Mock.IMockGenerator>());
-builder.Services.AddSingleton<SpeakingCoach.Api.Services.Mock.ICefrEvaluator, SpeakingCoach.Api.Services.Mock.GeminiCefrEvaluator>();
-builder.Services.AddSingleton<AdminOptions>();
-builder.Services.AddSingleton<IEmailSender, BrevoEmailSender>();
-builder.Services.AddSingleton<IGoogleSignIn, GoogleSignInService>();
-builder.Services.AddSingleton<AiQuotaOptions>();
-builder.Services.AddSingleton<GuestQuotaStore>();
-builder.Services.AddSingleton<AiDailyCaps>();
-builder.Services.AddSingleton<AiInFlight>();
-builder.Services.AddSingleton<TalkLocks>();
-builder.Services.AddMemoryCache();
-builder.Services.AddSingleton(new DemoGate());
-builder.Services.AddSingleton<SpeakingCoach.Api.Services.Content.ContentAi>();
-builder.Services.AddScoped<AiQuotaService>();
-
-// Telegram bot: token bo'lmasa — hammasi o'chiq, ilova avvalgidek ishlaydi.
-builder.Services.AddSingleton<SpeakingCoach.Api.Services.Telegram.TelegramOptions>();
-builder.Services.AddSingleton<SpeakingCoach.Api.Services.Telegram.ITelegramApi, SpeakingCoach.Api.Services.Telegram.TelegramApi>();
-builder.Services.AddScoped<SpeakingCoach.Api.Services.Telegram.TelegramBot>();
-builder.Services.AddSingleton<SpeakingCoach.Api.Services.Telegram.AuthoringRunner>();
-builder.Services.AddScoped<SpeakingCoach.Api.Services.Telegram.TelegramReminders>();
-builder.Services.AddSingleton<SpeakingCoach.Api.Services.Telegram.ReminderJob>();
-builder.Services.AddScoped<SpeakingCoach.Api.Services.Telegram.AssignmentNotifier>();
-builder.Services.AddHostedService<SpeakingCoach.Api.Services.Telegram.TelegramStartup>();
-
-// Ishga tushganda: bazada yetishmayotgan jadval/migratsiya bo'lsa — logga aniq xato.
-builder.Services.AddHostedService<SchemaStartupCheck>();
-// Eski yozuvlarni tozalash (cron bo'lmasa ham): sessiyalar, kodlar, mashqlar, tashlab ketilgan hisoblar.
-builder.Services.AddHostedService<MaintenanceService>();
-
-// PasswordHasher holatsiz (stateless) — singleton yetarli. AuthService va
-// ReviewService esa AppDbContext'ga bog'liq; DbContext har so'rov uchun
-// alohida (scoped) bo'lgani uchun ular ham scoped.
-builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
-builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<ReviewService>();
-builder.Services.AddScoped<TodayService>();
-builder.Services.AddScoped<SpeakingCoach.Api.Services.Mock.MockSets>();
-builder.Services.AddSingleton(new SpeakingCoach.Api.Services.Mock.GenerationGate());
-builder.Services.AddScoped<SpeakingCoach.Api.Services.Mock.ShadowingService>();
-builder.Services.AddSingleton<SpeakingCoach.Api.Services.Mock.IShadowingCoach, SpeakingCoach.Api.Services.Mock.GeminiShadowingCoach>();
-builder.Services.AddScoped<ProgressService>();
-builder.Services.AddScoped<ReadinessService>();
-builder.Services.AddScoped<AdminService>();
-
-// Ulanish satri (connection string) standart ASP.NET Core konvensiyasi
-// bo'yicha "ConnectionStrings:Default" nomi bilan o'qiladi. Lokalda:
-// dotnet user-secrets set "ConnectionStrings:Default" "...".
-// Render'da: ConnectionStrings__Default environment variable.
-var connectionString = DbConnection.Normalize(builder.Configuration.GetConnectionString("Default")
-    ?? throw new InvalidOperationException(
-        "ConnectionStrings:Default sozlanmagan. Lokalda: dotnet user-secrets set " +
-        "\"ConnectionStrings:Default\" \"<Neon'dan olingan connection string>\"."));
-// Neon (serverless) ba'zan ulanishni uzib qo'yadi yoki "uyg'onayotgan" bo'ladi —
-// vaqtinchalik xatolarda so'rov 3 martagacha qayta bajariladi.
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(connectionString, npgsql => npgsql.EnableRetryOnFailure(3)));
+// Clean Architecture: har bir qatlam o'z servislarini o'zi ro'yxatdan o'tkazadi.
+// Domain — hech narsaga bog'liq emas; Application — Domain'ga; Infrastructure — Application'ga;
+// Api (shu loyiha) — hammasini yig'adi (composition root).
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 

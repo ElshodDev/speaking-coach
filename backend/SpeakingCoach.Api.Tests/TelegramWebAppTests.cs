@@ -1,8 +1,5 @@
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
-using SpeakingCoach.Api.Services;
-using SpeakingCoach.Api.Services.Telegram;
-
 namespace SpeakingCoach.Api.Tests;
 
 /// <summary>Mini App: initData imzosini tekshirish, sayt tugmalari (web_app) va /guide.</summary>

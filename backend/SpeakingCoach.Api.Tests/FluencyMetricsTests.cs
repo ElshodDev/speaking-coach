@@ -1,5 +1,3 @@
-using SpeakingCoach.Api.Services;
-
 namespace SpeakingCoach.Api.Tests;
 
 public class FluencyMetricsTests

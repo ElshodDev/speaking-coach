@@ -1,6 +1,4 @@
 using System.Text.Json;
-using SpeakingCoach.Api.Services;
-
 namespace SpeakingCoach.Api.Tests;
 
 public class ComprehensionTests
@@ -11,7 +9,7 @@ public class ComprehensionTests
     private static string ExerciseJson(params int[] correct) =>
         $"{{\"title\":\"T\",\"passage\":\"P\",\"questions\":[{string.Join(",", correct.Select(Question))}]}}";
 
-    private static ComprehensionExercise Parse(string json) => GeminiClient.DeserializeStrict<ComprehensionExercise>(json);
+    private static ComprehensionExercise Parse(string json) => GeminiJson.DeserializeStrict<ComprehensionExercise>(json);
 
     [Fact]
     public void Grade_counts_correct_answers_and_reports_the_right_option()
@@ -63,7 +61,7 @@ public class GeminiParsingTests
 
     private static void ParseAndCheck(string json)
     {
-        var r = GeminiClient.DeserializeStrict<WritingEvaluationResult>(json);
+        var r = GeminiJson.DeserializeStrict<WritingEvaluationResult>(json);
         ScoreGuard.EnsureValid(
             ("taskAchievement", r.TaskAchievement), ("coherenceCohesion", r.CoherenceCohesion),
             ("grammar", r.Grammar), ("vocabulary", r.Vocabulary));

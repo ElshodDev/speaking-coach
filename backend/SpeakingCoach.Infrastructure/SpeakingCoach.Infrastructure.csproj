@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Infrastructure: tashqi dunyo bilan aloqa — Postgres (EF Core, migratsiyalar),
+       Gemini, Telegram API, email, Google, fon vazifalari. Application'dagi
+       interfeyslarni amalga oshiradi. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SpeakingCoach.Application\SpeakingCoach.Application.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.15">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Microsoft.Extensions.Configuration" />
+    <Using Include="Microsoft.Extensions.DependencyInjection" />
+    <Using Include="Microsoft.Extensions.Logging" />
+    <Using Include="Microsoft.Extensions.Hosting" />
+    <Using Include="Microsoft.AspNetCore.Http" />
+    <Using Include="SpeakingCoach.Domain.Entities" />
+    <Using Include="SpeakingCoach.Domain.Rules" />
+    <Using Include="SpeakingCoach.Application" />
+    <Using Include="SpeakingCoach.Application.Abstractions" />
+    <Using Include="SpeakingCoach.Application.Content" />
+    <Using Include="SpeakingCoach.Application.Mock" />
+    <Using Include="SpeakingCoach.Application.Telegram" />
+    <Using Include="SpeakingCoach.Infrastructure" />
+    <Using Include="SpeakingCoach.Infrastructure.Persistence" />
+    <Using Include="SpeakingCoach.Infrastructure.Ai" />
+    <Using Include="SpeakingCoach.Infrastructure.Identity" />
+    <Using Include="SpeakingCoach.Infrastructure.Telegram" />
+    <Using Include="SpeakingCoach.Infrastructure.Jobs" />
+  </ItemGroup>
+</Project>

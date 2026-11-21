@@ -1,8 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Services;
-using SpeakingCoach.Api.Services.Telegram;
-
 namespace SpeakingCoach.Api.Endpoints;
 
 public record AuthRequest(string Email, string Password);
@@ -38,12 +34,12 @@ public static class AuthEndpoints
         }
 
         app.MapPost("/api/auth/register", async (AuthRequest body, HttpRequest request, AuthService auth) =>
-            ToResult(request, await auth.RegisterAsync(body.Email, body.Password, Texts.LangOf(request))))
+            ToResult(request, await auth.RegisterAsync(body.Email, body.Password, RequestTexts.LangOf(request))))
             .RequireRateLimiting("auth");
 
         app.MapPost("/api/auth/login", async (AuthRequest body, HttpRequest request, AuthService auth) =>
             // Noto'g'ri parol — 401 ("kim ekaningizni tasdiqlab bo'lmadi"), 400 emas.
-            ToResult(request, await auth.LoginAsync(body.Email, body.Password, Texts.LangOf(request))))
+            ToResult(request, await auth.LoginAsync(body.Email, body.Password, RequestTexts.LangOf(request))))
             .RequireRateLimiting("auth");
 
         app.MapPost("/api/auth/verify", async (VerifyRequest body, HttpRequest request, AuthService auth) =>
@@ -51,11 +47,11 @@ public static class AuthEndpoints
             .RequireRateLimiting("auth");
 
         app.MapPost("/api/auth/resend", async (EmailRequest body, HttpRequest request, AuthService auth) =>
-            ToResult(request, await auth.ResendAsync(body.Email, EmailCodePurpose.Verify, Texts.LangOf(request))))
+            ToResult(request, await auth.ResendAsync(body.Email, EmailCodePurpose.Verify, RequestTexts.LangOf(request))))
             .RequireRateLimiting("code");
 
         app.MapPost("/api/auth/forgot", async (EmailRequest body, HttpRequest request, AuthService auth) =>
-            ToResult(request, await auth.ForgotPasswordAsync(body.Email, Texts.LangOf(request))))
+            ToResult(request, await auth.ForgotPasswordAsync(body.Email, RequestTexts.LangOf(request))))
             .RequireRateLimiting("code");
 
         app.MapPost("/api/auth/reset", async (ResetRequest body, HttpRequest request, AuthService auth) =>
@@ -65,7 +61,7 @@ public static class AuthEndpoints
         // Parolsiz kirish (telefonda qulay): emailga 6 xonali kod → kod bilan kirish.
         // Hisob bo'lmasa, birinchi kodda ochiladi — alohida "ro'yxatdan o'tish" qadami yo'q.
         app.MapPost("/api/auth/code/request", async (EmailRequest body, HttpRequest request, AuthService auth) =>
-            ToResult(request, await auth.RequestLoginCodeAsync(body.Email, Texts.LangOf(request))))
+            ToResult(request, await auth.RequestLoginCodeAsync(body.Email, RequestTexts.LangOf(request))))
             .RequireRateLimiting("code");
 
         app.MapPost("/api/auth/code/verify", async (VerifyRequest body, HttpRequest request, AuthService auth) =>
@@ -92,7 +88,7 @@ public static class AuthEndpoints
         {
             var tg = TelegramWebAppAuth.ValidateUser(body.InitData, options.Token, DateTime.UtcNow);
             if (tg is null) return Results.Json(request.ErrorWithCode("auth.telegram_invalid"), statusCode: StatusCodes.Status401Unauthorized);
-            var (result, isNew) = await auth.SignInTelegramAsync(tg, SignupMethods.TelegramApp, Texts.LangOf(request));
+            var (result, isNew) = await auth.SignInTelegramAsync(tg, SignupMethods.TelegramApp, RequestTexts.LangOf(request));
             return Results.Ok(new { token = result.Token, email = result.Email, isNew });
         }).RequireRateLimiting("auth");
 
@@ -106,7 +102,7 @@ public static class AuthEndpoints
             {
                 return Results.Json(request.ErrorWithCode("tglogin.disabled"), statusCode: StatusCodes.Status503ServiceUnavailable);
             }
-            var lang = Texts.Langs.Contains(body?.Lang) ? body!.Lang! : Texts.LangOf(request);
+            var lang = Texts.Langs.Contains(body?.Lang) ? body!.Lang! : RequestTexts.LangOf(request);
             var start = await auth.StartTelegramLoginAsync(lang, request.HttpContext.Connection.RemoteIpAddress?.ToString());
             return Results.Ok(new
             {

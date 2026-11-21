@@ -1,8 +1,5 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Services;
-
 namespace SpeakingCoach.Api.Endpoints;
 
 public record DictationResultRequest(string? Level, int Sentences, int CorrectWords, int TotalWords);

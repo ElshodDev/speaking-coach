@@ -77,7 +77,7 @@ flowchart LR
     subgraph API["ASP.NET Core 10 Minimal API — Render, Docker"]
         RL["Rate limiting<br/>foydalanuvchi · IP · AI uchun umumiy"]
         EP["Endpoints<br/>auth · mashqlar · takrorlash · lug'at<br/>mock imtihon · shadowing · guruhlar · admin"]
-        SVC["Services<br/>GeminiClient (fallback, retry, qat'iy JSON)<br/>ReviewScheduler (SM-2) · ProgressCalculator<br/>IELTS/CEFR ballari · test validatorlari"]
+        SVC["Clean Architecture<br/>Application: foydalanish holatlari · IELTS/CEFR ballari<br/>Domain: entitylar · SM-2 · XP · reja qoidalari<br/>Infrastructure: EF Core · GeminiClient · Telegram"]
         BOT["Telegram bot<br/>(webhook, kutubxonasiz)"]
     end
 
@@ -136,7 +136,8 @@ Hammasi bepul tariflarda ishlaydi.
 
 ## Sifat
 
-- **Backend'da 759 ta unit test** (xUnit). Ular takrorlash jadvali, baholash jadvallari, validatorlar, qat'iy o'qish, xavfsizlik qoidalari, bot mantiqi, tarjimalar (har bir xabar uch tilda, bir xil parametrlar bilan), demo ma'lumotlari va ilovadagi har bir tayyor materialni (mock testlar, mashqlar) tekshiradi.
+- **Clean Architecture backend**: Domain, Application, Infrastructure va Api loyihalari. Bog'liqlik qoidasini arxitektura testlari tekshiradi ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)).
+- **Backend'da 856 ta unit test** (xUnit). Ular takrorlash jadvali, baholash jadvallari, validatorlar, qat'iy o'qish, xavfsizlik qoidalari, bot mantiqi, tarjimalar (har bir xabar uch tilda, bir xil parametrlar bilan), demo ma'lumotlari va ilovadagi har bir tayyor materialni (mock testlar, mashqlar) tekshiradi.
 - **Frontend'da 170 ta unit test** (Vitest): grafiklar, matn bilan ishlash, shadowing va diktant mantiqi, tarmoq xatolari va kutish muddati, Telegram'dan ochilish va kirish holati, ilova ichidagi brauzerni aniqlash, har bir tarjimadagi o'zbek imlosi, ilovadagi darslar, lug'at va mavzular (to'g'ri javob harflari teng taqsimlangani ham).
 - **28 ta Playwright end-to-end to'plami** haqiqiy frontend'ni soxta API bilan telefon, planshet va noutbuk ekranlarida sinaydi. Yuqoridagi skrinshotlar ham shu testlardan olingan.
 - **CI** har bir push'da ikkala qismni build qilib testlaydi, ma'lum zaifligi bor paket bo'lsa yiqiladi.

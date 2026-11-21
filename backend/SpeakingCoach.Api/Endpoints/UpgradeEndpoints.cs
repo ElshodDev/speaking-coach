@@ -1,7 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Services;
-
 namespace SpeakingCoach.Api.Endpoints;
 
 public record UpgradeRequest(string? Target);
@@ -44,7 +41,7 @@ public static class UpgradeEndpoints
             if (limited is not null) return limited;
             try
             {
-                var result = await upgrader.UpgradeAsync(source, user.Level, target, Texts.LangOf(request), request.HttpContext.RequestAborted);
+                var result = await upgrader.UpgradeAsync(source, user.Level, target, RequestTexts.LangOf(request), request.HttpContext.RequestAborted);
                 activity.ResponseData = AnswerUpgradeRules.WithCached(activity.ResponseData, result);
                 await db.SaveChangesAsync();
                 await quotas.RecordAsync(request, AiKind.Exercise);

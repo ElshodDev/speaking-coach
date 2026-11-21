@@ -2,10 +2,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Services;
-using SpeakingCoach.Api.Services.Telegram;
-
 namespace SpeakingCoach.Api.Endpoints;
 
 public record TelegramLinkRequest(int TzOffsetMinutes, string? Lang);
@@ -101,7 +97,7 @@ public static class TelegramEndpoints
             {
                 TokenHash = BotLogic.HashToken(token),
                 UserId = user.Id,
-                Lang = Texts.Langs.Contains(body.Lang) ? body.Lang! : Texts.LangOf(request),
+                Lang = Texts.Langs.Contains(body.Lang) ? body.Lang! : RequestTexts.LangOf(request),
                 TzOffsetMinutes = Math.Clamp(body.TzOffsetMinutes, -14 * 60, 14 * 60),
                 ExpiresAtUtc = now.Add(BotLogic.LinkTokenLifetime),
             });

@@ -1,9 +1,4 @@
 using System.Text.RegularExpressions;
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Services;
-using SpeakingCoach.Api.Services.Content;
-using SpeakingCoach.Api.Services.Mock;
-
 namespace SpeakingCoach.Api.Tests;
 
 /// <summary>Ilova bilan keladigan tayyor materiallar Gemini yaratganlari bilan bir xil qat'iy qoidalardan o'tadi.</summary>

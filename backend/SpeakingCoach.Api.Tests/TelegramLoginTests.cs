@@ -1,10 +1,5 @@
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Endpoints;
-using SpeakingCoach.Api.Services;
-using SpeakingCoach.Api.Services.Telegram;
-
 namespace SpeakingCoach.Api.Tests;
 
 /// <summary>

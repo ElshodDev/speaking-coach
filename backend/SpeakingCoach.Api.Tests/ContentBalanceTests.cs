@@ -1,7 +1,3 @@
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Services.Content;
-using SpeakingCoach.Api.Services.Mock;
-
 namespace SpeakingCoach.Api.Tests;
 
 /// <summary>
