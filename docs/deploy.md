@@ -54,6 +54,15 @@ Maxfiylik: ovoz va so'rov tanasi, sarlavhalar, cookie, so'rov qismi (`?...`), fo
 
 Birinchi yozishdan oldin "ovoz Google Gemini'ga yuboriladi, saqlanmaydi" roziligi so'raladi (UZ/RU/EN; qurilmada `localStorage["sc.micConsent.v1"]`). Hamma mikrofon ishlatiladigan joy (Gapirish, Part 2, Mock Speaking, AI suhbat, Shadowing) `requestMicConsent()` dan o'tadi. **O'chirish (feature flag): Vercel'da `VITE_MIC_CONSENT=off` va Redeploy.** Matn maxfiylik siyosati (`public/privacy.html`) bilan bir xil bo'lishi kerak.
 
+## Feature flag'lar (backend, standart — yoqiq)
+
+| Render o'zgaruvchisi | Nima qiladi |
+|---|---|
+| `Features__SpeakingFourCriteria` | Gapirish natijasi: 4 rasmiy IELTS mezoni (taxminiy band), talaffuz ("taxminiy") va bitta asosiy tuzatish. `false` — eski 3 mezonli ko'rinish. |
+| `Features__DayOneDiagnostic` | Birinchi kunlik boshlang'ich test: bosh sahifada 4 ta qisqa mashq kartasi va tayyorlik bahosi birinchi kundan (Reading/Listening — ilovaning tayyor mashqlari darajasi bo'yicha past ishonch bilan). `false` — o'chiq, tayyorlik avvalgidek faqat mock bo'yicha. |
+
+O'chirish uchun qiymatni `false` qiling va servisni qayta ishga tushiring. Yangi maydonlar mavjud javobga **qo'shimcha** (ixtiyoriy) — eski mijozlar va eski yozuvlar buzilmaydi.
+
 ## Render (backend)
 
 Root directory: **`backend`**, Dockerfile path: **`./Dockerfile`**, Docker. (Backend 4 ta loyihadan iborat — qarang: [ARCHITECTURE.md](ARCHITECTURE.md) — shuning uchun build konteksti butun `backend` papkasi.) **Health check path: `/health/live`** (bazaga tegmaydi — Neon uxlab qolganda Render serverni behuda qayta ishga tushirmaydi; `/health` esa bazani ham tekshiradi, monitoring uchun). Environment:

@@ -41,3 +41,17 @@ public static class ScoreGuard
         }
     }
 }
+
+/// <summary>IELTS Speaking'ning 4 rasmiy mezoni bo'yicha taxminiy band (0–9, 0,5 qadam). Mock Speaking bilan bir xil mezonlar.</summary>
+public record SpeakingBands(
+    [property: JsonPropertyName("fluency")] decimal Fluency,
+    [property: JsonPropertyName("lexical")] decimal Lexical,
+    [property: JsonPropertyName("grammar")] decimal Grammar,
+    [property: JsonPropertyName("pronunciation")] decimal Pronunciation);
+
+/// <summary>Bu urinishdagi bitta eng muhim tuzatish: nima xato, qanday aytilgan, qanday to'g'ri va qisqa maslahat.</summary>
+public record PriorityFix(
+    [property: JsonPropertyName("issue")] string Issue,
+    [property: JsonPropertyName("original")] string Original,
+    [property: JsonPropertyName("corrected")] string Corrected,
+    [property: JsonPropertyName("tip")] string Tip);

@@ -110,7 +110,7 @@ public static class SpeakingWritingEndpoints
                     // Tuzatishlar avtomatik takrorlash kartalariga aylanadi —
                     // urinish bilan bitta tranzaksiyada saqlanadi.
                     newCards = await reviews.AddCardsAsync(
-                        userId!.Value, ActivityType.Speaking, ReviewCardFactory.FromCorrections(evaluation.TopCorrections));
+                        userId!.Value, ActivityType.Speaking, ReviewCardFactory.FromCorrections(ReviewCardFactory.WithPriorityFix(evaluation.TopCorrections, evaluation.PriorityFix)));
                     await db.SaveChangesAsync();
                 }
 

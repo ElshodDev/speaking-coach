@@ -30,6 +30,8 @@ export interface Readiness {
   focusSkill: Skill | null;
   focusReason: 'missing' | 'weakest' | null;
   skills: SkillReadiness[];
+  /** Server: Features:DayOneDiagnostic yoqiq (eski serverda yo'q). */
+  diagnosticEnabled?: boolean;
 }
 
 /** IELTS — bitta kasr (6.5), CEFR — butun ball (51). */
@@ -52,10 +54,13 @@ export function formatRange(exam: Readiness['exam'], low: number | null, high: n
   return a === b ? a : `${a}–${b}`;
 }
 
-/** Fokus ko'nikma uchun yo'nalish: ma'lumot yo'q — shu bo'limning mock'i; zaif — oddiy mashq. */
+/**
+ * Fokus ko'nikma uchun yo'nalish: ma'lumot yo'q — shu bo'limning mock'i (boshlang'ich test yoqiq bo'lsa —
+ * qisqa mashq, 60 daqiqalik mock emas); zaif — oddiy mashq.
+ */
 export function focusRoute(r: Readiness): string | null {
   if (!r.focusSkill || !r.exam) return null;
-  if (r.focusReason === 'missing') {
+  if (r.focusReason === 'missing' && !r.diagnosticEnabled) {
     if (r.exam === 'cefr') return `mock/cefr-${r.focusSkill}`;
     return r.focusSkill === 'reading' ? 'mock/reading-academic' : r.focusSkill === 'writing' ? 'mock/writing-academic' : `mock/${r.focusSkill}`;
   }
@@ -65,4 +70,37 @@ export function focusRoute(r: Readiness): string | null {
 /** Holat rangi (mavjud .txt-good / .txt-mid / .txt-low sinflari). */
 export function statusTone(s: Status): 'good' | 'mid' | 'low' | null {
   return s === 'on_track' ? 'good' : s === 'close' ? 'mid' : s === 'behind' ? 'low' : null;
+}
+
+// ---- Birinchi kunlik boshlang'ich test ----
+
+export const DIAGNOSTIC_SKILLS: Skill[] = ['listening', 'reading', 'writing', 'speaking'];
+
+export interface DiagnosticStep {
+  skill: Skill;
+  done: boolean;
+  /** Qisqa mashq sahifasi (60 daqiqalik mock emas). */
+  route: string;
+}
+
+export type DiagnosticState = 'off' | 'todo' | 'done';
+
+/** Qadamlar: ko'nikma bo'yicha baho bor bo'lsa (mashq yoki mock'dan) — bajarilgan. */
+export function diagnosticSteps(r: Readiness): DiagnosticStep[] {
+  return DIAGNOSTIC_SKILLS.map((skill) => ({
+    skill,
+    done: r.skills.some((s) => s.skill === skill && s.estimate !== null),
+    route: `practice/${skill}`,
+  }));
+}
+
+/** off — flag o'chiq yoki imtihon maqsadi yo'q; todo — hali to'rttasi ham bajarilmagan; done — baho tayyor. */
+export function diagnosticState(r: Readiness): DiagnosticState {
+  if (!r.diagnosticEnabled || !r.exam) return 'off';
+  return diagnosticSteps(r).every((s) => s.done) ? 'done' : 'todo';
+}
+
+/** Keyingi bajarilmagan qadam (yo'q bo'lsa — null). */
+export function nextDiagnosticStep(r: Readiness): DiagnosticStep | null {
+  return diagnosticSteps(r).find((s) => !s.done) ?? null;
 }

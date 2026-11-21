@@ -17,6 +17,8 @@ import { initialTopic, TopicPicker, type PickedTopic } from './TopicPicker';
 import { stabilityMsg } from './locales/stability';
 import { Corrections, Feedback, GuestNote, HistoryList, ScoreBar, type CorrectionItem, type ScoreWithReasoning } from './ui';
 import { requestMicConsent } from './consent';
+import { SpeakingFeedback } from './SpeakingFeedback';
+import { criteriaRows, otherCorrections, type PriorityFix, type SpeakingBands } from './speakingFeedback';
 
 // Mavzular endi ilovaning tayyor bankida (content/topics.ts) — TopicPicker orqali.
 
@@ -39,6 +41,11 @@ interface EvaluationResult {
   topCorrections: CorrectionItem[];
   encouragement: string;
   nextFocus: string;
+  /** Yangi (ixtiyoriy) qismlar: serverda Features:SpeakingFourCriteria yoqiq bo'lsa keladi. */
+  pronunciation?: ScoreWithReasoning | null;
+  bands?: SpeakingBands | null;
+  priorityFix?: PriorityFix | null;
+  overallBand?: number | null;
 }
 
 interface SubmitResponse {
@@ -333,12 +340,18 @@ export function Recorder({
           <p className="quote">{result.evaluation.transcript}</p>
 
           <h3 style={{ marginTop: 18 }}>{t.evaluation}</h3>
-          <ScoreBar label={t.criteria.fluency} data={result.evaluation.fluency} />
-          <ScoreBar label={t.criteria.grammar} data={result.evaluation.grammar} />
-          <ScoreBar label={t.criteria.vocabulary} data={result.evaluation.vocabulary} />
+          {criteriaRows(result.evaluation) ? (
+            <SpeakingFeedback evaluation={result.evaluation} />
+          ) : (
+            <>
+              <ScoreBar label={t.criteria.fluency} data={result.evaluation.fluency} />
+              <ScoreBar label={t.criteria.grammar} data={result.evaluation.grammar} />
+              <ScoreBar label={t.criteria.vocabulary} data={result.evaluation.vocabulary} />
+            </>
+          )}
           {result.metrics && <FluencyCard metrics={result.metrics} />}
 
-          <Corrections items={result.evaluation.topCorrections} />
+          <Corrections items={criteriaRows(result.evaluation) ? otherCorrections(result.evaluation) : result.evaluation.topCorrections} />
           <Feedback encouragement={result.evaluation.encouragement} nextFocus={result.evaluation.nextFocus} />
           <UpgradeAnswer key={result.submissionId} activityId={result.saved ? result.submissionId : null} original={result.evaluation.transcript} loggedIn={loggedIn} onCardsAdded={onCardsAdded} />
 

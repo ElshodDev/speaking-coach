@@ -34,7 +34,9 @@ public record ReadinessReport(
     [property: JsonPropertyName("daysToExam")] int? DaysToExam,
     [property: JsonPropertyName("focusSkill")] string? FocusSkill,
     [property: JsonPropertyName("focusReason")] string? FocusReason,
-    [property: JsonPropertyName("skills")] List<SkillReadiness> Skills);
+    [property: JsonPropertyName("skills")] List<SkillReadiness> Skills,
+    // Qo'shimcha (ixtiyoriy): Features:DayOneDiagnostic yoqiq bo'lsa true — frontend "boshlang'ich test" kartasini ko'rsatadi.
+    [property: JsonPropertyName("diagnosticEnabled")] bool DiagnosticEnabled = false);
 
 /// <summary>Hisoblash qoidalari — toza funksiyalar (unit test qilinadi).</summary>
 public static class ReadinessCalculator
@@ -165,7 +167,7 @@ public static class ReadinessCalculator
     /// Speaking/Writing mashq natijasidan dalil: Part 2 — "estimatedBand"; oddiy mashq — mezonlar o'rtachasi (0–100).
     /// Shkalaga o'tkazilgan qiymat qaytariladi; o'qib bo'lmasa — null.
     /// </summary>
-    public static ReadinessEvidence? FromPractice(string exam, ActivityType type, string responseJson, DateTime atUtc)
+    public static ReadinessEvidence? FromPractice(string exam, ActivityType type, string responseJson, DateTime atUtc, bool useSpeakingBands = false)
     {
         var skill = type switch { ActivityType.Speaking => "speaking", ActivityType.Writing => "writing", _ => null };
         if (skill is null) return null;
@@ -176,6 +178,10 @@ public static class ReadinessCalculator
             if (r.ValueKind != JsonValueKind.Object) return null;
             if (r.TryGetProperty("estimatedBand", out var eb) && eb.TryGetDecimal(out var band))
                 return new ReadinessEvidence(skill, "part2", exam == "cefr" ? BandToCefr(band) : Math.Clamp(band, 0, 9), atUtc);
+            // Gapirish mashqining 4 mezonli bahosi (Features:SpeakingFourCriteria): modelning o'z band bahosi,
+            // 0–100 ballni bandga chiziqli o'girishdan aniqroq.
+            if (useSpeakingBands && type == ActivityType.Speaking && r.TryGetProperty("overallBand", out var ob) && ob.ValueKind == JsonValueKind.Number && ob.TryGetDecimal(out var overallBand) && overallBand is >= 0 and <= 9)
+                return new ReadinessEvidence(skill, "practice", exam == "cefr" ? BandToCefr(overallBand) : overallBand, atUtc);
             string[] criteria = type == ActivityType.Writing
                 ? ["taskAchievement", "coherenceCohesion", "grammar", "vocabulary"]
                 : ["fluency", "grammar", "vocabulary"];
@@ -191,11 +197,40 @@ public static class ReadinessCalculator
             return null;
         }
     }
+
+    /// <summary>
+    /// O'qish/Tinglash mashqidan dalil: faqat ilovaning TAYYOR (darajasi ma'lum) mashqlaridan — sarlavha bo'yicha
+    /// kutubxonadan daraja topiladi; AI yozgan mashqning darajasi noma'lum — dalil yo'q (null).
+    /// </summary>
+    public static ReadinessEvidence? FromComprehension(string exam, ActivityType type, string promptJson, string responseJson, DateTime atUtc)
+    {
+        var skill = type switch { ActivityType.Reading => "reading", ActivityType.Listening => "listening", _ => null };
+        if (skill is null) return null;
+        try
+        {
+            using var prompt = JsonDocument.Parse(promptJson);
+            if (prompt.RootElement.ValueKind != JsonValueKind.Object || !prompt.RootElement.TryGetProperty("title", out var t) || t.ValueKind != JsonValueKind.String) return null;
+            var title = t.GetString();
+            var level = PracticeLibrary.For(type).FirstOrDefault(x => x.Exercise.Title == title)?.Level;
+            using var resp = JsonDocument.Parse(responseJson);
+            var r = resp.RootElement;
+            if (r.ValueKind != JsonValueKind.Object || !r.TryGetProperty("score", out var s) || !s.TryGetInt32(out var score) || !r.TryGetProperty("total", out var tt) || !tt.TryGetInt32(out var total)) return null;
+            if (ComprehensionBand.Estimate(level, score, total) is not { } band) return null;
+            return new ReadinessEvidence(skill, "practice", exam == "cefr" ? BandToCefr(band) : band, atUtc);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
 }
 
 /// <summary>Bazadan dalillarni yig'adi (yengil so'rovlar) va hisobotni tuzadi.</summary>
-public class ReadinessService(IAppDbContext db, IMockRows mockRows)
+public class ReadinessService(IAppDbContext db, IMockRows mockRows, FeatureFlags? flags = null)
 {
+    /// <summary>Oxirgi shuncha O'qish/Tinglash mashqi hisobga olinadi (matnlar katta — cheklangan).</summary>
+    public const int ComprehensionTake = 20;
+
     public async Task<ReadinessReport> ForUserAsync(User user, DateOnly today, DateTime nowUtc)
     {
         var exam = user.Goal is "ielts" or "cefr" ? user.Goal : null;
@@ -217,8 +252,22 @@ public class ReadinessService(IAppDbContext db, IMockRows mockRows)
                 .Take(60)
                 .Select(a => new { a.Type, a.CreatedAtUtc, a.ResponseData })
                 .ToListAsync();
-            evidence.AddRange(practice.Select(p => ReadinessCalculator.FromPractice(exam, p.Type, p.ResponseData, p.CreatedAtUtc)).OfType<ReadinessEvidence>());
+            var useBands = flags?.SpeakingFourCriteria ?? false;
+            evidence.AddRange(practice.Select(p => ReadinessCalculator.FromPractice(exam, p.Type, p.ResponseData, p.CreatedAtUtc, useBands)).OfType<ReadinessEvidence>());
+            // Boshlang'ich baho (Features:DayOneDiagnostic): ilovaning tayyor O'qish/Tinglash mashqlari darajasi ma'lum —
+            // ulardan past ishonchli taxminiy dalil olinadi (mock'siz ham tayyorlik birinchi kundan hisoblanadi).
+            if (flags?.DayOneDiagnostic == true)
+            {
+                var comp = await db.Activities
+                    .Where(a => a.UserId == user.Id && a.CreatedAtUtc >= since && (a.Type == ActivityType.Reading || a.Type == ActivityType.Listening))
+                    .OrderByDescending(a => a.CreatedAtUtc)
+                    .Take(ComprehensionTake)
+                    .Select(a => new { a.Type, a.CreatedAtUtc, a.PromptData, a.ResponseData })
+                    .ToListAsync();
+                evidence.AddRange(comp.Select(c => ReadinessCalculator.FromComprehension(exam, c.Type, c.PromptData, c.ResponseData, c.CreatedAtUtc)).OfType<ReadinessEvidence>());
+            }
         }
-        return ReadinessCalculator.Build(user.Goal, user.TargetScore, user.ExamDate, today, evidence, nowUtc);
+        var report = ReadinessCalculator.Build(user.Goal, user.TargetScore, user.ExamDate, today, evidence, nowUtc);
+        return report with { DiagnosticEnabled = exam is not null && flags?.DayOneDiagnostic == true };
     }
 }
