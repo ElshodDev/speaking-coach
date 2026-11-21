@@ -1,4 +1,6 @@
-# AI Speaking Coach
+# FluentUZ
+
+> *Avval "AI Speaking Coach" deb atalgan.*
 
 🇬🇧 [English](README.md) · 🇺🇿 O'zbekcha
 
@@ -137,8 +139,8 @@ Hammasi bepul tariflarda ishlaydi.
 ## Sifat
 
 - **Clean Architecture backend**: Domain, Application, Infrastructure va Api loyihalari. Bog'liqlik qoidasini arxitektura testlari tekshiradi ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)).
-- **Backend'da 856 ta unit test** (xUnit). Ular takrorlash jadvali, baholash jadvallari, validatorlar, qat'iy o'qish, xavfsizlik qoidalari, bot mantiqi, tarjimalar (har bir xabar uch tilda, bir xil parametrlar bilan), demo ma'lumotlari va ilovadagi har bir tayyor materialni (mock testlar, mashqlar) tekshiradi.
-- **Frontend'da 170 ta unit test** (Vitest): grafiklar, matn bilan ishlash, shadowing va diktant mantiqi, tarmoq xatolari va kutish muddati, Telegram'dan ochilish va kirish holati, ilova ichidagi brauzerni aniqlash, har bir tarjimadagi o'zbek imlosi, ilovadagi darslar, lug'at va mavzular (to'g'ri javob harflari teng taqsimlangani ham).
+- **Backend'da 923 ta unit test** (xUnit). Ular takrorlash jadvali, baholash jadvallari, validatorlar, qat'iy o'qish, xavfsizlik qoidalari, bot mantiqi, tarjimalar (har bir xabar uch tilda, bir xil parametrlar bilan), demo ma'lumotlari va ilovadagi har bir tayyor materialni (mock testlar, mashqlar) tekshiradi.
+- **Frontend'da 292 ta unit test** (Vitest): grafiklar, matn bilan ishlash, shadowing va diktant mantiqi, tarmoq xatolari va kutish muddati, Telegram'dan ochilish va kirish holati, ilova ichidagi brauzerni aniqlash, har bir tarjimadagi o'zbek imlosi, ilovadagi darslar, lug'at va mavzular (to'g'ri javob harflari teng taqsimlangani ham).
 - **28 ta Playwright end-to-end to'plami** haqiqiy frontend'ni soxta API bilan telefon, planshet va noutbuk ekranlarida sinaydi. Yuqoridagi skrinshotlar ham shu testlardan olingan.
 - **CI** har bir push'da ikkala qismni build qilib testlaydi, ma'lum zaifligi bor paket bo'lsa yiqiladi.
 
@@ -150,3 +152,10 @@ Hammasi bepul tariflarda ishlaydi.
 - Ballar taxminiy. Rasmiy IELTS va CEFR natijasini faqat sertifikatlangan imtihon markazi beradi.
 
 Loyiha qanday qurilgani, yo'lda nimalar buzilgani va qanday tuzatilgani **[case study](docs/case-study.md)** da batafsil yozilgan.
+
+## Litsenziya va xavfsizlik
+
+Bu repozitoriy kodni o'qish uchun ochiq, lekin **ochiq manba (open source) emas**: barcha huquqlar himoyalangan ([LICENSE](LICENSE)). Biror qismini ishlatish uchun ruxsat so'rash kerak bo'lsa, "License request" nomli issue oching.
+
+Xavfsizlik muammosini topdingizmi? Iltimos, uni yopiq tarzda xabar qiling: [SECURITY.md](SECURITY.md). Ommaviy issue ochmang.
+
