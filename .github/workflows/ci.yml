@@ -47,5 +47,8 @@ jobs:
       - run: npm ci
       # Ma'lum zaifliklar (yuqori va kritik) — bo'lsa, CI qizil.
       - run: npm audit --audit-level=high
+      # Lint (xato = CI qizil; ogohlantirishlar ko'rinadi). typescript-eslint TS 6 API bilan alohida papkada ishlaydi.
+      - run: npm ci --prefix lint
+      - run: npm run lint
       - run: npm test
       - run: npm run build

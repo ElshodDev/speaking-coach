@@ -1,0 +1,14 @@
+{
+  "name": "speaking-coach-lint",
+  "private": true,
+  "description": "ESLint alohida papkada: typescript-eslint hali TypeScript 7'ni qo'llamaydi, shuning uchun bu yerda TS 6 API ishlatiladi. Asosiy build (tsc 7) o'zgarmagan.",
+  "type": "module",
+  "devDependencies": {
+    "@eslint/js": "^10.0.0",
+    "eslint": "^10.0.0",
+    "eslint-plugin-react-hooks": "^7.0.0",
+    "globals": "^17.0.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.0.0"
+  }
+}

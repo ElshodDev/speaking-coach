@@ -33,7 +33,7 @@ import { ServerWake } from './ServerWake';
 import { Footer } from './Footer';
 import { setIsAdmin } from './adminFlag';
 import { confirmLeave } from './leaveGuard';
-import { common, LangSelect, useLang, useT } from './i18n';
+import { common, LangSelect, useT } from './i18n';
 import { appMsg } from './locales/app';
 import { Icon } from './Icon';
 import { homeMsg } from './locales/home';

@@ -11,6 +11,8 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "lint:install": "npm ci --prefix lint",
+    "lint": "node lint/node_modules/eslint/bin/eslint.js \"src/**/*.{ts,tsx}\"",
     "catalog": "node --experimental-strip-types --no-warnings scripts/learn-catalog.mjs"
   },
   "dependencies": {

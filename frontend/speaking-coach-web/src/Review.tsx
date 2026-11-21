@@ -81,6 +81,15 @@ export function Review({
   // Baho/o'chirish yuborilmoqda: `busy` holati keyingi renderda yangilanadi, shuning
   // uchun tez ikki bosish bitta kartani ikki marta baholab (keyingisini o'tkazib) yubormasin.
   const pendingRef = useRef(false);
+  // Takrorlash seansi tugadi: kamida bitta karta baholangan va navbat bo'shagan (seans boshiga bir marta).
+  // Hook'lar shartli `return`lardan OLDIN turishi shart (mehmon kirgach hook'lar soni o'zgarmasin).
+  const gradedRef = useRef(0);
+  useEffect(() => {
+    if (cards.length === 0 && gradedRef.current > 0) {
+      gradedRef.current = 0;
+      track('review_completed');
+    }
+  }, [cards.length]);
   useEffect(() => {
     const on = (e: KeyboardEvent) => keyHandler.current(e);
     window.addEventListener('keydown', on);
@@ -147,15 +156,6 @@ export function Review({
   }
 
   const current = cards[0];
-
-  // Takrorlash seansi tugadi: kamida bitta karta baholangan va navbat bo'shagan (seans boshiga bir marta).
-  const gradedRef = useRef(0);
-  useEffect(() => {
-    if (cards.length === 0 && gradedRef.current > 0) {
-      gradedRef.current = 0;
-      track('review_completed');
-    }
-  }, [cards.length]);
 
   // Karta bajarildi (baholandi yoki o'chirildi): keyingisiga o'tamiz, statistika yangilanadi.
   // Statistika kelmasa — xato ko'rsatmaymiz, karta baribir saqlangan.
