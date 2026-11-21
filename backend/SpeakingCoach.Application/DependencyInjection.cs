@@ -54,6 +54,7 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
         services.AddScoped<AuthService>();
         services.AddScoped<AiQuotaService>();
+        services.AddScoped<ReferralService>();
         services.AddScoped<ReviewService>();
         services.AddScoped<TodayService>();
         services.AddScoped<MockSets>();

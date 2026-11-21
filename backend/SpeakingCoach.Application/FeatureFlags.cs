@@ -12,5 +12,8 @@ public class FeatureFlags(IConfiguration config)
     /// <summary>Birinchi kunlik diagnostik test va boshlang'ich tayyorlik bahosi. Env: Features__DayOneDiagnostic.</summary>
     public bool DayOneDiagnostic => Read("Features:DayOneDiagnostic");
 
+    /// <summary>Taklif (referral): taklif havolasi, mukofot (+kunlik AI urinishlar). Env: Features__Referral.</summary>
+    public bool Referral => Read("Features:Referral");
+
     private bool Read(string key) => !bool.TryParse(config[key], out var on) || on;
 }

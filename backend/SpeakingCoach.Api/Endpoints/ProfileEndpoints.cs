@@ -31,6 +31,14 @@ public static partial class ProfileEndpoints
             });
         });
 
+        // Taklif (referral): mening kodim, nechta do'st qo'shildi, mukofot faolmi. Feature flag o'chiq bo'lsa enabled=false.
+        app.MapGet("/api/referral", async (HttpRequest request, AuthService auth, ReferralService referrals) =>
+        {
+            var user = await auth.GetCurrentUserAsync(request);
+            if (user is null) return Unauthorized(request);
+            return Results.Ok(await referrals.GetAsync(user));
+        });
+
         app.MapGet("/api/profile", async (HttpRequest request, AuthService auth, AdminOptions admins) =>
         {
             var user = await auth.GetCurrentUserAsync(request);

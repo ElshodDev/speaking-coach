@@ -208,9 +208,11 @@ public class AiQuotaService
     private readonly AiQuotaOptions _options;
     private readonly GuestQuotaStore _guests;
     private readonly AiInFlight _inFlight;
+    private readonly FeatureFlags? _flags;
 
-    public AiQuotaService(IAppDbContext db, AdminOptions admins, AiQuotaOptions options, GuestQuotaStore guests, AiInFlight inFlight)
+    public AiQuotaService(IAppDbContext db, AdminOptions admins, AiQuotaOptions options, GuestQuotaStore guests, AiInFlight inFlight, FeatureFlags? flags = null)
     {
+        _flags = flags;
         _db = db;
         _admins = admins;
         _options = options;
@@ -244,8 +246,10 @@ public class AiQuotaService
         var usage = await _db.AiUsages.FirstOrDefaultAsync(u => u.UserId == user.Id && u.Day == day);
         // Demo hisob — mehmon limitlari bilan (bepul Gemini kvotasi haqiqiy foydalanuvchilarga qolsin).
         var demo = DemoAccount.IsDemo(user.Email);
+        // Taklif mukofoti (feature flag Features__Referral): taklif qilgan/qilingan hisobga +kunlik mashq urinishlari.
+        var bonus = !demo && _flags?.Referral == true ? await ReferralService.ExtraExercisesAsync(_db, user, DateTime.UtcNow) : 0;
         return new QuotaStatus(
-            new QuotaCounter(usage?.Exercises ?? 0, demo ? _options.GuestExercises : _options.Exercises),
+            new QuotaCounter(usage?.Exercises ?? 0, demo ? _options.GuestExercises : _options.Exercises + bonus),
             new QuotaCounter(usage?.Words ?? 0, demo ? _options.GuestWords : _options.Words),
             Unlimited: _admins.IsAdmin(user),
             Guest: false,

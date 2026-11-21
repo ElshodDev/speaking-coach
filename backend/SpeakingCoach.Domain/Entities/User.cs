@@ -63,6 +63,12 @@ public class User
     /// null — bu maydondan oldin ochilgan va aniqlab bo'lmagan hisob.
     /// </summary>
     public string? SignupMethod { get; set; }
+
+    /// <summary>
+    /// Kim taklif qilgan (referral): taklif havolasi orqali ro'yxatdan o'tganda yoziladi. null — taklifsiz.
+    /// Faqat bir marta, hisob ochilganda; keyin o'zgarmaydi. Mukofot shu maydondan hisoblanadi (ReferralRules).
+    /// </summary>
+    public Guid? ReferredByUserId { get; set; }
 }
 
 /// <summary>User.SignupMethod qiymatlari.</summary>
