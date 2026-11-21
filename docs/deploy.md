@@ -139,3 +139,12 @@ Domen o'zgarsa, uchta joyni yangilang: Render'dagi `FrontendOrigin` (birinchisi 
 - `robots.txt` va `sitemap.xml` build paytida yoziladi (`vite.config.ts` → `src/seo.ts`), manzil `VITE_SITE_URL` dan. Sitemap'da faqat `/`, `/privacy.html`, `/terms.html` (hash marshrutlar alohida sahifa emas).
 - PWA nomi: `manifest.webmanifest` → "FluentUZ". Ilova ichidagi sarlavha, ulashish kartasi, maxfiylik/shartlar sahifalari, email va Telegram matnlari ham "FluentUZ".
 - Qaytarish: `index.html` va `manifest.webmanifest` ni oldingi holatga qaytarish kifoya (funksiya yoki ma'lumotga ta'sir yo'q).
+
+## Oflayn takrorlash
+
+Internet bo'lmaganda ham bugungi kartalarni takrorlash mumkin (faqat frontend; API va baza o'zgarmagan).
+- **Qanday ishlaydi:** Takrorlash sahifasi internet bor paytda ochilganda bugungi muddati kelgan kartalar (`GET /api/review/due`, 50 tagacha) qurilmada (`localStorage["sc.offReview.v1"]`) saqlanadi. Oflaynda shu kartalar ko'rsatiladi, baholar navbatga yoziladi va internet qaytganda ketma-ket yuboriladi (server takror/erta baholarni o'zi e'tiborsiz qoldiradi, shuning uchun qayta yuborish xavfsiz).
+- **Chegaralar:** faqat bugungi kartalar (ertasi kuni kartalar o'chadi, yuborilmagan baholar saqlanadi); faqat bitta hisob uchun; chiqishda hammasi o'chadi; oflaynda karta qo'shish/o'chirish va statistika ishlamaydi. Sahifa oflaynda ochilishi uchun Takrorlashni bir marta internet bilan ochgan bo'lish kerak (service worker kodni keshlaydi).
+- **Qaytarish (feature flag):** Vercel'da `VITE_OFFLINE_REVIEW=off` va Redeploy — hech narsa saqlanmaydi, eskisi o'chadi.
+- **Diqqat:** baho oflaynda berilgan vaqt emas, serverga yetib kelgan vaqt bo'yicha hisoblanadi (oraliqlar bir necha soatga siljishi mumkin).
+

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { apiJson, postJson } from './api';
+import { ApiError, apiJson, getSavedEmail, postJson } from './api';
+import { enqueueGrade, flushQueue, loadDue, pendingGrades, saveDue, type SendGrade } from './offlineReview';
 import { track } from './analytics';
 import { isSpeechSupported, sleep, speakAsync, stopSpeaking } from './speech';
 import { PageHeader } from './ui';
@@ -75,6 +76,10 @@ export function Review({
   const [revealed, setRevealed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // Oflayn rejim: kartalar qurilmadagi bugungi nusxadan, baholar navbatga yoziladi.
+  const [offline, setOffline] = useState(false);
+  const [pending, setPending] = useState(0);
+  const [synced, setSynced] = useState(0);
   const wide = useWide();
   // Klaviatura (kompyuter): Probel/Enter — javob, 1–4 — baho. Ishlovchi har renderda yangilanadi.
   const keyHandler = useRef<(e: KeyboardEvent) => void>(() => undefined);
@@ -96,9 +101,30 @@ export function Review({
     return () => window.removeEventListener('keydown', on);
   }, []);
 
+  const user = getSavedEmail() ?? '';
+
+  // Navbatdagi oflayn baholarni yuboradi; qancha yuborilganini ko'rsatadi.
+  const sync = useCallback(async () => {
+    if (!user || pendingGrades(user).length === 0) return 0;
+    const send: SendGrade = async (id, grade) => {
+      try {
+        await postJson(`/api/review/cards/${id}/grade`, { grade });
+        return 'ok';
+      } catch (err) {
+        // Javob umuman kelmadi (internet/server) — keyinroq; server rad etgan (masalan karta o'chgan) — navbatdan chiqadi.
+        return err instanceof ApiError && err.status === 0 ? 'offline' : 'drop';
+      }
+    };
+    const { sent, left } = await flushQueue(user, send);
+    setPending(left);
+    if (sent > 0) setSynced((n) => n + sent);
+    return sent;
+  }, [user]);
+
   const load = useCallback(async () => {
     if (!loggedIn) return;
     try {
+      await sync();
       const [due, s] = await Promise.all([
         apiJson<ReviewCard[]>(`/api/review/due?limit=50${scopeQuery}`),
         apiJson<ReviewStats>(statsPath()),
@@ -106,10 +132,31 @@ export function Review({
       setCards(due);
       setStats(s);
       setError('');
+      setOffline(false);
+      // Faqat to'liq (Lug'at doirasiz) bugungi ro'yxat saqlanadi.
+      if (!scope) saveDue(user, due);
     } catch (err) {
-      setError(err instanceof Error ? err.message : msg(reviewMsg).loadError);
+      // Javob umuman kelmadi — bugungi saqlangan kartalar bilan oflayn ishlaymiz.
+      const saved = err instanceof ApiError && err.status === 0 && !scope ? loadDue(user) : null;
+      if (saved) {
+        setCards(saved);
+        setOffline(true);
+        setPending(pendingGrades(user).length);
+        setError('');
+      } else {
+        setError(err instanceof Error ? err.message : msg(reviewMsg).loadError);
+      }
     }
-  }, [loggedIn, scopeQuery]);
+  }, [loggedIn, scopeQuery, scope, user, sync]);
+
+  // Internet qaytganda: navbatni yuborib, yangi holatni yuklaymiz.
+  useEffect(() => {
+    const on = () => {
+      void load();
+    };
+    window.addEventListener('online', on);
+    return () => window.removeEventListener('online', on);
+  }, [load]);
 
   useEffect(() => {
     load();
@@ -162,9 +209,23 @@ export function Review({
   async function cardDone(id: string) {
     setRevealed(false);
     setCards((prev) => prev.filter((card) => card.id !== id));
+    if (offline) return; // Statistika va menyudagi son — internet qaytganda yangilanadi.
     onChanged();
     const s = await apiJson<ReviewStats>(statsPath()).catch(() => null);
     if (s) setStats(s);
+  }
+
+  // Oflayn baho: navbatga yoziladi, karta ro'yxatdan chiqadi. Saqlab bo'lmasa — xato ko'rsatiladi (baho yo'qolmasin).
+  function gradeOffline(id: string, value: number) {
+    if (scope || !enqueueGrade(user, id, value)) {
+      setError(c.error);
+      return;
+    }
+    setOffline(true);
+    setPending(pendingGrades(user).length);
+    setError('');
+    setRevealed(false);
+    setCards((prev) => prev.filter((card) => card.id !== id));
   }
 
   async function grade(value: number) {
@@ -173,11 +234,16 @@ export function Review({
     pendingRef.current = true;
     setBusy(true);
     try {
-      await postJson(`/api/review/cards/${current.id}/grade`, { grade: value });
-      setError('');
-      await cardDone(current.id);
+      if (offline || (typeof navigator !== 'undefined' && navigator.onLine === false)) {
+        gradeOffline(current.id, value);
+      } else {
+        await postJson(`/api/review/cards/${current.id}/grade`, { grade: value });
+        setError('');
+        await cardDone(current.id);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : c.error);
+      if (err instanceof ApiError && err.status === 0 && !scope) gradeOffline(current.id, value);
+      else setError(err instanceof Error ? err.message : c.error);
     } finally {
       pendingRef.current = false;
       setBusy(false);
@@ -202,6 +268,10 @@ export function Review({
   };
 
   async function remove() {
+    if (offline) {
+      setError(t.offlineNoNew);
+      return;
+    }
     if (!current || pendingRef.current || !confirm(t.confirmDelete)) return;
     pendingRef.current = true;
     setBusy(true);
@@ -239,6 +309,16 @@ export function Review({
     }
     main={
     <>
+      {offline && (
+        <p className="offline-note small" role="status" data-testid="review-offline">
+          {t.offlineBanner(pending)}
+        </p>
+      )}
+      {!offline && synced > 0 && (
+        <p className="offline-note small" role="status" data-testid="review-synced">
+          {t.syncedBanner(synced)}
+        </p>
+      )}
       {error && <p className="error small">{error}</p>}
       {current && wide && <p className="muted tiny" style={{ margin: '12px 0 0' }} data-testid="review-keys">{t.keysHint}</p>}
 
