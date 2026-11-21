@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { getLevel, postJson } from './api';
 import { useT } from './i18n';
 import { upgradeMsg } from './locales/upgrade';
-import { defaultTarget, highlight, IELTS_HINT, TARGETS, wordCount, type Target, type UpgradeResult } from './upgradeLogic';
+import { defaultTarget, highlight, IELTS_HINT, MIN_WORDS, TARGETS, wordCount, type Target, type UpgradeResult } from './upgradeLogic';
 
 /**
  * "Javobimni yaxshila" — Speaking / Part 2 / Writing natijasi ostida. Saqlangan urinish ID'si bo'yicha
@@ -29,6 +29,17 @@ export function UpgradeAnswer({ activityId, original, loggedIn, onCardsAdded }: 
       <section className="upgrade" data-testid="upgrade">
         <h3>{t.title}</h3>
         <p className="muted small" style={{ margin: 0 }}>{t.login}</p>
+      </section>
+    );
+  }
+
+  // Juda qisqa javob: tugmani bosib server xatosini kutish o'rniga darhol tushuntiramiz.
+  const words = wordCount(original);
+  if (words < MIN_WORDS) {
+    return (
+      <section className="upgrade" data-testid="upgrade">
+        <h3>{t.title}</h3>
+        <p className="muted small" style={{ margin: 0 }} data-testid="upgrade-short">{t.tooShort(words)}</p>
       </section>
     );
   }

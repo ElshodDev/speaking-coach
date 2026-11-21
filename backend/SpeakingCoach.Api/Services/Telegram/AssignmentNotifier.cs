@@ -19,7 +19,7 @@ public class AssignmentNotifier(AppDbContext db, ITelegramApi api, TelegramOptio
         var group = await db.Groups.FirstOrDefaultAsync(g => g.Id == a.GroupId, ct);
         if (group is null) return 0;
         var teacher = await db.Users.Where(u => u.Id == group.TeacherId).Select(u => new { u.DisplayName, u.Email }).FirstOrDefaultAsync(ct);
-        var teacherName = GroupLogic.DisplayNameOf(teacher?.DisplayName, teacher?.Email ?? "");
+        var teacherName = GroupLogic.TeacherNameOf(teacher?.DisplayName);
 
         var memberIds = await db.GroupMembers.Where(m => m.GroupId == a.GroupId).Select(m => m.UserId).ToListAsync(ct);
         var accounts = await db.TelegramAccounts.Where(t => memberIds.Contains(t.UserId)).ToListAsync(ct);
@@ -28,7 +28,7 @@ public class AssignmentNotifier(AppDbContext db, ITelegramApi api, TelegramOptio
         {
             try
             {
-                var html = BotToday.NewTaskMessage(acc.Lang, teacherName, group.Name, a.Kind, a.Target, a.Instructions, a.DueAtUtc, acc.TzOffsetMinutes);
+                var html = BotToday.NewTaskMessage(acc.Lang, teacherName ?? Texts.Get(acc.Lang, "bot.your_teacher"), group.Name, a.Kind, a.Target, a.Instructions, a.DueAtUtc, acc.TzOffsetMinutes);
                 var route = GroupLogic.RouteFor(a.Kind);
                 await api.SendMessageAsync(acc.ChatId, html, new[]
                 {

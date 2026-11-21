@@ -142,7 +142,7 @@ export function TelegramLogin({ onSuccess }: { onSuccess: (r: TelegramLoginResul
           {t.open}
         </a>
         <div className="spread">
-          <span className="muted tiny">⏳ {t.waiting}</span>
+          <span className="muted tiny">{t.waiting}</span>
           <button type="button" className="btn-link small" onClick={() => setState({ kind: 'idle' })}>
             {t.cancel}
           </button>

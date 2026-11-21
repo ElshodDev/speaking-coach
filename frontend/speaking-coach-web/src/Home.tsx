@@ -156,7 +156,8 @@ export function Home({
       <TasksCard loggedIn go={go} />
     </>
   );
-  const statsCard = stats && (
+  // Yangi foydalanuvchida (karta ham, seriya ham yo'q) 0/0/0 kartasi hech narsa aytmaydi — ko'rsatmaymiz.
+  const statsCard = stats && (stats.total > 0 || stats.streakDays > 0 || stats.reviewedToday > 0) && (
     <div className="card">
       <div className="stats">
         <div className="stat">

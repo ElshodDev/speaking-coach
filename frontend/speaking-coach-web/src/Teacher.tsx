@@ -57,11 +57,17 @@ export function TeacherHome({ go }: { go: (route: string) => void }) {
   return (
     <>
       <PageHeader title={t.groupsTitle} subtitle={t.groupsSubtitle} onBack={() => go('profile')} />
-      <div className="card stack">
+      <form
+        className="card stack"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!busy && name.trim().length >= 2) void create();
+        }}
+      >
         <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder={t.newGroupName} aria-label={t.newGroupName} maxLength={80} />
-        <button className="btn btn-primary" onClick={create} disabled={busy || name.trim().length < 2}>{t.create}</button>
+        <button type="submit" className="btn btn-primary" disabled={busy || name.trim().length < 2}>{t.create}</button>
         {error && <p className="error small" role="alert">{error}</p>}
-      </div>
+      </form>
       {groups && groups.length === 0 && <p className="muted">{t.noGroups}</p>}
       {groups?.map((g) => (
         <button key={g.id} className="card" style={{ display: 'block', width: '100%', textAlign: 'left', cursor: 'pointer' }} onClick={() => go(`teacher/${g.id}`)}>

@@ -229,7 +229,7 @@ public static class GroupEndpoints
             return Results.Ok(new
             {
                 group.Id, group.Name,
-                teacher = GroupLogic.DisplayNameOf(teacher.DisplayName, teacher.Email),
+                teacher = GroupLogic.TeacherNameOf(teacher.DisplayName),
                 isTeacher = group.TeacherId == user.Id,
                 isMember = await db.GroupMembers.AnyAsync(m => m.GroupId == group.Id && m.UserId == user.Id),
             });
@@ -276,7 +276,7 @@ public static class GroupEndpoints
                 groups = groups.Select(g =>
                 {
                     var t = teachers.First(x => x.Id == g.TeacherId);
-                    return new { g.Id, g.Name, teacher = GroupLogic.DisplayNameOf(t.DisplayName, t.Email) };
+                    return new { g.Id, g.Name, teacher = GroupLogic.TeacherNameOf(t.DisplayName) };
                 }),
                 assignments = assignments.Select(a => new
                 {

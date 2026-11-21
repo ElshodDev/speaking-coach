@@ -18,7 +18,7 @@ interface Task {
 }
 
 interface TasksData {
-  groups: { id: string; name: string; teacher: string }[];
+  groups: { id: string; name: string; teacher: string | null }[];
   assignments: Task[];
 }
 
@@ -99,7 +99,7 @@ export function TasksPage({ go }: { go: (route: string) => void }) {
                 <div key={g.id} className="spread" style={{ padding: '8px 0', borderTop: '1px solid var(--border)' }}>
                   <span className="small">
                     <strong>{g.name}</strong>
-                    <div className="muted tiny">{g.teacher}</div>
+                    {g.teacher && <div className="muted tiny">{g.teacher}</div>}
                   </span>
                   <button
                     className="btn-link small quiet"
@@ -131,7 +131,13 @@ export function JoinByCode({ go }: { go: (route: string) => void }) {
     <div className="card stack">
       <strong>{t.joinTitle}</strong>
       <p className="muted small" style={{ margin: 0 }}>{t.joinText}</p>
-      <div className="row">
+      <form
+        className="row"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (clean.length === 6) go(`join/${clean}`);
+        }}
+      >
         <input
           className="input"
           style={{ flex: 1, textTransform: 'uppercase', letterSpacing: 2 }}
@@ -143,8 +149,8 @@ export function JoinByCode({ go }: { go: (route: string) => void }) {
           autoCapitalize="characters"
           autoComplete="off"
         />
-        <button className="btn btn-primary" disabled={clean.length !== 6} onClick={() => go(`join/${clean}`)}>{t.joinButton}</button>
-      </div>
+        <button type="submit" className="btn btn-primary" disabled={clean.length !== 6}>{t.joinButton}</button>
+      </form>
     </div>
   );
 }
@@ -152,7 +158,7 @@ export function JoinByCode({ go }: { go: (route: string) => void }) {
 /** #/join/KOD — taklif havolasi: guruh haqida ma'lumot va rozilik bilan qo'shilish. */
 export function JoinGroup({ code, loggedIn, go, onLogin }: { code: string; loggedIn: boolean; go: (route: string) => void; onLogin: () => void }) {
   const t = useT(teacherMsg);
-  const [info, setInfo] = useState<{ id: string; name: string; teacher: string; isTeacher: boolean; isMember: boolean } | null>(null);
+  const [info, setInfo] = useState<{ id: string; name: string; teacher: string | null; isTeacher: boolean; isMember: boolean } | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 

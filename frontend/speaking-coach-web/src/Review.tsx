@@ -229,7 +229,7 @@ export function Review({
     main={
     <>
       {error && <p className="error small">{error}</p>}
-      {current && wide && <p className="muted tiny" style={{ margin: '12px 0 0' }} data-testid="review-keys">⌨️ {t.keysHint}</p>}
+      {current && wide && <p className="muted tiny" style={{ margin: '12px 0 0' }} data-testid="review-keys">{t.keysHint}</p>}
 
       {current ? (
         <div className="card">

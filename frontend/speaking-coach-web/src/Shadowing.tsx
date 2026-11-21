@@ -916,7 +916,7 @@ export function ShadowingLessonPage({ id, go, loggedIn, onLogin }: { id: string;
       </div>
       <p className="muted small shadow-modehint">{t.modeHint[mode]}</p>
       {lesson.kind === 'youtube' && <p className="muted small" style={{ margin: '0 0 8px' }}>{t.videoNote}</p>}
-      {wide && <p className="muted tiny" data-testid="shadow-keys">⌨️ {t.keysHint}</p>}
+      {wide && <p className="muted tiny" data-testid="shadow-keys">{t.keysHint}</p>}
 
           </>
         );
