@@ -65,7 +65,7 @@ O'chirish uchun qiymatni `false` qiling va servisni qayta ishga tushiring. Yangi
 
 ## Render (backend)
 
-Root directory: **`backend`**, Dockerfile path: **`./Dockerfile`**, Docker. (Backend 4 ta loyihadan iborat — qarang: [ARCHITECTURE.md](ARCHITECTURE.md) — shuning uchun build konteksti butun `backend` papkasi.) **Health check path: `/health/live`** (bazaga tegmaydi — Neon uxlab qolganda Render serverni behuda qayta ishga tushirmaydi; `/health` esa bazani ham tekshiradi, monitoring uchun). Environment:
+Root directory: **`backend`**, Dockerfile path: **`./Dockerfile`**, Docker build context directory: **`.`** (tasdiqlangan ishlaydigan sozlama, 2026-11). Uchalasi bir-biriga mos bo'lishi shart: Root Directory o'rnatilsa, Render o'sha papkani loyiha ildizi qiladi va qolgan yo'llar unga nisbatan o'qiladi. Xatolar: `failed to read dockerfile: open Dockerfile` — yo'l noto'g'ri (masalan, bo'sh joy bilan ikkita yo'l yozilgan); `lstat .../src/backend: no such file` — Root Directory `backend` va Context ham `backend` qilib qo'yilgan (yo'l ikki marta qo'shiladi). Build yiqilsa, Render **eski versiyani ishlatishda davom etadi** — yangi kod jonli bo'lmaydi; tekshirish: `GET /api/referral` `401` bersa yangi backend, `404` bo'lsa eski. Docker. (Backend 4 ta loyihadan iborat — qarang: [ARCHITECTURE.md](ARCHITECTURE.md) — shuning uchun build konteksti butun `backend` papkasi.) **Health check path: `/health/live`** (bazaga tegmaydi — Neon uxlab qolganda Render serverni behuda qayta ishga tushirmaydi; `/health` esa bazani ham tekshiradi, monitoring uchun). Environment:
 
 | O'zgaruvchi | Nima uchun |
 |---|---|
