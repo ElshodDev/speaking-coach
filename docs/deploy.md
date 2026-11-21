@@ -160,3 +160,12 @@ Doʻstni taklif qilish: profilda havola (`https://fluentuz.app/?ref=KOD`), doʻs
 - **Telegram orqali kirish:** hisob ochilgandan keyin brauzer saqlangan kodni `POST /api/referral/claim {ref}` bilan yuboradi (kod hisob ochilgan paytda serverga yetmaydi). Server faqat Telegram orqali **1 soat ichida** ochilgan, hali taklif biriktirilmagan hisobga biriktiradi (atomar, bir marta); eski hisob, noto'g'ri kod, demo yoki `Features__Referral=false` bo'lsa — `{claimed:false}`. Yangi migratsiya **kerak emas** (xuddi shu `ReferredByUserId` ustuni). Saytdan "Telegram orqali kirish" va Mini App (`/api/auth/telegram`) — ikkalasi ham shu yo'ldan.
 - **Hozircha qamrab olinmagan:** Mini App ichida ochilganda `?ref=` bo'lmasa (masalan, botning menyu tugmasidan) kod yo'q — `t.me/bot/app?startapp=...` orqali taklif havolasi hali qo'llab-quvvatlanmaydi. Kod Plausible'ga yuborilmaydi.
 
+### Eslatmalar ishlayotganini tekshirish (3 daqiqa)
+
+1. **cron-job.org** (yoki GitHub Actions → "Telegram reminders") tarixida oxirgi chaqiruvlar `202` bilan tugaganini ko'ring; har soatda bittadan bo'lishi kerak.
+2. **Render logida** har yurishdan keyin shu qator chiqadi: `Eslatmalar: tekshirildi N, yuborildi N, maqsad bajarilgan N, o'chirildi N; tozalandi N`. Soat bo'yicha ketma-ket chiqmasa — cron ishlamayapti.
+3. **Telegram'da o'zingizga:** botda ⚙️ Sozlamalar → eslatma soatini hozirgi soatdan 1 soat keyinga qo'ying, shu soatda xabar kelishini kuting (maqsadingiz hali bajarilmagan bo'lishi kerak, aks holda xabar kelmaydi).
+4. Cron `401/403` bersa — `X-Cron-Secret` Render'dagi `Telegram__CronSecret` bilan bir xil emas.
+
+Bosh sahifadagi "Telegramda eslatma" taklifi: "Ulash" Telegram'ni darhol ochadi (profilga o'tkazmaydi); "Keyinroq" 7 kunga yashiradi (`localStorage["sc.tgPromo.dismissedAt"]`).
+

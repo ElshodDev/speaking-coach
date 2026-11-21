@@ -242,10 +242,10 @@ export function Home({
       {due}
       {practice}
       {statsCard}
+      {promo}
       <WordOfDay loggedIn />
       <QuizTile go={go} />
       {league}
-      {promo}
     </>
   );
 }

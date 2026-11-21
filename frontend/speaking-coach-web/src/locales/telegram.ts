@@ -18,6 +18,8 @@ export const telegramMsg = defineMessages(
     promoTitle: 'Telegramda eslatma va takrorlash',
     promoText: 'Kuniga bitta xabar — seriya uzilmaydi. Yoʻlda kartalarni chatda takrorlaysiz.',
     promoButton: 'Ulash',
+    promoLater: 'Keyinroq',
+    promoMore: 'Batafsil',
     features: [
       'Bugungi reja va oʻqituvchi vazifalari — chatning oʻzida',
       'Kartalarni takrorlash, soʻz yuborib tarjima olish',
@@ -44,6 +46,8 @@ export const telegramMsg = defineMessages(
       promoTitle: 'Напоминания и повторение в Telegram',
       promoText: 'Одно сообщение в день — серия не прервётся. Повторяйте карточки в дороге прямо в чате.',
       promoButton: 'Подключить',
+      promoLater: 'Позже',
+      promoMore: 'Подробнее',
       features: [
         'План на сегодня и задания учителя — прямо в чате',
         'Повторение карточек, перевод любого слова',
@@ -69,6 +73,8 @@ export const telegramMsg = defineMessages(
       promoTitle: 'Reminders and review in Telegram',
       promoText: 'One message a day keeps your streak alive. Review your cards in the chat on the go.',
       promoButton: 'Connect',
+      promoLater: 'Not now',
+      promoMore: 'Learn more',
       features: [
         'Today’s plan and teacher assignments — right in the chat',
         'Review your cards, translate any word',
