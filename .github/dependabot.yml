@@ -20,6 +20,10 @@ updates:
     schedule:
       interval: monthly
     open-pull-requests-limit: 2
+    ignore:
+      # typescript-eslint hali TypeScript 7'ni qo'llamaydi — lint uchun TS 6 qoladi.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: nuget
     directories:
       - /backend/SpeakingCoach.Domain
@@ -30,6 +34,14 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # Loyiha net10.0: .NET 11 paketlari (Microsoft.Extensions.*, EF Core) versiya ziddiyatini keltiradi — bosh versiya yangilanmaydi.
+      - dependency-name: "Microsoft.Extensions.*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Microsoft.EntityFrameworkCore*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Npgsql.EntityFrameworkCore.PostgreSQL"
+        update-types: ["version-update:semver-major"]
     groups:
       efcore:
         patterns: ["Microsoft.EntityFrameworkCore*", "Npgsql*"]
