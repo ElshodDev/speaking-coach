@@ -14,6 +14,7 @@ import { audioExt } from './shadowLogic';
 import { isSpeechSupported, speakAsync, stopSpeaking } from './speech';
 import { PageHeader } from './ui';
 import { Icon } from './Icon';
+import { requestMicConsent } from './consent';
 
 interface Correction {
   original: string;
@@ -186,6 +187,8 @@ export function TalkSession({
     startingRef.current = true;
     setStarting(true);
     try {
+      // Birinchi yozishdan oldin: ovoz AI'ga yuborilishi haqida rozilik (bir marta so'raladi).
+      if (!(await requestMicConsent())) return;
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       if (!aliveRef.current) {
         stream.getTracks().forEach((tr) => tr.stop());

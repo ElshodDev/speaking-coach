@@ -16,6 +16,7 @@ import { audioExt } from './shadowLogic';
 import { initialTopic, TopicPicker, type PickedTopic } from './TopicPicker';
 import { stabilityMsg } from './locales/stability';
 import { Corrections, Feedback, GuestNote, HistoryList, ScoreBar, type CorrectionItem, type ScoreWithReasoning } from './ui';
+import { requestMicConsent } from './consent';
 
 // Mavzular endi ilovaning tayyor bankida (content/topics.ts) — TopicPicker orqali.
 
@@ -140,6 +141,8 @@ export function Recorder({
     startingRef.current = true;
     setStarting(true);
     try {
+      // Birinchi yozishdan oldin: ovoz AI'ga yuborilishi haqida rozilik (bir marta so'raladi).
+      if (!(await requestMicConsent())) return;
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       if (!aliveRef.current) {
         stream.getTracks().forEach((track) => track.stop());

@@ -50,6 +50,10 @@ Ikki loyiha oching (Sentry'da: .NET va Browser/JavaScript) va DSN'larni qo'ying.
 
 Maxfiylik: ovoz va so'rov tanasi, sarlavhalar, cookie, so'rov qismi (`?...`), foydalanuvchi va breadcrumbs yuborilmaydi; xato matnidagi email/token niqoblanadi; Gemini noto'g'ri javobidan nutq parchasi ("Javob: ...") kesiladi. Qoidalar: `backend/SpeakingCoach.Api/Web/SentryScrubber.cs` va `frontend/speaking-coach-web/src/monitoring.ts` (ikkalasi testlangan). Kutilgan holatlar (AI band 503, katta so'rov 413, bekor qilingan so'rov) xato sifatida yuborilmaydi. Frontend'da Sentry kutubxonasi kech (dinamik) yuklanadi va faqat DSN berilgan build'ga qo'shiladi (~130 kB gzip alohida bo'lak). Performance (traces) va replay o'chiq.
 
+## Mikrofon roziligi
+
+Birinchi yozishdan oldin "ovoz Google Gemini'ga yuboriladi, saqlanmaydi" roziligi so'raladi (UZ/RU/EN; qurilmada `localStorage["sc.micConsent.v1"]`). Hamma mikrofon ishlatiladigan joy (Gapirish, Part 2, Mock Speaking, AI suhbat, Shadowing) `requestMicConsent()` dan o'tadi. **O'chirish (feature flag): Vercel'da `VITE_MIC_CONSENT=off` va Redeploy.** Matn maxfiylik siyosati (`public/privacy.html`) bilan bir xil bo'lishi kerak.
+
 ## Render (backend)
 
 Root directory: **`backend`**, Dockerfile path: **`./Dockerfile`**, Docker. (Backend 4 ta loyihadan iborat — qarang: [ARCHITECTURE.md](ARCHITECTURE.md) — shuning uchun build konteksti butun `backend` papkasi.) **Health check path: `/health/live`** (bazaga tegmaydi — Neon uxlab qolganda Render serverni behuda qayta ishga tushirmaydi; `/health` esa bazani ham tekshiradi, monitoring uchun). Environment:

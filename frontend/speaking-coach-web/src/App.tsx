@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { onRoute } from './analytics';
+import { MicConsentHost } from './consent';
 import { statsPath, type ReviewStats } from './reviewStats';
 import { EXERCISES, ExerciseTiles, Home, type ExerciseKind } from './Home';
 import { JoinByCode, JoinGroup, TasksPage } from './StudentTasks';
@@ -515,6 +516,7 @@ function App() {
           </div>
         </nav>
 
+        <MicConsentHost />
         <main className={pageWidth(section, sub, third)}>
           {isDemoEmail(email) && section !== 'demo' && <DemoBanner onRegister={leaveDemo} />}
           {sessionExpired && !loggedIn && (
