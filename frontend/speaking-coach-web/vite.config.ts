@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { connectAllowed } from './src/csp';
+import { buildRobots, buildSitemap } from './src/seo';
 
 /** Havola oldindan ko'rinishi (Open Graph) uchun saytning to'liq manzili. */
 const DEFAULT_SITE_URL = 'https://fluentuz.app';
@@ -20,6 +21,22 @@ function siteUrl(): Plugin {
     },
     transformIndexHtml(html) {
       return html.replaceAll('__SITE_URL__', url);
+    },
+  };
+}
+
+/** Build paytida robots.txt va sitemap.xml yozadi (manzil VITE_SITE_URL'dan — domen o'zgarsa qo'lda tahrirlash shart emas). */
+function seoFiles(): Plugin {
+  let url = DEFAULT_SITE_URL;
+  return {
+    name: 'seo-files',
+    apply: 'build',
+    configResolved(config) {
+      url = (config.env.VITE_SITE_URL || process.env.VITE_SITE_URL || DEFAULT_SITE_URL).replace(/\/+$/, '');
+    },
+    generateBundle() {
+      this.emitFile({ type: 'asset', fileName: 'robots.txt', source: buildRobots(url) });
+      this.emitFile({ type: 'asset', fileName: 'sitemap.xml', source: buildSitemap(url, new Date().toISOString().slice(0, 10)) });
     },
   };
 }
@@ -50,7 +67,7 @@ function cspGuard(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), siteUrl(), cspGuard()],
+  plugins: [react(), siteUrl(), seoFiles(), cspGuard()],
   server: {
     port: 5173,
   },
