@@ -3383,3 +3383,14 @@ main > * {
 .diag-steps li.is-done .diag-label {
   color: var(--muted);
 }
+
+/* Oflayn takrorlash bildirishnomasi */
+.offline-note {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: 8px;
+  background: var(--card, #fff);
+  color: var(--ink-text, inherit);
+}

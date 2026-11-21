@@ -4,6 +4,7 @@ import { common, getLang, msg } from './i18n';
 import { networkMsg } from './locales/network';
 import { onApiSuccess } from './analytics';
 import { noteServerResponse, trackRequest } from './netStatus';
+import { clearOfflineReview } from './offlineReview';
 
 // Lokalda .env fayl bo'lmasa, localhost:5000'ga tushadi. Vercel'da
 // VITE_API_URL environment variable orqali Render manziliga yo'naltiriladi.
@@ -40,6 +41,8 @@ export function setToken(token: string | null) {
     else {
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(EMAIL_KEY);
+      // Umumiy qurilmada oldingi hisobning oflayn kartalari qolib ketmasin.
+      clearOfflineReview();
     }
   } catch {
     // Brauzer saqlashni taqiqlagan bo'lsa (masalan maxfiy rejim sozlamasi) —

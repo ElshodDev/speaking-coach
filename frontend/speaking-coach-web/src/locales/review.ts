@@ -20,6 +20,12 @@ export const reviewMsg = defineMessages(
       Manual: 'Maʼnosini eslang:',
     } as Record<CardKind, string>,
     loadError: 'Kartalarni yuklab boʻlmadi',
+    offlineBanner: (n: number) =>
+      n > 0
+        ? `Oflayn rejim: bugungi kartalar ishlayapti. ${n} ta baho internet qaytganda yuboriladi.`
+        : 'Oflayn rejim: bugungi kartalar ishlayapti. Baholar internet qaytganda yuboriladi.',
+    offlineNoNew: 'Oflayn rejimda karta qoʻshib yoki oʻchirib boʻlmaydi.',
+    syncedBanner: (n: number) => `Oflayn baholar yuborildi: ${n} ta.`,
     title: 'Takrorlash',
     guestSubtitle: 'Xatolaringizni esda qolguncha takrorlang.',
     guestStep1Before: 'Mashqlardagi xatolaringiz ',
@@ -89,6 +95,12 @@ export const reviewMsg = defineMessages(
         Manual: 'Вспомните значение:',
       },
       loadError: 'Не удалось загрузить карточки',
+      offlineBanner: (n: number) =>
+        n > 0
+          ? `Офлайн-режим: сегодняшние карточки работают. Оценок в очереди: ${n} — они отправятся, когда появится интернет.`
+          : 'Офлайн-режим: сегодняшние карточки работают. Оценки отправятся, когда появится интернет.',
+      offlineNoNew: 'В офлайн-режиме нельзя добавлять и удалять карточки.',
+      syncedBanner: (n: number) => `Офлайн-оценки отправлены: ${n}.`,
       title: 'Повторение',
       guestSubtitle: 'Повторяйте свои ошибки, пока не запомните.',
       guestStep1Before: 'Ошибки из упражнений ',
@@ -157,6 +169,12 @@ export const reviewMsg = defineMessages(
         Manual: 'Recall the meaning:',
       },
       loadError: 'Could not load the cards',
+      offlineBanner: (n: number) =>
+        n > 0
+          ? `Offline mode: today's cards work. ${n} rating${n === 1 ? '' : 's'} will be sent when you're back online.`
+          : "Offline mode: today's cards work. Ratings will be sent when you're back online.",
+      offlineNoNew: "You can't add or delete cards while offline.",
+      syncedBanner: (n: number) => `Offline ratings sent: ${n}.`,
       title: 'Review',
       guestSubtitle: 'Review your mistakes until they stick.',
       guestStep1Before: 'Mistakes from your practice ',
