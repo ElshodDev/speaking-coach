@@ -2809,6 +2809,16 @@ main > *:nth-child(4) { animation-delay: 0.09s; }
 .site-footer-links .btn-link {
   font-size: 0.85rem;
 }
+/* Telefonda ishchi ekranlarda footer yashirin (Footer.tsx: showFooterOnPhone). */
+@media (max-width: 1023px) {
+  .site-footer--desktop-only {
+    display: none;
+  }
+  .site-footer {
+    margin-top: 24px;
+    padding-top: 12px;
+  }
+}
 /* Dialog footer ichida chiziladi — markazlashni meros qilib olmasin. */
 .site-footer .modal-backdrop {
   text-align: start;

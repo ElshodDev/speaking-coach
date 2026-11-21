@@ -18,8 +18,14 @@ export function feedbackPage(loc: Pick<Location, 'pathname' | 'hash'>): string {
   return `${loc.pathname}${hash.includes('tgWebAppData') ? '' : hash}`.slice(0, 200);
 }
 
+/** Telefonda footer faqat shu bo'limlarda ko'rinadi: ishchi ekranlarda (mashq, mock, takrorlash…) joy egallamasin. Kompyuterda hamma joyda. */
+const PHONE_FOOTER_SECTIONS = new Set(['', 'home', 'profile', 'login', 'register', 'welcome']);
+export function showFooterOnPhone(section: string): boolean {
+  return PHONE_FOOTER_SECTIONS.has(section);
+}
+
 /** Sahifa osti: maxfiylik va shartlar, aloqa, IELTS/CEFR ogohlantirishi, fikr bildirish. */
-export function Footer() {
+export function Footer({ section = 'home' }: { section?: string }) {
   const t = useT(legalMsg);
   const { lang } = useLang();
   const [open, setOpen] = useState(false);
@@ -32,7 +38,7 @@ export function Footer() {
   }
 
   return (
-    <footer className="site-footer" data-testid="site-footer">
+    <footer className={showFooterOnPhone(section) ? 'site-footer' : 'site-footer site-footer--desktop-only'} data-testid="site-footer">
       <nav className="site-footer-links" aria-label={`${t.privacy} · ${t.terms}`}>
         <a href={`/privacy.html#${lang}`}>{t.privacy}</a>
         <a href={`/terms.html#${lang}`}>{t.terms}</a>
