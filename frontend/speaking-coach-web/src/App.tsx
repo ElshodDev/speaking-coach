@@ -531,7 +531,7 @@ function App() {
             <Suspense fallback={<p className="muted" role="status" style={{ marginTop: 24 }}>…</p>}>{page}</Suspense>
           </ErrorBoundary>
         </main>
-        <Footer />
+        <Footer section={section} />
       </div>
     </>
   );
