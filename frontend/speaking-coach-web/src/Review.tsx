@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { apiJson, postJson } from './api';
+import { track } from './analytics';
 import { isSpeechSupported, sleep, speakAsync, stopSpeaking } from './speech';
 import { PageHeader } from './ui';
 import { common, msg, useT } from './i18n';
@@ -147,6 +148,15 @@ export function Review({
 
   const current = cards[0];
 
+  // Takrorlash seansi tugadi: kamida bitta karta baholangan va navbat bo'shagan (seans boshiga bir marta).
+  const gradedRef = useRef(0);
+  useEffect(() => {
+    if (cards.length === 0 && gradedRef.current > 0) {
+      gradedRef.current = 0;
+      track('review_completed');
+    }
+  }, [cards.length]);
+
   // Karta bajarildi (baholandi yoki o'chirildi): keyingisiga o'tamiz, statistika yangilanadi.
   // Statistika kelmasa — xato ko'rsatmaymiz, karta baribir saqlangan.
   async function cardDone(id: string) {
@@ -159,6 +169,7 @@ export function Review({
 
   async function grade(value: number) {
     if (!current || pendingRef.current) return;
+    gradedRef.current += 1;
     pendingRef.current = true;
     setBusy(true);
     try {

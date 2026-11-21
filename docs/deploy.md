@@ -31,6 +31,12 @@ dotnet test backend/SpeakingCoach.slnx     # barcha qatlamlar + arxitektura test
 cd frontend/speaking-coach-web && npm test
 ```
 
+## Analitika (Plausible, ixtiyoriy)
+
+Cookie'siz, shaxsiy ma'lumotsiz statistika. Yoqish: Plausible'da `fluentuz.app` saytini qo'shing, Vercel'da `VITE_PLAUSIBLE_DOMAIN=fluentuz.app` o'rnating va Redeploy qiling. **O'chirish (feature flag): shu o'zgaruvchini olib tashlab qayta deploy.** Do Not Track yoqilgan brauzerlarga hech narsa yuborilmaydi; foydalanuvchi o'zi `localStorage["sc.analytics"]="off"` qilib o'chira oladi.
+
+Hodisalar (`frontend/speaking-coach-web/src/analytics.ts`, qat'iy ro'yxat): `pageview` (faqat bo'lim nomi: `join/KOD` → `join`), `signup` (onboarding birinchi ko'rilganda, brauzerga bir marta), `first_practice_started`, `first_practice_completed`, `review_completed`, `mock_started`, `mock_completed`, `mic_consent_accepted`, `pwa_installed`. Xossalar: faqat `kind`/`section` (masalan `speaking`, `ielts-listening`). Plausible'da Goals bo'limiga shu nomlarni qo'shing.
+
 ## Render (backend)
 
 Root directory: **`backend`**, Dockerfile path: **`./Dockerfile`**, Docker. (Backend 4 ta loyihadan iborat — qarang: [ARCHITECTURE.md](ARCHITECTURE.md) — shuning uchun build konteksti butun `backend` papkasi.) **Health check path: `/health/live`** (bazaga tegmaydi — Neon uxlab qolganda Render serverni behuda qayta ishga tushirmaydi; `/health` esa bazani ham tekshiradi, monitoring uchun). Environment:

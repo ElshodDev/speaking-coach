@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { onRoute } from './analytics';
 import { statsPath, type ReviewStats } from './reviewStats';
 import { EXERCISES, ExerciseTiles, Home, type ExerciseKind } from './Home';
 import { JoinByCode, JoinGroup, TasksPage } from './StudentTasks';
@@ -125,6 +126,8 @@ function App() {
   const tNet = useT(networkMsg);
   const c = useT(common);
   const [route, go] = useRoute();
+  // Analitika: sahifa ko'rinishi va marshrutdan kelib chiqadigan hodisalar (faqat VITE_PLAUSIBLE_DOMAIN berilganda).
+  useEffect(() => onRoute(route), [route]);
   // Oxirgi kirgan hisob darhol tiklanadi: server uyg'onguncha (30–60 s) ham
   // ilova "kirgan" holatda turadi — mehmon ekrani chiqib, ish yo'qolmaydi.
   const [email, setEmailState] = useState<string | null>(getSavedEmail);
