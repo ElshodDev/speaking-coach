@@ -14,7 +14,7 @@
   <ItemGroup>
     <!-- IAppDbContext (DbSet, LINQ so'rovlari) uchun EF Core yadrosi — provayder (Npgsql) emas. -->
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.15" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.15" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="11.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.15" />
     <!-- PasswordHasher (parol xeshi) — ASP.NET Identity'ning web'siz yadrosi. -->
     <PackageReference Include="Microsoft.Extensions.Identity.Core" Version="10.0.15" />
