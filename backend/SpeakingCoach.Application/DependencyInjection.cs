@@ -8,6 +8,7 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<FeatureFlags>();
         services.AddMemoryCache();
 
         // Butun server bo'yicha Gemini byudjeti va saqlagich (Ai:GlobalPerMinute, Ai:GlobalPerDay, Ai:Models...).

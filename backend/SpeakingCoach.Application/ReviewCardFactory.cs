@@ -14,6 +14,19 @@ public static class ReviewCardFactory
     public const int MaxBackLength = 500;
     public const int MaxNoteLength = 1000;
 
+    /// <summary>
+    /// Asosiy tuzatish (priority fix) takrorlash kartalariga ham tushsin: ro'yxatda bo'lmasa (asl ibora bo'yicha)
+    /// oxiriga qo'shiladi, izohi — nima xato va qisqa maslahat.
+    /// </summary>
+    public static List<CorrectionItem> WithPriorityFix(IEnumerable<CorrectionItem> corrections, PriorityFix? fix)
+    {
+        var list = corrections.ToList();
+        if (fix is null || string.IsNullOrWhiteSpace(fix.Original)) return list;
+        if (list.Any(c => string.Equals(c.Original.Trim(), fix.Original.Trim(), StringComparison.OrdinalIgnoreCase))) return list;
+        list.Add(new CorrectionItem(fix.Original, fix.Corrected, $"{fix.Issue} {fix.Tip}".Trim()));
+        return list;
+    }
+
     /// <summary>Speaking/Writing tuzatishlari: "xato ibora" → "to'g'ri ibora".</summary>
     public static List<NewCard> FromCorrections(IEnumerable<CorrectionItem> corrections)
     {

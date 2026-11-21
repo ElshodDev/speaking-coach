@@ -3274,3 +3274,59 @@ main > * {
   gap: 12px;
   max-width: 440px;
 }
+
+/* Gapirish natijasi: 4 rasmiy mezon, umumiy taxminiy band, bitta asosiy tuzatish */
+.four-overall {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.four-band {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.priority-fix {
+  margin: 14px 0;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border));
+  border-left-width: 4px;
+  border-radius: var(--radius-sm);
+  background: var(--primary-soft);
+}
+.priority-fix h3 {
+  margin: 0 0 2px;
+  font-size: 1rem;
+}
+.pf-line {
+  margin: 0;
+  font-size: 1.05rem;
+  overflow-wrap: anywhere;
+}
+.four-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.four-row {
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.four-row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.four-row-band {
+  font-weight: 700;
+  font-size: 1.15rem;
+  font-variant-numeric: tabular-nums;
+}
+.four-row .why {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
