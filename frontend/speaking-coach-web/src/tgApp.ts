@@ -12,7 +12,7 @@ export interface TelegramLaunch {
 export function parseLaunch(hash: string, search: string): TelegramLaunch | null {
   const h = hash.replace(/^#/, '');
   if (!h.includes('tgWebAppData=')) return null;
-  let initData: string | null = null;
+  let initData: string | null;
   try {
     initData = new URLSearchParams(h).get('tgWebAppData');
   } catch {

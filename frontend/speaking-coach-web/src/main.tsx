@@ -3,12 +3,16 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { LangProvider } from './i18n';
 import { installChunkReload } from './ErrorBoundary';
+import { initAnalytics } from './analytics';
+import { initMonitoring } from './monitoring';
 // Inter (o'zgaruvchan shrift): lotin, kirill va o'zbekcha ʻ belgilari; brauzer faqat kerakli qismini yuklaydi.
 import '@fontsource-variable/inter';
 import './styles.css';
 import './auth.css';
 
 installChunkReload();
+initAnalytics();
+void initMonitoring();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

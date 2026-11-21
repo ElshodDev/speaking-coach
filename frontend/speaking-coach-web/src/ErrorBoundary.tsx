@@ -3,6 +3,7 @@
 // "Qayta yuklash" tugmasi ko'rsatiladi. `resetKey` o'zgarsa (boshqa sahifa) —
 // holat tozalanadi.
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { captureError } from './monitoring';
 import { common, useT } from './i18n';
 
 function Fallback({ onHome }: { onHome?: () => void }) {
@@ -44,6 +45,7 @@ export class ErrorBoundary extends Component<Props, { failed: boolean; key: stri
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('Sahifa xatosi', error, info.componentStack);
+    captureError(error);
   }
 
   render() {

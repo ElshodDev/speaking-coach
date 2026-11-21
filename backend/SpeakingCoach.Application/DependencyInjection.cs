@@ -60,6 +60,7 @@ public static class DependencyInjection
         services.AddScoped<ProgressService>();
         services.AddScoped<ReadinessService>();
         services.AddScoped<AdminService>();
+        services.AddScoped<RetentionService>();
         return services;
     }
 }

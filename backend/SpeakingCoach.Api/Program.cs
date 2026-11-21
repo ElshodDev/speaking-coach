@@ -4,6 +4,26 @@ using Microsoft.EntityFrameworkCore;
 using SpeakingCoach.Api.Endpoints;
 var builder = WebApplication.CreateBuilder(args);
 
+// Xato monitoringi (Sentry): faqat Sentry:Dsn (env: Sentry__Dsn) berilganda yoqiladi — feature flag.
+// Ovoz, matn, foydalanuvchi ma'lumoti va tokenlar yuborilmaydi (Web/SentryScrubber.cs).
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Sentry:Dsn"]))
+{
+    builder.WebHost.UseSentry(o =>
+    {
+        o.Dsn = builder.Configuration["Sentry:Dsn"];
+        o.Environment = builder.Configuration["Sentry:Environment"] ?? builder.Environment.EnvironmentName;
+        o.SendDefaultPii = false;
+        o.MaxRequestBodySize = Sentry.Extensibility.RequestSize.None;
+        o.TracesSampleRate = 0;
+        o.SetBeforeBreadcrumb(_ => null);
+        o.SetBeforeSend((evt, _) => SentryScrubber.Scrub(evt));
+        // Kutilgan holatlar xato emas: AI band (503), katta so'rov (413), bekor qilingan so'rov.
+        o.AddExceptionFilterForType<AiBusyException>();
+        o.AddExceptionFilterForType<OperationCanceledException>();
+        o.AddExceptionFilterForType<BadHttpRequestException>();
+    });
+}
+
 // Bir nechta manzil bo'lishi mumkin (vergul bilan): birinchisi — asosiy (masalan, o'z domen),
 // qolganlari — eski manzil (vercel.app) ham ishlab tursin, o'rnatilgan PWA va eski havolalar uchun.
 var frontendOrigins = FrontendOrigins.Parse(builder.Configuration["FrontendOrigin"]);

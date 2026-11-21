@@ -108,7 +108,7 @@ export function HistoryList({ items, renderRow }: { items: HistoryItem[]; render
   const t = useT(uiMsg);
   // Buzuq yozuvlar (renderRow null qaytaradi yoki xato otadi) — ko'rsatilmaydi va sanalmaydi.
   const rows = items.flatMap((item) => {
-    let row: ReactNode = null;
+    let row: ReactNode;
     try {
       row = renderRow(item);
     } catch {

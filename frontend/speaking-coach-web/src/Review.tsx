@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { apiJson, postJson } from './api';
+import { track } from './analytics';
 import { isSpeechSupported, sleep, speakAsync, stopSpeaking } from './speech';
 import { PageHeader } from './ui';
 import { common, msg, useT } from './i18n';
@@ -80,6 +81,15 @@ export function Review({
   // Baho/o'chirish yuborilmoqda: `busy` holati keyingi renderda yangilanadi, shuning
   // uchun tez ikki bosish bitta kartani ikki marta baholab (keyingisini o'tkazib) yubormasin.
   const pendingRef = useRef(false);
+  // Takrorlash seansi tugadi: kamida bitta karta baholangan va navbat bo'shagan (seans boshiga bir marta).
+  // Hook'lar shartli `return`lardan OLDIN turishi shart (mehmon kirgach hook'lar soni o'zgarmasin).
+  const gradedRef = useRef(0);
+  useEffect(() => {
+    if (cards.length === 0 && gradedRef.current > 0) {
+      gradedRef.current = 0;
+      track('review_completed');
+    }
+  }, [cards.length]);
   useEffect(() => {
     const on = (e: KeyboardEvent) => keyHandler.current(e);
     window.addEventListener('keydown', on);
@@ -159,6 +169,7 @@ export function Review({
 
   async function grade(value: number) {
     if (!current || pendingRef.current) return;
+    gradedRef.current += 1;
     pendingRef.current = true;
     setBusy(true);
     try {

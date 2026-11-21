@@ -14,8 +14,17 @@ updates:
         patterns: ["vite", "vitest", "@vitejs/*", "@vitest/*", "typescript"]
       react:
         patterns: ["react", "react-dom", "@types/react*"]
+  # Lint vositalari (alohida papka: typescript-eslint TypeScript 7'ni hali qo'llamaydi).
+  - package-ecosystem: npm
+    directory: /frontend/speaking-coach-web/lint
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
   - package-ecosystem: nuget
     directories:
+      - /backend/SpeakingCoach.Domain
+      - /backend/SpeakingCoach.Application
+      - /backend/SpeakingCoach.Infrastructure
       - /backend/SpeakingCoach.Api
       - /backend/SpeakingCoach.Api.Tests
     schedule:

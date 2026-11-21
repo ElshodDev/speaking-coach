@@ -13,6 +13,7 @@ import { clock, coveragePercent, nextCard, speakingHint, timeVerdict, type Part2
 import { audioExt } from './shadowLogic';
 import { Corrections, Feedback, GuestNote, PageHeader, ScoreBar } from './ui';
 import { speakingMsg } from './locales/speaking';
+import { requestMicConsent } from './consent';
 
 interface CardsResponse {
   prepSeconds: number;
@@ -196,6 +197,8 @@ export function Part2Page({ loggedIn, onLogin, onCardsAdded, go, cardId }: {
     }
     setStarting(true);
     try {
+      // Birinchi yozishdan oldin: ovoz AI'ga yuborilishi haqida rozilik (bir marta so'raladi).
+      if (!(await requestMicConsent())) return;
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       if (!aliveRef.current) {
         stream.getTracks().forEach((tr) => tr.stop());

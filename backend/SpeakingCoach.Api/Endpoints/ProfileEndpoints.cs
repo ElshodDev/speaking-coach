@@ -183,6 +183,18 @@ public static partial class ProfileEndpoints
             return Results.Ok(await admin.GetOverviewAsync(Math.Clamp(tzOffsetMinutes, -840, 840)));
         });
 
+        // Retention (D1/D7): mavjud jadvallardan hisoblanadi, sxema o'zgarmaydi. Faqat admin.
+        app.MapGet("/api/admin/retention", async (HttpRequest request, AuthService auth, AdminOptions admins, RetentionService retention, int days = RetentionService.DefaultDays) =>
+        {
+            var user = await auth.GetCurrentUserAsync(request);
+            if (user is null) return Unauthorized(request);
+            if (!admins.IsAdmin(user))
+            {
+                return Results.Json(request.Error("admin.only"), statusCode: StatusCodes.Status403Forbidden);
+            }
+            return Results.Ok(await retention.GetAsync(days, DateTime.UtcNow, request.HttpContext.RequestAborted));
+        });
+
         // Tizim holati: baza sxemasi, Telegram bot, sozlamalar. Sirlar qaytarilmaydi.
         app.MapGet("/api/admin/system", async (
             HttpRequest request, AuthService auth, AdminOptions admins, AppDbContext db, ISchemaInspector schema,

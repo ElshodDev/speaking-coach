@@ -51,6 +51,7 @@ import { PageHeader } from './ui';
 import { focusedButton, typingTarget, useWide } from './layout';
 import { normalizeWord, WordSheet } from './WordSheet';
 import { Icon } from './Icon';
+import { requestMicConsent } from './consent';
 
 const loadProgress = () => apiJson<ShadowProgress[]>('/api/shadowing/progress').catch(() => [] as ShadowProgress[]);
 
@@ -430,6 +431,8 @@ function useRecorder() {
     const gen = ++genRef.current;
     let stream = streamRef.current;
     if (!stream || stream.getTracks().every((tr) => tr.readyState === 'ended')) {
+      // Birinchi yozishdan oldin: ovoz AI'ga yuborilishi haqida rozilik (bir marta so'raladi).
+      if (!(await requestMicConsent())) return null;
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       } catch {

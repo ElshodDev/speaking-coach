@@ -2,6 +2,7 @@
 // kirish tokeni va xato xabarlarini o'qish bir joyda.
 import { common, getLang, msg } from './i18n';
 import { networkMsg } from './locales/network';
+import { onApiSuccess } from './analytics';
 import { noteServerResponse, trackRequest } from './netStatus';
 
 // Lokalda .env fayl bo'lmasa, localhost:5000'ga tushadi. Vercel'da
@@ -236,6 +237,8 @@ export function parseJsonBody<T>(text: string, status: number): T {
 export async function apiJson<T>(path: string, init: ApiInit = {}): Promise<T> {
   const response = await apiFetch(path, init);
   if (!response.ok) throw await errorFromResponse(response);
+  // Analitika: faqat yo'l va usul (javob tanasi o'qilmaydi); hech qachon xato tashlamaydi.
+  onApiSuccess(init.method ?? 'GET', path);
   // 204 / bo'sh javob — JSON yo'q.
   return parseJsonBody<T>(await response.text(), response.status);
 }

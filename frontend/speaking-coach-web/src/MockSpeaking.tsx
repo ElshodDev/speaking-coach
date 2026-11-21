@@ -20,6 +20,7 @@ import {
 } from './mockLogic';
 import { isSpeechSupported, sleep, speakAsync, stopSpeaking } from './speech';
 import { PageHeader } from './ui';
+import { requestMicConsent } from './consent';
 
 interface Recorded {
   blob: Blob;
@@ -164,6 +165,8 @@ export function MockSpeaking({
     setMicProblem(null);
     setError('');
     try {
+      // Birinchi yozishdan oldin: ovoz AI'ga yuborilishi haqida rozilik (bir marta so'raladi).
+      if (!(await requestMicConsent())) return;
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       // Ruxsat oynasi ochiq turganda sahifadan chiqib ketilgan bo'lsa — cleanup
       // allaqachon ishlagan: mikrofonni shu yerda o'chiramiz (yoqiq qolmasin).
