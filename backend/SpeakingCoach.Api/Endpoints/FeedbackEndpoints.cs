@@ -1,8 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Services;
-using SpeakingCoach.Api.Services.Telegram;
-
 namespace SpeakingCoach.Api.Endpoints;
 
 public record FeedbackRequest(string? Kind, string? Message, string? Page);
@@ -82,7 +78,7 @@ public static class FeedbackEndpoints
                 Kind = FeedbackRules.NormalizeKind(body.Kind!),
                 Message = body.Message!.Trim(),
                 Page = FeedbackRules.NormalizePage(body.Page),
-                Lang = Texts.LangOf(request),
+                Lang = RequestTexts.LangOf(request),
                 CreatedAtUtc = DateTime.UtcNow,
                 Ip = TelegramLoginRules.Clip(request.HttpContext.Connection.RemoteIpAddress?.ToString(), 64),
             };

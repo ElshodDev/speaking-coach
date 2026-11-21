@@ -1,6 +1,4 @@
 using System.Text.Json;
-using SpeakingCoach.Api.Services.Telegram;
-
 namespace SpeakingCoach.Api.Tests;
 
 /// <summary>Telegram yuboradigan haqiqiy JSON shakli bizning turlarga to'g'ri o'qiladimi.</summary>

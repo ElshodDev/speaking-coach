@@ -1,6 +1,4 @@
 using System.Text.RegularExpressions;
-using SpeakingCoach.Api.Services;
-
 namespace SpeakingCoach.Api.Tests;
 
 public class TextsTests

@@ -1,10 +1,6 @@
 using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Services;
-using SpeakingCoach.Api.Services.Mock;
-
 namespace SpeakingCoach.Api.Tests;
 
 /// <summary>Testda boshqariladigan soat.</summary>
@@ -104,10 +100,10 @@ public class GeminiErrorTests
     [Fact]
     public void Log_text_is_truncated()
     {
-        var s = GeminiClient.Truncate(new string('x', 5000));
-        Assert.True(s.Length <= GeminiClient.MaxLoggedChars + 1);
-        Assert.Equal("short", GeminiClient.Truncate("short"));
-        var ex = Assert.Throws<InvalidOperationException>(() => GeminiClient.DeserializeStrict<TalkTurnResult>("{\"oops\": \"" + new string('y', 5000) + "\""));
+        var s = GeminiJson.Truncate(new string('x', 5000));
+        Assert.True(s.Length <= GeminiJson.MaxLoggedChars + 1);
+        Assert.Equal("short", GeminiJson.Truncate("short"));
+        var ex = Assert.Throws<InvalidOperationException>(() => GeminiJson.DeserializeStrict<TalkTurnResult>("{\"oops\": \"" + new string('y', 5000) + "\""));
         Assert.True(ex.Message.Length < 1000, ex.Message.Length.ToString());
     }
 }
@@ -470,10 +466,10 @@ public class HeavyQueryTests
     [Fact]
     public void Light_mock_rows_keep_the_prompt_defaults()
     {
-        var row = new SpeakingCoach.Api.Endpoints.MockEndpoints.MockRow { Module = "reading", SetId = "t1" };
+        var row = new MockQueries.MockRow { Module = "reading", SetId = "t1" };
         Assert.Equal("ielts", row.Prompt.Exam);
         Assert.Equal("reading", row.Prompt.Module);
         Assert.Equal("t1", row.Prompt.SetId);
-        Assert.Contains($"'{ActivityType.MockExam}'", SpeakingCoach.Api.Endpoints.MockEndpoints.MockRowsSql);
+        Assert.Contains($"'{ActivityType.MockExam}'", MockRowsQuery.MockRowsSql);
     }
 }

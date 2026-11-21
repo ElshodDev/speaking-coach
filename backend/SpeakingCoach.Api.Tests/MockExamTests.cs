@@ -1,7 +1,3 @@
-using SpeakingCoach.Api.Endpoints;
-using SpeakingCoach.Api.Services;
-using SpeakingCoach.Api.Services.Mock;
-
 namespace SpeakingCoach.Api.Tests;
 
 public class MockExamTests
@@ -170,34 +166,34 @@ public class MockExamTests
              "grammaticalRange":{"band":5,"reasoning":"r"},"pronunciation":{"band":6,"reasoning":"r"},
              "topCorrections":[],"strengths":"s","nextSteps":["n"]}
             """;
-        var parsed = GeminiClient.DeserializeStrict<SpeakingMockAi>(ok);
+        var parsed = GeminiJson.DeserializeStrict<SpeakingMockAi>(ok);
         Assert.Equal(5, parsed.GrammaticalRange.Band);
 
         var missing = ok.Replace("\"pronunciation\":{\"band\":6,\"reasoning\":\"r\"},", "");
-        Assert.Throws<InvalidOperationException>(() => GeminiClient.DeserializeStrict<SpeakingMockAi>(missing));
+        Assert.Throws<InvalidOperationException>(() => GeminiJson.DeserializeStrict<SpeakingMockAi>(missing));
     }
 
     [Fact]
     public void Prompt_metadata_and_overall_are_read_safely()
     {
-        var p = MockEndpoints.ParsePrompt("""{"exam":"ielts","module":"writing","setId":"a2","variant":"academic"}""");
+        var p = MockQueries.ParsePrompt("""{"exam":"ielts","module":"writing","setId":"a2","variant":"academic"}""");
         Assert.Equal("writing", p.Module);
         Assert.Equal("a2", p.SetId);
-        Assert.Equal("", MockEndpoints.ParsePrompt("not json").Module);
-        Assert.Equal(6.5m, MockEndpoints.ReadOverall("""{"overall":6.5}"""));
-        Assert.Null(MockEndpoints.ReadOverall("{}"));
+        Assert.Equal("", MockQueries.ParsePrompt("not json").Module);
+        Assert.Equal(6.5m, MockQueries.ReadOverall("""{"overall":6.5}"""));
+        Assert.Null(MockQueries.ReadOverall("{}"));
     }
 
     [Fact]
     public void Mock_exam_gives_xp_but_does_not_count_as_a_fifth_exercise_kind()
     {
-        Assert.Equal(ProgressCalculator.MockExamXp, ProgressCalculator.XpFor(new ActivityFact(Data.ActivityType.MockExam, DateTime.UtcNow)));
+        Assert.Equal(ProgressCalculator.MockExamXp, ProgressCalculator.XpFor(new ActivityFact(ActivityType.MockExam, DateTime.UtcNow)));
         var three = new List<ActivityFact>
         {
-            new(Data.ActivityType.Speaking, DateTime.UtcNow),
-            new(Data.ActivityType.Writing, DateTime.UtcNow),
-            new(Data.ActivityType.Reading, DateTime.UtcNow, 2),
-            new(Data.ActivityType.MockExam, DateTime.UtcNow),
+            new(ActivityType.Speaking, DateTime.UtcNow),
+            new(ActivityType.Writing, DateTime.UtcNow),
+            new(ActivityType.Reading, DateTime.UtcNow, 2),
+            new(ActivityType.MockExam, DateTime.UtcNow),
         };
         var badges = ProgressCalculator.Badges(three, 0, 0);
         Assert.False(badges.Single(b => b.Id == "all_rounder").Earned);

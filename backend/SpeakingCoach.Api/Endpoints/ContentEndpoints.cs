@@ -1,7 +1,3 @@
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Services;
-using SpeakingCoach.Api.Services.Content;
-
 namespace SpeakingCoach.Api.Endpoints;
 
 public record TopicSuggestRequest(string Kind, string? Category, string? Level, List<string>? Avoid);
@@ -40,7 +36,7 @@ public static class ContentEndpoints
             if (limited is not null) return limited;
             try
             {
-                var quiz = await ai.QuizAsync(topic, LearnerLevel.Normalize(body.Level), Texts.LangOf(request), request.HttpContext.RequestAborted);
+                var quiz = await ai.QuizAsync(topic, LearnerLevel.Normalize(body.Level), RequestTexts.LangOf(request), request.HttpContext.RequestAborted);
                 await quotas.RecordAsync(request, AiKind.Exercise);
                 return Results.Ok(quiz);
             }

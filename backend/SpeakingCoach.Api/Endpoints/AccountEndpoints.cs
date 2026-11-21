@@ -1,9 +1,6 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Services;
-
 namespace SpeakingCoach.Api.Endpoints;
 
 public record DeleteAccountRequest(string ConfirmEmail);
@@ -219,7 +216,7 @@ public static class AccountEndpoints
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return Unauthorized(request);
-            var result = await auth.RequestEmailChangeAsync(user, body.Email, Texts.LangOf(request));
+            var result = await auth.RequestEmailChangeAsync(user, body.Email, RequestTexts.LangOf(request));
             return ToResult(request, result, new { ok = true, email = result.Email });
         }).RequireRateLimiting("code");
 

@@ -1,8 +1,5 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Services;
-
 namespace SpeakingCoach.Api.Endpoints;
 
 public record GroupNameRequest(string? Name);
@@ -86,7 +83,7 @@ public static class GroupEndpoints
                 .ToList();
 
             var assignments = await db.Assignments.Where(a => a.GroupId == id).OrderByDescending(a => a.CreatedAtUtc).ToListAsync();
-            var results = await ResultsAsync(db, assignments, memberIds);
+            var results = await GroupQueries.ResultsAsync(db, assignments, memberIds);
             return Results.Ok(new
             {
                 group = new { group.Id, group.Name, group.JoinCode, group.CreatedAtUtc },
@@ -175,7 +172,7 @@ public static class GroupEndpoints
                 using var scope = scopes.CreateScope();
                 try
                 {
-                    await scope.ServiceProvider.GetRequiredService<Services.Telegram.AssignmentNotifier>().NotifyAsync(a.Id);
+                    await scope.ServiceProvider.GetRequiredService<AssignmentNotifier>().NotifyAsync(a.Id);
                 }
                 catch (Exception ex)
                 {
@@ -204,7 +201,7 @@ public static class GroupEndpoints
             var a = await db.Assignments.FirstOrDefaultAsync(x => x.Id == id);
             if (a is null || await OwnGroupAsync(db, a.GroupId, user.Id) is null) return NotFound(request);
             if (!await db.GroupMembers.AnyAsync(m => m.GroupId == a.GroupId && m.UserId == userId)) return NotFound(request);
-            var status = (await ResultsAsync(db, [a], [userId]))[a.Id][userId];
+            var status = (await GroupQueries.ResultsAsync(db, [a], [userId]))[a.Id][userId];
             if (status.ActivityId is not Guid activityId) return Results.Ok(new { status, activity = (object?)null });
             var act = await db.Activities.FirstAsync(x => x.Id == activityId);
             using var prompt = JsonDocument.Parse(act.PromptData);
@@ -253,7 +250,7 @@ public static class GroupEndpoints
             {
                 await db.SaveChangesAsync();
             }
-            catch (DbUpdateException ex) when (AuthService.IsUniqueViolation(ex))
+            catch (DbUpdateException ex) when (DbErrors.IsUniqueViolation(ex))
             {
                 // Ikki marta bosildi: parallel so'rov a'zolikni allaqachon yozdi (kalit — GroupId+UserId).
                 return Results.Ok(new { group.Id, joined = false });
@@ -270,7 +267,7 @@ public static class GroupEndpoints
             var teacherIds = groups.Select(g => g.TeacherId).Distinct().ToList();
             var teachers = await db.Users.Where(u => teacherIds.Contains(u.Id)).Select(u => new { u.Id, u.DisplayName, u.Email }).ToListAsync();
             var assignments = await db.Assignments.Where(a => groupIds.Contains(a.GroupId)).OrderByDescending(a => a.CreatedAtUtc).Take(200).ToListAsync();
-            var results = await ResultsAsync(db, assignments, [user.Id]);
+            var results = await GroupQueries.ResultsAsync(db, assignments, [user.Id]);
             return Results.Ok(new
             {
                 groups = groups.Select(g =>
@@ -295,66 +292,5 @@ public static class GroupEndpoints
             await db.SaveChangesAsync();
             return Results.Ok(new { left = true });
         }).RequireRateLimiting(RateLimits.WritePolicy);
-    }
-
-    /// <summary>Har bir vazifa × o'quvchi uchun holat (o'quvchilarning urinishlaridan avtomatik).</summary>
-    public static async Task<Dictionary<Guid, Dictionary<Guid, AssignmentStatus>>> ResultsAsync(AppDbContext db, List<Assignment> assignments, List<Guid> userIds)
-    {
-        var map = assignments.ToDictionary(a => a.Id, _ => new Dictionary<Guid, AssignmentStatus>());
-        if (assignments.Count == 0 || userIds.Count == 0)
-        {
-            foreach (var a in assignments)
-                foreach (var u in userIds) map[a.Id][u] = new(false, false, null, null, null, null, null);
-            return map;
-        }
-
-        var since = assignments.Min(a => a.CreatedAtUtc);
-        // Faqat vazifalarga mos turlar va faqat kerakli ustunlar: ResponseData (baholar,
-        // insho tahlili) bu yerda o'qilmaydi — ball pastda faqat topilgan urinishlar uchun olinadi.
-        var types = GroupLogic.NeededTypes(assignments).ToList();
-        var rows = types.Count == 0 ? [] : await db.Activities
-            .Where(x => x.UserId != null && userIds.Contains(x.UserId.Value) && x.CreatedAtUtc >= since && types.Contains(x.Type))
-            .Select(x => new { x.Id, UserId = x.UserId!.Value, x.Type, x.CreatedAtUtc, PromptData = x.Type == ActivityType.MockExam ? x.PromptData : null })
-            .ToListAsync();
-        var byUser = rows.Select(x =>
-        {
-            string? exam = null, module = null;
-            if (x.Type == ActivityType.MockExam)
-            {
-                var p = MockEndpoints.ParsePrompt(x.PromptData ?? "");
-                (exam, module) = (p.Exam, p.Module);
-            }
-            return (x.UserId, Ref: new ActivityRef(x.Id, x.Type, x.CreatedAtUtc, exam, module, null));
-        }).ToLookup(x => x.UserId, x => x.Ref);
-
-        var reviewsByUser = Enumerable.Empty<(Guid UserId, DateTime At)>().ToLookup(r => r.UserId, r => r.At);
-        if (assignments.Any(a => a.Kind == "review"))
-        {
-            var logs = await db.ReviewLogs.Where(l => userIds.Contains(l.UserId) && l.ReviewedAtUtc >= since).Select(l => new { l.UserId, l.ReviewedAtUtc }).ToListAsync();
-            reviewsByUser = logs.ToLookup(l => l.UserId, l => l.ReviewedAtUtc);
-        }
-
-        foreach (var u in userIds)
-        {
-            var mine = byUser[u].ToList();
-            var myReviews = reviewsByUser[u].ToList();
-            foreach (var a in assignments) map[a.Id][u] = GroupLogic.StatusFor(a, mine, myReviews);
-        }
-
-        // Ball — faqat jadvalda ko'rsatiladigan (vazifaga hisoblangan) urinishlar uchun.
-        var hitIds = map.Values.SelectMany(m => m.Values).Where(st => st.ActivityId is not null).Select(st => st.ActivityId!.Value).Distinct().ToList();
-        if (hitIds.Count > 0)
-        {
-            var scores = new Dictionary<Guid, string?>();
-            foreach (var chunk in hitIds.Chunk(500))
-            {
-                var part = await db.Activities.Where(x => chunk.Contains(x.Id)).Select(x => new { x.Id, x.ResponseData }).ToListAsync();
-                foreach (var r in part) scores[r.Id] = GroupLogic.ScoreText(r.ResponseData);
-            }
-            foreach (var m in map.Values)
-                foreach (var u in m.Keys.ToList())
-                    if (m[u].ActivityId is Guid aid && scores.TryGetValue(aid, out var sc)) m[u] = m[u] with { Score = sc };
-        }
-        return map;
     }
 }

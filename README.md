@@ -77,7 +77,7 @@ flowchart LR
     subgraph API["ASP.NET Core 10 Minimal API — Docker on Render"]
         RL["Rate limiting<br/>per user · per IP · server-wide AI slots"]
         EP["Endpoints<br/>auth · practice · review · vocab<br/>mock exams · shadowing · groups · admin"]
-        SVC["Services<br/>GeminiClient (fallback, retry, strict JSON)<br/>ReviewScheduler (SM-2) · ProgressCalculator<br/>IELTS/CEFR scoring · test validators"]
+        SVC["Clean Architecture<br/>Application: use cases · IELTS/CEFR scoring<br/>Domain: entities · SM-2 · XP · plan rules<br/>Infrastructure: EF Core · GeminiClient · Telegram"]
         BOT["Telegram bot<br/>(webhook, no library)"]
     end
 
@@ -136,7 +136,8 @@ Everything runs on free tiers.
 
 ## Quality
 
-- **759 backend unit tests** (xUnit) cover scheduling, scoring tables, validators, strict parsing, the security rules, bot logic, localisation (every message in all three languages with matching placeholders), the demo seed and every piece of built-in content (mock tests, exercises).
+- **Clean Architecture backend** — Domain / Application / Infrastructure / Api projects; the dependency rule is enforced by architecture tests ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)).
+- **856 backend unit tests** (xUnit) cover scheduling, scoring tables, validators, strict parsing, the security rules, bot logic, localisation (every message in all three languages with matching placeholders), the demo seed and every piece of built-in content (mock tests, exercises).
 - **170 frontend unit tests** (Vitest) cover charts, text handling, shadowing and dictation logic, network errors and timeouts, the Telegram launch check and sign-in state, in-app browser detection, Uzbek spelling in every translation, and the built-in lessons, vocabulary and topics (including an even spread of correct answer letters).
 - **28 Playwright end-to-end suites** drive the real frontend against a mocked API on phone, tablet and laptop screens. The screenshots above come from these runs.
 - **CI** builds and tests both halves on every push and fails on known vulnerable packages.

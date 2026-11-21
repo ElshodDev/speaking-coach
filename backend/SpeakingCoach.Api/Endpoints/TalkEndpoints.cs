@@ -1,8 +1,5 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Services;
-
 namespace SpeakingCoach.Api.Endpoints;
 
 public record TalkStartRequest(string Scenario, string? Level);
@@ -124,7 +121,7 @@ public static class TalkEndpoints
             try
             {
                 if (typed.Length == 0) audio = await Uploads.ReadAsync(file!, ct);
-                result = await ai.TurnAsync(scenario, state.Level, state.Lines, Texts.LangOf(request), audio, file?.ContentType,
+                result = await ai.TurnAsync(scenario, state.Level, state.Lines, RequestTexts.LangOf(request), audio, file?.ContentType,
                     typed.Length > 0 ? typed : null, ct);
             }
             catch (Exception ex)
@@ -176,7 +173,7 @@ public static class TalkEndpoints
             TalkSummary summary;
             try
             {
-                summary = await ai.SummarizeAsync(scenario, state.Level, state.Lines, Texts.LangOf(request), request.HttpContext.RequestAborted);
+                summary = await ai.SummarizeAsync(scenario, state.Level, state.Lines, RequestTexts.LangOf(request), request.HttpContext.RequestAborted);
             }
             catch (Exception ex) when (AiErrors.Handles(ex, request))
             {

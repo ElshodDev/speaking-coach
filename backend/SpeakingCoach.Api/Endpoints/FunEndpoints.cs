@@ -1,6 +1,3 @@
-using SpeakingCoach.Api.Data;
-using SpeakingCoach.Api.Services;
-
 namespace SpeakingCoach.Api.Endpoints;
 
 /// <summary>O'yin elementlari: kunlik so'z va tezkor viktorina (AI'siz, mehmonlar uchun ham).</summary>
@@ -12,7 +9,7 @@ public static class FunEndpoints
         {
             var today = ReviewScheduler.ToLocalDate(DateTime.UtcNow, Math.Clamp(tzOffsetMinutes, -840, 840));
             var w = DailyWords.ForDate(today);
-            var lang = Texts.LangOf(request);
+            var lang = RequestTexts.LangOf(request);
             return Results.Ok(new
             {
                 date = today.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
@@ -28,7 +25,7 @@ public static class FunEndpoints
         // Lug'atdagi so'zlar (kirgan bo'lsa) + kunlik so'zlar — 10 ta savol.
         app.MapGet("/api/quiz", async (HttpRequest request, AuthService auth, ReviewService reviews, int count = QuizLogic.DefaultCount) =>
         {
-            var lang = Texts.LangOf(request);
+            var lang = RequestTexts.LangOf(request);
             var userId = await auth.GetCurrentUserIdAsync(request);
             var vocab = userId is Guid id
                 ? (await reviews.GetVocabAsync(id, 500)).Where(c => c.Kind == ReviewCardKind.Word).Select(c => new QuizPair(c.Front, c.Back)).ToList()
