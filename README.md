@@ -1,4 +1,6 @@
-# AI Speaking Coach
+# FluentUZ
+
+> *Formerly "AI Speaking Coach".*
 
 🇬🇧 English · 🇺🇿 [O'zbekcha](README.uz.md)
 
@@ -137,8 +139,8 @@ Everything runs on free tiers.
 ## Quality
 
 - **Clean Architecture backend** — Domain / Application / Infrastructure / Api projects; the dependency rule is enforced by architecture tests ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)).
-- **856 backend unit tests** (xUnit) cover scheduling, scoring tables, validators, strict parsing, the security rules, bot logic, localisation (every message in all three languages with matching placeholders), the demo seed and every piece of built-in content (mock tests, exercises).
-- **170 frontend unit tests** (Vitest) cover charts, text handling, shadowing and dictation logic, network errors and timeouts, the Telegram launch check and sign-in state, in-app browser detection, Uzbek spelling in every translation, and the built-in lessons, vocabulary and topics (including an even spread of correct answer letters).
+- **923 backend unit tests** (xUnit) cover scheduling, scoring tables, validators, strict parsing, the security rules, bot logic, localisation (every message in all three languages with matching placeholders), the demo seed and every piece of built-in content (mock tests, exercises).
+- **292 frontend unit tests** (Vitest) cover charts, text handling, shadowing and dictation logic, network errors and timeouts, the Telegram launch check and sign-in state, in-app browser detection, Uzbek spelling in every translation, and the built-in lessons, vocabulary and topics (including an even spread of correct answer letters).
 - **28 Playwright end-to-end suites** drive the real frontend against a mocked API on phone, tablet and laptop screens. The screenshots above come from these runs.
 - **CI** builds and tests both halves on every push and fails on known vulnerable packages.
 
@@ -150,3 +152,10 @@ Everything runs on free tiers.
 - Scores are estimates. Official IELTS and CEFR results come only from certified exam centres.
 
 The full story, including what went wrong and how it was fixed, is in the **[case study](docs/case-study.md)**.
+
+## License and security
+
+This repository is public so the code can be read, but it is **not open source**: all rights are reserved (see [LICENSE](LICENSE)). To ask for permission to use any of it, open an issue titled "License request".
+
+Found a security problem? Please report it privately; see [SECURITY.md](SECURITY.md). Do not open a public issue.
+
