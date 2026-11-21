@@ -107,6 +107,22 @@ export function refPayload(): { ref?: string } {
   return r ? { ref: r } : {};
 }
 
+/**
+ * Telegram orqali YANGI hisob ochilgach: saqlangan taklif kodini serverga yuboradi (email/Google'da kod
+ * ro'yxatdan o'tish so'rovining o'zida ketadi). Natijadan qat'i nazar kod o'chiriladi; hech qachon xato tashlamaydi.
+ */
+export async function claimReferral(isNew: boolean | undefined, post: (path: string, body: unknown) => Promise<unknown>): Promise<void> {
+  const ref = getRef();
+  if (!ref) return;
+  try {
+    if (isNew) await post('/api/referral/claim', { ref });
+  } catch {
+    // Taklif hech qachon kirishni to'xtatmasligi kerak.
+  } finally {
+    clearRef();
+  }
+}
+
 export interface ReferralInfo {
   enabled: boolean;
   code: string;

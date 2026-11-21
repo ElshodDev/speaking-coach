@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { clearRef, decideInvite, getRef, isValidRef, referralLink, refFromSearch, refPayload, saveRef, stripRef } from './referral';
+import { claimReferral, clearRef, decideInvite, getRef, isValidRef, referralLink, refFromSearch, refPayload, saveRef, stripRef } from './referral';
 
 const mem = new Map<string, string>();
 (globalThis as { localStorage?: unknown }).localStorage = {
@@ -63,5 +63,33 @@ describe('referral', () => {
     expect(getRef()).toBeNull();
     mem.set('sc.ref.v1', 'garbage');
     expect(getRef()).toBeNull();
+  });
+
+  it('Telegram: yangi hisob — kod serverga yuboriladi va o‘chiriladi', async () => {
+    saveRef(CODE);
+    const calls: [string, unknown][] = [];
+    await claimReferral(true, async (path, body) => void calls.push([path, body]));
+    expect(calls).toEqual([['/api/referral/claim', { ref: CODE }]]);
+    expect(getRef()).toBeNull();
+  });
+
+  it('Telegram: mavjud hisob — hech narsa yuborilmaydi, lekin eski kod o‘chiriladi', async () => {
+    saveRef(CODE);
+    let called = false;
+    await claimReferral(false, async () => void (called = true));
+    expect(called).toBe(false);
+    expect(getRef()).toBeNull();
+  });
+
+  it('Telegram: server xato bersa ham kirish to‘xtamaydi (xato tashlanmaydi)', async () => {
+    saveRef(CODE);
+    await expect(claimReferral(true, async () => Promise.reject(new Error('boom')))).resolves.toBeUndefined();
+    expect(getRef()).toBeNull();
+  });
+
+  it('kod bo‘lmasa claim hech narsa qilmaydi', async () => {
+    let called = false;
+    await claimReferral(true, async () => void (called = true));
+    expect(called).toBe(false);
   });
 });

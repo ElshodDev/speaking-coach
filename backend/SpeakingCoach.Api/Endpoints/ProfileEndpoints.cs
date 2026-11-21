@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 namespace SpeakingCoach.Api.Endpoints;
 
+public record ReferralClaimRequest(string? Ref);
 public record ProfileUpdateRequest(string? DisplayName, string? Level, bool ShowOnLeaderboard);
 public record WordExplainRequest(string Word, string? Sentence, string? Level);
 public record OnboardingRequest(bool Skip, string? Goal, string? Level, string? TargetScore, string? ExamDate, int? DailyMinutes, int TzOffsetMinutes = 0);
@@ -38,6 +39,14 @@ public static partial class ProfileEndpoints
             if (user is null) return Unauthorized(request);
             return Results.Ok(await referrals.GetAsync(user));
         });
+
+        // Telegram orqali yangi ochilgan hisobga taklifni biriktiradi (kod brauzerda saqlangan; hisob ochilgach yuboriladi).
+        app.MapPost("/api/referral/claim", async (ReferralClaimRequest body, HttpRequest request, AuthService auth, ReferralService referrals) =>
+        {
+            var user = await auth.GetCurrentUserAsync(request);
+            if (user is null) return Unauthorized(request);
+            return Results.Ok(new { claimed = await referrals.ClaimAsync(user, body.Ref) });
+        }).RequireRateLimiting(RateLimits.WritePolicy);
 
         app.MapGet("/api/profile", async (HttpRequest request, AuthService auth, AdminOptions admins) =>
         {
