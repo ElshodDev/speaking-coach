@@ -1,0 +1,67 @@
+import { defineMessages } from '../i18n';
+
+/** DiagnosticCard.tsx — birinchi kunlik boshlang'ich test (Features:DayOneDiagnostic). */
+export const diagnosticMsg = defineMessages(
+  {
+    title: 'Boshlangʻich test: 4 ta qisqa mashq',
+    text: (exam: string) => `Taxminan 12 daqiqa. Tinglash, oʻqish, yozish va gapirish — shundan soʻng ${exam} boʻyicha boshlangʻich bahoni olasiz.`,
+    progress: (n: number) => `${n}/4 bajarildi`,
+    steps: {
+      listening: 'Tinglash — 4 ta savol',
+      reading: 'Oʻqish — 4 ta savol',
+      writing: 'Qisqa yozuv — 60–100 soʻz',
+      speaking: 'Gapirish — 30–60 soniya',
+    },
+    start: 'Boshlash',
+    done: 'Bajarildi',
+    next: 'Keyingisi →',
+    later: 'Keyinroq',
+    note: 'Bu qisqa mashqlarga asoslangan taxminiy baho: ishonch past, oraliq keng. Aniqroq natija uchun keyin sinov imtihoni (mock) topshiring.',
+    readyTitle: 'Boshlangʻich bahoyingiz tayyor',
+    ready: (exam: string, value: string, range: string) => `Taxminiy ${exam}: ${value}${range ? ` (${range})` : ''}.`,
+    details: 'Batafsil →',
+    close: 'Yopish',
+  },
+  {
+    ru: {
+      title: 'Стартовый тест: 4 коротких упражнения',
+      text: (exam: string) => `Около 12 минут. Аудирование, чтение, письмо и говорение — после этого вы получите стартовую оценку по ${exam}.`,
+      progress: (n: number) => `Выполнено ${n}/4`,
+      steps: {
+        listening: 'Аудирование — 4 вопроса',
+        reading: 'Чтение — 4 вопроса',
+        writing: 'Короткий текст — 60–100 слов',
+        speaking: 'Говорение — 30–60 секунд',
+      },
+      start: 'Начать',
+      done: 'Готово',
+      next: 'Дальше →',
+      later: 'Позже',
+      note: 'Это примерная оценка по коротким упражнениям: уверенность низкая, диапазон широкий. Для точного результата позже пройдите пробный экзамен (mock).',
+      readyTitle: 'Ваша стартовая оценка готова',
+      ready: (exam: string, value: string, range: string) => `Примерно ${exam}: ${value}${range ? ` (${range})` : ''}.`,
+      details: 'Подробнее →',
+      close: 'Закрыть',
+    },
+    en: {
+      title: 'Starter test: 4 short exercises',
+      text: (exam: string) => `About 12 minutes. Listening, reading, writing and speaking — then you get a starting ${exam} estimate.`,
+      progress: (n: number) => `${n}/4 done`,
+      steps: {
+        listening: 'Listening — 4 questions',
+        reading: 'Reading — 4 questions',
+        writing: 'Short writing — 60–100 words',
+        speaking: 'Speaking — 30–60 seconds',
+      },
+      start: 'Start',
+      done: 'Done',
+      next: 'Next →',
+      later: 'Later',
+      note: 'This is a rough estimate from short exercises: low confidence, wide range. For a more accurate result, take a mock exam later.',
+      readyTitle: 'Your starting estimate is ready',
+      ready: (exam: string, value: string, range: string) => `Estimated ${exam}: ${value}${range ? ` (${range})` : ''}.`,
+      details: 'Details →',
+      close: 'Close',
+    },
+  },
+);

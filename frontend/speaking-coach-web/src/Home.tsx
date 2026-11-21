@@ -7,6 +7,7 @@ import { TelegramPromo } from './TelegramCard';
 import { TasksCard } from './StudentTasks';
 import { Icon } from './Icon';
 import { TodayPlan } from './TodayPlan';
+import { DiagnosticCard } from './DiagnosticCard';
 import { QuizTile, WordOfDay } from './WordOfDay';
 import { DemoHeroButton, isDemoEmail } from './Demo';
 import { demoMsg } from './locales/demo';
@@ -152,6 +153,7 @@ export function Home({
   );
   const plan = (
     <>
+      <DiagnosticCard go={go} />
       <TodayPlan go={go} />
       <TasksCard loggedIn go={go} />
     </>

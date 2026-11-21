@@ -56,7 +56,7 @@ public static class PlanLogic
         bool Newcomer = false);
 
     /// <summary>Shuncha mashqdan kam bo'lsa — foydalanuvchi hali "yangi" (reja yengil).</summary>
-    public const int NewcomerActivities = 3;
+    public const int NewcomerActivities = 5;
 
     public record Item(string Key, string Kind, string Route, bool Done, int Minutes, int? Progress = null, int? Target = null);
 

@@ -59,7 +59,7 @@ Birinchi yozishdan oldin "ovoz Google Gemini'ga yuboriladi, saqlanmaydi" rozilig
 | Render o'zgaruvchisi | Nima qiladi |
 |---|---|
 | `Features__SpeakingFourCriteria` | Gapirish natijasi: 4 rasmiy IELTS mezoni (taxminiy band), talaffuz ("taxminiy") va bitta asosiy tuzatish. `false` — eski 3 mezonli ko'rinish. |
-| `Features__DayOneDiagnostic` | Birinchi kunlik diagnostik test (qo'shilgach). `false` — o'chiq. |
+| `Features__DayOneDiagnostic` | Birinchi kunlik boshlang'ich test: bosh sahifada 4 ta qisqa mashq kartasi va tayyorlik bahosi birinchi kundan (Reading/Listening — ilovaning tayyor mashqlari darajasi bo'yicha past ishonch bilan). `false` — o'chiq, tayyorlik avvalgidek faqat mock bo'yicha. |
 
 O'chirish uchun qiymatni `false` qiling va servisni qayta ishga tushiring. Yangi maydonlar mavjud javobga **qo'shimcha** (ixtiyoriy) — eski mijozlar va eski yozuvlar buzilmaydi.
 

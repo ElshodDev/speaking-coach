@@ -102,7 +102,7 @@ export function ReadinessCard({ go }: { go: (route: string) => void }) {
           <button className="btn btn-primary" onClick={() => go(route)}>{t.go}</button>
         </div>
       )}
-      <p className="muted tiny" style={{ marginBottom: 0 }}>{t.note}</p>
+      <p className="muted tiny" style={{ marginBottom: 0 }}>{r.diagnosticEnabled ? t.noteDiagnostic : t.note}</p>
     </div>
   );
 }
