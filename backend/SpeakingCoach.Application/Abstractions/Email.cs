@@ -24,9 +24,9 @@ public static class EmailTemplates
             "ru" => (
                 purpose switch
                 {
-                    EmailCodePurpose.Verify => $"{code} — код подтверждения Speaking Coach",
-                    EmailCodePurpose.Login => $"{code} — код для входа в Speaking Coach",
-                    _ => $"{code} — код для сброса пароля Speaking Coach",
+                    EmailCodePurpose.Verify => $"{code} — код подтверждения FluentUZ",
+                    EmailCodePurpose.Login => $"{code} — код для входа в FluentUZ",
+                    _ => $"{code} — код для сброса пароля FluentUZ",
                 },
                 purpose switch
                 {
@@ -39,9 +39,9 @@ public static class EmailTemplates
             "en" => (
                 purpose switch
                 {
-                    EmailCodePurpose.Verify => $"{code} is your Speaking Coach verification code",
-                    EmailCodePurpose.Login => $"{code} is your Speaking Coach sign-in code",
-                    _ => $"{code} is your Speaking Coach password reset code",
+                    EmailCodePurpose.Verify => $"{code} is your FluentUZ verification code",
+                    EmailCodePurpose.Login => $"{code} is your FluentUZ sign-in code",
+                    _ => $"{code} is your FluentUZ password reset code",
                 },
                 purpose switch
                 {
@@ -54,9 +54,9 @@ public static class EmailTemplates
             _ => (
                 purpose switch
                 {
-                    EmailCodePurpose.Verify => $"{code} — Speaking Coach tasdiqlash kodi",
-                    EmailCodePurpose.Login => $"{code} — Speaking Coach'ga kirish kodi",
-                    _ => $"{code} — Speaking Coach parolni tiklash kodi",
+                    EmailCodePurpose.Verify => $"{code} — FluentUZ tasdiqlash kodi",
+                    EmailCodePurpose.Login => $"{code} — FluentUZ'ga kirish kodi",
+                    _ => $"{code} — FluentUZ parolni tiklash kodi",
                 },
                 purpose switch
                 {
@@ -68,7 +68,7 @@ public static class EmailTemplates
                 "Agar bu siz boʻlmasangiz, xatga eʼtibor bermang."),
         };
 
-        var text = $"{intro}\n\n{code}\n\n{validity}\n{ignore}\n\n— Speaking Coach";
+        var text = $"{intro}\n\n{code}\n\n{validity}\n{ignore}\n\n— FluentUZ";
         Func<string, string> safe = s => WebUtility.HtmlEncode(s);
         var html = $"""
             <div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#0f172a">
@@ -76,7 +76,7 @@ public static class EmailTemplates
               <p style="font-size:34px;font-weight:700;letter-spacing:8px;margin:0 0 16px;color:#2563eb">{safe(code)}</p>
               <p style="font-size:14px;color:#475569;margin:0 0 4px">{safe(validity)}</p>
               <p style="font-size:14px;color:#475569;margin:0 0 24px">{safe(ignore)}</p>
-              <p style="font-size:13px;color:#94a3b8;margin:0">Speaking Coach</p>
+              <p style="font-size:13px;color:#94a3b8;margin:0">FluentUZ</p>
             </div>
             """;
         return new EmailMessage(subject, text, html);

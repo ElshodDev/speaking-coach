@@ -74,7 +74,7 @@ Root directory: **`backend`**, Dockerfile path: **`./Dockerfile`**, Docker. (Bac
 | `FrontendOrigin` | Sayt manzili — CORS va bot havolalari uchun. Bir nechta bo'lsa vergul bilan, birinchisi asosiy: `https://fluentuz.app,https://speaking-coach-theta.vercel.app` (eski manzil ham ishlab tursin) |
 | `Admin__Emails` | Sayt adminlari emaillari, vergul bilan |
 | `Email__BrevoApiKey`, `Email__FromAddress` | Email tasdiqlashni yoqadi (Brevo'da tasdiqlangan yuboruvchi) |
-| `Email__FromName` | Xatdagi yuboruvchi nomi (standart: `Speaking Coach`) |
+| `Email__FromName` | Xatdagi yuboruvchi nomi (standart: `FluentUZ`) |
 | `Email__DailyCap` | Kuniga ko'pi bilan nechta xat (standart: 250; Brevo bepul tarifi — 300). Tugasa, sayt Telegram yoki Google orqali kirishni taklif qiladi |
 | `Google__ClientId` | Google orqali kirish (Web OAuth client, Vercel manzili ruxsat etilgan origin) |
 | `Telegram__BotToken`, `Telegram__CronSecret` | Telegram bot, soatlik eslatmalar va **saytga Telegram orqali kirish** (token bo'lsa o'zi yoqiladi) |
@@ -137,5 +137,5 @@ Domen o'zgarsa, uchta joyni yangilang: Render'dagi `FrontendOrigin` (birinchisi 
 
 - `frontend/speaking-coach-web/index.html`: sarlavha **FluentUZ**, meta description, Open Graph/Twitter, JSON-LD (`WebApplication`) va `#root` ichida statik landing matni. Qidiruv robotlari va JS yuklanguncha shu ko'rinadi; React ishga tushgach ilova uning o'rnini oladi. Router'ga tegilmagan.
 - `robots.txt` va `sitemap.xml` build paytida yoziladi (`vite.config.ts` → `src/seo.ts`), manzil `VITE_SITE_URL` dan. Sitemap'da faqat `/`, `/privacy.html`, `/terms.html` (hash marshrutlar alohida sahifa emas).
-- PWA nomi: `manifest.webmanifest` → "FluentUZ". Ilova ichidagi sarlavha (`Speaking Coach`) o'zgarmagan.
+- PWA nomi: `manifest.webmanifest` → "FluentUZ". Ilova ichidagi sarlavha, ulashish kartasi, maxfiylik/shartlar sahifalari, email va Telegram matnlari ham "FluentUZ".
 - Qaytarish: `index.html` va `manifest.webmanifest` ni oldingi holatga qaytarish kifoya (funksiya yoki ma'lumotga ta'sir yo'q).

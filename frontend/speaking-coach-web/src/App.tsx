@@ -471,7 +471,7 @@ function App() {
         <header className="topbar">
           <a className="brand" href="#/">
             <Logo size={30} />
-            <span className="brand-name">Speaking Coach</span>
+            <span className="brand-name">FluentUZ</span>
           </a>
           <div className="topbar-right">
             <LangSelect />
@@ -497,7 +497,7 @@ function App() {
           {/* Kompyuterda menyu chap tomonda: logo uning tepasida. */}
           <a className="brand nav-brand" href="#/">
             <Logo size={30} />
-            <span className="brand-name">Speaking Coach</span>
+            <span className="brand-name">FluentUZ</span>
           </a>
           <div className="nav-inner">
             {NAV.map((n) => (
