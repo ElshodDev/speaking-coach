@@ -132,3 +132,10 @@ Domen Name.com'da (Student Pack, 2027-09-28 gacha; avtomatik yangilanish o'chiq)
 | CNAME | `www` | Vercel ko'rsatgan `…vercel-dns…` manzil | `www` → 308 bilan `fluentuz.app` ga |
 
 Domen o'zgarsa, uchta joyni yangilang: Render'dagi `FrontendOrigin` (birinchisi — asosiy), Vercel'dagi `VITE_SITE_URL` (keyin Redeploy) va Google Cloud Console → OAuth client → Authorized JavaScript origins.
+
+## Landing, SEO (Partiya C)
+
+- `frontend/speaking-coach-web/index.html`: sarlavha **FluentUZ**, meta description, Open Graph/Twitter, JSON-LD (`WebApplication`) va `#root` ichida statik landing matni. Qidiruv robotlari va JS yuklanguncha shu ko'rinadi; React ishga tushgach ilova uning o'rnini oladi. Router'ga tegilmagan.
+- `robots.txt` va `sitemap.xml` build paytida yoziladi (`vite.config.ts` → `src/seo.ts`), manzil `VITE_SITE_URL` dan. Sitemap'da faqat `/`, `/privacy.html`, `/terms.html` (hash marshrutlar alohida sahifa emas).
+- PWA nomi: `manifest.webmanifest` → "FluentUZ". Ilova ichidagi sarlavha (`Speaking Coach`) o'zgarmagan.
+- Qaytarish: `index.html` va `manifest.webmanifest` ni oldingi holatga qaytarish kifoya (funksiya yoki ma'lumotga ta'sir yo'q).
