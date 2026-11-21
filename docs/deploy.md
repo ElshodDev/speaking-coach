@@ -37,6 +37,8 @@ Cookie'siz, shaxsiy ma'lumotsiz statistika. Yoqish: Plausible'da `fluentuz.app` 
 
 Hodisalar (`frontend/speaking-coach-web/src/analytics.ts`, qat'iy ro'yxat): `pageview` (faqat bo'lim nomi: `join/KOD` → `join`), `signup` (onboarding birinchi ko'rilganda, brauzerga bir marta), `first_practice_started`, `first_practice_completed`, `review_completed`, `mock_started`, `mock_completed`, `mic_consent_accepted`, `pwa_installed`. Xossalar: faqat `kind`/`section` (masalan `speaking`, `ielts-listening`). Plausible'da Goals bo'limiga shu nomlarni qo'shing.
 
+**Retention (D1/D7):** `GET /api/admin/retention?days=30` (faqat admin, `Authorization: Bearer <token>`; `days` 1–90). Mavjud jadvallardan hisoblanadi (`Users`, `Activities`, `ReviewLogs`) — sxema o'zgarmaydi, demo hisoblar hisobga olinmaydi. Ta'rif: ro'yxatdan o'tgan kundan keyin aynan 1-/7-kuni (Toshkent vaqti) mashq qilgan yoki karta takrorlagan foydalanuvchilar ulushi; tugamagan kun `null`. Javobda umumiy foiz va kunlik guruhlar (cohorts) bor.
+
 ## Render (backend)
 
 Root directory: **`backend`**, Dockerfile path: **`./Dockerfile`**, Docker. (Backend 4 ta loyihadan iborat — qarang: [ARCHITECTURE.md](ARCHITECTURE.md) — shuning uchun build konteksti butun `backend` papkasi.) **Health check path: `/health/live`** (bazaga tegmaydi — Neon uxlab qolganda Render serverni behuda qayta ishga tushirmaydi; `/health` esa bazani ham tekshiradi, monitoring uchun). Environment:
