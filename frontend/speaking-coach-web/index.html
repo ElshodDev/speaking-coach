@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="description" content="Ingliz tili: gapirish, yozish, oʻqish, tinglash va xatolarni takrorlash — sunʼiy intellekt yordamida." />
+    <meta name="description" content="FluentUZ — ingliz tilini sunʼiy intellekt bilan oʻrganing: gapirish, yozish, oʻqish, tinglash, xatolarni takrorlash va IELTS/CEFR mock imtihonlari. Bepul." />
+    <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#1d4ed8" />
     <!-- PWA: telefonda "Bosh ekranga qo'shish" / "Ilovani o'rnatish" uchun -->
     <link rel="manifest" href="/manifest.webmanifest" />
@@ -11,28 +12,55 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="Speaking Coach" />
-    <title>Speaking Coach</title>
+    <meta name="apple-mobile-web-app-title" content="FluentUZ" />
+    <title>FluentUZ — AI bilan ingliz tili: IELTS va CEFR</title>
     <link rel="canonical" href="__SITE_URL__/" />
     <!-- Havola oldindan ko'rinishi (Telegram, Facebook, WhatsApp, X). __SITE_URL__ — vite.config.ts almashtiradi. -->
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Speaking Coach" />
+    <meta property="og:site_name" content="FluentUZ" />
     <meta property="og:locale" content="uz_UZ" />
     <meta property="og:url" content="__SITE_URL__/" />
-    <meta property="og:title" content="Speaking Coach — AI bilan ingliz tili" />
+    <meta property="og:title" content="FluentUZ — AI bilan ingliz tili" />
     <meta property="og:description" content="Gapiring, yozing, oʻqing va tinglang — sunʼiy intellekt xatolaringizni topadi va tuzatadi. IELTS va CEFR mock imtihonlari. Bepul." />
     <meta property="og:image" content="__SITE_URL__/og-image.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Speaking Coach — AI bilan ingliz tili" />
+    <meta property="og:image:alt" content="FluentUZ — AI bilan ingliz tili" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Speaking Coach — AI bilan ingliz tili" />
+    <meta name="twitter:title" content="FluentUZ — AI bilan ingliz tili" />
     <meta name="twitter:description" content="Gapiring, yozing, oʻqing va tinglang — sunʼiy intellekt xatolaringizni topadi va tuzatadi. IELTS va CEFR mock imtihonlari. Bepul." />
     <meta name="twitter:image" content="__SITE_URL__/og-image.png" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "FluentUZ",
+        "url": "__SITE_URL__/",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Web, Android, iOS",
+        "inLanguage": ["uz", "ru", "en"],
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "UZS" },
+        "description": "Ingliz tilini AI bilan oʻrganish: gapirish, yozish, oʻqish, tinglash, xatolarni takrorlash, IELTS va CEFR mock imtihonlari."
+      }
+    </script>
   </head>
   <body style="margin: 0">
-    <div id="root"></div>
+    <div id="root">
+      <!-- Statik landing: qidiruv robotlari va JS yuklanguncha. React ishga tushgach o'rnini ilova oladi (router'ga aloqasi yo'q). -->
+      <main style="font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; max-width: 720px; margin: 0 auto; padding: 48px 20px; color: #0b1b3f; line-height: 1.55">
+        <h1 style="font-size: 2rem; margin: 0 0 12px; color: #1d4ed8">FluentUZ</h1>
+        <p style="font-size: 1.15rem; margin: 0 0 24px">Ingliz tilini sunʼiy intellekt bilan oʻrganing: gapiring, yozing, oʻqing va tinglang — xatolaringizni AI topadi va tuzatadi. Bepul.</p>
+        <ul style="padding-left: 20px; margin: 0 0 24px">
+          <li><strong>Gapirish</strong> — ovozingizni tahlil qilib, IELTS mezonlari boʻyicha baho va bitta aniq tuzatish beradi.</li>
+          <li><strong>Yozish, oʻqish, tinglash</strong> — har kuni qisqa mashqlar va tushunarli izohlar.</li>
+          <li><strong>Takrorlash</strong> — xatolaringiz kartochkalarga aylanadi va oʻz vaqtida eslatiladi.</li>
+          <li><strong>Mock imtihonlar</strong> — IELTS va CEFR sinov imtihonlari, tayyorlik bahosi.</li>
+        </ul>
+        <p style="margin: 0 0 24px; color: #4b587c">Ilova yuklanmoqda… Agar sahifa ochilmasa, JavaScript yoqilganini tekshiring.</p>
+        <p style="font-size: 0.9rem; color: #4b587c"><a href="/privacy.html" style="color: #1d4ed8">Maxfiylik siyosati</a> · <a href="/terms.html" style="color: #1d4ed8">Foydalanish shartlari</a></p>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
