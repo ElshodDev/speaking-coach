@@ -12,6 +12,7 @@ import { Logo } from './Logo';
 import { PageHeader } from './ui';
 import { UsageNote } from './Usage';
 import { TelegramCard } from './TelegramCard';
+import { ReferralCard } from './ReferralCard';
 import { ErrorBoundary } from './ErrorBoundary';
 import { DemoBanner, DemoOffer, DemoStart, isDemoEmail } from './Demo';
 import { cleanLaunchUrl, genuineTelegram, inTelegram, readyTelegram, syncTgBack, telegramLaunch } from './tgApp';
@@ -618,6 +619,7 @@ function Profile({
       {/* key: profil serverdan kelganda forma qiymatlari yangilansin */}
       {(!email || profile) && <Settings key={profile ? 'user' : 'guest'} profile={profile} onSaved={onProfileSaved} />}
       {email && !isDemoEmail(email) && <TelegramCard key={email} />}
+      {email && !isDemoEmail(email) && <ReferralCard key={`ref-${email}`} />}
       {email && profile && (
         <div className="card cta" data-testid="goal-card">
           <div>

@@ -7,6 +7,7 @@ import { GoogleButton } from './GoogleButton';
 import { chromeIntent, currentInApp, isAndroid, isIos } from './inApp';
 import { inTelegram } from './tgApp';
 import { Icon } from './Icon';
+import { clearRef, refPayload } from './referral';
 
 /** Server javobi: yo token (kirildi), yo "kodni kiriting", yo shunchaki ok. */
 interface AuthResponse {
@@ -139,7 +140,9 @@ export function AuthPanel({
     if (mode === 'code-verify') return verifyLoginCode(code);
     run(async () => {
       if (mode === 'register' || mode === 'login') {
-        const data = await postJson<AuthResponse>(`/api/auth/${mode}`, { email: formEmail, password });
+        const data = await postJson<AuthResponse>(`/api/auth/${mode}`, { email: formEmail, password, ...(mode === 'register' ? refPayload() : {}) });
+        // Taklif kodi serverga yetdi (hisob ochildi) — qayta yuborilmasin.
+        if (mode === 'register') clearRef();
         if (data.needsVerification) {
           if (data.email) setFormEmail(data.email);
           setCameFrom(mode);
@@ -167,7 +170,11 @@ export function AuthPanel({
   }
 
   function google(credential: string) {
-    run(async () => finish(await postJson<AuthResponse>('/api/auth/google', { credential })));
+    run(async () => {
+      const data = await postJson<AuthResponse>('/api/auth/google', { credential, ...refPayload() });
+      clearRef();
+      finish(data);
+    });
   }
 
   function resend() {
