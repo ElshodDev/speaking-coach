@@ -1,3 +1,4 @@
+import { FeedbackLink } from './RatingWidgets';
 import { mistakesMsg } from './locales/mistakes';
 import { shareMsg } from './locales/share';
 import { ShareCardDialog, type ShareStats } from './ShareCard';
@@ -354,6 +355,7 @@ export function Progress({
           main={<><ReadinessCard go={go} />{statsCard}{trendCard}{activity}{hardest}</>}
           side={<>{level}{boardCard}{badges}</>}
         />
+        <FeedbackLink />
         {shareDialog}
       </>
     );
@@ -371,6 +373,7 @@ export function Progress({
       {badges}
       {boardCard}
       {hardest}
+      <FeedbackLink />
       {shareDialog}
     </>
   );

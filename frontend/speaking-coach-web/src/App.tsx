@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { onRoute } from './analytics';
 import { MicConsentHost } from './consent';
+import { FeedbackLink, RatePrompt } from './RatingWidgets';
 import { statsPath, type ReviewStats } from './reviewStats';
 import { EXERCISES, ExerciseTiles, Home, type ExerciseKind } from './Home';
 import { JoinByCode, JoinGroup, TasksPage } from './StudentTasks';
@@ -372,6 +373,7 @@ function App() {
         <div className="card-grid">
           {(['talk', 'dictation', 'shadowing', 'learn'] as const).map((k) => <PracticeLink key={k} id={k} go={go} />)}
         </div>
+        <FeedbackLink />
       </>
     );
   } else if (section === 'shadowing' && sub) {
@@ -520,6 +522,7 @@ function App() {
         </nav>
 
         <MicConsentHost />
+        <RatePrompt />
         <main className={pageWidth(section, sub, third)}>
           {isDemoEmail(email) && section !== 'demo' && <DemoBanner onRegister={leaveDemo} />}
           {sessionExpired && !loggedIn && (

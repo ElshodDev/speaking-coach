@@ -57,7 +57,7 @@ export function Footer({ section = 'home' }: { section?: string }) {
   );
 }
 
-function FeedbackDialog({ onClose }: { onClose: () => void }) {
+export function FeedbackDialog({ onClose }: { onClose: () => void }) {
   const t = useT(legalMsg);
   const titleId = useId();
   const kindId = useId();

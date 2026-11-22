@@ -3,6 +3,7 @@
 import { common, getLang, msg } from './i18n';
 import { networkMsg } from './locales/network';
 import { onApiSuccess } from './analytics';
+import { noteRatingTrigger } from './ratings';
 import { noteServerResponse, trackRequest } from './netStatus';
 import { clearOfflineReview } from './offlineReview';
 
@@ -242,6 +243,8 @@ export async function apiJson<T>(path: string, init: ApiInit = {}): Promise<T> {
   if (!response.ok) throw await errorFromResponse(response);
   // Analitika: faqat yo'l va usul (javob tanasi o'qilmaydi); hech qachon xato tashlamaydi.
   onApiSuccess(init.method ?? 'GET', path);
+  // Birinchi mashq tugagan bo'lsa — "foydali bo'ldimi?" so'rovini ochish (RatePrompt tinglaydi).
+  noteRatingTrigger(init.method ?? 'GET', path);
   // 204 / bo'sh javob — JSON yo'q.
   return parseJsonBody<T>(await response.text(), response.status);
 }

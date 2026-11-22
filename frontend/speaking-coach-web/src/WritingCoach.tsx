@@ -1,3 +1,4 @@
+import { AiFairness } from './RatingWidgets';
 import { useEffect, useRef, useState } from 'react';
 import { STABILITY_RUNS, StabilityTable, computeStats, runSequentially, type DimensionStats } from './Stability';
 import { getLevel, loadHistory as fetchHistory, postJson, type HistoryItem } from './api';
@@ -245,6 +246,7 @@ export function WritingCoach({
 
           <Corrections items={result.evaluation.topCorrections} />
           <Feedback encouragement={result.evaluation.encouragement} nextFocus={result.evaluation.nextFocus} />
+          <AiFairness key={result.submissionId} skill="writing" />
           <UpgradeAnswer key={result.submissionId} activityId={result.saved ? result.submissionId : null} original={lastSubmittedText ?? ''} loggedIn={loggedIn} onCardsAdded={onCardsAdded} />
 
           {/* Barqarorlik testi — ichki tekshiruv vositasi (5× AI so'rovi), faqat admin uchun. */}

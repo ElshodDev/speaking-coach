@@ -1,3 +1,4 @@
+import { AiFairness } from './RatingWidgets';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiJson, getLevel } from './api';
 import { cardsMessage } from './cards';
@@ -386,6 +387,7 @@ export function Part2Page({ loggedIn, onLogin, onCardsAdded, go, cardId }: {
               {result.metrics && <FluencyCard metrics={result.metrics} />}
               <Corrections items={result.evaluation.topCorrections} />
               <Feedback encouragement={result.evaluation.encouragement} nextFocus={result.evaluation.nextFocus} />
+              <AiFairness skill="part2" />
               <UpgradeAnswer
                 key={result.submissionId}
                 activityId={result.saved ? result.submissionId : null}

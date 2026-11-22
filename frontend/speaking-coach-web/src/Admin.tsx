@@ -1,3 +1,4 @@
+import { AdminRatings } from './AdminRatings';
 import { useEffect, useState } from 'react';
 import { AdminSystem } from './AdminSystem';
 import { apiJson } from './api';
@@ -191,6 +192,8 @@ export function Admin() {
           </table>
         </div>
       </div>
+
+      <AdminRatings />
 
       <div className="card stack" data-testid="admin-feedback">
         <h3 style={{ margin: 0 }}>{t.feedbackTitle}</h3>

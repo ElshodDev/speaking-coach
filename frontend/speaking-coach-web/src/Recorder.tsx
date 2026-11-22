@@ -18,6 +18,7 @@ import { stabilityMsg } from './locales/stability';
 import { Corrections, Feedback, GuestNote, HistoryList, ScoreBar, type CorrectionItem, type ScoreWithReasoning } from './ui';
 import { requestMicConsent } from './consent';
 import { SpeakingFeedback } from './SpeakingFeedback';
+import { AiFairness } from './RatingWidgets';
 import { criteriaRows, otherCorrections, type PriorityFix, type SpeakingBands } from './speakingFeedback';
 
 // Mavzular endi ilovaning tayyor bankida (content/topics.ts) — TopicPicker orqali.
@@ -353,6 +354,7 @@ export function Recorder({
 
           <Corrections items={criteriaRows(result.evaluation) ? otherCorrections(result.evaluation) : result.evaluation.topCorrections} />
           <Feedback encouragement={result.evaluation.encouragement} nextFocus={result.evaluation.nextFocus} />
+          <AiFairness key={result.submissionId} skill="speaking" />
           <UpgradeAnswer key={result.submissionId} activityId={result.saved ? result.submissionId : null} original={result.evaluation.transcript} loggedIn={loggedIn} onCardsAdded={onCardsAdded} />
 
           {/* Barqarorlik testi — ichki tekshiruv vositasi (5× AI so'rovi), faqat admin uchun. */}
