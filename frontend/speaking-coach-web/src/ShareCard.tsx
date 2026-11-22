@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useT } from './i18n';
 import { shareMsg } from './locales/share';
-import { LOGO } from './Logo';
 
 export interface ShareStats {
   name: string | null;
@@ -55,37 +54,19 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 }
 
-/** Ilova logotipi (Logo.tsx bilan bir xil shakllar), x/y — chap yuqori burchak, size — tomon uzunligi. */
-function drawLogo(ctx: CanvasRenderingContext2D, x: number, y: number, size: number) {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(size / 100, size / 100);
-  roundRect(ctx, 0, 0, 100, 100, 24);
-  ctx.fillStyle = LOGO.bg;
-  ctx.fill();
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-  ctx.stroke();
-  if (typeof Path2D !== 'undefined') {
-    ctx.globalAlpha = 0.92;
-    ctx.fillStyle = '#ffffff';
-    ctx.fill(new Path2D(LOGO.back));
-    ctx.globalAlpha = 1;
-    const front = new Path2D(LOGO.front);
-    ctx.lineWidth = 4;
-    ctx.lineJoin = 'round';
-    ctx.strokeStyle = LOGO.bg;
-    ctx.stroke(front);
-    ctx.fillStyle = LOGO.accent;
-    ctx.fill(front);
-    ctx.fillStyle = LOGO.dots;
-    for (const cx of [52, 62, 72]) {
-      ctx.beginPath();
-      ctx.arc(cx, 61, 3.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-  ctx.restore();
+/** Logotip rasmini yuklaydi (o'sha manzildan, xizmat ishchisi keshidan); yuklanmasa — null (karta logotipsiz chiziladi). */
+function loadLogo(): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = '/icons/icon-192.png';
+  });
+}
+
+/** Ilova logotipi (public/icons/icon-192.png), x/y — chap yuqori burchak, size — tomon uzunligi. */
+function drawLogo(ctx: CanvasRenderingContext2D, img: HTMLImageElement | null, x: number, y: number, size: number) {
+  if (img) ctx.drawImage(img, x, y, size, size);
 }
 
 /** Matn kenglikka sig'maguncha shriftni kichraytiradi. */
@@ -105,6 +86,7 @@ export async function drawShareCard(s: ShareStats, t: (typeof shareMsg)['uz'], s
   } catch {
     // shrift yuklanmasa — tizim shrifti bilan chiziladi
   }
+  const logo = await loadLogo();
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
@@ -129,7 +111,7 @@ export async function drawShareCard(s: ShareStats, t: (typeof shareMsg)['uz'], s
   ctx.textAlign = 'left';
 
   // Logotip va nom.
-  drawLogo(ctx, 90, 150, 96);
+  drawLogo(ctx, logo, 90, 150, 96);
   ctx.font = `700 52px ${FONT}`;
   ctx.fillText('FluentUZ', 214, 214);
 
