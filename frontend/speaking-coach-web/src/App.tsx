@@ -497,7 +497,7 @@ function App() {
           <header className="topbar nn-top">
             <div className="nn-title">
               {section === 'home' && (profile?.displayName || email) && <small>{tHub.hello(profile?.displayName || accountLabel(email).split('@')[0])}</small>}
-              <b>{section === 'home' ? tHub.today : tHub.items[section]?.title ?? (t.nav as Record<string, string>)[section] ?? t.profile}</b>
+              <b>{section === 'home' ? tHub.today : tHub.items[section === 'welcome' ? 'goal' : section]?.title ?? (t.nav as Record<string, string>)[section] ?? t.profile}</b>
             </div>
             <div className="topbar-right">
               {loggedIn && stats && stats.streakDays > 0 && <span className="badge streak"><Icon name="flame" size={14} className="streak-ico" /> {stats.streakDays}</span>}

@@ -723,3 +723,17 @@ body:has(.app.nn) {
 [data-testid='day-plan'] {
   max-width: 760px;
 }
+
+/* Ichki sahifalar: tanlangan chiplar va to'q-fonli elementlarda matn rangi fon bilan moslashsin */
+.nn .chips button[aria-pressed='true'],
+.nn .shadow-speeds button[aria-pressed='true'],
+.nn .level-num,
+.nn .bubble.user,
+.nn .avatar {
+  color: var(--on-primary);
+}
+@media (prefers-color-scheme: dark) {
+  html:has(.app.nn) {
+    background: #16120c;
+  }
+}
