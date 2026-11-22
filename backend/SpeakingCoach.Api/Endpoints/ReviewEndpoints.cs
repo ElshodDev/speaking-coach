@@ -46,7 +46,7 @@ public static class ReviewEndpoints
                 : Results.Ok(new { card.Id, card.DueAtUtc, card.IntervalDays });
         }).RequireRateLimiting(RateLimits.WritePolicy);
 
-        app.MapPost("/api/review/cards", async (ManualCardRequest body, HttpRequest request, AuthService auth, ReviewService reviews, AppDbContext db) =>
+        app.MapPost("/api/review/cards", async (ManualCardRequest body, HttpRequest request, AuthService auth, ReviewService reviews) =>
         {
             var userId = await auth.GetCurrentUserIdAsync(request);
             if (userId is null) return Unauthorized(request);
@@ -62,7 +62,7 @@ public static class ReviewEndpoints
             {
                 return Results.BadRequest(request.Error("review.limit", ReviewService.MaxCardsPerUser));
             }
-            var added = await reviews.AddCardsAsync(userId.Value, null, new[]
+            var added = await reviews.AddCardsAndSaveAsync(userId.Value, null, new[]
             {
                 new NewCard(ReviewCardKind.Manual, front, back, ReviewCardFactory.Clean(body.Note, ReviewCardFactory.MaxNoteLength)),
             });
@@ -70,7 +70,6 @@ public static class ReviewEndpoints
             {
                 return Results.BadRequest(request.Error("review.phrase_exists"));
             }
-            await db.SaveChangesAsync();
             return Results.Ok(new { added });
         }).RequireRateLimiting(RateLimits.WritePolicy);
 

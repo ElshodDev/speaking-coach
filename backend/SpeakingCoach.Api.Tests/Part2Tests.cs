@@ -68,9 +68,9 @@ public class Part2Tests
     [Fact]
     public void Card_id_is_read_only_from_part2_prompts()
     {
-        Assert.Equal("c3", Part2Endpoints.CardIdOf("""{"topic":"t","part2":true,"cardId":"c3"}"""));
-        Assert.Null(Part2Endpoints.CardIdOf("""{"topic":"my city"}"""));
-        Assert.Null(Part2Endpoints.CardIdOf("not json"));
-        Assert.Null(Part2Endpoints.CardIdOf(null));
+        Assert.Equal("c3", Part2Rules.CardIdOf("""{"topic":"t","part2":true,"cardId":"c3"}"""));
+        Assert.Null(Part2Rules.CardIdOf("""{"topic":"my city"}"""));
+        Assert.Null(Part2Rules.CardIdOf("not json"));
+        Assert.Null(Part2Rules.CardIdOf(null));
     }
 }

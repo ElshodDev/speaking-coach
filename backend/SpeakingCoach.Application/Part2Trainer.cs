@@ -34,6 +34,24 @@ public record Part2Evaluation(
 /// <summary>Kartochkalar banki va natijani tekshirish qoidalari — toza funksiyalar (unit test qilinadi).</summary>
 public static class Part2Rules
 {
+    /// <summary>Saqlangan PromptData'dan kartochka ID'si (Part 2 bo'lmasa — null).</summary>
+    public static string? CardIdOf(string? promptJson)
+    {
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(promptJson ?? "");
+            return doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object
+                && doc.RootElement.TryGetProperty("part2", out var p) && p.ValueKind == System.Text.Json.JsonValueKind.True
+                && doc.RootElement.TryGetProperty("cardId", out var id) && id.ValueKind == System.Text.Json.JsonValueKind.String
+                ? id.GetString()
+                : null;
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return null;
+        }
+    }
+
     public const int PrepSeconds = IeltsBank.Part2PrepSeconds;
     public const int SpeakSeconds = IeltsBank.Part2SpeakSeconds;
 

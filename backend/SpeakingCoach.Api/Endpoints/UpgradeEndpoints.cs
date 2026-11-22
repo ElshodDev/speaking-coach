@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 namespace SpeakingCoach.Api.Endpoints;
 
 public record UpgradeRequest(string? Target);
@@ -15,16 +14,12 @@ public static class UpgradeEndpoints
     {
         static IResult LoginFirst(HttpRequest r) => Results.Json(r.Error("login.required"), statusCode: StatusCodes.Status401Unauthorized);
 
-        async Task<Activity?> OwnAsync(AppDbContext db, Guid id, Guid userId) =>
-            await db.Activities.FirstOrDefaultAsync(a => a.Id == id && a.UserId == userId
-                && (a.Type == ActivityType.Speaking || a.Type == ActivityType.Writing));
-
         app.MapPost("/api/upgrade/{id:guid}", async (Guid id, UpgradeRequest body, HttpRequest request, AuthService auth,
-            AppDbContext db, AiQuotaService quotas, IAnswerUpgrader upgrader, ILogger<Program> logger) =>
+            PracticeStore store, AiQuotaService quotas, IAnswerUpgrader upgrader, ILogger<Program> logger) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return LoginFirst(request);
-            var activity = await OwnAsync(db, id, user.Id);
+            var activity = await store.OwnAttemptAsync(id, user.Id);
             if (activity is null) return Results.NotFound(request.Error("upgrade.not_found"));
             var target = AnswerUpgradeRules.NormalizeTarget(body.Target) ?? AnswerUpgradeRules.DefaultTarget(user.Level);
 
@@ -42,8 +37,7 @@ public static class UpgradeEndpoints
             try
             {
                 var result = await upgrader.UpgradeAsync(source, user.Level, target, RequestTexts.LangOf(request), request.HttpContext.RequestAborted);
-                activity.ResponseData = AnswerUpgradeRules.WithCached(activity.ResponseData, result);
-                await db.SaveChangesAsync();
+                await store.SaveUpgradeAsync(activity, AnswerUpgradeRules.WithCached(activity.ResponseData, result));
                 await quotas.RecordAsync(request, AiKind.Exercise);
                 return Results.Ok(new { result, cached = false });
             }
@@ -56,17 +50,16 @@ public static class UpgradeEndpoints
 
         // Tanlangan yaxshilashlar — takrorlash kartalariga (AI'siz, keshlangan natijadan).
         app.MapPost("/api/upgrade/{id:guid}/cards", async (Guid id, UpgradeCardsRequest body, HttpRequest request, AuthService auth,
-            AppDbContext db, ReviewService reviews) =>
+            PracticeStore store, ReviewService reviews) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return LoginFirst(request);
-            var activity = await OwnAsync(db, id, user.Id);
+            var activity = await store.OwnAttemptAsync(id, user.Id);
             var target = AnswerUpgradeRules.NormalizeTarget(body.Target);
             var result = activity is null || target is null ? null : AnswerUpgradeRules.Cached(activity.ResponseData, target);
             if (result is null) return Results.NotFound(request.Error("upgrade.not_found"));
             var cards = AnswerUpgradeRules.Cards(result, body.Items ?? []);
-            var added = await reviews.AddCardsAsync(user.Id, activity!.Type, cards);
-            await db.SaveChangesAsync();
+            var added = await reviews.AddCardsAndSaveAsync(user.Id, activity!.Type, cards);
             return Results.Ok(new { added });
         }).RequireRateLimiting(RateLimits.WritePolicy);
     }

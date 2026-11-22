@@ -1,5 +1,3 @@
-using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 namespace SpeakingCoach.Api.Endpoints;
 
 /// <summary>
@@ -16,20 +14,10 @@ public static class Part2Endpoints
     public static void MapPart2Endpoints(this IEndpointRouteBuilder app)
     {
         // Kartochkalar ro'yxati; kirgan foydalanuvchi uchun — qaysilarini bajargani.
-        app.MapGet("/api/part2/cards", async (HttpRequest request, AuthService auth, AppDbContext db, MockSets sets) =>
+        app.MapGet("/api/part2/cards", async (HttpRequest request, AuthService auth, PracticeStore store, MockSets sets) =>
         {
             var cards = Part2Rules.All(await sets.IeltsSpeakingAsync());
-            var done = new HashSet<string>(StringComparer.Ordinal);
-            if (await auth.GetCurrentUserIdAsync(request) is Guid userId)
-            {
-                var prompts = await db.Activities
-                    .Where(a => a.UserId == userId && a.Type == ActivityType.Speaking && EF.Functions.JsonExists(a.PromptData, "part2"))
-                    .OrderByDescending(a => a.CreatedAtUtc)
-                    .Take(300)
-                    .Select(a => a.PromptData)
-                    .ToListAsync();
-                foreach (var p in prompts) if (CardIdOf(p) is { } id) done.Add(id);
-            }
+            var done = await auth.GetCurrentUserIdAsync(request) is Guid userId ? await store.Part2DoneAsync(userId) : [];
             return Results.Ok(new
             {
                 prepSeconds = Part2Rules.PrepSeconds,
@@ -39,7 +27,7 @@ public static class Part2Endpoints
         });
 
         app.MapPost("/api/part2/submit", async (
-            HttpRequest request, AuthService auth, AppDbContext db, ReviewService reviews, AiQuotaService quotas,
+            HttpRequest request, AuthService auth, PracticeStore store, AiQuotaService quotas,
             MockSets sets, IPart2Coach coach, ILogger<Program> logger) =>
         {
             if (!request.HasFormContentType) return Results.BadRequest(request.Error("speaking.multipart"));
@@ -74,18 +62,7 @@ public static class Part2Endpoints
                 var newCards = 0;
                 if (userId is not null)
                 {
-                    db.Activities.Add(new Activity
-                    {
-                        Id = submissionId,
-                        Type = ActivityType.Speaking,
-                        UserId = userId,
-                        CreatedAtUtc = DateTime.UtcNow,
-                        // "topic" — Speaking tarixida mavzu shu maydondan ko'rsatiladi.
-                        PromptData = JsonSerializer.Serialize(new { topic = card.Topic, part2 = true, cardId = card.Id }),
-                        ResponseData = FluencyMetrics.WithMetrics(evaluation, metrics),
-                    });
-                    newCards = await reviews.AddCardsAsync(userId.Value, ActivityType.Speaking, ReviewCardFactory.FromCorrections(evaluation.TopCorrections));
-                    await db.SaveChangesAsync();
+                    newCards = await store.SavePart2Async(userId.Value, submissionId, card, FluencyMetrics.WithMetrics(evaluation, metrics), evaluation.TopCorrections);
                 }
                 await quotas.RecordAsync(request, AiKind.Exercise);
                 return Results.Ok(new { submissionId, card, evaluation, metrics, saved = userId is not null, newCards });
@@ -96,23 +73,5 @@ public static class Part2Endpoints
                 return Results.Problem(detail: request.T("ai_unavailable"), statusCode: 502);
             }
         }).RequireRateLimiting(RateLimits.AiPolicy).WithBodyLimit(BodyBytes);
-    }
-
-    /// <summary>Saqlangan PromptData'dan kartochka ID'si (Part 2 bo'lmasa — null).</summary>
-    public static string? CardIdOf(string? promptJson)
-    {
-        try
-        {
-            using var doc = JsonDocument.Parse(promptJson ?? "");
-            return doc.RootElement.ValueKind == JsonValueKind.Object
-                && doc.RootElement.TryGetProperty("part2", out var p) && p.ValueKind == JsonValueKind.True
-                && doc.RootElement.TryGetProperty("cardId", out var id) && id.ValueKind == JsonValueKind.String
-                ? id.GetString()
-                : null;
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
     }
 }

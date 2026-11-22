@@ -64,6 +64,7 @@ public static class DependencyInjection
         services.AddScoped<MockSets>();
         services.AddScoped<MockExamService>();
         services.AddScoped<TelegramLinkService>();
+        services.AddScoped<PracticeStore>();
         services.AddScoped<ShadowingService>();
         services.AddScoped<ProgressService>();
         services.AddScoped<ReadinessService>();
