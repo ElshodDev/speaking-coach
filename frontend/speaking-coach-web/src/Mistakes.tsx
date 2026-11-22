@@ -8,6 +8,7 @@ import { common, useT } from './i18n';
 import { mistakesMsg } from './locales/mistakes';
 import { progressMsg } from './locales/progress';
 import { PageHeader } from './ui';
+import { TutorSuggest } from './TutorSuggest';
 import { Icon } from './Icon';
 
 export interface MistakeExample {
@@ -102,6 +103,7 @@ export function Mistakes({ loggedIn, onLogin, go }: { loggedIn: boolean; onLogin
       <p className="muted small" style={{ margin: '4px 0 0' }}>
         {t.total(data.total)} · {t.last30(data.last30)}
       </p>
+      <TutorSuggest loggedIn go={go} limit={3} />
       <div className="mistake-grid" data-testid="mistakes">
         {data.categories.map((c, i) => {
           const cat = t.cats[c.id] ?? t.cats.other;

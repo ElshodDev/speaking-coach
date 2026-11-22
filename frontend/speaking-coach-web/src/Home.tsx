@@ -6,6 +6,7 @@ import { UsageNote } from './Usage';
 import { TelegramPromo } from './TelegramCard';
 import { SourceCard } from './RatingWidgets';
 import { TasksCard } from './StudentTasks';
+import { TutorSuggest } from './TutorSuggest';
 import { Icon } from './Icon';
 import { TodayPlan } from './TodayPlan';
 import { DiagnosticCard } from './DiagnosticCard';
@@ -157,6 +158,7 @@ export function Home({
       <DiagnosticCard go={go} />
       <TodayPlan go={go} />
       <TasksCard loggedIn go={go} />
+      <TutorSuggest loggedIn go={go} limit={1} />
     </>
   );
   // Yangi foydalanuvchida (karta ham, seriya ham yo'q) 0/0/0 kartasi hech narsa aytmaydi — ko'rsatmaymiz.
