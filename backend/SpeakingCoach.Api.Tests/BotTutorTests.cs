@@ -199,3 +199,63 @@ public class BotTutorTests
         foreach (var lang in Texts.Langs) Assert.InRange(Texts.Get(lang, "tutor.bot_cmd").Length, 3, 256);
     }
 }
+
+public class BotTutorAssignmentTests
+{
+    [Fact]
+    public void Assignment_start_callback_round_trips_within_64_bytes()
+    {
+        var id = Guid.NewGuid();
+        var cb = new BotCallback.Tutor(null, "t", BotTutor.AssignmentArg(id));
+        var data = BotLogic.Encode(cb);
+        Assert.True(System.Text.Encoding.UTF8.GetByteCount(data) <= 64, data);
+        Assert.Equal(cb, BotLogic.Decode(data));
+        Assert.Equal(id, BotTutor.ParseAssignmentArg(BotTutor.AssignmentArg(id)));
+    }
+
+    [Theory]
+    [InlineData("tu:t:a")]
+    [InlineData("tu:t:aXYZ")]
+    [InlineData("tu:t:b00000000000000000000000000000000")]
+    [InlineData("tu:t:a0000000000000000000000000000000")]      // 31 belgi
+    [InlineData("tu:t:a000000000000000000000000000000000")]    // 33 belgi
+    public void Broken_assignment_arguments_are_rejected(string data)
+    {
+        var arg = data["tu:t:".Length..];
+        Assert.Null(BotTutor.ParseAssignmentArg(arg));
+        Assert.Null(BotLogic.Decode(data));
+    }
+
+    [Fact]
+    public void Topic_picks_still_work()
+    {
+        Assert.Equal(new BotCallback.Tutor(null, "t", "3"), BotLogic.Decode("tu:t:3"));
+        Assert.Equal(new BotCallback.Tutor(null, "t", "new"), BotLogic.Decode("tu:t:new"));
+    }
+
+    [Fact]
+    public void Lesson_assignments_have_a_label_in_every_language()
+    {
+        foreach (var lang in Texts.Langs)
+        {
+            var label = BotToday.KindLabel(lang, "lesson:Modal verbs", null);
+            Assert.Contains("Modal verbs", label);
+            Assert.NotEqual("lesson:Modal verbs", label);
+        }
+        Assert.StartsWith("🎓 AI dars", BotToday.KindLabel("uz", "lesson:Modal verbs", null));
+        // Boshqa turlar o'zgarmagan.
+        Assert.Equal("🔁 Review 20 cards", BotToday.KindLabel("en", "review", 20));
+    }
+
+    [Fact]
+    public void Today_message_offers_a_start_button_for_pending_lessons_only()
+    {
+        var plan = new PlanLogic.Plan(null, null, []);
+        var lesson = new PendingTask(Guid.NewGuid(), "G1", "lesson:Modal verbs", null, "", null, new AssignmentStatus(false, false, null, null, null, null, null));
+        var other = new PendingTask(Guid.NewGuid(), "G1", "practice:speaking", null, "", null, new AssignmentStatus(false, false, null, null, null, null, null));
+        var (html, buttons) = BotToday.TodayMessage("uz", plan, null, [lesson, other], DateTime.UtcNow, 0);
+        Assert.Contains("AI dars: Modal verbs", html);
+        var start = Assert.Single(buttons, b => b.Callback is BotCallback.Tutor);
+        Assert.Equal(new BotCallback.Tutor(null, "t", BotTutor.AssignmentArg(lesson.Id)), start.Callback);
+    }
+}

@@ -243,6 +243,7 @@ public static class Texts
         ["bot.today_no_goal"] = new("Maqsad belgilanmagan — saytda Profil → 🎯 Maqsadim.", "Цель не указана — на сайте: Профиль → 🎯 Моя цель.", "No goal set — on the website: Profile → 🎯 My goal."),
         ["bot.plan_review"] = new("🔁 Takrorlash — {0}/{1} ta karta", "🔁 Повторение — {0}/{1} карточек", "🔁 Review — {0}/{1} cards"),
         ["bot.kind_review"] = new("🔁 {0} ta kartani takrorlash", "🔁 Повторить {0} карточек", "🔁 Review {0} cards"),
+        ["bot.kind_lesson"] = new("🎓 AI dars: {0}", "🎓 ИИ-урок: {0}", "🎓 AI lesson: {0}"),
         ["bot.kind_speaking"] = new("🎙 Gapirish mashqi", "🎙 Упражнение: говорение", "🎙 Speaking practice"),
         ["bot.kind_writing"] = new("✍️ Yozish mashqi", "✍️ Упражнение: письмо", "✍️ Writing practice"),
         ["bot.kind_reading"] = new("📖 Oʻqish mashqi", "📖 Упражнение: чтение", "📖 Reading practice"),

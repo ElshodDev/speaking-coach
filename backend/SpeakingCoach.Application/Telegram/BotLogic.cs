@@ -105,6 +105,7 @@ public static partial class BotLogic
             ["au", "m", var e, var m, var v, "g" or "s"] when Mock.AuthorKind.Parse($"{e}:{m}:{v}") is { } k => new BotCallback.AuthorModePick(k.Key, p[5] == "g"),
             ["au", "x"] => new BotCallback.AuthorCancel(),
             ["tu", "t", "new"] => new BotCallback.Tutor(null, "t", "new"),
+            ["tu", "t", var x] when BotTutor.ParseAssignmentArg(x) is not null => new BotCallback.Tutor(null, "t", x),
             ["tu", "t", var i] when int.TryParse(i, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var n) && n < Tutor.SuggestedTopics.Length
                 => new BotCallback.Tutor(null, "t", i),
             ["tu", var id, "a", var a, var o] when Guid.TryParseExact(id, "N", out var g) && BotTutor.IsAnswerArg($"{a}:{o}") => new BotCallback.Tutor(g, "a", $"{a}:{o}"),

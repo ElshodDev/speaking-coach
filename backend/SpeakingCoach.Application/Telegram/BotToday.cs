@@ -27,7 +27,7 @@ public static class BotToday
     };
 
     /// <summary>O'qituvchi vazifasi turi: "review", "practice:writing", "mock:cefr:reading".</summary>
-    public static string KindLabel(string lang, string kind, int? target) => kind.Split(':') switch
+    public static string KindLabel(string lang, string kind, int? target) => GroupLogic.LessonTopic(kind) is { } lessonTopic ? Texts.Get(lang, "bot.kind_lesson", lessonTopic) : kind.Split(':') switch
     {
         ["review"] => Texts.Get(lang, "bot.kind_review", target ?? 0),
         ["shadowing"] => Texts.Get(lang, "bot.kind_shadowing"),
@@ -92,6 +92,9 @@ public static class BotToday
                 var progress = t.Status.Progress is int p && t.Status.Target is int tg ? $" · {p}/{tg}" : "";
                 lines.Add($"• {BotLogic.Html(label)}{progress} — {BotLogic.Html(t.GroupName)}{due}");
             }
+            // AI dars vazifalari botning o'zida bir bosishda boshlanadi (ko'pi bilan 3 ta).
+            foreach (var t in tasks.Where(x => GroupLogic.LessonTopic(x.Kind) is not null).Take(3))
+                buttons.Add(new TodayButton(KindLabel(lang, t.Kind, null), new BotCallback.Tutor(null, "t", BotTutor.AssignmentArg(t.Id)), null));
             if (tasks.Count > 5) lines.Add($"<i>{Texts.Get(lang, "bot.more_tasks", tasks.Count - 5)}</i>");
             buttons.Add(new TodayButton(Texts.Get(lang, "bot.tasks_button"), null, "tasks"));
         }

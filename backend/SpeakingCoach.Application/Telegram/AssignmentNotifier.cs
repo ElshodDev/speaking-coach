@@ -32,7 +32,10 @@ public class AssignmentNotifier(IAppDbContext db, ITelegramApi api, TelegramOpti
                 {
                     new[] { a.Kind == "review"
                         ? new TgButton(Texts.Get(acc.Lang, "bot.task_do"), BotLogic.Encode(new BotCallback.StartReview()))
-                        : options.SiteButton(Texts.Get(acc.Lang, "bot.task_do"), route) },
+                        : GroupLogic.LessonTopic(a.Kind) is not null
+                            // AI dars: botning o'zida boshlanadi (/dars bilan bir xil yadro).
+                            ? new TgButton(Texts.Get(acc.Lang, "bot.task_do"), BotLogic.Encode(new BotCallback.Tutor(null, "t", BotTutor.AssignmentArg(a.Id))))
+                            : options.SiteButton(Texts.Get(acc.Lang, "bot.task_do"), route) },
                 }, ct: ct);
                 sent++;
                 await Task.Delay(50, ct);

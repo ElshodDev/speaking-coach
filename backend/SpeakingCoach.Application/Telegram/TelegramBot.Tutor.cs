@@ -116,7 +116,7 @@ public partial class TelegramBot
         }
     }
 
-    private async Task StartTutorLessonAsync(Ctx c, string topic, CancellationToken ct)
+    private async Task StartTutorLessonAsync(Ctx c, string topic, CancellationToken ct, Guid? assignmentId = null)
     {
         if (Tutor.NormalizeTopic(topic) is null)
         {
@@ -133,7 +133,7 @@ public partial class TelegramBot
         await SendPlainAsync(c, "tutor.bot_preparing", [], ct);
         await RunTutorAiAsync(c, ct, async () =>
         {
-            var r = await _tutor.StartAsync(c.User!, topic, null, c.Lang, ct);
+            var r = await _tutor.StartAsync(c.User!, topic, null, c.Lang, ct, assignmentId is not null);
             if (!r.Ok)
             {
                 // Mavzudan tashqari bo'lsa — holat saqlanadi: foydalanuvchi boshqa mavzu yozishi mumkin.
@@ -162,6 +162,14 @@ public partial class TelegramBot
             if (cb.Arg == "new")
             {
                 await AskTutorTopicAsync(c, ct);
+                return null;
+            }
+            // Ustoz vazifasi: mavzu vazifadan olinadi (guruh a'zoligi tekshiriladi).
+            if (BotTutor.ParseAssignmentArg(cb.Arg) is { } assignmentId)
+            {
+                var resolved = await _tutor.ResolveAssignmentTopicAsync(assignmentId, user);
+                if (!resolved.Ok) return c.T(resolved.Fail!.Key, resolved.Fail.Args);
+                await StartTutorLessonAsync(c, resolved.Value!, ct, assignmentId);
                 return null;
             }
             // Boshqa mavzu so'rovi ochiq bo'lsa ham, tugma bosilsa — tanlangan mavzu bilan boshlaymiz.
