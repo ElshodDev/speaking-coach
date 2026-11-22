@@ -186,7 +186,8 @@ public class AdminService
             .ToDictionary(g => g.Key, g => g.Count());
         var tgAccounts = await _db.TelegramAccounts.Select(t => new { t.UserId, t.LastSeenAtUtc }).ToListAsync();
         tgAccounts = tgAccounts.Where(t => !demoIds.Contains(t.UserId)).ToList();
-        var feedback7d = await _db.Feedbacks.CountAsync(f => f.CreatedAtUtc >= since7);
+        // Faqat yozilgan fikrlar: bir bosishli baholar ("rating") hisobga olinmaydi.
+        var feedback7d = await _db.Feedbacks.CountAsync(f => f.CreatedAtUtc >= since7 && f.Kind != "rating");
 
         return new AdminOverview(
             users.Count,
