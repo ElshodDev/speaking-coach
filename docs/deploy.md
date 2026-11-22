@@ -152,6 +152,13 @@ Internet bo'lmaganda ham bugungi kartalarni takrorlash mumkin (faqat frontend; A
 - **Qaytarish (feature flag):** Vercel'da `VITE_OFFLINE_REVIEW=off` va Redeploy — hech narsa saqlanmaydi, eskisi o'chadi.
 - **Diqqat:** baho oflaynda berilgan vaqt emas, serverga yetib kelgan vaqt bo'yicha hisoblanadi (oraliqlar bir necha soatga siljishi mumkin).
 
+
+## Yangi menyu ("Kundalik" dizayni) — VITE_NEW_NAV
+
+- **Nima o'zgaradi:** pastda 5 tugma (Asosiy · Takrorlash · AI ustoz (markazda) · Mashqlar · Natijalar); Lug'at Takrorlash ichida "Kartalar | Lug'at" bo'lib turadi (eski `#/vocab` havolasi ishlayveradi); tepada sarlavha, seriya, **Fikr**, **Hammasi** (qidiruvli, barcha bo'limlar) va avatar. Rang va shakllar — `src/newNav.css` (faqat `.app.nn` ichida).
+- **Yoqish:** Vercel'da `VITE_NEW_NAV=true` va Redeploy. Bayroq berilmasa yoki `true` bo'lmasa, hozirgi menyu o'zgarishsiz qoladi.
+- **Qaytarish:** o'zgaruvchini o'chirib, Redeploy qiling. Baza, API va kirish tizimiga tegilmagan.
+
 ## Taklif (referral)
 
 Doʻstni taklif qilish: profilda havola (`https://fluentuz.app/?ref=KOD`), doʻst shu havola bilan roʻyxatdan oʻtsa (email yoki Google), **ikkalasiga ham 7 kun davomida kuniga +5 ta qoʻshimcha AI mashq** beriladi.

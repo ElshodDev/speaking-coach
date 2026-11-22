@@ -34,7 +34,11 @@ import {
   type Profile as ProfileData,
 } from './api';
 import { ServerWake } from './ServerWake';
-import { Footer } from './Footer';
+import { Footer, FeedbackDialog } from './Footer';
+import { Hub } from './Hub';
+import { hubMsg } from './locales/hub';
+import { activeNav2, NAV2, NEW_NAV } from './newNav';
+import './newNav.css';
 import { setIsAdmin } from './adminFlag';
 import { confirmLeave } from './leaveGuard';
 import { common, LangSelect, useT } from './i18n';
@@ -131,6 +135,9 @@ function App() {
   const tMockPick = useT(mockPickMsg);
   const tNet = useT(networkMsg);
   const c = useT(common);
+  const tHub = useT(hubMsg);
+  const [hubOpen, setHubOpen] = useState(false);
+  const [fbOpen, setFbOpen] = useState(false);
   const [route, go] = useRoute();
   // Analitika: sahifa ko'rinishi va marshrutdan kelib chiqadigan hodisalar (faqat VITE_PLAUSIBLE_DOMAIN berilganda).
   useEffect(() => onRoute(route), [route]);
@@ -465,7 +472,9 @@ function App() {
 
   // Profil va Admin menyuda yo'q — ularda menyuning hech biri belgilanmaydi.
   const onProfile = section === 'profile' || section === 'admin' || section === 'teacher' || section === 'login' || section === 'register';
-  const activeNav = onProfile
+  const activeNav = NEW_NAV
+    ? activeNav2(section)
+    : onProfile
     ? null
     : section === 'review' && sub === 'vocab'
       ? 'vocab'
@@ -481,7 +490,31 @@ function App() {
   return (
     <>
       <ServerWake />
-      <div className="app">
+      <div className={NEW_NAV ? 'app nn' : 'app'}>
+        {NEW_NAV ? (
+          <header className="topbar nn-top">
+            <div className="nn-title">
+              {section === 'home' && (profile?.displayName || email) && <small>{tHub.hello(profile?.displayName || accountLabel(email).split('@')[0])}</small>}
+              <b>{section === 'home' ? tHub.today : tHub.items[section]?.title ?? (t.nav as Record<string, string>)[section] ?? t.profile}</b>
+            </div>
+            <div className="topbar-right">
+              {loggedIn && stats && stats.streakDays > 0 && <span className="badge streak"><Icon name="flame" size={14} className="streak-ico" /> {stats.streakDays}</span>}
+              <button className="nn-ib" onClick={() => setFbOpen(true)} aria-label={tHub.feedback} title={tHub.feedback} data-testid="fb-top">
+                <Icon name="chat" size={19} />
+              </button>
+              <button className="nn-ib" onClick={() => setHubOpen(true)} aria-label={tHub.all} title={tHub.all} data-testid="hub-open">
+                <Icon name="grid" size={19} />
+              </button>
+              {loggedIn ? (
+                <button className="avatar" aria-label={t.profile} aria-current={onProfile ? 'page' : undefined} onClick={() => go('profile')}>
+                  {initial}
+                </button>
+              ) : (
+                <button className="btn-link" onClick={toLogin}>{c.login}</button>
+              )}
+            </div>
+          </header>
+        ) : (
         <header className="topbar">
           <a className="brand" href="#/">
             <Logo size={30} />
@@ -506,6 +539,7 @@ function App() {
             )}
           </div>
         </header>
+        )}
 
         <nav className="nav" aria-label={t.navLabel}>
           {/* Kompyuterda menyu chap tomonda: logo uning tepasida. */}
@@ -514,21 +548,26 @@ function App() {
             <span className="brand-name">FluentUZ</span>
           </a>
           <div className="nav-inner">
-            {NAV.map((n) => (
-              <button key={n.id} aria-current={activeNav === n.id ? 'page' : undefined} onClick={() => go(n.id)}>
+            {(NEW_NAV ? NAV2 : NAV).map((n0) => {
+              const n = typeof n0 === 'string' ? { id: n0 } : n0;
+              return (
+              <button key={n.id} className={n.id === 'tutor' ? 'nn-ai' : undefined} aria-current={activeNav === n.id ? 'page' : undefined} onClick={() => go(n.id)}>
                 <span className="icon" aria-hidden>
                   <Icon name={n.id} size={22} />
                 </span>
-                {t.nav[n.id]}
+                {n.id === 'tutor' && NEW_NAV ? tHub.items.tutor.title : t.nav[n.id as keyof typeof t.nav]}
                 {n.id === 'review' && stats && stats.due > 0 && (
                   <span className="dot" aria-label={t.dueDot(stats.due)}>
                     {stats.due}
                   </span>
                 )}
               </button>
-            ))}
+              );
+            })}
           </div>
         </nav>
+        {hubOpen && <Hub go={go} onClose={() => setHubOpen(false)} hasEmail={loggedIn} isAdmin={!!profile?.isAdmin} />}
+        {fbOpen && <FeedbackDialog onClose={() => setFbOpen(false)} />}
 
         <MicConsentHost />
         <RatePrompt />
@@ -540,6 +579,12 @@ function App() {
               {section !== 'login' && (
                 <button className="btn-link" onClick={toLogin}>{c.login} →</button>
               )}
+            </div>
+          )}
+          {NEW_NAV && (section === 'vocab' || (section === 'review' && !sub)) && (
+            <div className="nn-seg" role="tablist" data-testid="review-seg">
+              <button role="tab" aria-selected={section === 'review'} onClick={() => go('review')}>{tHub.items.review.title}</button>
+              <button role="tab" aria-selected={section === 'vocab'} onClick={() => go('vocab')}>{tHub.items.vocab.title}</button>
             </div>
           )}
           <ErrorBoundary resetKey={route} onHome={() => go('home')}>
