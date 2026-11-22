@@ -1,4 +1,6 @@
+using System.IO.Compression;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SpeakingCoach.Api.Endpoints;
@@ -56,6 +58,16 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 // So'rovlar sonini cheklash (rate limiting) — nomli siyosatlar ("auth", "code",
 // "poll", "write", "ai", "join") va AI uchun umumiy bir vaqtdagi cheklov:
 // batafsil Web/RateLimits.cs da. Rad etilsa — 429 + Retry-After.
+// JSON javoblarni siqish (Brotli, bo'lmasa Gzip): test/dars/ro'yxat javoblari 5–10 marta kichrayadi.
+// Render ortidagi proksi TLS'ni o'zi yechadi (ilova HTTP ko'radi), shuning uchun siqish ishlaydi; "tezkor" daraja — protsessor kam ketadi.
+builder.Services.AddResponseCompression(options =>
+{
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+});
+builder.Services.Configure<BrotliCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
+builder.Services.Configure<GzipCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
+
 builder.Services.AddRateLimiter(RateLimits.Configure);
 
 // So'rov hajmi: umumiy 2 MB (JSON), audio endpoint'lar o'z chegarasini beradi (Web/Uploads.cs).
@@ -71,6 +83,7 @@ var app = builder.Build();
 
 // Tartib muhim: avval haqiqiy IP aniqlanadi, keyin CORS, keyin cheklov.
 app.UseForwardedHeaders();
+app.UseResponseCompression();
 // API faqat JSON qaytaradi: brauzer turini "taxmin qilmasin", manzil begona saytlarga sizmasin.
 app.Use((context, next) =>
 {
