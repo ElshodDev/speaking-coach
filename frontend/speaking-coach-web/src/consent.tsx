@@ -14,7 +14,7 @@ type Resolver = (ok: boolean) => void;
 let pending: Resolver[] = [];
 const listeners = new Set<() => void>();
 
-export function consentEnabled(): boolean {
+function consentEnabled(): boolean {
   return import.meta.env.VITE_MIC_CONSENT !== 'off';
 }
 

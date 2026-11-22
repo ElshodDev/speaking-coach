@@ -52,7 +52,7 @@ export interface ShadowCheck {
   tip: string;
 }
 
-export const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1'] as const;
+const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1'] as const;
 export const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5] as const;
 
 /** Mashq rejimi: oddiy (o'zingiz boshqarasiz), avto (pauza bilan ketma-ket), qo'l tegizmasdan (o'ynaydi → yozadi → eshittiradi). */
@@ -74,7 +74,7 @@ export const CHARACTER_VOICE: Record<CharacterName, { voice: 'male' | 'female'; 
   penguin: { voice: 'female', pitch: 1.5, rate: 1.05 },
 };
 
-export const words = (text: string) => text.split(/\s+/).filter(Boolean).length;
+const words = (text: string) => text.split(/\s+/).filter(Boolean).length;
 
 /** Gap davomiyligi (soniya): video — vaqtlaridan; qahramon — ~2.6 so'z/s. */
 export function lineSeconds(line: ShadowLine): number {

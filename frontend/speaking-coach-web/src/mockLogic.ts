@@ -1,7 +1,7 @@
 // Mock imtihon uchun toza (sof) funksiyalar — komponentlardan ajratilgan,
 // shuning uchun unit test bilan tekshiriladi.
 
-export interface CueCard {
+interface CueCard {
   topic: string;
   points: string[];
   explain: string;
@@ -157,7 +157,7 @@ export interface WritingDraft {
   task2: string;
 }
 
-export const DRAFT_KEY = 'speakingCoach.mockWriting';
+const DRAFT_KEY = 'speakingCoach.mockWriting';
 
 /** Qoralama hali davom ettirishga yaroqlimi (vaqt + 5 daqiqa zaxira ichida). */
 export function draftUsable(d: WritingDraft | null, variant: string, minutes: number, now: number): boolean {

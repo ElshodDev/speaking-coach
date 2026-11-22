@@ -3,7 +3,7 @@
 // Ilovaning o'z materiali; AI ishlatilmaydi. options[0] — to'g'ri javob (ko'rsatishda aralashtiriladi).
 // cat — "Mening xatolarim" bo'limidagi xato turi (MistakeAnalyzer.cs bilan bir xil ID'lar).
 
-export type TrapCategory = 'articles' | 'prepositions' | 'agreement' | 'tense' | 'plural' | 'word_choice';
+type TrapCategory = 'articles' | 'prepositions' | 'agreement' | 'tense' | 'plural' | 'word_choice';
 
 export interface TrapItem {
   id: string;

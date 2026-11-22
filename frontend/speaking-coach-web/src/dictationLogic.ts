@@ -1,8 +1,8 @@
 // Diktant: yozilgan gapni asl gap bilan so'zma-so'z solishtirish (AI'siz, toza funksiyalar).
 
-export type WordStatus = 'ok' | 'wrong' | 'missing' | 'extra';
+type WordStatus = 'ok' | 'wrong' | 'missing' | 'extra';
 
-export interface WordMark {
+interface WordMark {
   status: WordStatus;
   /** Asl gapdagi so'z (extra bo'lsa — bo'sh). */
   expected: string;
@@ -24,7 +24,7 @@ export function normalizeWord(w: string): string {
     .replace(/^[^a-z0-9']+|[^a-z0-9']+$/g, '');
 }
 
-export function words(text: string): string[] {
+function words(text: string): string[] {
   return text
     .split(/\s+/)
     .map((w) => w.trim())

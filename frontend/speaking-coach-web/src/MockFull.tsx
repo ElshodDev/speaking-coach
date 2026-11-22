@@ -13,7 +13,7 @@ import { formatBand } from './mockLogic';
 import { PageHeader } from './ui';
 
 export const FULL_ORDER = ['listening', 'reading', 'writing', 'speaking'] as const;
-export type Variant = 'academic' | 'general';
+type Variant = 'academic' | 'general';
 /** To'liq imtihon turi: IELTS Academic/General yoki CEFR (Multilevel). */
 export type FullKind = Variant | 'cefr';
 

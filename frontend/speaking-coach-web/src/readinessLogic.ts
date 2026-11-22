@@ -1,7 +1,7 @@
 // Imtihonga tayyorlik bahosi — server javobi turlari va ko'rsatish uchun toza funksiyalar.
 
-export type Skill = 'listening' | 'reading' | 'writing' | 'speaking';
-export type Confidence = 'none' | 'low' | 'medium' | 'high';
+type Skill = 'listening' | 'reading' | 'writing' | 'speaking';
+type Confidence = 'none' | 'low' | 'medium' | 'high';
 export type Status = 'no_goal' | 'unknown' | 'no_target' | 'on_track' | 'close' | 'behind';
 
 export interface SkillReadiness {
@@ -74,7 +74,7 @@ export function statusTone(s: Status): 'good' | 'mid' | 'low' | null {
 
 // ---- Birinchi kunlik boshlang'ich test ----
 
-export const DIAGNOSTIC_SKILLS: Skill[] = ['listening', 'reading', 'writing', 'speaking'];
+const DIAGNOSTIC_SKILLS: Skill[] = ['listening', 'reading', 'writing', 'speaking'];
 
 export interface DiagnosticStep {
   skill: Skill;

@@ -5,8 +5,8 @@ export type Goal = 'ielts' | 'cefr' | 'general';
 export const GOALS: Goal[] = ['ielts', 'cefr', 'general'];
 export const LEVELS = ['A2', 'B1', 'B2', 'C1'] as const;
 export const MINUTES = [10, 20, 30, 45] as const;
-export const IELTS_TARGETS = ['5.0', '5.5', '6.0', '6.5', '7.0', '7.5', '8.0'];
-export const CEFR_TARGETS = ['B1', 'B2', 'C1'];
+const IELTS_TARGETS = ['5.0', '5.5', '6.0', '6.5', '7.0', '7.5', '8.0'];
+const CEFR_TARGETS = ['B1', 'B2', 'C1'];
 
 export interface PlanItem {
   key: string;

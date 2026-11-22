@@ -5,7 +5,7 @@
 export const SITEMAP_PATHS = ['/', '/privacy.html', '/terms.html'] as const;
 
 /** Qidiruv robotlari kirmasligi kerak bo'lgan yo'llar: API va shaxsiy sahifalar yo'q (hammasi hash ichida), shuning uchun faqat servis fayllari. */
-export const ROBOTS_DISALLOW = ['/sw.js'] as const;
+const ROBOTS_DISALLOW = ['/sw.js'] as const;
 
 export function buildRobots(siteUrl: string): string {
   const base = siteUrl.replace(/\/+$/, '');

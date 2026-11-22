@@ -14,7 +14,7 @@ export const AI_VERDICTS: AiVerdict[] = ['fair', 'high', 'low'];
 export type SourceId = 'instagram' | 'telegram' | 'friend' | 'teacher' | 'search' | 'other';
 export const SOURCES: SourceId[] = ['instagram', 'telegram', 'friend', 'teacher', 'search', 'other'];
 
-export const RATING_PATTERN =
+const RATING_PATTERN =
   /^(first_practice:(up|down)|ai_fair:(speaking|writing|part2|mock):(fair|high|low)|lesson:(up|down)|source:(instagram|telegram|friend|teacher|search|other))$/;
 
 export const isRatingKey = (key: string): boolean => RATING_PATTERN.test(key);
@@ -94,7 +94,7 @@ export interface RatingItem {
   count: number;
 }
 
-export interface AiCounts {
+interface AiCounts {
   fair: number;
   high: number;
   low: number;

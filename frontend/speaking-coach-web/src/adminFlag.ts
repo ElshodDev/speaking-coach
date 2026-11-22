@@ -13,7 +13,7 @@ export function setIsAdmin(v: boolean) {
   listeners.forEach((l) => l());
 }
 
-export const getIsAdmin = (): boolean => isAdmin;
+const getIsAdmin = (): boolean => isAdmin;
 
 function subscribe(listener: () => void) {
   listeners.add(listener);

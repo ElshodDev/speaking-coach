@@ -28,7 +28,7 @@ export interface SpeakingEvaluationLike {
   topCorrections: CorrectionItem[];
 }
 
-export type CriterionKey = 'fluency' | 'lexical' | 'grammar' | 'pronunciation';
+type CriterionKey = 'fluency' | 'lexical' | 'grammar' | 'pronunciation';
 
 export interface CriterionRow {
   key: CriterionKey;

@@ -9,7 +9,7 @@ import { clearOfflineReview } from './offlineReview';
 
 // Lokalda .env fayl bo'lmasa, localhost:5000'ga tushadi. Vercel'da
 // VITE_API_URL environment variable orqali Render manziliga yo'naltiriladi.
-export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const TOKEN_KEY = 'speakingCoach.token';
 
@@ -202,7 +202,7 @@ function retryAfterHeader(response: Response): number | undefined {
 }
 
 /** Xato javobidan ApiError: server xabari, kodi va qayta urinish vaqti bilan. */
-export async function errorFromResponse(response: Response): Promise<ApiError> {
+async function errorFromResponse(response: Response): Promise<ApiError> {
   const body = (await response.json().catch(() => ({}))) as {
     error?: string;
     detail?: string;

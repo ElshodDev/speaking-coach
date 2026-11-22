@@ -98,7 +98,7 @@ function fitText(ctx: CanvasRenderingContext2D, text: string, weight: number, si
   }
 }
 
-export async function drawShareCard(s: ShareStats, t: (typeof shareMsg)['uz'], site: string): Promise<Blob> {
+async function drawShareCard(s: ShareStats, t: (typeof shareMsg)['uz'], site: string): Promise<Blob> {
   try {
     await document.fonts?.load(`800 96px 'Inter Variable'`);
     await document.fonts?.ready;

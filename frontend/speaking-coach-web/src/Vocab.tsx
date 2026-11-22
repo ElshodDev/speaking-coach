@@ -8,7 +8,7 @@ import { vocabMsg } from './locales/vocab';
 import { learnMsg } from './locales/learn';
 import { Icon } from './Icon';
 
-export type VocabStatus = 'New' | 'Learning' | 'Known';
+type VocabStatus = 'New' | 'Learning' | 'Known';
 
 export interface VocabWord {
   id: string;

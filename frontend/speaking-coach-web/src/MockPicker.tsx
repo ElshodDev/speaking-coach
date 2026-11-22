@@ -28,7 +28,7 @@ interface BankResponse {
 type Filter = 'all' | 'fresh' | 'done';
 
 /** Marshrut qismi: "t/<id>" — aniq test, "next" — keyingi ishlanmagan, "ai" — AI yangisini tuzadi. */
-export const pickRoute = (base: string, id: string) => `${base}/t/${encodeURIComponent(id)}`;
+const pickRoute = (base: string, id: string) => `${base}/t/${encodeURIComponent(id)}`;
 
 export function MockPicker({
   exam,
