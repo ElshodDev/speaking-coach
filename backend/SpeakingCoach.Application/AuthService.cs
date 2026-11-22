@@ -782,14 +782,16 @@ public class AuthService
 
         var hash = HashToken(token);
         var now = DateTime.UtcNow;
-        var session = await _db.Sessions
-            .Where(s => s.TokenHash == hash && s.ExpiresAtUtc > now)
-            .Select(s => new { s.Id, s.UserId, s.ExpiresAtUtc })
+        // Sessiya va foydalanuvchi — bitta so'rovda (har bir autentifikatsiyalangan so'rovda bitta baza safari tejaladi).
+        var found = await (
+            from s in _db.Sessions
+            where s.TokenHash == hash && s.ExpiresAtUtc > now
+            join u in _db.Users on s.UserId equals u.Id
+            select new { s.Id, s.ExpiresAtUtc, User = u })
             .FirstOrDefaultAsync();
-        if (session is null) return null;
-
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == session.UserId);
-        if (user is null) return null;
+        if (found is null) return null;
+        var session = found;
+        var user = found.User;
         // Email tasdiqlanmagan hisobning (masalan, bu funksiyadan oldin
         // ochilgan) eski sessiyasi ham yaroqsiz — qayta kirib, kodni kiritadi.
         if (VerificationRequired && user.EmailVerifiedAtUtc is null) return null;

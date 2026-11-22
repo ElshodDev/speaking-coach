@@ -1916,13 +1916,6 @@ table.data td {
     min-height: 260px;
     resize: none;
   }
-  .exam-split.sticky-left > :first-child {
-    position: sticky;
-    top: calc(var(--sticky-top) + 96px);
-    max-height: calc(100vh - var(--sticky-top) - 110px);
-    height: auto;
-    overflow-y: auto;
-  }
   .card-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));

@@ -26,8 +26,6 @@ public record AuthorKind(string Exam, string Module, string Variant)
 
     public static AuthorKind? Parse(string? key) => All.FirstOrDefault(k => k.Key == key);
 
-    public bool Objective => Module is "reading" or "listening";
-
     public bool IsShadowing => Exam == ShadowingService.Exam;
 
     /// <summary>"Reading (Academic)", "Speaking", "YouTube", "Characters".</summary>

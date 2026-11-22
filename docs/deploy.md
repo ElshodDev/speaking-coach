@@ -239,3 +239,9 @@ Istalgan foydalanuvchi (o'qituvchi yoki admin bo'lishi shart emas) Telegram botd
 - **O'chirish:** `Features__PersonalPodcasts=false`.
 - **Eslatma:** faqat shaxsiy mashq uchun; ochiq (public) YouTube video va aniq inglizcha nutq kerak. Sifat Gemini'ning videoni eshitishiga bog'liq.
 
+### Tezlik (audit natijasi)
+
+- **API javoblari siqiladi** (Brotli, bo'lmasa Gzip): 1 KB dan katta JSON (kartalar, natijalar, testlar) taxminan 4–5 marta kichrayadi. Sozlama kerak emas; brauzer `Accept-Encoding` yuboradi.
+- **Frontend fayllari uzoq keshlanadi** (`/assets/*` — nomida hash bor, `immutable`, 1 yil): qayta kirganda yuzlab KB qayta yuklanmaydi. `index.html` va `sw.js` har safar tekshiriladi (yangi versiya darrov chiqadi).
+- **Kam baza safari:** har so'rovda sessiya va foydalanuvchi bitta so'rovda; `/api/review/stats` (har sahifada chaqiriladi) 7 o'rniga 4–5 so'rov. Neon'da har baza safari tarmoq kechikishini qo'shadi, shuning uchun bu bevosita tezlikka ta'sir qiladi.
+
