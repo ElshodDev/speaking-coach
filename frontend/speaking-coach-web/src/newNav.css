@@ -715,3 +715,11 @@ body:has(.app.nn) {
     color: #fda4af;
   }
 }
+
+/* Kompyuter: nom yozuvi ko'rsatilmaydi (faqat belgi), kun rejasi o'qishga qulay kenglikda */
+.nn .brand-name {
+  display: none;
+}
+[data-testid='day-plan'] {
+  max-width: 760px;
+}
