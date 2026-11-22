@@ -1,0 +1,12 @@
+name: License request
+description: Ask for permission to use part of this code (the repository is public but not open source)
+title: "License request"
+labels: [license]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What would you like to use, and for what?
+      description: Which files or features, and whether the use is personal, educational or commercial.
+    validations:
+      required: true
