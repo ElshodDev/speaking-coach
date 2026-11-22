@@ -11,10 +11,10 @@ public record RatingRequest(string? Key, string? Page);
 /// </summary>
 public static partial class RatingRules
 {
-    public const string Kind = "rating";
+    public const string Kind = FeedbackKinds.Rating;
     public const int MaxKey = 64;
 
-    [GeneratedRegex(@"^(first_practice:(up|down)|ai_fair:(speaking|writing|part2|mock):(fair|high|low)|source:(instagram|telegram|friend|teacher|search|other))\z", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"^(first_practice:(up|down)|ai_fair:(speaking|writing|part2|mock):(fair|high|low)|lesson:(up|down)|source:(instagram|telegram|friend|teacher|search|other))\z", RegexOptions.CultureInvariant)]
     private static partial Regex Allowed();
 
     public static bool IsValid(string? key) => key is not null && key.Length <= MaxKey && Allowed().IsMatch(key);

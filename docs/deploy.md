@@ -216,3 +216,14 @@ O'qituvchi guruhga **"AI dars (mavzu)"** turidagi vazifa beradi ("Modal verbs").
 - **Baza sxemasi o'zgarmaydi, migratsiya kerak emas.** AI chaqirilmaydi va limit sarflanmaydi (faqat mavjud `Activities` o'qiladi). Yangi endpoint: `GET /api/tutor/recommendations`.
 - **O'chirish:** `Features__AiTutor=false` — tavsiyalar bo'sh qaytadi (kartalar ko'rinmaydi).
 
+### AI ustoz o'lchovlari (admin → "AI ustoz")
+
+Pilot paytida darslar sifatini raqam bilan ko'rish uchun (Admin paneli, oxirgi 30 kun):
+- **Boshlangan darslar** va ular qayerdan boshlangani: o'zi tanlagan / **tavsiyadan** / **ustoz vazifasidan**; **tugatilgan** darslar, o'quvchilar soni va boshlanganlarning necha foizi tugagani.
+- **Mini-test o'rtachasi**, o'zlashtirish (yaxshi / o'rtacha / qiyin), o'z gaplarini yozganlar.
+- **Dars bahosi** (👍/👎, saytda ham, Telegram'da ham): 👎 bo'lsa, ixtiyoriy izoh oddiy fikrlar ro'yxatiga `[AI ustoz: mavzu] …` bilan tushadi.
+- Ustozlarning AI dars vazifalari soni va **eng ko'p o'rganilgan mavzular**.
+- Plausible (yoqilgan bo'lsa): `tutor_started`, `tutor_completed` hodisalari (xossasiz, identifikatorsiz).
+
+**Baza sxemasi o'zgarmaydi, migratsiya kerak emas.** Hodisalar mavjud `Feedbacks` jadvaliga `Kind = "rating"` bilan yoziladi (`lesson_start:free|recommended|assigned` — faqat server yozadi, tashqaridan `POST /api/rating` bilan yozib bo'lmaydi; `lesson:up|down` — foydalanuvchi bahosi). Ular fikrlar ro'yxatiga va "Fikrlar (7 kun)" sonoqchisiga kirmaydi; hisob o'chirilsa, ular ham o'chadi. Yangi endpoint: `GET /api/admin/tutor?days=30` (faqat admin). Eslatma: bu o'zgarishdan oldingi darslar uchun "boshlangan" hodisasi yo'q, shuning uchun "tugatilgan ulushi" faqat yangi davr uchun to'g'ri.
+

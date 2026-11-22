@@ -1,5 +1,11 @@
 namespace SpeakingCoach.Domain.Entities;
 
+public static class FeedbackKinds
+{
+    /// <summary>Bir bosishli baholar va ichki hodisalar (adminning fikrlar ro'yxatiga kirmaydi).</summary>
+    public const string Rating = "rating";
+}
+
 /// <summary>Foydalanuvchi fikri: xato, taklif, kontent yoki AI haqida (mehmon ham yubora oladi).</summary>
 public class Feedback
 {

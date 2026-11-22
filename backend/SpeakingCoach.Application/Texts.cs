@@ -639,6 +639,9 @@ public static class Texts
             "🎯 Xatolaringiz asosida tavsiya — pastdagi birinchi tugmalar.",
             "🎯 Рекомендация по вашим ошибкам — первые кнопки ниже.",
             "🎯 Recommended from your mistakes — the first buttons below."),
+        ["tutor.bot_rate_up"] = new("👍 Dars foydali", "👍 Урок полезен", "👍 Helpful lesson"),
+        ["tutor.bot_rate_down"] = new("👎 Unchalik", "👎 Не очень", "👎 Not really"),
+        ["tutor.bot_thanks"] = new("Rahmat!", "Спасибо!", "Thank you!"),
         ["tutor.bot_preparing"] = new(
             "⏳ Dars tayyorlanmoqda… (10–20 soniya)",
             "⏳ Готовим урок… (10–20 секунд)",

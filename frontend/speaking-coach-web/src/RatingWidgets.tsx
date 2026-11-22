@@ -10,6 +10,7 @@ import {
   SOURCES,
   aiKey,
   firstPracticeKey,
+  lessonKey,
   markAsked,
   promptsEnabled,
   ratingPage,
@@ -222,6 +223,61 @@ export function FeedbackLink() {
         {t.feedbackLink}
       </button>
       {open && <FeedbackDialog onClose={() => setOpen(false)} />}
+    </div>
+  );
+}
+
+/**
+ * AI ustoz darsi natijasi ostida: "Dars foydali bo'ldimi?" (bir bosish). "Unchalik emas" bo'lsa — ixtiyoriy izoh
+ * (mavjud /api/feedback orqali). Ota komponent `key` bilan har dars uchun alohida holat beradi.
+ */
+export function LessonRating({ topic }: { topic: string }) {
+  const t = useT(ratingMsg);
+  const [phase, setPhase] = useState<'ask' | 'why' | 'thanks'>('ask');
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  if (!promptsEnabled()) return null;
+
+  async function sendWhy() {
+    const message = text.trim();
+    if (message.length >= 3) {
+      setBusy(true);
+      try {
+        await postJson('/api/feedback', { kind: 'other', message: `[AI ustoz: ${topic}] ${message}`.slice(0, 2000), page: ratingPage(window.location.hash) });
+      } catch {
+        // Yuborib bo'lmasa ham rahmat deymiz.
+      }
+      setBusy(false);
+    }
+    setPhase('thanks');
+  }
+
+  return (
+    <div className="stack" data-testid="lesson-rating">
+      {phase === 'ask' && (
+        <>
+          <strong className="small">{t.lessonTitle}</strong>
+          <div className="rate-row">
+            <button type="button" className="btn btn-outline" data-testid="lesson-up" onClick={() => { void sendRating(lessonKey(true), post); setPhase('thanks'); }}>
+              <Icon name="thumbUp" size={20} /> {t.lessonUp}
+            </button>
+            <button type="button" className="btn btn-outline" data-testid="lesson-down" onClick={() => { void sendRating(lessonKey(false), post); setPhase('why'); }}>
+              <Icon name="thumbDown" size={20} /> {t.lessonDown}
+            </button>
+          </div>
+        </>
+      )}
+      {phase === 'why' && (
+        <>
+          <label className="small" htmlFor="lesson-why">{t.whyQ}</label>
+          <textarea id="lesson-why" className="input" rows={3} maxLength={500} value={text} placeholder={t.whyPlaceholder} onChange={(e) => setText(e.target.value)} />
+          <div className="rate-row">
+            <button type="button" className="btn btn-primary" onClick={() => void sendWhy()} disabled={busy} data-testid="lesson-why-send">{t.send}</button>
+            <button type="button" className="btn btn-outline" onClick={() => setPhase('thanks')} disabled={busy}>{t.skip}</button>
+          </div>
+        </>
+      )}
+      {phase === 'thanks' && <p className="success small" role="status" style={{ margin: 0 }}>{t.lessonThanks}</p>}
     </div>
   );
 }

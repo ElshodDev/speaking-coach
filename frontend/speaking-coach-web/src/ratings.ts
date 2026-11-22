@@ -15,11 +15,12 @@ export type SourceId = 'instagram' | 'telegram' | 'friend' | 'teacher' | 'search
 export const SOURCES: SourceId[] = ['instagram', 'telegram', 'friend', 'teacher', 'search', 'other'];
 
 export const RATING_PATTERN =
-  /^(first_practice:(up|down)|ai_fair:(speaking|writing|part2|mock):(fair|high|low)|source:(instagram|telegram|friend|teacher|search|other))$/;
+  /^(first_practice:(up|down)|ai_fair:(speaking|writing|part2|mock):(fair|high|low)|lesson:(up|down)|source:(instagram|telegram|friend|teacher|search|other))$/;
 
 export const isRatingKey = (key: string): boolean => RATING_PATTERN.test(key);
 export const firstPracticeKey = (up: boolean) => `first_practice:${up ? 'up' : 'down'}`;
 export const aiKey = (skill: AiSkill, verdict: AiVerdict) => `ai_fair:${skill}:${verdict}`;
+export const lessonKey = (up: boolean) => `lesson:${up ? 'up' : 'down'}`;
 export const sourceKey = (source: SourceId) => `source:${source}`;
 
 /** Flag: env'da VITE_FEEDBACK_PROMPTS=off bo'lsa — hamma so'rovlar o'chiq. */
