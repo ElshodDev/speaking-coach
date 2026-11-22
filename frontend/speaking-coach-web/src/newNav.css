@@ -498,3 +498,110 @@ body:has(.app.nn) {
 .nn-profile .card {
   margin: 0;
 }
+
+/* Bannerlar: to'q ko'k o'rniga qog'oz-eslatma uslubi (sariq fon, qora matn, qora tugma) */
+.nn .hero,
+.nn .page-header.hero {
+  --ink: #2a2218;
+  background: var(--nn-note);
+  color: #2a2218;
+  border: 1px solid color-mix(in srgb, #2a2218 18%, transparent);
+  border-radius: 8px 8px 24px 8px;
+  box-shadow: 3px 5px 0 rgba(42, 34, 24, 0.08);
+}
+.nn .hero h1,
+.nn .hero h2,
+.nn .hero p,
+.nn .page-header.hero h1,
+.nn .page-header.hero p {
+  color: inherit;
+}
+.nn .hero h1,
+.nn .page-header.hero h1 {
+  font-family: Georgia, 'Times New Roman', serif;
+}
+.nn .hero .btn-primary,
+.nn .hero .btn-primary:hover:not(:disabled) {
+  background: #2a2218;
+  color: #fbf8f1;
+  box-shadow: none;
+}
+.nn .hero .btn-ghost-light {
+  background: transparent;
+  color: #2a2218;
+  border: 1.5px solid #2a2218;
+}
+.nn .hero .btn-ghost-light:hover:not(:disabled) {
+  background: rgba(42, 34, 24, 0.08);
+}
+.nn .hero .hero-note,
+.nn .hero .hero-note .btn-link {
+  color: #2a2218;
+}
+.nn .goal-ring {
+  background: conic-gradient(#2a2218 calc(var(--p) * 1%), rgba(42, 34, 24, 0.15) 0);
+}
+.nn .goal-ring span {
+  background: var(--nn-note);
+  color: #2a2218;
+}
+@media (prefers-color-scheme: dark) {
+  .nn .hero,
+  .nn .page-header.hero,
+  .nn .hero .hero-note,
+  .nn .hero .hero-note .btn-link,
+  .nn .hero .btn-ghost-light {
+    color: #fdf3c4;
+  }
+  .nn .hero .btn-ghost-light {
+    border-color: #fdf3c4;
+  }
+  .nn .hero .btn-primary,
+  .nn .hero .btn-primary:hover:not(:disabled) {
+    background: #fde047;
+    color: #2a1f00;
+  }
+  .nn .goal-ring {
+    background: conic-gradient(#fde047 calc(var(--p) * 1%), rgba(253, 243, 196, 0.18) 0);
+  }
+  .nn .goal-ring span {
+    color: #fdf3c4;
+  }
+}
+
+/* Bosiladigan kartalar (cta) va xabar chiziqlari: ko'k tus o'rniga qog'oz tusi */
+.nn .cta {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.nn button.card.cta:hover {
+  border-color: var(--text);
+}
+.nn .btn-primary {
+  background: var(--text);
+  color: var(--bg);
+  box-shadow: none;
+}
+.nn .btn-primary:hover:not(:disabled) {
+  background: var(--text);
+  filter: none;
+}
+.nn .btn-outline {
+  border-color: var(--text);
+  color: var(--text);
+}
+.nn .demo-banner {
+  background: var(--nn-note);
+  color: #2a2218;
+  border-color: color-mix(in srgb, #2a2218 18%, transparent);
+}
+.nn .demo-banner .btn-link {
+  color: #2a2218;
+  font-weight: 700;
+}
+@media (prefers-color-scheme: dark) {
+  .nn .demo-banner,
+  .nn .demo-banner .btn-link {
+    color: #fdf3c4;
+  }
+}
