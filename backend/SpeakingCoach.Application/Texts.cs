@@ -539,10 +539,6 @@ public static class Texts
             "Telegram maʼlumoti tasdiqlanmadi. Ilovani botdan qayta oching.",
             "Не удалось проверить данные Telegram. Откройте приложение из бота ещё раз.",
             "Couldn't verify the Telegram data. Open the app from the bot again."),
-        ["auth.telegram_not_linked"] = new(
-            "Bu Telegram hali hisobga ulanmagan. Kiring va Profil → Telegramni ulash.",
-            "Этот Telegram ещё не привязан к аккаунту. Войдите и откройте Профиль → Подключить Telegram.",
-            "This Telegram isn't linked to an account yet. Log in, then Profile → Connect Telegram."),
         ["login.required"] = new("Tizimga kiring.", "Войдите в систему.", "Please log in."),
         ["group.not_found"] = new("Guruh yoki vazifa topilmadi.", "Группа или задание не найдены.", "Group or assignment not found."),
         ["group.name_invalid"] = new("Guruh nomi 2–80 belgidan iborat boʻlsin.", "Название группы — от 2 до 80 символов.", "The group name must be 2–80 characters."),
@@ -876,7 +872,6 @@ public static class Texts
 
         ["speaking.multipart"] = new("multipart/form-data kutilgan edi.", "Ожидался формат multipart/form-data.", "multipart/form-data was expected."),
         ["speaking.no_audio"] = new("Audio fayl topilmadi yoki u boʻsh.", "Аудиофайл не найден или пуст.", "The audio file is missing or empty."),
-        ["speaking.too_big"] = new("Fayl hajmi 10 MB dan katta.", "Размер файла больше 10 МБ.", "The file is larger than 10 MB."),
         ["topic.empty"] = new("Mavzu koʻrsatilmagan.", "Тема не указана.", "The topic is missing."),
         ["topic.too_long"] = new("Mavzu juda uzun (koʻpi bilan {0} ta belgi).", "Тема слишком длинная (не более {0} символов).", "The topic is too long (at most {0} characters)."),
         ["text.empty"] = new("Matn boʻsh boʻlishi mumkin emas.", "Текст не может быть пустым.", "The text cannot be empty."),

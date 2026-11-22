@@ -11,8 +11,6 @@ public record BuiltInMock(Guid Id, string Exam, string Module, string Variant, s
 /// </summary>
 public static class BuiltInMocks
 {
-    public const int TestsPerKind = 11;
-
     /// <summary>Barqaror Id: 1-testlar avvalgi Id'larini saqlaydi (bazada allaqachon bo'lishi mumkin).</summary>
     private static Guid Id(int kind, int n) => (kind, n) switch
     {
@@ -55,15 +53,6 @@ public static class BuiltInMocks
         .. CefrListening.Select((t, i) => new BuiltInMock(Id(21, i + 1), "cefr", "listening", "", $"CEFR Listening — Test {i + 1}", t)).Where(m => ((ListeningTest)m.Content).Parts.Count > 0),
         .. CefrReading.Select((t, i) => new BuiltInMock(Id(22, i + 1), "cefr", "reading", "", $"CEFR Reading — Test {i + 1}", t)).Where(m => ((ReadingTest)m.Content).Passages.Count > 0),
     ];
-
-    /// <summary>Test raqami (1, 2, …) — ro'yxatda "Test 3" deb ko'rsatish uchun; tayyor test bo'lmasa null.</summary>
-    public static int? NumberOf(Guid id)
-    {
-        var m = All.FirstOrDefault(x => x.Id == id);
-        if (m is null) return null;
-        var digits = new string(m.Title.Reverse().TakeWhile(char.IsDigit).Reverse().ToArray());
-        return int.TryParse(digits, out var n) ? n : null;
-    }
 
     public static bool IsBuiltIn(Guid id) => All.Any(x => x.Id == id);
 
