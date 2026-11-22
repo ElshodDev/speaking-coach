@@ -117,7 +117,7 @@ public class ObjectiveMockTests
             Id = Guid.NewGuid(), Module = "reading", Variant = "academic",
             Payload = JsonSerializer.Serialize(SampleReading(), GeminiMockGenerator.Web),
         };
-        var r = MockEndpoints.GradeObjective("reading", test, new Dictionary<string, string> { ["1"] = "Main gate", ["2"] = "TRUE" }, 600);
+        var r = MockGrading.GradeObjective("reading", test, new Dictionary<string, string> { ["1"] = "Main gate", ["2"] = "TRUE" }, 600);
         Assert.Equal(1, r.Score);
         Assert.Equal(2, r.Total);
         Assert.True(r.Questions[0].Correct);
