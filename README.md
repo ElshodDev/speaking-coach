@@ -1,5 +1,7 @@
 # FluentUZ
 
+<p align="center"><img src="docs/brand/logo-1024.png" width="140" alt="FluentUZ logo: an open book with a terminal and a speech bubble, wreathed in wheat and cotton"></p>
+
 > *Formerly "AI Speaking Coach".*
 
 🇬🇧 English · 🇺🇿 [O'zbekcha](README.uz.md)
@@ -38,7 +40,7 @@ The whole screen is used: a sidebar menu, two-column pages, and in mock exams th
 |---|---|---|---|
 | ![Shadowing](docs/screenshots/shadowing.png) | ![Shadowing check](docs/screenshots/shadowing-check.png) | ![Progress](docs/screenshots/progress.png) | ![Vocabulary](docs/screenshots/vocab.png) |
 
-<sub>Screens are shown in Uzbek. They are captured by the Playwright end-to-end tests against a mocked API, so they always match the current UI.</sub>
+<sub>Screens are shown in Uzbek. They are captured from the running app with Playwright against a mocked API.</sub>
 
 ## What it does
 
@@ -61,11 +63,16 @@ The whole screen is used: a sidebar menu, two-column pages, and in mock exams th
 | 🎯 **Exam readiness** | For IELTS and CEFR goals: an estimated result per section and overall (IELTS bands with official rounding, CEFR 0–75 with the level), each with a likely range and a confidence that grows with evidence, the gap to the target score and the days left. It uses mock results first, then Part 2 bands and Speaking/Writing practice, recent ones weighted more (last 90 days); without a mock a section never shows high confidence. The weakest section (or one with no data yet) becomes today's focus and moves to the top of the daily plan. |
 | 🧭 **Daily plan** | A short onboarding (goal, level, target score, exam date, minutes per day) turns into a plan for each day that ticks itself off, with an exam countdown. |
 | 👩‍🏫 **Teacher groups** | A teacher shares a join code, sets assignments (practice, mock sections, "review N cards") with deadlines, and sees a results matrix. Assignments count as done automatically, with no separate submission. |
-| 📈 **Progress** | XP, levels, badges, an activity calendar, score trends and an opt-in weekly leaderboard under a nickname.. **My mistakes** groups every AI correction from speaking, writing, mock exams and conversations into types (articles, tenses, prepositions, agreement…), shows whether each is growing or shrinking over the last 30 days and links to the matching grammar lesson. **Share card** draws a 1080×1920 story image of your level, streak and exercises in the browser. |
-| 📲 **Telegram bot** | [@SpeakingCoachUzBot](https://t.me/SpeakingCoachUzBot): review cards in the chat, look up and save words, get one daily reminder, see today's plan and assignments. The website opens inside Telegram as a Mini App and signs the user in automatically (a new account is created on the first visit). Teachers can turn a PDF, a photo or a topic into a validated mock test that the admin approves. |
+| 📈 **Progress** | XP, levels, badges, an activity calendar, score trends and an opt-in weekly leaderboard under a nickname. **My mistakes** groups every AI correction from speaking, writing, mock exams and conversations into types (articles, tenses, prepositions, agreement…), shows whether each is growing or shrinking over the last 30 days and links to the matching grammar lesson. **Share card** draws a 1080×1920 story image of your level, streak and exercises in the browser. |
+| 📲 **Telegram bot** | [@SpeakingCoachUzBot](https://t.me/SpeakingCoachUzBot): review cards in the chat, look up and save words, get one daily reminder, see today's plan and assignments. The website opens inside Telegram as a Mini App and signs the user in automatically (a new account is created on the first visit). Teachers can turn a PDF, a photo or a topic into a validated mock test that the admin approves. Commands: `/dars` (AI mini-lesson), `/podcast` (personal podcast), `/add` (teachers and admins: add a shadowing or test lesson). |
+| 🧑‍🏫 **AI tutor** | Type a topic (“Modal verbs”) and one AI call builds a mini-lesson: 3 short explanations, 6 exercises, your own sentences graded on request and a 4-question mini-test. Answers are checked **on the server without AI** (the key reaches the learner only after answering), mistakes become flashcards, and a lesson allows up to 5 “explain it differently” questions. A teacher can assign a lesson topic to a group (one shared lesson per class, with class-wide insights), and **“based on your mistakes”** suggestions pick the topic you need most without calling AI. On the web (Practice → AI tutor) and in Telegram (`/dars`). |
+| 🎙 **Personal podcast** | In the Telegram bot, `/podcast` plus a YouTube link: AI listens to the video and turns it into a shadowing lesson that **only its owner sees**. It opens as a Mini App with the usual line-by-line repeat and AI check. |
+| 🙋 **Feedback and invites** | Optional one-tap prompts (“Was this exercise useful?”, “Did the AI grade feel fair?”, “Where did you find us?”) with a summary for the admin, and a referral link: when a friend signs up, both get 5 extra AI exercises a day for 7 days. |
 | 👀 **Demo account** | One click opens a private, temporary account full of realistic data, so anyone can see every screen without registering. |
 | 🔐 **Accounts** | Sign in with Telegram (send the bot the number shown on the site), with a 6-digit email code, with Google, or with a password; no password is needed, and the account is created on first sign-in. Inside in-app browsers (Instagram, Telegram), where Google blocks its sign-in window, the app explains this and points to Telegram sign-in. The profile lists the sign-in methods and lets a Telegram account add an email and password. Everything also works as a guest; nothing is saved then. Export or delete your data from the profile, read the terms and privacy policy, or send feedback from any page. |
 | 🌐 **Three languages** | The interface, server messages and word translations switch between Uzbek, Russian and English. |
+
+Newer features sit behind feature flags, so each can be switched off with one setting: `Features__AiTutor`, `Features__PersonalPodcasts`, `Features__Referral`, `Features__SpeakingFourCriteria` (the Speaking result shows the four official IELTS criteria as an estimated band, a pronunciation estimate and one priority fix) and `Features__DayOneDiagnostic` (four short starter exercises and a readiness estimate from the first day). The settings are listed in [docs/deploy.md](docs/deploy.md) (in Uzbek).
 
 ## How it is built
 
@@ -123,7 +130,7 @@ Everything runs on free tiers.
 - **The model writes the test, code grades it.** Wherever an answer key exists, grading is deterministic C#. Mock tests are generated once, checked by strict validators (numbering, answer types, gap answers must appear in the text, map options) and reused from a shared bank, so AI quota is spent only when the bank runs out.
 - **Measured grading stability.** A built-in admin tool re-grades the same recording or essay five times and shows the spread per criterion, which makes the AI grader's uncertainty visible.
 - **Designed for a sleeping server.** The bot uses a webhook, so a message wakes the API. Reminders come from an hourly GitHub Actions cron. Each account is claimed atomically before its message is sent, so a delayed or repeated cron run never sends a duplicate.
-- **Pure core logic.** The SM-2 scheduler, IELTS band rounding, the CEFR score tables, XP and badges, reminder timing and the demo seed never touch the database or HTTP. That is why 759 tests run in seconds.
+- **Pure core logic.** The SM-2 scheduler, IELTS band rounding, the CEFR score tables, XP and badges, reminder timing and the demo seed never touch the database or HTTP. That is why more than 1,100 backend tests run in about a second.
 - **XP is derived, not stored.** Levels, badges and the leaderboard are computed from the history, so nothing drifts out of sync and rule changes re-score the past automatically.
 - **Type-safe translations without a library.** Each screen declares its texts once in Uzbek, and the Russian and English versions must have the same shape, so a missing translation fails the build.
 - **One layout, three screen sizes.** Phone first, with bottom navigation. On a tablet the menu moves to the top. On a laptop the app switches to a sidebar with two-column pages and split-screen exams, and keyboard shortcuts appear: Space to reveal or play, 1–4 to grade, ← → to move between lines, R to record.
@@ -139,13 +146,13 @@ Everything runs on free tiers.
 ## Quality
 
 - **Clean Architecture backend** — Domain / Application / Infrastructure / Api projects; the dependency rule is enforced by architecture tests ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)).
-- **923 backend unit tests** (xUnit) cover scheduling, scoring tables, validators, strict parsing, the security rules, bot logic, localisation (every message in all three languages with matching placeholders), the demo seed and every piece of built-in content (mock tests, exercises).
-- **292 frontend unit tests** (Vitest) cover charts, text handling, shadowing and dictation logic, network errors and timeouts, the Telegram launch check and sign-in state, in-app browser detection, Uzbek spelling in every translation, and the built-in lessons, vocabulary and topics (including an even spread of correct answer letters).
-- **28 Playwright end-to-end suites** drive the real frontend against a mocked API on phone, tablet and laptop screens. The screenshots above come from these runs.
-- **CI** builds and tests both halves on every push and fails on known vulnerable packages.
+- **More than 1,100 backend unit tests** (xUnit) cover scheduling, scoring tables, validators, strict parsing, the security rules, bot logic, localisation (every message in all three languages with matching placeholders), the demo seed and every piece of built-in content (mock tests, exercises).
+- **More than 330 frontend unit tests** (Vitest) cover charts, text handling, shadowing and dictation logic, network errors and timeouts, the Telegram launch check and sign-in state, in-app browser detection, Uzbek spelling in every translation, and the built-in lessons, vocabulary and topics (including an even spread of correct answer letters).
+- **CI** type-checks, lints, builds and tests both halves on every push and fails on known vulnerable packages. The screenshots and the demo GIF are captured separately from the running app (Playwright, mocked API); browser end-to-end tests are not part of this repository yet.
 
 ## Known limitations and next steps
 
+- Browser end-to-end tests are not in the repository yet; CI covers type checks, lint, unit tests, the production build and dependency audits.
 - The database and endpoint layer has no integration tests yet. The next step is `WebApplicationFactory` with a real Postgres in Testcontainers.
 - Free tiers mean a 30–60 s cold start and a shared Gemini quota.
 - The session token lives in `localStorage` because the site and the API are on different domains. A custom domain would allow an `httpOnly` cookie and authenticated email sending.

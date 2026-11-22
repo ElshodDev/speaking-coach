@@ -2,7 +2,7 @@
 
 **Project:** [AI Speaking Coach](https://fluentuz.app) · [try the demo](https://fluentuz.app/#/demo) · [source](https://github.com/ElshodDev/speaking-coach)
 **Stack:** ASP.NET Core 10 Minimal API, EF Core + PostgreSQL (Neon), React 19 + TypeScript (Vite, PWA), Google Gemini, Telegram Bot API
-**Size:** about 31 000 lines of C# (a large share of it built-in exam content) and 27 000 lines of TypeScript; 759 backend unit tests, 170 frontend unit tests, 28 Playwright end-to-end suites
+**Size:** about 31 000 lines of C# (a large share of it built-in exam content) and 32 000 lines of TypeScript (tests not counted); more than 1,100 backend unit tests and more than 330 frontend unit tests
 
 ---
 
@@ -125,8 +125,8 @@ The seed data is built by a pure function using the same records and card factor
 ## Testing approach
 
 - **Unit tests (xUnit, Vitest)** cover the pure logic: scheduling, scoring tables, validators, parsing, security rules and localisation. One test checks that every message key exists in all three languages with matching placeholders.
-- **End-to-end tests (Playwright)** drive the real frontend against a mocked API that follows the backend's contract, on phone, tablet and laptop screens. The README screenshots and the demo GIF come from those same runs, so they always match the current UI.
-- **CI** builds and tests both halves on every push and fails on known vulnerable packages.
+- **Screenshots and the demo GIF** are captured from the running app with Playwright against a mocked API that follows the backend's contract, on phone, tablet and laptop screens. Browser end-to-end tests are not part of this repository yet.
+- **CI** type-checks, lints, builds and tests both halves on every push and fails on known vulnerable packages.
 
 The honest gap: the database and endpoint layer has no integration tests yet. That is the next piece of work (see below).
 

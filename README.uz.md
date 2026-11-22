@@ -1,5 +1,7 @@
 # FluentUZ
 
+<p align="center"><img src="docs/brand/logo-1024.png" width="140" alt="FluentUZ logo: an open book with a terminal and a speech bubble, wreathed in wheat and cotton"></p>
+
 > *Avval "AI Speaking Coach" deb atalgan.*
 
 🇬🇧 [English](README.md) · 🇺🇿 O'zbekcha
@@ -38,7 +40,7 @@ Ekran to'liq ishlatiladi: chapda menyu, sahifalar ikki ustunda. Mock imtihonda e
 |---|---|---|---|
 | ![](docs/screenshots/shadowing.png) | ![](docs/screenshots/shadowing-check.png) | ![](docs/screenshots/progress.png) | ![](docs/screenshots/vocab.png) |
 
-<sub>Skrinshotlarni Playwright end-to-end testlari soxta API bilan oladi, shuning uchun ular doim hozirgi interfeysni ko'rsatadi.</sub>
+<sub>Skrinshotlar ishlayotgan ilovadan Playwright bilan, soxta API ustida olingan.</sub>
 
 ## Ilova nima qiladi
 
@@ -62,10 +64,15 @@ Ekran to'liq ishlatiladi: chapda menyu, sahifalar ikki ustunda. Mock imtihonda e
 | 🧭 **Bugungi reja** | Qisqa tanishtiruvda maqsad, daraja, maqsad ball, imtihon sanasi va kunlik vaqt so'raladi. Shundan har kunlik reja tuziladi: bajarilgani o'zi belgilanadi, imtihongacha qolgan kunlar ko'rinib turadi. |
 | 👩‍🏫 **O'qituvchi guruhlari** | O'qituvchi taklif kodini ulashadi, vazifa beradi (mashq, mock bo'limi, "N ta karta takrorlash") va muddat qo'yadi. Natijalarni jadvalda ko'radi. Vazifa alohida topshirilmaydi: o'quvchi mashqni bajarsa, o'zi belgilanadi. |
 | 📈 **Natijalar** | XP, darajalar, nishonlar, faollik kalendari va ballar grafigi. Taxallus bilan ixtiyoriy haftalik musobaqa ham bor. **Mening xatolarim** sahifasi gapirish, yozish, mock va suhbatlardagi barcha AI tuzatishlarini turlarga ajratadi (artikl, zamon, predlog, moslashuv…), oxirgi 30 kunda kamaygan yoki ko'payganini ko'rsatadi va mos grammatika darsiga olib boradi. **Natija kartasi** daraja, seriya va mashqlarni brauzerda 1080×1920 story rasmiga aylantiradi. |
-| 📲 **Telegram bot** | [@SpeakingCoachUzBot](https://t.me/SpeakingCoachUzBot): kartalarni chatning o'zida takrorlash, so'z yuborib tarjimasini olish va lug'atga qo'shish, kuniga bitta eslatma, bugungi reja va vazifalar. Sayt Telegram ichida Mini App bo'lib ochiladi va foydalanuvchini parolsiz kiritadi (birinchi kirishda hisob o'zi ochiladi). O'qituvchilar PDF, rasm yoki mavzudan qat'iy tekshirilgan mock test tayyorlaydi, admin esa uni tasdiqlaydi. |
+| 📲 **Telegram bot** | [@SpeakingCoachUzBot](https://t.me/SpeakingCoachUzBot): kartalarni chatning o'zida takrorlash, so'z yuborib tarjimasini olish va lug'atga qo'shish, kuniga bitta eslatma, bugungi reja va vazifalar. Sayt Telegram ichida Mini App bo'lib ochiladi va foydalanuvchini parolsiz kiritadi (birinchi kirishda hisob o'zi ochiladi). O'qituvchilar PDF, rasm yoki mavzudan qat'iy tekshirilgan mock test tayyorlaydi, admin esa uni tasdiqlaydi. Buyruqlar: `/dars` (AI mini-dars), `/podcast` (shaxsiy podcast), `/add` (o'qituvchi va admin: shadowing yoki test darsi qo'shish). |
+| 🧑‍🏫 **AI ustoz** | Mavzu yozasiz ("Modal verbs") va AI bitta so'rovda mini-dars tuzadi: 3 ta qisqa tushuntirish, 6 ta mashq, xohlasangiz o'z gaplaringiz (AI baholaydi) va 4 savolli mini-test. Javoblar **serverda AI'siz** tekshiriladi (to'g'ri javob faqat javob berilgandan keyin ko'rinadi), xatolar takrorlash kartasiga tushadi, darsga 5 tagacha "boshqacha tushuntir" savoli beriladi. O'qituvchi guruhga dars mavzusini vazifa qilib beradi (butun sinf uchun bitta umumiy dars va sinf bo'yicha tahlil). **"Xatolaringiz asosida"** tavsiyasi AI chaqirmasdan sizga eng kerakli mavzuni topadi. Veb (Mashqlar → AI ustoz) va Telegram (`/dars`) orqali. |
+| 🎙 **Shaxsiy podcast** | Telegram botda `/podcast` va YouTube havolasi: AI videoni eshitib, uni **faqat egasi ko'radigan** shadowing darsiga aylantiradi. Dars Mini App ichida odatdagi gap-gap takrorlash va AI tekshiruvi bilan ochiladi. |
+| 🙋 **Fikr va takliflar** | Ixtiyoriy bir bosishli so'rovlar ("Bu mashq foydali bo'ldimi?", "AI bahosi adolatli tuyuldimi?", "Bizni qayerdan topdingiz?") va admin uchun xulosa; shuningdek taklif havolasi: do'st ro'yxatdan o'tsa, ikkalasiga 7 kun davomida kuniga 5 ta qo'shimcha AI mashq beriladi. |
 | 👀 **Demo hisob** | Bir bosishda tayyor ma'lumotli shaxsiy vaqtinchalik hisob ochiladi. Istalgan odam ro'yxatdan o'tmasdan barcha sahifalarni ko'ra oladi. |
 | 🔐 **Hisob** | Telegram orqali (saytdagi raqamni botga yozasiz), emailga kelgan 6 xonali kod, Google yoki parol bilan kirish; parol shart emas, hisob birinchi kirishda o'zi ochiladi. Ilovalar ichidagi brauzerlarda (Instagram, Telegram) Google o'z oynasini bloklaydi — ilova buni tushuntiradi va Telegram orqali kirishni taklif qiladi. Profilda kirish usullari ko'rinadi, Telegram hisobiga email va parol qo'shish mumkin. Hammasi mehmon sifatida ham ishlaydi, faqat hech narsa saqlanmaydi. Ma'lumotlarni profildan yuklab olish yoki o'chirish, foydalanish shartlari va maxfiylik siyosatini o'qish, istalgan sahifadan fikr yuborish mumkin. |
 | 🌐 **Uch til** | Interfeys, server xabarlari va so'z tarjimalari o'zbek, rus va ingliz tillarida. |
+
+Yangi imkoniyatlar feature flag orqasida, shuning uchun har birini bitta sozlama bilan o'chirish mumkin: `Features__AiTutor`, `Features__PersonalPodcasts`, `Features__Referral`, `Features__SpeakingFourCriteria` (Gapirish natijasida 4 ta rasmiy IELTS mezoni bo'yicha taxminiy band, talaffuz bahosi va bitta asosiy tuzatish) va `Features__DayOneDiagnostic` (birinchi kunning 4 ta qisqa boshlang'ich mashqi va shu kundan tayyorlik bahosi). Sozlamalar [docs/deploy.md](docs/deploy.md) da.
 
 ## Qanday qurilgan
 
@@ -123,7 +130,7 @@ Hammasi bepul tariflarda ishlaydi.
 - **Testni model yozadi, kod baholaydi.** To'g'ri javobi ma'lum joyda baholashni C# kodi qiladi. Mock testlar bir marta yaratiladi va qat'iy validatorlardan o'tadi: raqamlash, javob turlari, bo'sh joy javobi matnda borligi, xarita variantlari. Keyin umumiy bankdan qayta ishlatiladi. AI limiti faqat bank tugaganda sarflanadi.
 - **Baholash barqarorligi o'lchanadi.** Admin uchun ichki vosita bir xil yozuv yoki inshoni besh marta qayta baholaydi va har bir mezon bo'yicha tarqoqlikni ko'rsatadi. Shunda AI baholovchining noaniqligi ko'zga ko'rinadi.
 - **Uxlaydigan serverga moslangan.** Bot webhook bilan ishlaydi: kelgan xabar serverni uyg'otadi. Eslatmalarni GitHub Actions har soatda ishga tushiradi. Har bir hisob xabar yuborilishidan oldin atomar "band qilinadi", shuning uchun kechikkan yoki takrorlangan cron ikki marta yozmaydi.
-- **Asosiy mantiq sof funksiyalarda.** SM-2, IELTS ballini yaxlitlash, CEFR jadvallari, XP va nishonlar, eslatma vaqti va demo ma'lumotlari bazaga ham, HTTP'ga ham tegmaydi. 759 ta test bir necha soniyada o'tishining sababi shu.
+- **Asosiy mantiq sof funksiyalarda.** SM-2, IELTS ballini yaxlitlash, CEFR jadvallari, XP va nishonlar, eslatma vaqti va demo ma'lumotlari bazaga ham, HTTP'ga ham tegmaydi. 1100 dan ortiq backend test taxminan bir soniyada o'tishining sababi shu.
 - **XP saqlanmaydi, hisoblanadi.** Daraja, nishon va musobaqa tarixdan hisoblanadi. Shuning uchun hech narsa "sinxrondan chiqmaydi", qoida o'zgarsa eski natijalar ham o'zi qayta hisoblanadi.
 - **Kutubxonasiz, tipga qat'iy tarjimalar.** Har bir sahifa matnlarini bir marta o'zbekcha yozadi, rus va ingliz variantlari esa aynan shu shaklda bo'lishi shart. Bitta tarjima tushib qolsa, build yiqiladi.
 - **Bitta dizayn, uch xil ekran.** Asosiy loyiha telefon uchun, menyu pastda. Planshetda menyu tepaga chiqadi. Noutbukda chap menyu, ikki ustunli sahifalar va yonma-yon imtihon paydo bo'ladi, klaviatura tugmalari ham ishlaydi: Probel — javob yoki tinglash, 1–4 — baho, ← → — gaplar orasida yurish, R — yozish.
@@ -139,13 +146,13 @@ Hammasi bepul tariflarda ishlaydi.
 ## Sifat
 
 - **Clean Architecture backend**: Domain, Application, Infrastructure va Api loyihalari. Bog'liqlik qoidasini arxitektura testlari tekshiradi ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)).
-- **Backend'da 923 ta unit test** (xUnit). Ular takrorlash jadvali, baholash jadvallari, validatorlar, qat'iy o'qish, xavfsizlik qoidalari, bot mantiqi, tarjimalar (har bir xabar uch tilda, bir xil parametrlar bilan), demo ma'lumotlari va ilovadagi har bir tayyor materialni (mock testlar, mashqlar) tekshiradi.
-- **Frontend'da 292 ta unit test** (Vitest): grafiklar, matn bilan ishlash, shadowing va diktant mantiqi, tarmoq xatolari va kutish muddati, Telegram'dan ochilish va kirish holati, ilova ichidagi brauzerni aniqlash, har bir tarjimadagi o'zbek imlosi, ilovadagi darslar, lug'at va mavzular (to'g'ri javob harflari teng taqsimlangani ham).
-- **28 ta Playwright end-to-end to'plami** haqiqiy frontend'ni soxta API bilan telefon, planshet va noutbuk ekranlarida sinaydi. Yuqoridagi skrinshotlar ham shu testlardan olingan.
-- **CI** har bir push'da ikkala qismni build qilib testlaydi, ma'lum zaifligi bor paket bo'lsa yiqiladi.
+- **Backend'da 1100 dan ortiq unit test** (xUnit). Ular takrorlash jadvali, baholash jadvallari, validatorlar, qat'iy o'qish, xavfsizlik qoidalari, bot mantiqi, tarjimalar (har bir xabar uch tilda, bir xil parametrlar bilan), demo ma'lumotlari va ilovadagi har bir tayyor materialni (mock testlar, mashqlar) tekshiradi.
+- **Frontend'da 330 dan ortiq unit test** (Vitest): grafiklar, matn bilan ishlash, shadowing va diktant mantiqi, tarmoq xatolari va kutish muddati, Telegram'dan ochilish va kirish holati, ilova ichidagi brauzerni aniqlash, har bir tarjimadagi o'zbek imlosi, ilovadagi darslar, lug'at va mavzular (to'g'ri javob harflari teng taqsimlangani ham).
+- **CI** har bir push'da ikkala qismni tip tekshiruvidan, lintdan, build va testlardan o'tkazadi, ma'lum zaifligi bor paket bo'lsa yiqiladi. Skrinshotlar va demo GIF ishlayotgan ilovadan alohida olinadi (Playwright, soxta API); brauzer end-to-end testlari hozircha shu repozitoriyda yo'q.
 
 ## Cheklovlar va keyingi qadamlar
 
+- Brauzer end-to-end testlari hozircha repozitoriyda yo'q; CI tip tekshiruvi, lint, unit testlar, production build va paketlar auditini qamrab oladi.
 - Baza va endpoint qatlami uchun integration testlar hali yo'q. Keyingi qadam — `WebApplicationFactory` va Testcontainers'dagi haqiqiy Postgres.
 - Bepul tarif sabab birinchi ochilish 30–60 soniya olishi mumkin, Gemini limiti esa hamma uchun umumiy.
 - Sayt va API turli domenlarda bo'lgani uchun token `localStorage` da saqlanadi. O'z domeni bo'lsa, `httpOnly` cookie va tasdiqlangan email yuboruvchi ishlatish mumkin bo'ladi.
