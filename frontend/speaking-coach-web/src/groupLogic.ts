@@ -28,8 +28,36 @@ export interface AssignmentStatus {
   target: number | null;
 }
 
-/** Vazifani bajarish uchun ilovadagi sahifa (o'quvchi "Bajarish"ni bosganda). */
-export function routeFor(kind: string): string {
+// ---- AI dars vazifasi: "lesson:<mavzu>" (backend GroupLogic bilan bir xil qoidalar) ----
+
+export const LESSON_PREFIX = 'lesson:';
+export const MAX_LESSON_TOPIC = 33;
+
+/** Mavzu: bo'shliqlar bir xil, 2..33 belgi, boshqaruv belgisiz; yaroqsiz bo'lsa null. */
+export function cleanLessonTopic(raw: string): string | null {
+  const t = raw.split(/\s+/).filter(Boolean).join(' ');
+  // eslint-disable-next-line no-control-regex
+  return t.length >= 2 && t.length <= MAX_LESSON_TOPIC && !/[\u0000-\u001f\u007f]/.test(t) ? t : null;
+}
+
+export const lessonKind = (topic: string): string => LESSON_PREFIX + topic;
+
+/** "lesson:Modal verbs" → "Modal verbs"; boshqa tur yoki yaroqsiz mavzu — null. */
+export function lessonTopic(kind: string): string | null {
+  if (!kind.startsWith(LESSON_PREFIX)) return null;
+  const topic = kind.slice(LESSON_PREFIX.length);
+  return cleanLessonTopic(topic) === topic ? topic : null;
+}
+
+/** Vazifa turining ko'rinadigan nomi (AI dars — mavzu bilan). */
+export function kindLabel(t: { kinds: Record<string, string>; lessonLabel: (topic: string) => string }, kind: string): string {
+  const topic = lessonTopic(kind);
+  return topic ? t.lessonLabel(topic) : (t.kinds[kind] ?? kind);
+}
+
+/** Vazifani bajarish uchun ilovadagi sahifa (o'quvchi "Bajarish"ni bosganda). id — AI dars uchun (dars vazifa bo'yicha boshlanadi). */
+export function routeFor(kind: string, id?: string): string {
+  if (lessonTopic(kind)) return id ? `tutor/a/${id}` : 'tutor';
   const map: Record<string, string> = {
     'practice:speaking': 'practice/speaking',
     'practice:writing': 'practice/writing',

@@ -5,6 +5,7 @@ import { apiJson, getLevel, postJson } from './api';
 import { cardsMessage } from './cards';
 import { common, useT } from './i18n';
 import { tutorMsg } from './locales/tutor';
+import { lessonTopic } from './groupLogic';
 import { PageHeader } from './ui';
 import {
   answered,
@@ -38,12 +39,23 @@ interface Result {
 
 const LEVELS = ['A2', 'B1', 'B2', 'C1'];
 
+interface AssignedTask {
+  id: string;
+  groupName: string;
+  kind: string;
+  instructions: string;
+  status: { done: boolean };
+}
+
 export function TutorPage({
   loggedIn,
   onLogin,
   onCardsAdded,
   go,
+  assignmentId,
 }: {
+  /** Ustoz vazifasidan ochilgan bo'lsa — vazifa identifikatori (mavzu vazifadan olinadi). */
+  assignmentId?: string;
   loggedIn: boolean;
   onLogin: () => void;
   onCardsAdded?: () => void;
@@ -60,6 +72,8 @@ export function TutorPage({
   const [topic, setTopic] = useState('');
   const [level, setLevel] = useState(getLevel());
   const [resume, setResume] = useState<{ id: string; topic: string } | null>(null);
+  // undefined — yuklanmoqda, null — topilmadi.
+  const [task, setTask] = useState<AssignedTask | null | undefined>(assignmentId ? undefined : null);
   const [busy, setBusy] = useState<'' | 'start' | 'write' | 'finish'>('');
   const [error, setError] = useState('');
   const [text, setText] = useState('');
@@ -78,6 +92,14 @@ export function TutorPage({
       .then((c) => alive.current && setConfig(c))
       .catch(() => alive.current && setConfig({ enabled: true, topics: [] }));
   }, []);
+
+  // Ustoz vazifasi: mavzu va izoh vazifalar ro'yxatidan olinadi (server mavzuni baribir o'zi aniqlaydi).
+  useEffect(() => {
+    if (!assignmentId || !loggedIn) return;
+    apiJson<{ assignments: AssignedTask[] }>('/api/student/assignments')
+      .then((d) => alive.current && setTask(d.assignments.find((a) => a.id === assignmentId && lessonTopic(a.kind)) ?? null))
+      .catch(() => alive.current && setTask(null));
+  }, [assignmentId, loggedIn]);
 
   // Oxirgi dars bo'lsa — "Davom ettirish".
   useEffect(() => {
@@ -115,12 +137,13 @@ export function TutorPage({
 
   async function start(e?: FormEvent, forTopic?: string) {
     e?.preventDefault();
-    const value = (forTopic ?? topic).trim();
+    const value = (forTopic ?? (task ? (lessonTopic(task.kind) ?? '') : topic)).trim();
     if (value.length < 2 || busy) return;
     setBusy('start');
     setError('');
     try {
-      const d = await postJson<{ lessonId: string; lesson: LessonView }>('/api/tutor/start', { topic: value, level });
+      const fromTask = !forTopic && task ? task.id : undefined;
+      const d = await postJson<{ lessonId: string; lesson: LessonView }>('/api/tutor/start', fromTask ? { assignmentId: fromTask, level } : { topic: value, level });
       if (alive.current) open(d.lessonId, d.lesson);
     } catch (err) {
       if (alive.current) setError(err instanceof Error ? err.message : cm.error);
@@ -233,7 +256,25 @@ export function TutorPage({
     return (
       <>
         {header}
-        <form className="card stack" onSubmit={(e) => void start(e)} data-testid="tutor-topic-form">
+        {task && (
+          <form className="card stack" onSubmit={(e) => void start(e)} data-testid="tutor-assignment">
+            <div className="muted tiny">{t.assignmentTitle} · {t.assignmentFrom(task.groupName)}</div>
+            <h3 style={{ margin: 0 }} data-testid="tutor-assignment-topic">{lessonTopic(task.kind)}</h3>
+            {task.instructions && <p style={{ margin: 0 }}>{task.instructions}</p>}
+            {task.status.done && <p className="muted small" style={{ margin: 0 }}>{t.assignmentDone}</p>}
+            <label className="small" htmlFor="tutor-level-a">{t.level}</label>
+            <select id="tutor-level-a" className="input" value={level} onChange={(e) => setLevel(e.target.value)} style={{ maxWidth: 120 }}>
+              {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
+            </select>
+            {error && <p className="error small" role="alert">{error}</p>}
+            <button className="btn btn-primary" type="submit" disabled={busy === 'start'} data-testid="tutor-start-assigned">
+              {busy === 'start' ? t.starting : t.start}
+            </button>
+          </form>
+        )}
+        {task === null && assignmentId && <p className="muted small">{t.assignmentMissing}</p>}
+        {task === undefined && <p className="muted small">…</p>}
+        {!task && task !== undefined && (<form className="card stack" onSubmit={(e) => void start(e)} data-testid="tutor-topic-form">
           {resume && (
             <button type="button" className="btn btn-outline" onClick={() => void resumeLesson()} data-testid="tutor-resume">
               {t.resume(resume.topic)}
@@ -268,7 +309,7 @@ export function TutorPage({
           <button className="btn btn-primary" type="submit" disabled={busy === 'start' || topic.trim().length < 2} data-testid="tutor-start">
             {busy === 'start' ? t.starting : t.start}
           </button>
-        </form>
+        </form>)}
       </>
     );
   }

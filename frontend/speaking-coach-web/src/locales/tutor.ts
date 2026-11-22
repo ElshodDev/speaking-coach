@@ -58,6 +58,10 @@ export const tutorMsg = defineMessages(
     again: 'Shu mavzuni qayta oʻrganish',
     newTopic: 'Yangi mavzu',
     review: 'Takrorlashga oʻtish',
+    assignmentTitle: 'Ustoz vazifasi',
+    assignmentMissing: 'Vazifa topilmadi. Mavzuni oʻzingiz yozib ham oʻrganishingiz mumkin.',
+    assignmentDone: 'Bu vazifa bajarilgan. Mavzuni qayta oʻrganishingiz mumkin.',
+    assignmentFrom: (group: string) => `Guruh: ${group}`,
   },
   {
     ru: {
@@ -116,6 +120,10 @@ export const tutorMsg = defineMessages(
       again: 'Выучить эту тему заново',
       newTopic: 'Новая тема',
       review: 'К повторению',
+      assignmentTitle: 'Задание учителя',
+      assignmentMissing: 'Задание не найдено. Можно выбрать тему самому.',
+      assignmentDone: 'Это задание выполнено. Можно пройти тему ещё раз.',
+      assignmentFrom: (group: string) => `Группа: ${group}`,
     },
     en: {
       title: 'AI tutor',
@@ -173,6 +181,10 @@ export const tutorMsg = defineMessages(
       again: 'Study this topic again',
       newTopic: 'New topic',
       review: 'Go to review',
+      assignmentTitle: 'Teacher assignment',
+      assignmentMissing: 'Assignment not found. You can also type a topic yourself.',
+      assignmentDone: 'This assignment is done. You can study the topic again.',
+      assignmentFrom: (group: string) => `Group: ${group}`,
     },
   },
 );

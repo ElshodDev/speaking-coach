@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { cleanCode, formatDue, isOverdue, joinUrl, localInputToUtc, routeFor, savePendingJoin, sortTasks, takePendingJoin, ASSIGNMENT_KINDS, type AssignmentStatus } from './groupLogic';
+import { cleanCode, cleanLessonTopic, formatDue, isOverdue, joinUrl, kindLabel, lessonKind, lessonTopic, localInputToUtc, MAX_LESSON_TOPIC, routeFor, savePendingJoin, sortTasks, takePendingJoin, ASSIGNMENT_KINDS, type AssignmentStatus } from './groupLogic';
 import { teacherMsg } from './locales/teacher';
 
 const st = (done: boolean): AssignmentStatus => ({ done, late: false, doneAtUtc: null, activityId: null, score: null, progress: null, target: null });
 
 describe('groupLogic', () => {
   it('maps every assignment kind to a page in the app', () => {
-    const routes = ASSIGNMENT_KINDS.map(routeFor);
+    const routes = ASSIGNMENT_KINDS.map((k) => routeFor(k));
     expect(routes).not.toContain('practice');
     expect(routeFor('mock:cefr:writing')).toBe('mock/cefr-writing');
     expect(routeFor('review')).toBe('review');
@@ -61,5 +61,48 @@ describe('formatDue', () => {
     const s = formatDue('2026-09-30T13:00:00Z', 'ru-RU');
     expect(s).toMatch(/\d{2}\.\d{2}\.2026/);
     expect(s).toMatch(/\d{2}:\d{2}/);
+  });
+});
+
+describe('AI dars vazifasi', () => {
+  it('mavzu tozalanadi va backend qoidalari bilan mos (2..33 belgi)', () => {
+    expect(cleanLessonTopic('  Modal   verbs ')).toBe('Modal verbs');
+    expect(cleanLessonTopic('x')).toBeNull();
+    expect(cleanLessonTopic('a'.repeat(MAX_LESSON_TOPIC))).not.toBeNull();
+    expect(cleanLessonTopic('a'.repeat(MAX_LESSON_TOPIC + 1))).toBeNull();
+    expect(cleanLessonTopic('bad\u0007char')).toBeNull();
+    expect(lessonKind('a'.repeat(MAX_LESSON_TOPIC)).length).toBeLessThanOrEqual(40);
+  });
+
+  it('lessonTopic faqat aynan shu ko‘rinishdagi turni taniydi', () => {
+    expect(lessonTopic('lesson:Modal verbs')).toBe('Modal verbs');
+    expect(lessonTopic('lesson:Time: past/present')).toBe('Time: past/present');
+    expect(lessonTopic('lesson: Modal verbs')).toBeNull();
+    expect(lessonTopic('lesson:')).toBeNull();
+    expect(lessonTopic('review')).toBeNull();
+    expect(lessonTopic('Lesson:Modal verbs')).toBeNull();
+  });
+
+  it('marshrut: vazifa id bilan — ustozdan dars sahifasi', () => {
+    expect(routeFor('lesson:Modal verbs', 'abc')).toBe('tutor/a/abc');
+    expect(routeFor('lesson:Modal verbs')).toBe('tutor');
+    expect(routeFor('practice:speaking', 'abc')).toBe('practice/speaking');
+  });
+
+  it('kindLabel: AI dars mavzu bilan, boshqa turlar o‘zgarmagan, noma‘lum tur — o‘zi', () => {
+    for (const lang of ['uz', 'ru', 'en'] as const) {
+      const m = teacherMsg[lang];
+      expect(kindLabel(m, 'lesson:Modal verbs')).toContain('Modal verbs');
+      expect(kindLabel(m, 'review')).toBe(m.kinds.review);
+      expect(kindLabel(m, 'weird')).toBe('weird');
+      expect(m.lessonKind).toBeTruthy();
+      expect(m.insightsMastery(1, 2, 3)).toContain('3');
+    }
+  });
+
+  it('tarjimalar kalitlari uch tilda bir xil', () => {
+    const keys = (o: object) => Object.keys(o).sort();
+    expect(keys(teacherMsg.ru)).toEqual(keys(teacherMsg.uz));
+    expect(keys(teacherMsg.en)).toEqual(keys(teacherMsg.uz));
   });
 });

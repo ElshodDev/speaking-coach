@@ -421,7 +421,7 @@ function App() {
   } else if (section === 'mock') {
     page = <MockHub key={userKey} loggedIn={loggedIn} go={go} onLogin={toLogin} />;
   } else if (section === 'tutor') {
-    page = <TutorPage key={userKey} loggedIn={loggedIn} onLogin={toLogin} onCardsAdded={refreshStats} go={go} />;
+    page = <TutorPage key={`${userKey}-${sub === 'a' ? third : ''}`} assignmentId={sub === 'a' ? third : undefined} loggedIn={loggedIn} onLogin={toLogin} onCardsAdded={refreshStats} go={go} />;
   } else if (section === 'talk' && sub) {
     page = <TalkSession key={`${sub}-${userKey}`} scenario={sub} loggedIn={loggedIn} onLogin={toLogin} onCardsAdded={refreshStats} go={go} />;
   } else if (section === 'talk') {
