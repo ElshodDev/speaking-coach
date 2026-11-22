@@ -144,7 +144,7 @@ public class PersonalPodcastTests
     [Fact]
     public void Podcast_texts_exist_in_all_languages_and_escape_the_title()
     {
-        foreach (var key in new[] { "pc.intro", "pc.mine_head", "pc.working", "pc.ready", "pc.practice_btn", "pc.delete_btn", "pc.deleted", "pc.not_found", "pc.limit", "pc.full", "pc.disabled", "pc.cmd" })
+        foreach (var key in new[] { "pc.intro", "pc.mine_head", "pc.working", "pc.busy", "pc.ready", "pc.practice_btn", "pc.delete_btn", "pc.deleted", "pc.not_found", "pc.limit", "pc.full", "pc.disabled", "pc.cmd" })
             foreach (var lang in Texts.Langs) Assert.False(string.IsNullOrWhiteSpace(Texts.Get(lang, key, 3, 30, 5)), $"{key}/{lang}");
         foreach (var lang in Texts.Langs) Assert.InRange(Texts.Get(lang, "pc.cmd").Length, 3, 256);
         Assert.Contains("&lt;b&gt;", BotPodcast.ReadyText("uz", "<b>x", 10, 90));

@@ -190,8 +190,9 @@ public partial class TelegramBot
             {
                 if (BotPodcast.IsFlowState(c.Account?.BotState))
                 {
+                    var podcast = BotPodcast.IsAwaitingLink(c.Account?.BotState);
                     await SetBotStateAsync(c, null, ct);
-                    await _api.SendMessageAsync(c.ChatId, c.T("tutor.bot_cancelled"), replyKeyboard: BotLogic.MainMenu(c.Lang), ct: ct);
+                    await _api.SendMessageAsync(c.ChatId, c.T(podcast ? "bot.author_cancelled" : "tutor.bot_cancelled"), replyKeyboard: BotLogic.MainMenu(c.Lang), ct: ct);
                     return;
                 }
                 await CancelAuthoringAsync(c, null, ct);

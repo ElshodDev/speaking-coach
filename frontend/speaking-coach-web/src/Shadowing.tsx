@@ -63,8 +63,11 @@ export function ShadowingList({ go }: { go: (route: string) => void }) {
   const [progress, setProgress] = useState<Record<string, ShadowProgress>>({});
   const [error, setError] = useState('');
   const [level, setLevel] = useState<string | null>(null);
+  // Mening videolarim: botda /podcast bilan qo'shilgan shaxsiy darslar (faqat egasiga ko'rinadi).
+  const [mine, setMine] = useState<ShadowSummary[]>([]);
 
   useEffect(() => {
+    apiJson<ShadowSummary[]>('/api/shadowing/mine').then(setMine).catch(() => setMine([]));
     apiJson<ShadowSummary[]>('/api/shadowing')
       .then(setList)
       .catch((e) => setError(e instanceof Error ? e.message : String(e)));
@@ -72,6 +75,30 @@ export function ShadowingList({ go }: { go: (route: string) => void }) {
   }, []);
 
   const shown = list ? list.filter((l) => !level || l.level === level) : [];
+
+  const card = (l: ShadowSummary) => {
+    const p = progress[l.id];
+    return (
+      <button key={l.id} className={`shadow-card${p ? ' is-done' : ''}`} data-testid="shadow-lesson" onClick={() => go(`shadowing/${l.id}`)}>
+        <div className="shadow-thumb">
+          {l.kind === 'youtube' && l.videoId ? (
+            <img src={thumbnail(l.videoId)} alt="" loading="lazy" />
+          ) : (
+            <div className="shadow-thumb-chars" aria-hidden>
+              <Icon name="shadowing" size={34} />
+            </div>
+          )}
+          {l.episode > 0 && <span className="shadow-ep">{t.episode(l.episode)}</span>}
+          <span className="shadow-level">{l.level}</span>
+          {p && <span className="shadow-done" data-testid="done-badge">{p.best != null ? t.best(p.best) : '✓'}</span>}
+        </div>
+        <div className="shadow-card-body">
+          <strong>{l.title}</strong>
+          <span className="muted small">{t.lines(l.lines)} · {t.minutes(l.seconds)}</span>
+        </div>
+      </button>
+    );
+  };
 
   return (
     <>
@@ -86,6 +113,16 @@ export function ShadowingList({ go }: { go: (route: string) => void }) {
               <button key={lv} aria-pressed={level === lv} onClick={() => setLevel(lv)}>{lv}</button>
             ))}
           </div>
+          <section className="shadow-series" data-testid="my-videos">
+            <h2 className="shadow-series-title">
+              {t.mineTitle} <span className="muted small">· {t.mineHint}</span>
+            </h2>
+            {mine.length > 0 ? (
+              <div className="shadow-grid">{mine.map((l) => card(l))}</div>
+            ) : (
+              <p className="muted small" data-testid="my-videos-empty">{t.mineEmpty}</p>
+            )}
+          </section>
           {shown.length === 0 && <p className="muted">{t.empty}</p>}
           {bySeries(shown).map((g) => (
             <section key={g.kind} className="shadow-series" data-testid={`series-${g.kind}`}>
@@ -93,29 +130,7 @@ export function ShadowingList({ go }: { go: (route: string) => void }) {
                 {t.series[g.kind]} <span className="muted small">· {t.seriesHint[g.kind]}</span>
               </h2>
               <div className="shadow-grid">
-                {g.lessons.map((l) => {
-                  const p = progress[l.id];
-                  return (
-                    <button key={l.id} className={`shadow-card${p ? ' is-done' : ''}`} data-testid="shadow-lesson" onClick={() => go(`shadowing/${l.id}`)}>
-                      <div className="shadow-thumb">
-                        {l.kind === 'youtube' && l.videoId ? (
-                          <img src={thumbnail(l.videoId)} alt="" loading="lazy" />
-                        ) : (
-                          <div className="shadow-thumb-chars" aria-hidden>
-                            <Icon name="shadowing" size={34} />
-                          </div>
-                        )}
-                        <span className="shadow-ep">{t.episode(l.episode)}</span>
-                        <span className="shadow-level">{l.level}</span>
-                        {p && <span className="shadow-done" data-testid="done-badge">{p.best != null ? t.best(p.best) : '✓'}</span>}
-                      </div>
-                      <div className="shadow-card-body">
-                        <strong>{l.title}</strong>
-                        <span className="muted small">{t.lines(l.lines)} · {t.minutes(l.seconds)}</span>
-                      </div>
-                    </button>
-                  );
-                })}
+                {g.lessons.map((l) => card(l))}
               </div>
             </section>
           ))}

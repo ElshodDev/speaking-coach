@@ -59,6 +59,7 @@ Birinchi yozishdan oldin "ovoz Google Gemini'ga yuboriladi, saqlanmaydi" rozilig
 | Render o'zgaruvchisi | Nima qiladi |
 |---|---|
 | `Features__SpeakingFourCriteria` | Gapirish natijasi: 4 rasmiy IELTS mezoni (taxminiy band), talaffuz ("taxminiy") va bitta asosiy tuzatish. `false` — eski 3 mezonli ko'rinish. |
+| `Features__PersonalPodcasts` | Shaxsiy podcast (Telegram `/podcast`): istalgan foydalanuvchi YouTube videoni o'ziga shadowing darsi qiladi (faqat o'zi ko'radi). `false` — o'chiq. Standart — yoqiq. |
 | `Features__AiTutor` | AI ustoz (veb: Mashqlar → "AI ustoz"; Telegram: `/dars`): mavzu yozib mini-dars. `false` — o'chiq (`/api/tutor/*` 404, botda "o'chirilgan"). Standart — yoqiq. |
 | `Features__DayOneDiagnostic` | Birinchi kunlik boshlang'ich test: bosh sahifada 4 ta qisqa mashq kartasi va tayyorlik bahosi birinchi kundan (Reading/Listening — ilovaning tayyor mashqlari darajasi bo'yicha past ishonch bilan). `false` — o'chiq, tayyorlik avvalgidek faqat mock bo'yicha. |
 
@@ -85,6 +86,7 @@ Root directory: **`backend`**, Dockerfile path: **`./Dockerfile`**, Docker build
 | `Demo__Enabled` | `false` — demo hisobni o'chiradi (standart: yoqiq) |
 | `Ai__ExercisesPerDay`, `Ai__WordsPerDay`, `Ai__ShadowingPerDay`, `Ai__Guest*PerDay` | Foydalanuvchi/mehmon uchun kunlik AI limitlari (ixtiyoriy) |
 | `Ai__TalkTurnsPerDay` | AI suhbatda kuniga nechta javob (standart: 40) |
+| `Ai__PodcastsPerDay` | Shaxsiy podcast: kuniga nechta video tayyorlash (standart: 3; admin — cheksiz). Har video 1 ta katta Gemini so'rovi (video tinglanadi) |
 | `Ai__TutorCallsPerDay` | AI ustozda kuniga nechta savol/yozma baholash (standart: 30; darsning o'zi — oddiy mashq limitidan) |
 | `Ai__AuthoringPerDay` | Bot orqali test tayyorlash, kuniga (standart: 10) |
 | `Ai__GlobalPerMinute`, `Ai__GlobalPerDay` | Butun server bo'yicha Gemini so'rovlari: daqiqasiga 12, kuniga 1400 (Toshkent kuni). Oshsa — foydalanuvchiga "AI hozir band" (503) |
@@ -226,4 +228,14 @@ Pilot paytida darslar sifatini raqam bilan ko'rish uchun (Admin paneli, oxirgi 3
 - Plausible (yoqilgan bo'lsa): `tutor_started`, `tutor_completed` hodisalari (xossasiz, identifikatorsiz).
 
 **Baza sxemasi o'zgarmaydi, migratsiya kerak emas.** Hodisalar mavjud `Feedbacks` jadvaliga `Kind = "rating"` bilan yoziladi (`lesson_start:free|recommended|assigned` — faqat server yozadi, tashqaridan `POST /api/rating` bilan yozib bo'lmaydi; `lesson:up|down` — foydalanuvchi bahosi). Ular fikrlar ro'yxatiga va "Fikrlar (7 kun)" sonoqchisiga kirmaydi; hisob o'chirilsa, ular ham o'chadi. Yangi endpoint: `GET /api/admin/tutor?days=30` (faqat admin). Eslatma: bu o'zgarishdan oldingi darslar uchun "boshlangan" hodisasi yo'q, shuning uchun "tugatilgan ulushi" faqat yangi davr uchun to'g'ri.
+
+### Shaxsiy podcast (`/podcast`)
+
+Istalgan foydalanuvchi (o'qituvchi yoki admin bo'lishi shart emas) Telegram botda `/podcast` yozib YouTube havolasini yuboradi (`https://youtu.be/ID 1:20-3:40`, ixtiyoriy daraja `B1`): Gemini videoni tinglab gaplarga bo'ladi va **shadowing darsi** tayyorlaydi (1–3 daqiqa, fonda). Bot "▶️ Mashq qilish" tugmasini yuboradi: sayt **Telegram ichida (Mini App)** ochiladi — video, gap-gap takrorlash va AI baho mavjud Shadowing mashqidagidek. Darslar saytda ham **Shadowing → "Mening videolarim"** bo'limida ko'rinadi. `/podcast` ro'yxatda ularni o'chirish tugmasi bor.
+
+- **Faqat egasiga ko'rinadi.** Umumiy Shadowing ro'yxatiga, boshqa foydalanuvchiga va admin ko'rib chiqish navbatiga tushmaydi (boshqa hisobdan dars ochish — 404; mehmon — 404). Umumiy kutubxonaga qo'shish — avvalgidek `/add` (o'qituvchi/admin).
+- **Baza sxemasi o'zgarmaydi, migratsiya kerak emas:** dars `MockTests`da, holat `personal` (ustun 16 belgi), muallif `CreatedByUserId`. Hisob o'chirilganda shaxsiy darslar ham o'chadi (chop etilganlar bankda qoladi); ma'lumotlar eksportida bor (`mockTestsAuthored`).
+- **Limitlar:** kuniga `Ai__PodcastsPerDay` (standart 3, admin cheksiz), saqlanadigan darslar ko'pi bilan 30; chatda bir vaqtda bitta ish; AI xato bersa urinish qaytariladi. Video 10 soniyadan 5 daqiqagacha (vaqt yozilmasa — boshidan 3 daqiqa).
+- **O'chirish:** `Features__PersonalPodcasts=false`.
+- **Eslatma:** faqat shaxsiy mashq uchun; ochiq (public) YouTube video va aniq inglizcha nutq kerak. Sifat Gemini'ning videoni eshitishiga bog'liq.
 

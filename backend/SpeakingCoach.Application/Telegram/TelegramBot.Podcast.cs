@@ -49,7 +49,7 @@ public partial class TelegramBot
         }
         if (_runner.IsRunning(c.ChatId))
         {
-            await SendPlainAsync(c, "bot.author_busy", [], ct);
+            await SendPlainAsync(c, "pc.busy", [], ct);
             return;
         }
         // Havola va vaqt oralig'ini tekshirish — mavjud YouTube shadowing qoidalari (xato bo'lsa, holat saqlanadi).
@@ -73,7 +73,7 @@ public partial class TelegramBot
         var job = new PodcastJob(c.ChatId, c.User.Id, c.Lang, input);
         var started = _runner.TryStart(c.ChatId, (sp, token) => sp.GetRequiredService<TelegramBot>().RunPodcastAsync(job, sp.GetRequiredService<IMockAuthoring>(), token));
         if (!started) _podcasts.RefundAttempt(c.User);
-        await SendPlainAsync(c, started ? "pc.working" : "bot.author_busy", [], ct);
+        await SendPlainAsync(c, started ? "pc.working" : "pc.busy", [], ct);
     }
 
     /// <summary>Fonda: havola → Gemini → shaxsiy dars → "Mashq qilish" tugmasi.</summary>

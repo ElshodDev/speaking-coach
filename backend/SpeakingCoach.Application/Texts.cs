@@ -650,6 +650,10 @@ public static class Texts
             "Sizning videolaringiz:",
             "Ваши видео:",
             "Your videos:"),
+        ["pc.busy"] = new(
+            "Oldingi video hali tayyorlanmoqda — tugashini kuting.",
+            "Предыдущее видео ещё готовится — подождите.",
+            "The previous video is still being prepared — please wait."),
         ["pc.working"] = new(
             "⏳ Video tayyorlanmoqda… (1–3 daqiqa). Tayyor boʻlgach yozaman.",
             "⏳ Готовим видео… (1–3 минуты). Напишу, когда будет готово.",
