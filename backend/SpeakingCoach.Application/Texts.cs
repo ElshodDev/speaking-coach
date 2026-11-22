@@ -325,9 +325,9 @@ public static class Texts
             "🔒 Эта команда только для администраторов.",
             "🔒 This command is for admins only."),
         ["bot.help"] = new(
-            "<b>Bot nima qila oladi</b>\n\n📚 Inglizcha soʻz yuboring — maʼnosi, misol va “Lugʻatga qoʻshish” tugmasi.\n🌟 /word — kunlik soʻz.\n📋 <b>Bugun</b> — bugungi reja, imtihongacha kunlar va oʻqituvchi vazifalari.\n🔁 <b>Takrorlash</b> — navbatdagi kartalar: javobni koʻrasiz va qanchalik eslaganingizni belgilaysiz.\n📊 <b>Natijalar</b> — seriya, bugungi maqsad va kartalar.\n⚙️ <b>Sozlamalar</b> — eslatma vaqti, til, hisobni uzish.\n🌐 /lang — bot tili: oʻzbek, rus yoki ingliz.\n🧭 /guide — saytda nimalar bor; boʻlimlar Telegram ichida ochiladi.\n📝 /add — test qoʻshish (oʻqituvchi va admin), /bank — testlar roʻyxati.\n👥 /admin — foydalanuvchilar soni (faqat admin).\n\nHammasi saytdagi hisobingiz bilan bir xil: bu yerda takrorlagan kartangiz saytda ham takrorlangan boʻladi.",
-            "<b>Что умеет бот</b>\n\n📚 Пришлите английское слово — значение, пример и кнопка «Добавить в словарь».\n🌟 /word — слово дня.\n📋 <b>Сегодня</b> — план на день, дни до экзамена и задания учителя.\n🔁 <b>Повторение</b> — карточки на сегодня: смотрите ответ и отмечаете, насколько хорошо вспомнили.\n📊 <b>Прогресс</b> — серия, цель на сегодня и карточки.\n⚙️ <b>Настройки</b> — время напоминания, язык, отключение аккаунта.\n🌐 /lang — язык бота: узбекский, русский или английский.\n🧭 /guide — что есть на сайте; разделы открываются прямо в Telegram.\n📝 /add — добавить тест (учитель и админ), /bank — список тестов.\n👥 /admin — число пользователей (только админ).\n\nВсё синхронизировано с сайтом: карточка, повторённая здесь, повторена и на сайте.",
-            "<b>What the bot can do</b>\n\n📚 Send an English word — meaning, an example and an “Add to vocabulary” button.\n🌟 /word — word of the day.\n📋 <b>Today</b> — today's plan, days to your exam and teacher assignments.\n🔁 <b>Review</b> — your due cards: see the answer and rate how well you remembered.\n📊 <b>Progress</b> — streak, today's goal and cards.\n⚙️ <b>Settings</b> — reminder time, language, disconnect.\n🌐 /lang — bot language: Uzbek, Russian or English.\n🧭 /guide — what's on the website; sections open right inside Telegram.\n📝 /add — add a test (teachers and admin), /bank — list of tests.\n👥 /admin — user counts (admins only).\n\nEverything is synced with the website: a card reviewed here is reviewed there too."),
+            "<b>Bot nima qila oladi</b>\n\n📚 Inglizcha soʻz yuboring — maʼnosi, misol va “Lugʻatga qoʻshish” tugmasi.\n🌟 /word — kunlik soʻz.\n📋 <b>Bugun</b> — bugungi reja, imtihongacha kunlar va oʻqituvchi vazifalari.\n🔁 <b>Takrorlash</b> — navbatdagi kartalar: javobni koʻrasiz va qanchalik eslaganingizni belgilaysiz.\n📊 <b>Natijalar</b> — seriya, bugungi maqsad va kartalar.\n⚙️ <b>Sozlamalar</b> — eslatma vaqti, til, hisobni uzish.\n🎓 /dars — AI ustoz: mavzu yozasiz, bot dars, mashq va mini-test beradi.\n🌐 /lang — bot tili: oʻzbek, rus yoki ingliz.\n🧭 /guide — saytda nimalar bor; boʻlimlar Telegram ichida ochiladi.\n📝 /add — test qoʻshish (oʻqituvchi va admin), /bank — testlar roʻyxati.\n👥 /admin — foydalanuvchilar soni (faqat admin).\n\nHammasi saytdagi hisobingiz bilan bir xil: bu yerda takrorlagan kartangiz saytda ham takrorlangan boʻladi.",
+            "<b>Что умеет бот</b>\n\n📚 Пришлите английское слово — значение, пример и кнопка «Добавить в словарь».\n🌟 /word — слово дня.\n📋 <b>Сегодня</b> — план на день, дни до экзамена и задания учителя.\n🔁 <b>Повторение</b> — карточки на сегодня: смотрите ответ и отмечаете, насколько хорошо вспомнили.\n📊 <b>Прогресс</b> — серия, цель на сегодня и карточки.\n⚙️ <b>Настройки</b> — время напоминания, язык, отключение аккаунта.\n🎓 /dars — ИИ-учитель: пишете тему, бот даёт урок, упражнения и мини-тест.\n🌐 /lang — язык бота: узбекский, русский или английский.\n🧭 /guide — что есть на сайте; разделы открываются прямо в Telegram.\n📝 /add — добавить тест (учитель и админ), /bank — список тестов.\n👥 /admin — число пользователей (только админ).\n\nВсё синхронизировано с сайтом: карточка, повторённая здесь, повторена и на сайте.",
+            "<b>What the bot can do</b>\n\n📚 Send an English word — meaning, an example and an “Add to vocabulary” button.\n🌟 /word — word of the day.\n📋 <b>Today</b> — today's plan, days to your exam and teacher assignments.\n🔁 <b>Review</b> — your due cards: see the answer and rate how well you remembered.\n📊 <b>Progress</b> — streak, today's goal and cards.\n⚙️ <b>Settings</b> — reminder time, language, disconnect.\n🎓 /dars — AI tutor: type a topic and the bot gives a lesson, exercises and a mini-test.\n🌐 /lang — bot language: Uzbek, Russian or English.\n🧭 /guide — what's on the website; sections open right inside Telegram.\n📝 /add — add a test (teachers and admin), /bank — list of tests.\n👥 /admin — user counts (admins only).\n\nEverything is synced with the website: a card reviewed here is reviewed there too."),
         ["bot.no_cards"] = new(
             "🗂 Hali kartalar yoʻq. Saytda mashq qiling yoki menga inglizcha soʻz yuboring — ular shu yerga tushadi.",
             "🗂 Карточек пока нет. Позанимайтесь на сайте или пришлите мне английское слово — они появятся здесь.",
@@ -578,6 +578,162 @@ public static class Texts
             "Yakunlashdan oldin kamida bitta javob bering.",
             "Прежде чем завершить, ответьте хотя бы один раз.",
             "Give at least one answer before finishing."),
+        ["tutor.login"] = new(
+            "AI ustoz bilan oʻrganish uchun tizimga kiring — darslar va xatolaringiz hisobingizda saqlanadi.",
+            "Чтобы учиться с ИИ-учителем, войдите — уроки и ошибки сохранятся в аккаунте.",
+            "Log in to learn with the AI tutor — lessons and mistakes are saved to your account."),
+        ["tutor.disabled"] = new(
+            "AI ustoz hozircha oʻchirilgan.",
+            "ИИ-учитель сейчас отключён.",
+            "The AI tutor is turned off right now."),
+        ["tutor.bad_topic"] = new(
+            "Mavzuni 2–80 belgi bilan yozing, masalan: Modal verbs.",
+            "Напишите тему в 2–80 символов, например: Modal verbs.",
+            "Write the topic in 2–80 characters, for example: Modal verbs."),
+        ["tutor.off_topic"] = new(
+            "Bu inglizcha oʻrganishga oid emas. Grammatika, soʻzlar yoki muloqot mavzusini yozing, masalan: Modal verbs.",
+            "Это не про изучение английского. Напишите тему по грамматике, лексике или общению, например: Modal verbs.",
+            "That isn't about learning English. Write a grammar, vocabulary or communication topic, for example: Modal verbs."),
+        ["tutor.not_found"] = new(
+            "Dars topilmadi yoki muddati tugagan. Yangisini boshlang.",
+            "Урок не найден или устарел. Начните новый.",
+            "Lesson not found or expired. Please start a new one."),
+        ["tutor.daily_limit"] = new(
+            "Bugungi AI ustoz limiti tugadi ({0} ta amal). Ertaga davom eting.",
+            "Дневной лимит ИИ-учителя исчерпан ({0} действий). Продолжите завтра.",
+            "You've reached today's AI tutor limit ({0} actions). Continue tomorrow."),
+        ["tutor.bad_answer"] = new(
+            "Javob qabul qilinmadi: avval oldingi savolga javob bering.",
+            "Ответ не принят: сначала ответьте на предыдущий вопрос.",
+            "Answer not accepted: answer the previous question first."),
+        ["tutor.bad_text"] = new(
+            "Matnni 3–800 belgi bilan yozing.",
+            "Напишите текст в 3–800 символов.",
+            "Write the text in 3–800 characters."),
+        ["tutor.locked"] = new(
+            "Bu bosqich hali ochilmagan: avval mashqlarni tugating.",
+            "Этот этап ещё закрыт: сначала закончите упражнения.",
+            "This step is not open yet: finish the exercises first."),
+        ["tutor.asks_limit"] = new(
+            "Bitta darsda koʻpi bilan {0} ta savol berish mumkin.",
+            "В одном уроке можно задать не больше {0} вопросов.",
+            "You can ask at most {0} questions per lesson."),
+        ["tutor.not_ready"] = new(
+            "Yakunlashdan oldin mini-testni tugating.",
+            "Прежде чем завершить, закончите мини-тест.",
+            "Finish the mini-test before completing the lesson."),
+        ["tutor.bot_ask_topic"] = new(
+            "📚 <b>AI ustoz</b>\nQaysi mavzuni oʻrganmoqchisiz? Mavzuni yozing (masalan: <i>Modal verbs</i>) yoki pastdan tanlang.\nBekor qilish: /cancel",
+            "📚 <b>ИИ-учитель</b>\nКакую тему хотите выучить? Напишите тему (например: <i>Modal verbs</i>) или выберите ниже.\nОтмена: /cancel",
+            "📚 <b>AI tutor</b>\nWhat do you want to learn? Type a topic (for example: <i>Modal verbs</i>) or pick one below.\nCancel: /cancel"),
+        ["tutor.bot_preparing"] = new(
+            "⏳ Dars tayyorlanmoqda… (10–20 soniya)",
+            "⏳ Готовим урок… (10–20 секунд)",
+            "⏳ Preparing your lesson… (10–20 seconds)"),
+        ["tutor.bot_checking"] = new(
+            "⏳ Tekshirilmoqda…",
+            "⏳ Проверяем…",
+            "⏳ Checking…"),
+        ["tutor.bot_to_practice"] = new(
+            "Mashqlarga oʻtish ▶",
+            "К упражнениям ▶",
+            "Go to exercises ▶"),
+        ["tutor.bot_ask_btn"] = new(
+            "❓ Savol berish",
+            "❓ Задать вопрос",
+            "❓ Ask a question"),
+        ["tutor.bot_next"] = new(
+            "Keyingisi ▶",
+            "Дальше ▶",
+            "Next ▶"),
+        ["tutor.bot_continue"] = new(
+            "Davom etish ▶",
+            "Продолжить ▶",
+            "Continue ▶"),
+        ["tutor.bot_step_practice"] = new(
+            "Mashq {0}/{1}",
+            "Упражнение {0}/{1}",
+            "Exercise {0}/{1}"),
+        ["tutor.bot_step_test"] = new(
+            "Mini-test · savol {0}/{1}",
+            "Мини-тест · вопрос {0}/{1}",
+            "Mini-test · question {0}/{1}"),
+        ["tutor.bot_correct"] = new(
+            "✅ Toʻgʻri!",
+            "✅ Верно!",
+            "✅ Correct!"),
+        ["tutor.bot_wrong"] = new(
+            "❌ Notoʻgʻri. Toʻgʻri javob: <b>{0}</b>",
+            "❌ Неверно. Правильный ответ: <b>{0}</b>",
+            "❌ Not quite. Correct answer: <b>{0}</b>"),
+        ["tutor.bot_write_prompt"] = new(
+            "✍️ <b>Endi oʻz gaplaringiz</b>\n{0}\n\nGaplaringizni inglizcha bitta xabarda yuboring.",
+            "✍️ <b>Теперь ваши предложения</b>\n{0}\n\nОтправьте предложения по-английски одним сообщением.",
+            "✍️ <b>Now your own sentences</b>\n{0}\n\nSend your sentences in English in one message."),
+        ["tutor.bot_write_btn"] = new(
+            "✍️ Yozaman",
+            "✍️ Напишу",
+            "✍️ I'll write"),
+        ["tutor.bot_skip_btn"] = new(
+            "Mini-testga oʻtish ▶",
+            "К мини-тесту ▶",
+            "Go to the mini-test ▶"),
+        ["tutor.bot_corrections"] = new(
+            "Tuzatishlar",
+            "Исправления",
+            "Corrections"),
+        ["tutor.bot_improved"] = new(
+            "Yaxshilangan variant",
+            "Улучшенный вариант",
+            "Improved version"),
+        ["tutor.bot_ask_prompt"] = new(
+            "❓ Savolingizni yozing (masalan: <i>can va may farqi nima?</i>). Qolgan savollar: {0}.\nBekor qilish: /cancel",
+            "❓ Напишите вопрос (например: <i>в чём разница между can и may?</i>). Осталось вопросов: {0}.\nОтмена: /cancel",
+            "❓ Type your question (for example: <i>what is the difference between can and may?</i>). Questions left: {0}.\nCancel: /cancel"),
+        ["tutor.bot_asks_left"] = new(
+            "Qolgan savollar: {0}",
+            "Осталось вопросов: {0}",
+            "Questions left: {0}"),
+        ["tutor.bot_result"] = new(
+            "🎓 <b>{0}</b>: dars tugadi!\nMashqlar: <b>{1}/{2}</b> · Mini-test: <b>{3}/{4}</b>",
+            "🎓 <b>{0}</b>: урок окончен!\nУпражнения: <b>{1}/{2}</b> · Мини-тест: <b>{3}/{4}</b>",
+            "🎓 <b>{0}</b>: lesson complete!\nExercises: <b>{1}/{2}</b> · Mini-test: <b>{3}/{4}</b>"),
+        ["tutor.bot_mastery_strong"] = new(
+            "Zoʻr! Mavzuni yaxshi oʻzlashtirdingiz.",
+            "Отлично! Вы хорошо усвоили тему.",
+            "Great! You have a good grip on this topic."),
+        ["tutor.bot_mastery_ok"] = new(
+            "Yomon emas. Xatolaringizni takrorlash kartalarida mustahkamlang.",
+            "Неплохо. Закрепите ошибки в карточках для повторения.",
+            "Not bad. Reinforce your mistakes in the review cards."),
+        ["tutor.bot_mastery_weak"] = new(
+            "Mavzu hali qiyin. Tushuntirishni qayta oʻqib, yana urinib koʻring.",
+            "Тема пока трудная. Перечитайте объяснение и попробуйте ещё раз.",
+            "The topic is still tricky. Re-read the explanation and try again."),
+        ["tutor.bot_mistakes"] = new(
+            "Xatolaringiz:",
+            "Ваши ошибки:",
+            "Your mistakes:"),
+        ["tutor.bot_cards"] = new(
+            "🗂 {0} ta karta takrorlashga qoʻshildi.",
+            "🗂 Карточек добавлено в повторение: {0}.",
+            "🗂 {0} cards added to your review."),
+        ["tutor.bot_review_btn"] = new(
+            "🔁 Takrorlash",
+            "🔁 Повторение",
+            "🔁 Review"),
+        ["tutor.bot_new_btn"] = new(
+            "📚 Yangi mavzu",
+            "📚 Новая тема",
+            "📚 New topic"),
+        ["tutor.bot_cancelled"] = new(
+            "Bekor qilindi. Yangi dars: /dars",
+            "Отменено. Новый урок: /dars",
+            "Cancelled. New lesson: /dars"),
+        ["tutor.bot_cmd"] = new(
+            "AI ustoz: mavzu boʻyicha dars",
+            "ИИ-учитель: урок по теме",
+            "AI tutor: a lesson on any topic"),
         ["dictation.bad"] = new(
             "Diktant natijasi notoʻgʻri.",
             "Неверный результат диктанта.",

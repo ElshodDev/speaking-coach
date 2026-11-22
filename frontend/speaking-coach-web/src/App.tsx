@@ -69,6 +69,7 @@ const Progress = lazy(() => import('./Progress').then((m) => ({ default: m.Progr
 const Admin = lazy(() => import('./Admin').then((m) => ({ default: m.Admin })));
 const Quiz = lazy(() => import('./Quiz').then((m) => ({ default: m.Quiz })));
 const Mistakes = lazy(() => import('./Mistakes').then((m) => ({ default: m.Mistakes })));
+const TutorPage = lazy(() => import('./Tutor').then((m) => ({ default: m.TutorPage })));
 const TalkHub = lazy(() => import('./Talk').then((m) => ({ default: m.TalkHub })));
 const Part2Page = lazy(() => import('./Part2').then((m) => ({ default: m.Part2Page })));
 const TalkSession = lazy(() => import('./Talk').then((m) => ({ default: m.TalkSession })));
@@ -371,7 +372,7 @@ function App() {
         </div>
         <h2 className="section-title">{t.sections.more}</h2>
         <div className="card-grid">
-          {(['talk', 'dictation', 'shadowing', 'learn'] as const).map((k) => <PracticeLink key={k} id={k} go={go} />)}
+          {(['tutor', 'talk', 'dictation', 'shadowing', 'learn'] as const).map((k) => <PracticeLink key={k} id={k} go={go} />)}
         </div>
         <FeedbackLink />
       </>
@@ -419,6 +420,8 @@ function App() {
     else page = <MockWriting key={k} variant={m.variant ?? 'academic'} go={go} setId={picked} />;
   } else if (section === 'mock') {
     page = <MockHub key={userKey} loggedIn={loggedIn} go={go} onLogin={toLogin} />;
+  } else if (section === 'tutor') {
+    page = <TutorPage key={userKey} loggedIn={loggedIn} onLogin={toLogin} onCardsAdded={refreshStats} go={go} />;
   } else if (section === 'talk' && sub) {
     page = <TalkSession key={`${sub}-${userKey}`} scenario={sub} loggedIn={loggedIn} onLogin={toLogin} onCardsAdded={refreshStats} go={go} />;
   } else if (section === 'talk') {
@@ -460,7 +463,7 @@ function App() {
     ? null
     : section === 'review' && sub === 'vocab'
       ? 'vocab'
-      : section === 'mock' || section === 'shadowing' || section === 'learn' || section === 'talk' || section === 'dictation' || section === 'part2'
+      : section === 'mock' || section === 'shadowing' || section === 'learn' || section === 'tutor' || section === 'talk' || section === 'dictation' || section === 'part2'
         ? 'practice'
       : section === 'mistakes'
         ? 'progress'
@@ -682,7 +685,7 @@ function Profile({
 export default App;
 
 /** Mashqlar sahifasidagi bo'lim kartasi: butun karta bosiladi (bir xil "Ochish" tugmalari o'rniga). */
-function PracticeLink({ id, go }: { id: 'learn' | 'part2' | 'talk' | 'dictation' | 'shadowing' | 'mock'; go: (route: string) => void }) {
+function PracticeLink({ id, go }: { id: 'tutor' | 'learn' | 'part2' | 'talk' | 'dictation' | 'shadowing' | 'mock'; go: (route: string) => void }) {
   const t = useT(appMsg);
   return (
     <button className="card cta link-card" onClick={() => go(id)} data-testid={`${id}-entry`}>

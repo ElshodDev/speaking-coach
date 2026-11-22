@@ -16,6 +16,7 @@ export const appMsg = defineMessages(
     // Mashqlar sahifasidagi bo'lim kartalari (bo'limlarning o'z matnlari ular bilan birga kech yuklanadi).
     sections: { basic: 'Asosiy mashqlar', exam: 'Imtihonga tayyorgarlik', more: 'Qoʻshimcha mashqlar' },
     tiles: {
+      tutor: { title: 'AI ustoz', text: 'Mavzu yozasiz (masalan, modal verbs) — AI dars, mashq va mini-test tayyorlaydi' },
       learn: { title: 'Darslar', text: 'Grammatika qoidalari, tipik xatolar va 20 mavzuda soʻzlar' },
       part2: { title: 'IELTS Speaking Part 2', text: 'Savol kartasi: 1 daqiqa tayyorlanib, 2 daqiqa gapirasiz' },
       talk: { title: 'AI bilan suhbat', text: 'Kafe, ish intervyusi, imtihonchi — ovoz bilan rolli suhbat' },
@@ -48,6 +49,7 @@ export const appMsg = defineMessages(
       open: 'Открыть',
       sections: { basic: 'Основные упражнения', exam: 'Подготовка к экзамену', more: 'Дополнительно' },
       tiles: {
+        tutor: { title: 'ИИ-учитель', text: 'Пишете тему (например, modal verbs) — ИИ готовит урок, упражнения и мини-тест' },
         learn: { title: 'Уроки', text: 'Правила грамматики, типичные ошибки и слова по 20 темам' },
         part2: { title: 'IELTS Speaking Part 2', text: 'Карточка с вопросом: 1 минута на подготовку, 2 минуты речи' },
         talk: { title: 'Разговор с ИИ', text: 'Кафе, собеседование, экзаменатор — ролевой диалог голосом' },
@@ -79,6 +81,7 @@ export const appMsg = defineMessages(
       open: 'Open',
       sections: { basic: 'Core practice', exam: 'Exam preparation', more: 'More practice' },
       tiles: {
+        tutor: { title: 'AI tutor', text: 'Type a topic (e.g. modal verbs) — the AI builds a lesson, exercises and a mini-test' },
         learn: { title: 'Lessons', text: 'Grammar rules, typical mistakes and words on 20 topics' },
         part2: { title: 'IELTS Speaking Part 2', text: 'A cue card: 1 minute to prepare, 2 minutes to speak' },
         talk: { title: 'Talk with AI', text: 'Café, job interview, examiner — a spoken role-play' },

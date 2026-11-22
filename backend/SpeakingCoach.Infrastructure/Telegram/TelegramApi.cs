@@ -31,7 +31,7 @@ public class TelegramApi : ITelegramApi
     private async Task<JsonElement> CallAsync(string method, object payload, CancellationToken ct)
     {
         if (_options.Token is null) throw new InvalidOperationException("Telegram:BotToken sozlanmagan");
-        using var response = await _http.PostAsJsonAsync($"https://api.telegram.org/bot{_options.Token}/{method}", payload, Json, ct);
+        using var response = await _http.PostAsJsonAsync($"{_options.ApiBase}/bot{_options.Token}/{method}", payload, Json, ct);
         var body = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: ct);
         if (!body.TryGetProperty("ok", out var ok) || !ok.GetBoolean())
         {
@@ -125,7 +125,7 @@ public class TelegramApi : ITelegramApi
     {
         var file = await CallAsync("getFile", new { file_id = fileId }, ct);
         var path = file.GetProperty("file_path").GetString() ?? throw new TelegramApiException(404, "file_path yo'q");
-        using var response = await _http.GetAsync($"https://api.telegram.org/file/bot{_options.Token}/{path}", ct);
+        using var response = await _http.GetAsync($"{_options.ApiBase}/file/bot{_options.Token}/{path}", ct);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsByteArrayAsync(ct);
     }
@@ -144,7 +144,7 @@ public class TelegramApi : ITelegramApi
             form.Add(new StringContent("HTML"), "parse_mode");
         }
         if (inline is not null) form.Add(new StringContent(JsonSerializer.Serialize(new { inline_keyboard = inline }, Json)), "reply_markup");
-        using var response = await _http.PostAsync($"https://api.telegram.org/bot{_options.Token}/sendDocument", form, ct);
+        using var response = await _http.PostAsync($"{_options.ApiBase}/bot{_options.Token}/sendDocument", form, ct);
         var body = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: ct);
         if (!body.TryGetProperty("ok", out var ok) || !ok.GetBoolean())
         {

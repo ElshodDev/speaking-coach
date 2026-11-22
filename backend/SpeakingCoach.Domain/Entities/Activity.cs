@@ -26,6 +26,10 @@ public enum ActivityType
 
     /// <summary>Diktant (eshitib yozish): nechta gap, so'zlar aniqligi.</summary>
     Dictation = 7,
+
+    /// <summary>AI ustoz darsi (mavzu bo'yicha mini-dars): natija ResponseData'da.</summary>
+    /// <remarks>Tur bazada matn sifatida saqlanadi — yangi qiymat migratsiya talab qilmaydi.</remarks>
+    Lesson = 8,
 }
 
 /// <summary>

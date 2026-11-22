@@ -30,6 +30,7 @@ public static class ProgressCalculator
     public const int ShadowingXp = 15;
     public const int ConversationXp = 25;
     public const int DictationXp = 10;
+    public const int LessonXp = 25;
 
     public static int XpFor(ActivityFact a) => a.Type switch
     {
@@ -39,6 +40,7 @@ public static class ProgressCalculator
         ActivityType.Shadowing => ShadowingXp,
         ActivityType.Conversation => ConversationXp,
         ActivityType.Dictation => DictationXp,
+        ActivityType.Lesson => LessonXp,
         _ => 0,
     };
 

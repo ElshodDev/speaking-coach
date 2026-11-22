@@ -33,11 +33,15 @@ public partial class TelegramBot
     private readonly AuthoringRunner _runner;
     private readonly AdminService _adminStats;
     private readonly AuthService _auth;
+    private readonly TutorService _tutor;
+    private readonly FeatureFlags _flags;
 
     public TelegramBot(IAppDbContext db, ITelegramApi api, TelegramOptions options, ReviewService reviews,
         IWordService words, AiQuotaService quotas, TodayService today, ILogger<TelegramBot> logger,
-        AdminOptions admins, AuthoringRunner runner, AdminService adminStats, AuthService auth)
+        AdminOptions admins, AuthoringRunner runner, AdminService adminStats, AuthService auth, TutorService tutor, FeatureFlags flags)
     {
+        _tutor = tutor;
+        _flags = flags;
         _auth = auth;
         _adminStats = adminStats;
         _admins = admins;
@@ -182,7 +186,18 @@ public partial class TelegramBot
             }
             if (BotLogic.IsCommand(text, "/cancel"))
             {
+                if (BotTutor.ParseState(c.Account?.BotState) is not null)
+                {
+                    await SetBotStateAsync(c, null, ct);
+                    await _api.SendMessageAsync(c.ChatId, c.T("tutor.bot_cancelled"), replyKeyboard: BotLogic.MainMenu(c.Lang), ct: ct);
+                    return;
+                }
                 await CancelAuthoringAsync(c, null, ct);
+                return;
+            }
+            if (BotLogic.IsCommand(text, "/dars") || BotLogic.IsCommand(text, "/tutor"))
+            {
+                await TutorEntryAsync(c, text, ct);
                 return;
             }
 
@@ -203,6 +218,13 @@ public partial class TelegramBot
                 case MenuAction.Help:
                     await _api.SendMessageAsync(c.ChatId, c.T("bot.help"), [GuideRow(c)], ct: ct);
                     return;
+            }
+
+            // /dars dan keyin kutilayotgan mavzu, o'z gaplari yoki savol.
+            if (!text.StartsWith('/') && text.Length > 0 && BotTutor.ParseState(c.Account?.BotState) is { } tutorState)
+            {
+                await ReceiveTutorTextAsync(c, text, tutorState.Kind, tutorState.LessonId, ct);
+                return;
             }
 
             // /add dan keyin kutilayotgan material yoki mavzu (menyu va buyruqlardan keyin tekshiriladi).
@@ -608,6 +630,10 @@ public partial class TelegramBot
 
                 case BotCallback.AuthorExam or BotCallback.AuthorKindPick or BotCallback.AuthorModePick or BotCallback.AuthorCancel or BotCallback.TestCmd:
                     toast = await HandleAuthorCallbackAsync(c, action, messageId, ct);
+                    break;
+
+                case BotCallback.Tutor tutorCb:
+                    toast = await HandleTutorCallbackAsync(c, tutorCb, messageId, ct);
                     break;
 
                 case BotCallback.Unlink:
