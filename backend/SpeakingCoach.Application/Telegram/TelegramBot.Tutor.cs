@@ -45,7 +45,18 @@ public partial class TelegramBot
     private async Task AskTutorTopicAsync(Ctx c, CancellationToken ct)
     {
         await SetBotStateAsync(c, BotTutor.State(TutorAwait.Topic), ct);
-        await _api.SendMessageAsync(c.ChatId, c.T("tutor.bot_ask_topic"), BotTutor.TopicButtons(), ct: ct);
+        // Xatolar asosidagi tavsiya (AI'siz); xato bo'lsa ham dars tanlash to'xtamasin.
+        var recommended = new List<string>();
+        try
+        {
+            if (c.User is not null) recommended = [.. (await _tutor.RecommendAsync(c.User, TopicAdvisor.DefaultMax, ct)).Select(r => r.Topic)];
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "AI ustoz tavsiyasi olinmadi: chat {Chat}", c.ChatId);
+        }
+        var html = c.T("tutor.bot_ask_topic") + (recommended.Count > 0 ? "\n\n" + c.T("tutor.bot_recommend") : "");
+        await _api.SendMessageAsync(c.ChatId, html, BotTutor.TopicButtons(recommended), ct: ct);
     }
 
     /// <summary>Matn kutilayotganda kelgan xabar (buyruq emas) — mavzu, o'z gaplari yoki savol.</summary>
@@ -173,7 +184,7 @@ public partial class TelegramBot
                 return null;
             }
             // Boshqa mavzu so'rovi ochiq bo'lsa ham, tugma bosilsa — tanlangan mavzu bilan boshlaymiz.
-            await StartTutorLessonAsync(c, Tutor.SuggestedTopics[int.Parse(cb.Arg, System.Globalization.CultureInfo.InvariantCulture)], ct);
+            await StartTutorLessonAsync(c, Tutor.AllTopics[int.Parse(cb.Arg, System.Globalization.CultureInfo.InvariantCulture)], ct);
             return null;
         }
 

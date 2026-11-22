@@ -62,6 +62,9 @@ export const tutorMsg = defineMessages(
     assignmentMissing: 'Vazifa topilmadi. Mavzuni oʻzingiz yozib ham oʻrganishingiz mumkin.',
     assignmentDone: 'Bu vazifa bajarilgan. Mavzuni qayta oʻrganishingiz mumkin.',
     assignmentFrom: (group: string) => `Guruh: ${group}`,
+    suggestTitle: 'Sizga tavsiya (xatolaringiz asosida)',
+    suggestWhy: (cat: string, n: number, recent: boolean) => `${cat}: ${recent ? 'oxirgi 30 kunda' : 'jami'} ${n} ta xato`,
+    suggestLearn: 'Shu mavzuni oʻrganish',
   },
   {
     ru: {
@@ -124,6 +127,9 @@ export const tutorMsg = defineMessages(
       assignmentMissing: 'Задание не найдено. Можно выбрать тему самому.',
       assignmentDone: 'Это задание выполнено. Можно пройти тему ещё раз.',
       assignmentFrom: (group: string) => `Группа: ${group}`,
+      suggestTitle: 'Рекомендуем (по вашим ошибкам)',
+      suggestWhy: (cat: string, n: number, recent: boolean) => `${cat}: ошибок ${recent ? 'за 30 дней' : 'всего'} — ${n}`,
+      suggestLearn: 'Выучить эту тему',
     },
     en: {
       title: 'AI tutor',
@@ -185,6 +191,9 @@ export const tutorMsg = defineMessages(
       assignmentMissing: 'Assignment not found. You can also type a topic yourself.',
       assignmentDone: 'This assignment is done. You can study the topic again.',
       assignmentFrom: (group: string) => `Group: ${group}`,
+      suggestTitle: 'Recommended for you (from your mistakes)',
+      suggestWhy: (cat: string, n: number, recent: boolean) => `${cat}: ${n} mistakes ${recent ? 'in the last 30 days' : 'in total'}`,
+      suggestLearn: 'Study this topic',
     },
   },
 );

@@ -153,10 +153,22 @@ public static partial class BotTutor
         return sb.ToString().TrimEnd();
     }
 
-    /// <summary>Tavsiya etilgan mavzular — har qatorda ikkita tugma.</summary>
-    public static IReadOnlyList<IReadOnlyList<TgButton>> TopicButtons() =>
-        [.. Tutor.SuggestedTopics
-            .Select((t, i) => new TgButton(t, BotLogic.Encode(new BotCallback.Tutor(null, "t", i.ToString(System.Globalization.CultureInfo.InvariantCulture)))))
-            .Chunk(2)
-            .Select(row => (IReadOnlyList<TgButton>)row)];
+    private static TgButton TopicButton(string label, int index) =>
+        new(label, BotLogic.Encode(new BotCallback.Tutor(null, "t", index.ToString(System.Globalization.CultureInfo.InvariantCulture))));
+
+    /// <summary>
+    /// Mavzu tugmalari: avval xatolar asosidagi tavsiyalar (🎯, har biri alohida qatorda), so'ng tavsiya etilgan mavzular
+    /// (har qatorda ikkita). Tugma ma'lumotidagi indeks Tutor.AllTopics'ga ishora qiladi.
+    /// </summary>
+    public static IReadOnlyList<IReadOnlyList<TgButton>> TopicButtons(IReadOnlyList<string>? recommended = null)
+    {
+        var rows = new List<IReadOnlyList<TgButton>>();
+        foreach (var topic in recommended ?? [])
+        {
+            var index = Array.FindIndex(Tutor.AllTopics, t => string.Equals(t, topic, StringComparison.OrdinalIgnoreCase));
+            if (index >= 0) rows.Add([TopicButton("🎯 " + topic, index)]);
+        }
+        rows.AddRange(Tutor.SuggestedTopics.Select((t, i) => TopicButton(t, i)).Chunk(2).Select(row => (IReadOnlyList<TgButton>)row));
+        return rows;
+    }
 }

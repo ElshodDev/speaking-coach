@@ -18,6 +18,7 @@ public static class DependencyInjection
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(connectionString, npgsql => npgsql.EnableRetryOnFailure(3)));
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
+        services.AddScoped<IMistakeSource, EfMistakeSource>();
         services.AddScoped<IMockRows, MockRowsQuery>();
         services.AddScoped<ISchemaInspector, SchemaInspector>();
 

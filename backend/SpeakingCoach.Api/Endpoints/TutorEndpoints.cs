@@ -25,6 +25,26 @@ public static class TutorEndpoints
         // Sozlama: yoqilganmi va tavsiya etilgan mavzular (kirish talab qilinmaydi — sahifa shunga qarab chiziladi).
         app.MapGet("/api/tutor/config", (FeatureFlags flags) => Results.Ok(new { enabled = flags.AiTutor, topics = Tutor.SuggestedTopics }));
 
+        // "Xatolaringiz asosida sizga shu mavzu kerak": AI'siz, limit sarflamaydi.
+        app.MapGet("/api/tutor/recommendations", async (HttpRequest request, AuthService auth, TutorService tutor, FeatureFlags flags) =>
+        {
+            if (!flags.AiTutor) return Results.Ok(new { items = Array.Empty<object>() });
+            var user = await auth.GetCurrentUserAsync(request);
+            if (user is null) return LoginFirst(request);
+            var items = await tutor.RecommendAsync(user);
+            return Results.Ok(new
+            {
+                items = items.Select(r => new
+                {
+                    category = r.Category,
+                    topic = r.Topic,
+                    count = r.Count,
+                    last30 = r.Last30,
+                    example = r.Example is null ? null : new { original = r.Example.Original, corrected = r.Example.Corrected },
+                }),
+            });
+        });
+
         // AI chaqiradigan amal: AI xatosi — 502 (kunlik limit servis ichida qaytariladi); AiBusy — markaziy middleware (503).
         async Task<IResult> Guarded(HttpRequest request, ILogger<Program> logger, string what, Func<Task<IResult>> run)
         {

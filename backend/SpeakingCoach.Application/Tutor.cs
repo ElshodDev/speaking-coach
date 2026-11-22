@@ -89,6 +89,13 @@ public static class Tutor
         "Prepositions of time and place", "Passive voice", "Phrasal verbs",
     ];
 
+    /// <summary>
+    /// Barcha tanilgan mavzular: tavsiya etilgan 8 ta + xato turlaridan keladigan mavzular. Bot tugmasidagi indeks shu ro'yxatga
+    /// ishora qiladi — mavjud indekslar (0..7) o'zgarmaydi, yangilari oxiriga qo'shiladi.
+    /// </summary>
+    public static readonly string[] AllTopics =
+        [.. SuggestedTopics.Concat(TopicAdvisor.TopicOf.Values.Where(t => !SuggestedTopics.Contains(t, StringComparer.OrdinalIgnoreCase)))];
+
     public static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     /// <summary>Mavzuni tozalaydi: bo'shliqlar bir xil, boshqaruv belgilari va juda qisqa/uzun mavzu — null.</summary>

@@ -69,6 +69,7 @@ const Progress = lazy(() => import('./Progress').then((m) => ({ default: m.Progr
 const Admin = lazy(() => import('./Admin').then((m) => ({ default: m.Admin })));
 const Quiz = lazy(() => import('./Quiz').then((m) => ({ default: m.Quiz })));
 const Mistakes = lazy(() => import('./Mistakes').then((m) => ({ default: m.Mistakes })));
+import { TutorSuggest, topicFromRoute } from './TutorSuggest';
 const TutorPage = lazy(() => import('./Tutor').then((m) => ({ default: m.TutorPage })));
 const TalkHub = lazy(() => import('./Talk').then((m) => ({ default: m.TalkHub })));
 const Part2Page = lazy(() => import('./Part2').then((m) => ({ default: m.Part2Page })));
@@ -382,7 +383,12 @@ function App() {
   } else if (section === 'shadowing') {
     page = <ShadowingList go={go} />;
   } else if (section === 'mock' && sub === 'result' && third) {
-    page = <MockResultView key={`${third}-${userKey}`} id={third} go={go} />;
+    page = (
+      <>
+        <MockResultView key={`${third}-${userKey}`} id={third} go={go} />
+        <TutorSuggest loggedIn={loggedIn} go={go} limit={1} />
+      </>
+    );
   } else if (section === 'teacher' && sub && loggedIn) {
     page = <TeacherGroup key={`${sub}-${userKey}`} id={sub} go={go} />;
   } else if (section === 'teacher' && loggedIn) {
@@ -421,7 +427,7 @@ function App() {
   } else if (section === 'mock') {
     page = <MockHub key={userKey} loggedIn={loggedIn} go={go} onLogin={toLogin} />;
   } else if (section === 'tutor') {
-    page = <TutorPage key={`${userKey}-${sub === 'a' ? third : ''}`} assignmentId={sub === 'a' ? third : undefined} loggedIn={loggedIn} onLogin={toLogin} onCardsAdded={refreshStats} go={go} />;
+    page = <TutorPage key={`${userKey}-${sub ?? ''}-${third ?? ''}`} assignmentId={sub === 'a' ? third : undefined} presetTopic={sub === 't' ? (topicFromRoute(third) ?? undefined) : undefined} loggedIn={loggedIn} onLogin={toLogin} onCardsAdded={refreshStats} go={go} />;
   } else if (section === 'talk' && sub) {
     page = <TalkSession key={`${sub}-${userKey}`} scenario={sub} loggedIn={loggedIn} onLogin={toLogin} onCardsAdded={refreshStats} go={go} />;
   } else if (section === 'talk') {

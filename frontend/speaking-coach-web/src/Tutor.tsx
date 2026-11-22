@@ -7,6 +7,7 @@ import { common, useT } from './i18n';
 import { tutorMsg } from './locales/tutor';
 import { lessonTopic } from './groupLogic';
 import { PageHeader } from './ui';
+import { TutorSuggest } from './TutorSuggest';
 import {
   answered,
   applyAnswer,
@@ -53,9 +54,12 @@ export function TutorPage({
   onCardsAdded,
   go,
   assignmentId,
+  presetTopic,
 }: {
   /** Ustoz vazifasidan ochilgan bo'lsa — vazifa identifikatori (mavzu vazifadan olinadi). */
   assignmentId?: string;
+  /** Tavsiyadan ochilgan bo'lsa — oldindan yozilgan mavzu. */
+  presetTopic?: string;
   loggedIn: boolean;
   onLogin: () => void;
   onCardsAdded?: () => void;
@@ -69,7 +73,7 @@ export function TutorPage({
   const [step, setStep] = useState<Step>('explain');
   const [explainIdx, setExplainIdx] = useState(0);
   const [cursor, setCursor] = useState(0);
-  const [topic, setTopic] = useState('');
+  const [topic, setTopic] = useState(presetTopic ?? '');
   const [level, setLevel] = useState(getLevel());
   const [resume, setResume] = useState<{ id: string; topic: string } | null>(null);
   // undefined — yuklanmoqda, null — topilmadi.
@@ -274,6 +278,7 @@ export function TutorPage({
         )}
         {task === null && assignmentId && <p className="muted small">{t.assignmentMissing}</p>}
         {task === undefined && <p className="muted small">…</p>}
+        {!task && task !== undefined && !presetTopic && <TutorSuggest loggedIn={loggedIn} go={go} limit={3} />}
         {!task && task !== undefined && (<form className="card stack" onSubmit={(e) => void start(e)} data-testid="tutor-topic-form">
           {resume && (
             <button type="button" className="btn btn-outline" onClick={() => void resumeLesson()} data-testid="tutor-resume">
