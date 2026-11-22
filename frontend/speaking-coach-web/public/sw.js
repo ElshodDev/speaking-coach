@@ -22,7 +22,7 @@
 // Yangi versiyada keshlash strategiyasi o'zgarsa, CACHE nomini oshiring
 // (v2, v3...) — eski kesh "activate" paytida o'chiriladi.
 const CACHE = 'speaking-coach-v5'; // v5: sahifa uchun 4 s kutish, eski /assets/ tozalanadi, ikonkalar SWR
-const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/logo.svg'];
+const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/logo.svg', '/icons/logo-mini.svg'];
 /** Sahifa shuncha vaqtda internetdan kelmasa — keshdagi nusxa ko'rsatiladi. */
 const NAV_TIMEOUT_MS = 4000;
 
