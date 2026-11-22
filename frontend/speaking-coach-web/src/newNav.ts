@@ -81,3 +81,10 @@ export function searchHub(items: HubItem[], query: string, label: (id: string) =
     return words.every((w) => hay.includes(w));
   });
 }
+
+/** Profil kartasidagi maqsad: "IELTS 6.5", "CEFR B2" yoki "General"; belgilanmagan bo'lsa — null. */
+export function goalShort(p: { goal?: string | null; targetScore?: string | null } | null, label: (goal: string) => string): string | null {
+  if (!p?.goal) return null;
+  const base = p.goal === 'ielts' ? 'IELTS' : p.goal === 'cefr' ? 'CEFR' : label(p.goal);
+  return p.targetScore && p.goal !== 'general' ? `${base} ${p.targetScore}` : base;
+}

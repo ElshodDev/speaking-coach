@@ -410,3 +410,91 @@ body:has(.app.nn) {
     color: #3b2a00;
   }
 }
+
+/* Profil */
+.nn-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+.nn-pcard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px;
+}
+.nn-pcard b {
+  font-family: Georgia, serif;
+  font-size: 1.25rem;
+}
+.nn-pav {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  font-size: 1.3rem;
+  cursor: default;
+}
+.nn-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.nn-stats div {
+  background: var(--surface-2);
+  border-radius: 14px;
+  padding: 8px 6px;
+  text-align: center;
+}
+.nn-stats b {
+  display: block;
+  font-size: 1.05rem;
+}
+.nn-stats small {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+.nn-big3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.nn-big3 button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 4px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--nn-gold);
+  color: var(--nn-gold-ink);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.nn-gh {
+  margin: 14px 4px 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.nn-danger {
+  margin-top: 10px;
+  padding-top: 6px;
+  border-top: 1px dashed color-mix(in srgb, #e11d48 55%, transparent);
+}
+.nn-danger .nn-gh {
+  color: #e11d48;
+}
+.nn-profile .card {
+  margin: 0;
+}
