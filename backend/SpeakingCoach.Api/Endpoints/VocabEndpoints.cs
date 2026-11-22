@@ -53,7 +53,7 @@ public static class VocabEndpoints
 
         // So'z izohidan (WordSheet) lug'atga qo'shish. So'z darhol
         // takrorlash navbatiga ham tushadi.
-        app.MapPost("/api/vocab", async (VocabAddRequest body, HttpRequest request, AuthService auth, ReviewService reviews, AppDbContext db) =>
+        app.MapPost("/api/vocab", async (VocabAddRequest body, HttpRequest request, AuthService auth, ReviewService reviews) =>
         {
             var userId = await auth.GetCurrentUserIdAsync(request);
             if (userId is null) return Unauthorized(request);
@@ -70,7 +70,7 @@ public static class VocabEndpoints
             {
                 return Results.BadRequest(request.Error("review.limit", ReviewService.MaxCardsPerUser));
             }
-            var added = await reviews.AddCardsAsync(userId.Value, Vocabulary.ParseSource(body.Source), new[]
+            var added = await reviews.AddCardsAndSaveAsync(userId.Value, Vocabulary.ParseSource(body.Source), new[]
             {
                 new NewCard(ReviewCardKind.Word, word, meaning, note),
             });
@@ -78,7 +78,6 @@ public static class VocabEndpoints
             {
                 return Results.Conflict(request.Error("vocab.exists"));
             }
-            await db.SaveChangesAsync();
             return Results.Ok(new { added });
         }).RequireRateLimiting(RateLimits.WritePolicy);
     }

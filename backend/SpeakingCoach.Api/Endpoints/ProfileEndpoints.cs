@@ -1,5 +1,3 @@
-using System.Text.RegularExpressions;
-using Microsoft.EntityFrameworkCore;
 namespace SpeakingCoach.Api.Endpoints;
 
 public record ReferralClaimRequest(string? Ref);
@@ -7,12 +5,8 @@ public record ProfileUpdateRequest(string? DisplayName, string? Level, bool Show
 public record WordExplainRequest(string Word, string? Sentence, string? Level);
 public record OnboardingRequest(bool Skip, string? Goal, string? Level, string? TargetScore, string? ExamDate, int? DailyMinutes, int TzOffsetMinutes = 0);
 
-public static partial class ProfileEndpoints
+public static class ProfileEndpoints
 {
-    // Taxallus: harflar (o'zbekcha ham), raqamlar, bo'sh joy va . _ - ' belgilari.
-    [GeneratedRegex(@"^[\p{L}\p{N} ._'\-]{2,30}$")]
-    private static partial Regex DisplayNamePattern();
-
     private static IResult Unauthorized(HttpRequest request) =>
         Results.Json(request.Error("login.required"), statusCode: StatusCodes.Status401Unauthorized);
 
@@ -72,31 +66,14 @@ public static partial class ProfileEndpoints
 
         // Tanishtiruv: maqsad, daraja, maqsad ball, imtihon sanasi, kunlik vaqt.
         // "Keyinroq" (Skip) — faqat qayta ko'rsatilmasligi uchun belgilanadi.
-        app.MapPut("/api/profile/onboarding", async (OnboardingRequest body, HttpRequest request, AuthService auth, AppDbContext db) =>
+        app.MapPut("/api/profile/onboarding", async (OnboardingRequest body, HttpRequest request, AuthService auth, ProfileService profiles) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return Unauthorized(request);
-            if (!body.Skip)
-            {
-                var today = ReviewScheduler.ToLocalDate(DateTime.UtcNow, Math.Clamp(body.TzOffsetMinutes, -840, 840));
-                var target = string.IsNullOrWhiteSpace(body.TargetScore) ? null : body.TargetScore.Trim().ToUpperInvariant();
-                var date = string.IsNullOrWhiteSpace(body.ExamDate) ? null : PlanLogic.ParseDate(body.ExamDate.Trim());
-                if (!PlanLogic.IsValidGoal(body.Goal)) return Results.BadRequest(request.Error("goal.bad_goal"));
-                if (body.Level is not null && !LearnerLevel.IsValid(body.Level)) return Results.BadRequest(request.Error("profile.bad_level"));
-                if (!PlanLogic.IsValidTarget(body.Goal, target)) return Results.BadRequest(request.Error("goal.bad_target"));
-                if ((!string.IsNullOrWhiteSpace(body.ExamDate) && date is null) || !PlanLogic.IsValidExamDate(date, today) || (body.Goal == "general" && date is not null))
-                    return Results.BadRequest(request.Error("goal.bad_date"));
-                if (!PlanLogic.IsValidMinutes(body.DailyMinutes)) return Results.BadRequest(request.Error("goal.bad_minutes"));
-
-                user.Goal = body.Goal;
-                if (body.Level is not null) user.Level = LearnerLevel.Normalize(body.Level);
-                user.TargetScore = target;
-                user.ExamDate = date;
-                user.DailyMinutes = body.DailyMinutes ?? PlanLogic.DefaultMinutes;
-            }
-            user.OnboardedAtUtc ??= DateTime.UtcNow;
-            await db.SaveChangesAsync();
-            return Results.Ok(new { goal = user.Goal, level = user.Level, targetScore = user.TargetScore, onboarded = true });
+            var r = await profiles.SaveOnboardingAsync(user, new OnboardingInput(body.Skip, body.Goal, body.Level, body.TargetScore, body.ExamDate, body.DailyMinutes, body.TzOffsetMinutes));
+            if (!r.Ok) return Results.BadRequest(request.Error(r.Failure!.Key));
+            var o = r.Value!;
+            return Results.Ok(new { goal = o.Goal, level = o.Level, targetScore = o.TargetScore, onboarded = o.Onboarded });
         }).RequireRateLimiting(RateLimits.WritePolicy);
 
         // Bugungi reja: takrorlash, kunning ko'nikmasi, (imtihonga tayyorlanayotganlarga) mock.
@@ -129,49 +106,14 @@ public static partial class ProfileEndpoints
             });
         });
 
-        app.MapPut("/api/profile", async (ProfileUpdateRequest body, HttpRequest request, AuthService auth, AppDbContext db) =>
+        app.MapPut("/api/profile", async (ProfileUpdateRequest body, HttpRequest request, AuthService auth, ProfileService profiles) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return Unauthorized(request);
-
-            if (body.Level is not null && !LearnerLevel.IsValid(body.Level))
-            {
-                return Results.BadRequest(request.Error("profile.bad_level"));
-            }
-
-            var name = string.IsNullOrWhiteSpace(body.DisplayName) ? null : body.DisplayName.Trim();
-            if (name is not null && !DisplayNamePattern().IsMatch(name))
-            {
-                return Results.BadRequest(request.Error("profile.bad_nickname"));
-            }
-            if (body.ShowOnLeaderboard && DemoAccount.IsDemo(user.Email))
-            {
-                return Results.BadRequest(request.Error("demo.not_allowed"));
-            }
-            if (body.ShowOnLeaderboard && name is null)
-            {
-                return Results.BadRequest(request.Error("profile.nickname_required"));
-            }
-            if (name is not null)
-            {
-                var lower = name.ToLower();
-                var taken = await db.Users.AnyAsync(u => u.Id != user.Id && u.DisplayName != null && u.DisplayName.ToLower() == lower);
-                if (taken) return Results.BadRequest(request.Error("profile.nickname_taken"));
-            }
-
-            user.DisplayName = name;
-            if (body.Level is not null) user.Level = LearnerLevel.Normalize(body.Level);
-            user.ShowOnLeaderboard = body.ShowOnLeaderboard;
-            try
-            {
-                await db.SaveChangesAsync();
-            }
-            catch (DbUpdateException ex) when (DbErrors.IsUniqueViolation(ex))
-            {
-                // Tekshiruvdan keyin, saqlashdan oldin boshqa kimdir shu taxallusni oldi (noyob indeks).
-                return Results.BadRequest(request.Error("profile.nickname_taken"));
-            }
-            return Results.Ok(new { displayName = user.DisplayName, level = user.Level, showOnLeaderboard = user.ShowOnLeaderboard });
+            var r = await profiles.UpdateAsync(user, body.DisplayName, body.Level, body.ShowOnLeaderboard);
+            if (!r.Ok) return Results.BadRequest(request.Error(r.Failure!.Key));
+            var p = r.Value!;
+            return Results.Ok(new { displayName = p.DisplayName, level = p.Level, showOnLeaderboard = p.ShowOnLeaderboard });
         }).RequireRateLimiting(RateLimits.WritePolicy);
 
         app.MapGet("/api/progress", async (HttpRequest request, AuthService auth, ProgressService progress, int tzOffsetMinutes = 0) =>
@@ -214,7 +156,7 @@ public static partial class ProfileEndpoints
 
         // Tizim holati: baza sxemasi, Telegram bot, sozlamalar. Sirlar qaytarilmaydi.
         app.MapGet("/api/admin/system", async (
-            HttpRequest request, AuthService auth, AdminOptions admins, AppDbContext db, ISchemaInspector schema,
+            HttpRequest request, AuthService auth, AdminOptions admins, IAppDbContext db, ISchemaInspector schema,
             ITelegramApi telegram, TelegramOptions tg,
             IEmailSender email, IGoogleSignIn google, IConfiguration config) =>
         {

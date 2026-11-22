@@ -71,6 +71,25 @@ public class TutorService(IAppDbContext db, ITutorAi ai, AiDailyCaps caps, AiQuo
 {
     private static TutorOutcome<T> Fail<T>(string key, int status, params object?[] args) => TutorOutcome<T>.Failure(key, status, args);
 
+    /// <summary>Admin: AI ustoz o'lchovlari (boshlangan/tugagan darslar, mini-test, o'zlashtirish, mavzular, baho) oxirgi N kun uchun.</summary>
+    public async Task<TutorStatsResult> AdminStatsAsync(int days)
+    {
+        days = Math.Clamp(days, 1, 365);
+        var since = DateTime.UtcNow.AddDays(-days);
+        var lessons = await db.Activities
+            .Where(a => a.Type == ActivityType.Lesson && a.CreatedAtUtc >= since)
+            .OrderByDescending(a => a.CreatedAtUtc).Take(5000)
+            .Select(a => new LessonRow(a.UserId, a.PromptData, a.ResponseData))
+            .ToListAsync();
+        var events = await db.Feedbacks
+            .Where(f => f.Kind == FeedbackKinds.Rating && f.CreatedAtUtc >= since && (f.Message.StartsWith("lesson_start:") || f.Message.StartsWith("lesson:")))
+            .GroupBy(f => f.Message)
+            .Select(g => new { key = g.Key, count = g.Count() })
+            .ToListAsync();
+        var assignments = await db.Assignments.CountAsync(a => a.CreatedAtUtc >= since && a.Kind.StartsWith("lesson:"));
+        return TutorStats.Build(days, lessons, events.ToDictionary(e => e.key, e => e.count), assignments);
+    }
+
     /// <summary>
     /// Ustoz vazifasining mavzusi: faqat guruh a'zosi (yoki guruh egasi) uchun va faqat "AI dars" turidagi vazifa.
     /// </summary>

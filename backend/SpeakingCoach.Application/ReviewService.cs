@@ -24,6 +24,14 @@ public class ReviewService
     /// Foydalanuvchida allaqachon bor ibora qayta qo'shilmaydi.
     /// Qaytaradi: nechta yangi karta qo'shildi.
     /// </summary>
+    /// <summary>Kartalarni qo'shadi va (kamida bittasi qo'shilgan bo'lsa) darhol saqlaydi — mustaqil amallar uchun (lug'atga qo'shish, qo'lda karta, yaxshilash kartalari).</summary>
+    public async Task<int> AddCardsAndSaveAsync(Guid userId, ActivityType? source, IReadOnlyList<NewCard> cards)
+    {
+        var added = await AddCardsAsync(userId, source, cards);
+        if (added > 0) await _db.SaveChangesAsync();
+        return added;
+    }
+
     public async Task<int> AddCardsAsync(Guid userId, ActivityType? source, IReadOnlyList<NewCard> cards)
     {
         if (cards.Count == 0) return 0;

@@ -18,9 +18,8 @@ public static class SpeakingWritingEndpoints
         app.MapPost("/api/speaking/submit", async (
             HttpRequest request,
             ISpeakingEvaluationService evaluationService,
-            AppDbContext db,
+            PracticeStore store,
             AuthService auth,
-            ReviewService reviews,
             AiQuotaService quotas,
             ILogger<Program> logger) =>
         {
@@ -98,7 +97,7 @@ public static class SpeakingWritingEndpoints
                 // shuning uchun tarixda faqat muvaffaqiyatli urinishlar ko'rinadi.
                 if (shouldSave)
                 {
-                    db.Activities.Add(new Activity
+                    newCards = await store.SaveAttemptAsync(new Activity
                     {
                         Id = submissionId,
                         Type = ActivityType.Speaking,
@@ -106,12 +105,7 @@ public static class SpeakingWritingEndpoints
                         CreatedAtUtc = DateTime.UtcNow,
                         PromptData = System.Text.Json.JsonSerializer.Serialize(new { topic }),
                         ResponseData = FluencyMetrics.WithMetrics(evaluation, metrics),
-                    });
-                    // Tuzatishlar avtomatik takrorlash kartalariga aylanadi —
-                    // urinish bilan bitta tranzaksiyada saqlanadi.
-                    newCards = await reviews.AddCardsAsync(
-                        userId!.Value, ActivityType.Speaking, ReviewCardFactory.FromCorrections(ReviewCardFactory.WithPriorityFix(evaluation.TopCorrections, evaluation.PriorityFix)));
-                    await db.SaveChangesAsync();
+                    }, ReviewCardFactory.WithPriorityFix(evaluation.TopCorrections, evaluation.PriorityFix));
                 }
 
                 await quotas.RecordAsync(request, AiKind.Exercise);
@@ -132,34 +126,15 @@ public static class SpeakingWritingEndpoints
         // Ravonlik dinamikasi (Progress grafigi): Speaking mashqi, Speaking imtihoni va AI suhbat —
         // oxirgi urinishlardagi o'lchovlar, eski → yangi. Faqat o'lchovli yozuvlar ("metrics" kaliti
         // bazada tekshiriladi — boshqa mock natijalarining katta JSON'i o'qilmaydi).
-        app.MapGet("/api/speaking/fluency", async (HttpRequest request, AppDbContext db, AuthService auth, int take = 20) =>
-        {
-            var userId = await auth.GetCurrentUserIdAsync(request);
-            if (userId is null) return Results.Ok(Array.Empty<FluencyPoint>());
-            ActivityType[] types = [ActivityType.Speaking, ActivityType.MockExam, ActivityType.Conversation];
-            var rows = await db.Activities
-                .Where(a => a.UserId == userId && types.Contains(a.Type) && EF.Functions.JsonExists(a.ResponseData, "metrics"))
-                .OrderByDescending(a => a.CreatedAtUtc)
-                .Take(Math.Clamp(take, 1, 50))
-                .Select(a => new { a.CreatedAtUtc, a.Type, a.ResponseData })
-                .ToListAsync();
-            var points = rows
-                .OrderBy(r => r.CreatedAtUtc)
-                .Select(r => (r.CreatedAtUtc, r.Type, M: FluencyMetrics.FromResponse(r.ResponseData)))
-                .Where(x => x.M?.Wpm is not null)
-                .Select(x => new FluencyPoint(x.CreatedAtUtc, x.M!.Wpm, x.M.FillersPerMinute, x.M.LongPauses,
-                    x.Type switch { ActivityType.MockExam => "mock", ActivityType.Conversation => "talk", _ => "speaking" }))
-                .ToList();
-            return Results.Ok(points);
-        });
+        app.MapGet("/api/speaking/fluency", async (HttpRequest request, PracticeStore store, AuthService auth, int take = 20) =>
+            await auth.GetCurrentUserIdAsync(request) is { } userId ? Results.Ok(await store.FluencyAsync(userId, take)) : Results.Ok(Array.Empty<FluencyPoint>()));
 
         app.MapPost("/api/writing/submit", async (
             WritingSubmitRequest body,
             HttpRequest request,
             IWritingEvaluationService evaluationService,
-            AppDbContext db,
+            PracticeStore store,
             AuthService auth,
-            ReviewService reviews,
             AiQuotaService quotas,
             ILogger<Program> logger,
             bool save = true) =>
@@ -207,7 +182,7 @@ public static class SpeakingWritingEndpoints
 
                 if (shouldSave)
                 {
-                    db.Activities.Add(new Activity
+                    newCards = await store.SaveAttemptAsync(new Activity
                     {
                         Id = submissionId,
                         Type = ActivityType.Writing,
@@ -215,12 +190,7 @@ public static class SpeakingWritingEndpoints
                         CreatedAtUtc = DateTime.UtcNow,
                         PromptData = System.Text.Json.JsonSerializer.Serialize(new { topic = body.Topic, text = body.Text }),
                         ResponseData = System.Text.Json.JsonSerializer.Serialize(evaluation),
-                    });
-                    // Tuzatishlar avtomatik takrorlash kartalariga aylanadi —
-                    // urinish bilan bitta tranzaksiyada saqlanadi.
-                    newCards = await reviews.AddCardsAsync(
-                        userId!.Value, ActivityType.Writing, ReviewCardFactory.FromCorrections(evaluation.TopCorrections));
-                    await db.SaveChangesAsync();
+                    }, evaluation.TopCorrections);
                 }
 
                 await quotas.RecordAsync(request, AiKind.Exercise);

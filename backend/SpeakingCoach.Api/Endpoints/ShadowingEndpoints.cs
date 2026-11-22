@@ -1,5 +1,3 @@
-using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 namespace SpeakingCoach.Api.Endpoints;
 
 public record ShadowingDoneRequest(int Lines, int? Average);
@@ -23,16 +21,8 @@ public static class ShadowingEndpoints
             await auth.GetCurrentUserIdAsync(request) is { } uid ? Results.Ok(await lessons.MineAsync(uid)) : Results.Ok(Array.Empty<ShadowingSummary>()));
 
         // Foydalanuvchining natijalari: qaysi darslar bajarilgan va eng yaxshi ball (mehmon — bo'sh).
-        app.MapGet("/api/shadowing/progress", async (HttpRequest request, AuthService auth, AppDbContext db) =>
-        {
-            var userId = await auth.GetCurrentUserIdAsync(request);
-            if (userId is null) return Results.Ok(Array.Empty<ShadowingProgress>());
-            var rows = await db.Activities
-                .Where(a => a.UserId == userId && a.Type == ActivityType.Shadowing)
-                .Select(a => new { a.PromptData, a.ResponseData })
-                .ToListAsync();
-            return Results.Ok(ShadowingService.ProgressOf(rows.Select(r => (r.PromptData, r.ResponseData))));
-        });
+        app.MapGet("/api/shadowing/progress", async (HttpRequest request, AuthService auth, PracticeStore store) =>
+            await auth.GetCurrentUserIdAsync(request) is { } uid ? Results.Ok(await store.ShadowingProgressAsync(uid)) : Results.Ok(Array.Empty<ShadowingProgress>()));
 
         app.MapGet("/api/shadowing/{id}", async (string id, HttpRequest request, AuthService auth, ShadowingService lessons) =>
             await lessons.FindAsync(id, await auth.GetCurrentUserIdAsync(request)) is { } l ? Results.Ok(l) : Results.NotFound(request.Error("shadowing.not_found")));
@@ -86,41 +76,13 @@ public static class ShadowingEndpoints
             HttpRequest request,
             ShadowingService lessons,
             AuthService auth,
-            AppDbContext db) =>
+            PracticeStore store) =>
         {
             var userId = await auth.GetCurrentUserIdAsync(request);
             var lesson = await lessons.FindAsync(id, userId);
             if (lesson is null) return Results.NotFound(request.Error("shadowing.not_found"));
             if (userId is null) return Results.Ok(new { saved = false });
-
-            var since = DateTime.UtcNow.AddHours(-20);
-            var prompt = JsonSerializer.Serialize(new { lessonId = lesson.Id, title = lesson.Title, level = lesson.Level, kind = lesson.Kind });
-            var recent = await db.Activities
-                .Where(a => a.UserId == userId && a.Type == ActivityType.Shadowing && a.CreatedAtUtc > since)
-                .Select(a => a.PromptData)
-                .ToListAsync();
-            // jsonb o'z formatida qaytaradi (bo'shliqlar bilan) — matn qidiruvi emas, JSON o'qiymiz.
-            if (recent.Any(p => ShadowingService.LessonIdOf(p) == lesson.Id))
-            {
-                return Results.Ok(new { saved = false });
-            }
-
-            db.Activities.Add(new Activity
-            {
-                Id = Guid.NewGuid(),
-                Type = ActivityType.Shadowing,
-                UserId = userId,
-                CreatedAtUtc = DateTime.UtcNow,
-                PromptData = prompt,
-                ResponseData = JsonSerializer.Serialize(new
-                {
-                    lines = Math.Clamp(body.Lines, 0, lesson.Lines.Count),
-                    total = lesson.Lines.Count,
-                    average = body.Average is int a ? Math.Clamp(a, 0, 100) : (int?)null,
-                }),
-            });
-            await db.SaveChangesAsync();
-            return Results.Ok(new { saved = true });
+            return Results.Ok(new { saved = await store.SaveShadowingDoneAsync(userId.Value, lesson, body.Lines, body.Average) });
         }).RequireRateLimiting(RateLimits.WritePolicy);
     }
 }

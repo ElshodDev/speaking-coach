@@ -63,15 +63,22 @@ public class ArchitectureTests
         Assert.False(db.Database.HasPendingModelChanges(), "Model migratsiyalardan farq qiladi — yangi migratsiya kerak yoki snapshot buzilgan.");
     }
 
-    // Mantiq Application servislariga ko'chirilgan endpointlar: ularda AppDbContext (konkret baza) ishlatilmaydi.
-    // Yangi endpointlar ham shu yo'ldan borishi uchun ro'yxat asta-sekin kengaytiriladi (qarang: docs/ARCHITECTURE.md).
+    // Barcha endpoint sinflari yupqa: konkret AppDbContext'ga tegmaydi — mantiq va bazaga murojaat Application servislarida
+    // (qarang: docs/ARCHITECTURE.md). Yangi endpoint qo'shilsa, ro'yxatga qo'shish shart emas: sinflar avtomatik topiladi.
+    public static IEnumerable<object[]> EndpointClasses() =>
+        typeof(SpeakingCoach.Api.Endpoints.GroupEndpoints).Assembly.GetTypes()
+            .Where(t => t.Namespace == "SpeakingCoach.Api.Endpoints" && t.IsAbstract && t.IsSealed && t.IsPublic && t.Name.EndsWith("Endpoints"))
+            .OrderBy(t => t.Name)
+            .Select(t => new object[] { t });
+
+    [Fact]
+    public void Endpoint_classes_are_discovered()
+    {
+        Assert.True(EndpointClasses().Count() >= 20);
+    }
+
     [Theory]
-    [InlineData(typeof(SpeakingCoach.Api.Endpoints.GroupEndpoints))]
-    [InlineData(typeof(SpeakingCoach.Api.Endpoints.AccountEndpoints))]
-    [InlineData(typeof(SpeakingCoach.Api.Endpoints.ComprehensionEndpoints))]
-    [InlineData(typeof(SpeakingCoach.Api.Endpoints.HistoryQueries))]
-    [InlineData(typeof(SpeakingCoach.Api.Endpoints.MockEndpoints))]
-    [InlineData(typeof(SpeakingCoach.Api.Endpoints.TelegramEndpoints))]
+    [MemberData(nameof(EndpointClasses))]
     public void Thin_endpoints_do_not_touch_the_concrete_db_context(Type endpoints)
     {
         const BindingFlags all = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly;
