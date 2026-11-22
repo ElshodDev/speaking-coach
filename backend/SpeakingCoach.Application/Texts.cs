@@ -578,6 +578,50 @@ public static class Texts
             "Yakunlashdan oldin kamida bitta javob bering.",
             "Прежде чем завершить, ответьте хотя бы один раз.",
             "Give at least one answer before finishing."),
+        ["tutor.login"] = new(
+            "AI ustoz bilan oʻrganish uchun tizimga kiring — darslar va xatolaringiz hisobingizda saqlanadi.",
+            "Чтобы учиться с ИИ-учителем, войдите — уроки и ошибки сохранятся в аккаунте.",
+            "Log in to learn with the AI tutor — lessons and mistakes are saved to your account."),
+        ["tutor.disabled"] = new(
+            "AI ustoz hozircha oʻchirilgan.",
+            "ИИ-учитель сейчас отключён.",
+            "The AI tutor is turned off right now."),
+        ["tutor.bad_topic"] = new(
+            "Mavzuni 2–80 belgi bilan yozing, masalan: Modal verbs.",
+            "Напишите тему в 2–80 символов, например: Modal verbs.",
+            "Write the topic in 2–80 characters, for example: Modal verbs."),
+        ["tutor.off_topic"] = new(
+            "Bu inglizcha oʻrganishga oid emas. Grammatika, soʻzlar yoki muloqot mavzusini yozing, masalan: Modal verbs.",
+            "Это не про изучение английского. Напишите тему по грамматике, лексике или общению, например: Modal verbs.",
+            "That isn't about learning English. Write a grammar, vocabulary or communication topic, for example: Modal verbs."),
+        ["tutor.not_found"] = new(
+            "Dars topilmadi yoki muddati tugagan. Yangisini boshlang.",
+            "Урок не найден или устарел. Начните новый.",
+            "Lesson not found or expired. Please start a new one."),
+        ["tutor.daily_limit"] = new(
+            "Bugungi AI ustoz limiti tugadi ({0} ta amal). Ertaga davom eting.",
+            "Дневной лимит ИИ-учителя исчерпан ({0} действий). Продолжите завтра.",
+            "You've reached today's AI tutor limit ({0} actions). Continue tomorrow."),
+        ["tutor.bad_answer"] = new(
+            "Javob qabul qilinmadi: avval oldingi savolga javob bering.",
+            "Ответ не принят: сначала ответьте на предыдущий вопрос.",
+            "Answer not accepted: answer the previous question first."),
+        ["tutor.bad_text"] = new(
+            "Matnni 3–800 belgi bilan yozing.",
+            "Напишите текст в 3–800 символов.",
+            "Write the text in 3–800 characters."),
+        ["tutor.locked"] = new(
+            "Bu bosqich hali ochilmagan: avval mashqlarni tugating.",
+            "Этот этап ещё закрыт: сначала закончите упражнения.",
+            "This step is not open yet: finish the exercises first."),
+        ["tutor.asks_limit"] = new(
+            "Bitta darsda koʻpi bilan {0} ta savol berish mumkin.",
+            "В одном уроке можно задать не больше {0} вопросов.",
+            "You can ask at most {0} questions per lesson."),
+        ["tutor.not_ready"] = new(
+            "Yakunlashdan oldin mini-testni tugating.",
+            "Прежде чем завершить, закончите мини-тест.",
+            "Finish the mini-test before completing the lesson."),
         ["dictation.bad"] = new(
             "Diktant natijasi notoʻgʻri.",
             "Неверный результат диктанта.",

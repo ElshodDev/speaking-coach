@@ -120,6 +120,7 @@ app.MapShadowingEndpoints();
 app.MapContentEndpoints();
 app.MapMistakeEndpoints();
 app.MapTalkEndpoints();
+app.MapTutorEndpoints();
 app.MapPart2Endpoints();
 app.MapUpgradeEndpoints();
 app.MapDictationEndpoints();

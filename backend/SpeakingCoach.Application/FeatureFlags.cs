@@ -15,5 +15,8 @@ public class FeatureFlags(IConfiguration config)
     /// <summary>Taklif (referral): taklif havolasi, mukofot (+kunlik AI urinishlar). Env: Features__Referral.</summary>
     public bool Referral => Read("Features:Referral");
 
+    /// <summary>AI ustoz: mavzu yozib o'rganish (mini-dars), veb va Telegram. Env: Features__AiTutor.</summary>
+    public bool AiTutor => Read("Features:AiTutor");
+
     private bool Read(string key) => !bool.TryParse(config[key], out var on) || on;
 }
