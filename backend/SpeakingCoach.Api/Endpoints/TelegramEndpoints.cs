@@ -1,7 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 namespace SpeakingCoach.Api.Endpoints;
 
 public record TelegramLinkRequest(int TzOffsetMinutes, string? Lang);
@@ -66,62 +65,36 @@ public static class TelegramEndpoints
         static IResult Unauthorized(HttpRequest request) =>
             Results.Json(request.Error("login.required"), statusCode: StatusCodes.Status401Unauthorized);
 
-        app.MapGet("/api/telegram/status", async (HttpRequest request, AuthService auth, AppDbContext db, TelegramOptions options) =>
+        app.MapGet("/api/telegram/status", async (HttpRequest request, AuthService auth, TelegramLinkService links) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
-            if (user is null) return Unauthorized(request);
-            var account = await db.TelegramAccounts.FirstOrDefaultAsync(a => a.UserId == user.Id);
-            return Results.Ok(new
-            {
-                enabled = options.Enabled,
-                botUsername = options.BotUsername,
-                linked = account is not null,
-                username = account?.Username,
-                reminderHour = account?.ReminderHour,
-            });
+            return user is null ? Unauthorized(request) : Results.Ok(await links.StatusAsync(user.Id));
         });
 
         // Bir martalik havola: t.me/Bot?start=TOKEN (15 daqiqa amal qiladi).
-        app.MapPost("/api/telegram/link", async (TelegramLinkRequest body, HttpRequest request, AuthService auth, AppDbContext db, TelegramOptions options) =>
+        app.MapPost("/api/telegram/link", async (TelegramLinkRequest body, HttpRequest request, AuthService auth, TelegramLinkService links) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return Unauthorized(request);
-            if (!options.Enabled) return Results.NotFound();
-            if (DemoAccount.IsDemo(user.Email)) return Results.Json(request.Error("demo.not_allowed"), statusCode: StatusCodes.Status403Forbidden);
-
-            var now = DateTime.UtcNow;
-            db.TelegramLinkTokens.RemoveRange(await db.TelegramLinkTokens
-                .Where(t => t.UserId == user.Id || t.ExpiresAtUtc < now).ToListAsync());
-            var token = BotLogic.NewLinkToken();
-            db.TelegramLinkTokens.Add(new TelegramLinkToken
-            {
-                TokenHash = BotLogic.HashToken(token),
-                UserId = user.Id,
-                Lang = Texts.Langs.Contains(body.Lang) ? body.Lang! : RequestTexts.LangOf(request),
-                TzOffsetMinutes = Math.Clamp(body.TzOffsetMinutes, -14 * 60, 14 * 60),
-                ExpiresAtUtc = now.Add(BotLogic.LinkTokenLifetime),
-            });
-            await db.SaveChangesAsync();
-            return Results.Ok(new { url = $"https://t.me/{options.BotUsername}?start={token}" });
+            var r = await links.CreateLinkAsync(user, body.TzOffsetMinutes, body.Lang, RequestTexts.LangOf(request));
+            if (r.Disabled) return Results.NotFound();
+            if (r.DemoBlocked) return Results.Json(request.Error("demo.not_allowed"), statusCode: StatusCodes.Status403Forbidden);
+            return Results.Ok(new { url = r.Url });
         }).RequireRateLimiting("auth");
 
-        app.MapPut("/api/telegram/settings", async (TelegramSettingsRequest body, HttpRequest request, AuthService auth, AppDbContext db) =>
+        app.MapPut("/api/telegram/settings", async (TelegramSettingsRequest body, HttpRequest request, AuthService auth, TelegramLinkService links) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return Unauthorized(request);
-            var account = await db.TelegramAccounts.FirstOrDefaultAsync(a => a.UserId == user.Id);
-            if (account is null) return Results.NotFound();
-            account.ReminderHour = body.ReminderHour is int h ? Math.Clamp(h, 0, 23) : null;
-            await db.SaveChangesAsync();
-            return Results.Ok(new { reminderHour = account.ReminderHour });
+            var (found, hour) = await links.SetReminderHourAsync(user.Id, body.ReminderHour);
+            return found ? Results.Ok(new { reminderHour = hour }) : Results.NotFound();
         });
 
-        app.MapDelete("/api/telegram/link", async (HttpRequest request, AuthService auth, AppDbContext db) =>
+        app.MapDelete("/api/telegram/link", async (HttpRequest request, AuthService auth, TelegramLinkService links) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return Unauthorized(request);
-            db.TelegramAccounts.RemoveRange(await db.TelegramAccounts.Where(a => a.UserId == user.Id).ToListAsync());
-            await db.SaveChangesAsync();
+            await links.UnlinkAsync(user.Id);
             return Results.Ok();
         });
     }
