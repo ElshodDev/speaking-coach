@@ -213,6 +213,21 @@ public static class GroupEndpoints
             });
         });
 
+        // AI dars vazifasi xulosasi: kim bajardi, mini-test o'rtachasi, o'zlashtirish va sinfdagi eng ko'p xatolar.
+        app.MapGet("/api/teacher/assignments/{id:guid}/insights", async (Guid id, HttpRequest request, AuthService auth, AppDbContext db) =>
+        {
+            var user = await auth.GetCurrentUserAsync(request);
+            if (user is null) return Unauthorized(request);
+            var a = await db.Assignments.FirstOrDefaultAsync(x => x.Id == id);
+            if (a is null || await OwnGroupAsync(db, a.GroupId, user.Id) is null) return NotFound(request);
+            if (GroupLogic.LessonTopic(a.Kind) is not { } topic) return Results.BadRequest(request.Error("assignment.not_lesson"));
+            var memberIds = await db.GroupMembers.Where(m => m.GroupId == a.GroupId).Select(m => m.UserId).ToListAsync();
+            var results = (await GroupQueries.ResultsAsync(db, [a], memberIds))[a.Id];
+            var hitIds = results.Values.Where(st => st.ActivityId is not null).Select(st => st.ActivityId!.Value).ToList();
+            var responses = hitIds.Count == 0 ? [] : await db.Activities.Where(x => hitIds.Contains(x.Id)).Select(x => x.ResponseData).ToListAsync();
+            return Results.Ok(new { topic, insights = LessonInsights.Build(memberIds.Count, responses) });
+        });
+
         // ---------------- O'quvchi ----------------
 
         app.MapGet("/api/groups/join/{code}", async (string code, HttpRequest request, AuthService auth, AppDbContext db) =>

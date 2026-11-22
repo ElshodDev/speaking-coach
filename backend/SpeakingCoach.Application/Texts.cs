@@ -243,6 +243,7 @@ public static class Texts
         ["bot.today_no_goal"] = new("Maqsad belgilanmagan — saytda Profil → 🎯 Maqsadim.", "Цель не указана — на сайте: Профиль → 🎯 Моя цель.", "No goal set — on the website: Profile → 🎯 My goal."),
         ["bot.plan_review"] = new("🔁 Takrorlash — {0}/{1} ta karta", "🔁 Повторение — {0}/{1} карточек", "🔁 Review — {0}/{1} cards"),
         ["bot.kind_review"] = new("🔁 {0} ta kartani takrorlash", "🔁 Повторить {0} карточек", "🔁 Review {0} cards"),
+        ["bot.kind_lesson"] = new("🎓 AI dars: {0}", "🎓 ИИ-урок: {0}", "🎓 AI lesson: {0}"),
         ["bot.kind_speaking"] = new("🎙 Gapirish mashqi", "🎙 Упражнение: говорение", "🎙 Speaking practice"),
         ["bot.kind_writing"] = new("✍️ Yozish mashqi", "✍️ Упражнение: письмо", "✍️ Writing practice"),
         ["bot.kind_reading"] = new("📖 Oʻqish mashqi", "📖 Упражнение: чтение", "📖 Reading practice"),
@@ -582,6 +583,14 @@ public static class Texts
             "AI ustoz bilan oʻrganish uchun tizimga kiring — darslar va xatolaringiz hisobingizda saqlanadi.",
             "Чтобы учиться с ИИ-учителем, войдите — уроки и ошибки сохранятся в аккаунте.",
             "Log in to learn with the AI tutor — lessons and mistakes are saved to your account."),
+        ["tutor.bad_assignment"] = new(
+            "Vazifa topilmadi yoki u AI dars turida emas.",
+            "Задание не найдено или это не ИИ-урок.",
+            "Assignment not found or it is not an AI lesson."),
+        ["assignment.not_lesson"] = new(
+            "Bu vazifa AI dars turida emas.",
+            "Это задание не типа ИИ-урок.",
+            "This assignment is not an AI lesson."),
         ["tutor.disabled"] = new(
             "AI ustoz hozircha oʻchirilgan.",
             "ИИ-учитель сейчас отключён.",

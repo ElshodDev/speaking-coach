@@ -3,7 +3,7 @@ using System.Text.Json;
 namespace SpeakingCoach.Domain.Rules;
 
 /// <summary>O'quvchining bitta urinishi — vazifa bajarilganini aniqlash uchun kerakli qismi.</summary>
-public record ActivityRef(Guid Id, ActivityType Type, DateTime CreatedAtUtc, string? Exam, string? Module, string? Score);
+public record ActivityRef(Guid Id, ActivityType Type, DateTime CreatedAtUtc, string? Exam, string? Module, string? Score, string? Topic = null);
 
 /// <summary>Vazifa holati bitta o'quvchi uchun.</summary>
 public record AssignmentStatus(bool Done, bool Late, DateTime? DoneAtUtc, Guid? ActivityId, string? Score, int? Progress, int? Target);
@@ -39,9 +39,34 @@ public static class GroupLogic
     public static readonly string[] PracticeKinds = ["speaking", "writing", "reading", "listening"];
     public static readonly string[] MockModules = ["speaking", "writing", "listening", "reading"];
 
+    /// <summary>
+    /// AI dars vazifasi: "lesson:&lt;mavzu&gt;" (masalan "lesson:Modal verbs"). Mavzu Kind ustuniga sig'ishi kerak
+    /// (40 belgi), shuning uchun ko'pi bilan 33 belgi — baza sxemasi o'zgarmaydi.
+    /// </summary>
+    public const string LessonPrefix = "lesson:";
+    public const int MaxLessonTopicChars = 33;
+
+    public static string LessonKind(string topic) => LessonPrefix + topic;
+
+    /// <summary>Mavzu: bo'shliqlari bir xil, 2..33 belgi, boshqaruv belgisiz (aks holda null).</summary>
+    public static string? CleanLessonTopic(string? raw)
+    {
+        var t = string.Join(' ', (raw ?? "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+        return t.Length is >= 2 and <= MaxLessonTopicChars && !t.Any(char.IsControl) ? t : null;
+    }
+
+    /// <summary>"lesson:Modal verbs" → "Modal verbs"; boshqa tur yoki yaroqsiz mavzu — null.</summary>
+    public static string? LessonTopic(string? kind)
+    {
+        if (kind is null || !kind.StartsWith(LessonPrefix, StringComparison.Ordinal)) return null;
+        var topic = kind[LessonPrefix.Length..];
+        // Faqat aynan shu ko'rinishdagi (tozalangan) mavzu yaroqli: ikki xil yozuv bitta mavzuni ikkiga bo'lmasin.
+        return CleanLessonTopic(topic) == topic ? topic : null;
+    }
+
     /// <summary>Vazifa turi to'g'rimi (CEFR'da hozircha faqat Speaking va Writing bor).</summary>
     /// <summary>Vazifani bajarish sahifasi (saytdagi #/… manzil) — frontend'dagi routeFor bilan bir xil.</summary>
-    public static string RouteFor(string kind) => kind.Split(':') switch
+    public static string RouteFor(string kind) => LessonTopic(kind) is not null ? "tutor" : kind.Split(':') switch
     {
         ["review"] => "review",
         ["practice", var k] when PracticeKinds.Contains(k) => $"practice/{k}",
@@ -56,6 +81,7 @@ public static class GroupLogic
     {
         if (kind is null) return false;
         if (kind == "review") return true;
+        if (kind.StartsWith(LessonPrefix, StringComparison.Ordinal)) return LessonTopic(kind) is not null;
         var p = kind.Split(':');
         return p switch
         {
@@ -81,6 +107,11 @@ public static class GroupLogic
         var types = new HashSet<ActivityType>();
         foreach (var a in assignments)
         {
+            if (LessonTopic(a.Kind) is not null)
+            {
+                types.Add(ActivityType.Lesson);
+                continue;
+            }
             switch (a.Kind.Split(':'))
             {
                 case ["practice", var k] when PracticeType(k) is ActivityType t:
@@ -119,6 +150,17 @@ public static class GroupLogic
             return new(true, a.DueAtUtc is DateTime due && doneAt > due, doneAt, null, null, after.Count, target);
         }
 
+        if (LessonTopic(a.Kind) is { } lessonTopic)
+        {
+            // AI dars: vazifa berilgandan keyin SHU mavzu bo'yicha tugatilgan birinchi dars.
+            var lesson = activities
+                .Where(x => x.CreatedAtUtc >= a.CreatedAtUtc && x.Type == ActivityType.Lesson && string.Equals(x.Topic, lessonTopic, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(x => x.CreatedAtUtc).FirstOrDefault();
+            return lesson is null
+                ? new(false, false, null, null, null, null, null)
+                : new(true, a.DueAtUtc is DateTime ld && lesson.CreatedAtUtc > ld, lesson.CreatedAtUtc, lesson.Id, lesson.Score, null, null);
+        }
+
         var p = a.Kind.Split(':');
         Func<ActivityRef, bool> match = p switch
         {
@@ -142,6 +184,13 @@ public static class GroupLogic
             using var doc = JsonDocument.Parse(responseJson);
             var r = doc.RootElement;
             if (r.ValueKind != JsonValueKind.Object) return null;
+            // AI dars: mini-test natijasi ("3/4").
+            if (r.TryGetProperty("result", out var lr) && lr.ValueKind == JsonValueKind.Object
+                && lr.TryGetProperty("testCorrect", out var tc) && tc.TryGetInt32(out var testCorrect)
+                && lr.TryGetProperty("testTotal", out var tt) && tt.TryGetInt32(out var testTotal))
+            {
+                return $"{testCorrect}/{testTotal}";
+            }
             if (r.TryGetProperty("overall", out var o) && o.TryGetDecimal(out var overall))
             {
                 return r.TryGetProperty("level", out var lv) && lv.ValueKind == JsonValueKind.String

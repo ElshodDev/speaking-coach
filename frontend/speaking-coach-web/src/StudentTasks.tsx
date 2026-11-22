@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiJson, postJson } from './api';
-import { cleanCode, formatDue, isOverdue, routeFor, sortTasks, type AssignmentStatus } from './groupLogic';
+import { cleanCode, formatDue, isOverdue, kindLabel, routeFor, sortTasks, type AssignmentStatus } from './groupLogic';
 import { localeOf, useLang, useT } from './i18n';
 import { teacherMsg } from './locales/teacher';
 import { PageHeader } from './ui';
@@ -40,7 +40,7 @@ function TaskRow({ task, go }: { task: Task; go: (route: string) => void }) {
   return (
     <div className="spread" style={{ padding: '10px 0', borderTop: '1px solid var(--border)', alignItems: 'center', gap: 10 }} data-testid="task">
       <span className="small" style={{ minWidth: 0 }}>
-        <strong>{t.kinds[task.kind] ?? task.kind}{task.kind === 'review' && task.target ? ` · ${t.reviewTarget(task.target)}` : ''}</strong>
+        <strong>{kindLabel(t, task.kind)}{task.kind === 'review' && task.target ? ` · ${t.reviewTarget(task.target)}` : ''}</strong>
         {task.instructions && <div>{task.instructions}</div>}
         <div className="muted tiny">
           {t.fromGroup(task.groupName)}
@@ -54,7 +54,7 @@ function TaskRow({ task, go }: { task: Task; go: (route: string) => void }) {
           {s.late ? t.lateLabel : t.doneLabel}{s.score ? ` · ${s.score}` : ''}
         </span>
       ) : (
-        <button className="btn btn-primary" onClick={() => go(routeFor(task.kind))}>{t.start}</button>
+        <button className="btn btn-primary" onClick={() => go(routeFor(task.kind, task.id))}>{t.start}</button>
       )}
     </div>
   );

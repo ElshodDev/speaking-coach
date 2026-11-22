@@ -40,6 +40,12 @@ public static partial class BotTutor
     [GeneratedRegex(@"^[pt]\d{1,2}:\d$")]
     private static partial Regex AnswerArg();
 
+    /// <summary>Ustoz vazifasini boshlash tugmasi: "tu:t:a&lt;vazifa id&gt;" (id — 32 belgi, jami 38 bayt).</summary>
+    public static string AssignmentArg(Guid assignmentId) => "a" + assignmentId.ToString("N");
+
+    public static Guid? ParseAssignmentArg(string arg) =>
+        arg.Length == 33 && arg[0] == 'a' && Guid.TryParseExact(arg[1..], "N", out var g) ? g : null;
+
     public static bool IsAnswerArg(string arg) => AnswerArg().IsMatch(arg);
 
     public static (string Section, int Index, int Option) ParseAnswerArg(string arg)

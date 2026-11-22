@@ -196,3 +196,14 @@ Foydalanuvchi mavzu yozadi ("Modal verbs") — AI bitta so'rovda butun dars yara
 - **Limitlar:** dars boshlash — oddiy kunlik mashq limitidan (`Ai__ExercisesPerDay`); savol va yozma baholash — `Ai__TutorCallsPerDay` (standart 30); darsga ko'pi bilan 5 ta savol. Mavzudan tashqari (inglizcha o'rganishga oid bo'lmagan) so'rov limit sarflamaydi.
 - **O'chirish:** Render'da `Features__AiTutor=false` va qayta ishga tushirish.
 - **Lokal/e2e sinov:** `Gemini__BaseUrl` va `Telegram__ApiBaseUrl` soxta serverga yo'naltiriladi (production'da bo'sh qoldiriladi).
+
+### Ustoz vazifasi: AI dars (guruh uchun)
+
+O'qituvchi guruhga **"AI dars (mavzu)"** turidagi vazifa beradi ("Modal verbs"). O'quvchi uni veb (Vazifalarim → Boshlash) yoki Telegram (xabar tugmasi, "Bugun" ro'yxati) orqali bir bosishda boshlaydi.
+
+- **Baza sxemasi o'zgarmaydi, migratsiya kerak emas:** tur `Assignments.Kind` ustunida `lesson:<mavzu>` ko'rinishida (mavzu ko'pi bilan 33 belgi, ustun 40 belgi); bajarilish `Activities`dagi `Lesson` yozuvining mavzusidan aniqlanadi (vazifa berilgandan keyin SHU mavzu bo'yicha birinchi tugatilgan dars).
+- **Yangi:** `GET /api/teacher/assignments/{id}/insights` (faqat guruh egasi): bajarganlar, mini-test o'rtachasi, o'zlashtirish, sinfdagi eng ko'p xatolar. `POST /api/tutor/start` ixtiyoriy `assignmentId` maydonini qabul qiladi (mavzu vazifadan olinadi; faqat guruh a'zosi yoki egasi).
+- **Umumiy dars:** vazifa bo'yicha dars mavzu+daraja+til bo'yicha 12 soat xotirada saqlanadi — butun sinf uchun Gemini bitta marta chaqiriladi va hamma bir xil savollarni oladi (o'qituvchi umumiy xatolarni solishtira oladi). Server qayta ishga tushsa kesh bo'shaydi.
+- **Limit:** o'quvchi uchun oddiy kunlik mashq limiti sarflanadi (`Ai__ExercisesPerDay`); o'qituvchi uchun qo'shimcha limit yo'q.
+- **O'chirish:** `Features__AiTutor=false` — vazifa turi ham ishlamaydi (o'quvchida "o'chirilgan").
+

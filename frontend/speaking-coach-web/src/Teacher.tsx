@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiJson, postJson } from './api';
-import { ASSIGNMENT_KINDS, joinUrl, localInputToUtc, type AssignmentStatus, formatDue } from './groupLogic';
+import { ASSIGNMENT_KINDS, cleanLessonTopic, joinUrl, kindLabel, lessonKind, lessonTopic, localInputToUtc, MAX_LESSON_TOPIC, type AssignmentStatus, formatDue } from './groupLogic';
+import { LessonInsights } from './LessonInsights';
 import { localeOf, useLang, useT } from './i18n';
 import { teacherMsg } from './locales/teacher';
 import type { TelegramStatus } from './TelegramCard';
@@ -102,6 +103,7 @@ export function TeacherGroup({ id, go }: { id: string; go: (route: string) => vo
   const [tab, setTab] = useState<Tab>('assignments');
   const [copied, setCopied] = useState(false);
   const [kind, setKind] = useState<string>('practice:speaking');
+  const [topic, setTopic] = useState('');
   const [target, setTarget] = useState(20);
   const [due, setDue] = useState('');
   const [instructions, setInstructions] = useState('');
@@ -195,8 +197,16 @@ export function TeacherGroup({ id, go }: { id: string; go: (route: string) => vo
               {t.kind}
               <select className="input" value={kind} onChange={(e) => setKind(e.target.value)}>
                 {ASSIGNMENT_KINDS.map((k) => <option key={k} value={k}>{t.kinds[k]}</option>)}
+                <option value="lesson">{t.lessonKind}</option>
               </select>
             </label>
+            {kind === 'lesson' && (
+              <label className="small field">
+                {t.lessonTopic}
+                <input className="input" value={topic} maxLength={MAX_LESSON_TOPIC + 20} placeholder={t.lessonTopicPlaceholder} onChange={(e) => setTopic(e.target.value)} data-testid="lesson-topic" />
+                <span className="muted tiny">{t.lessonTopicHint}</span>
+              </label>
+            )}
             {kind === 'review' && (
               <label className="small field">
                 {t.target}
@@ -213,17 +223,18 @@ export function TeacherGroup({ id, go }: { id: string; go: (route: string) => vo
             </label>
             <button
               className="btn btn-primary"
-              disabled={busy}
+              disabled={busy || (kind === 'lesson' && cleanLessonTopic(topic) === null)}
               onClick={() =>
                 act(async () => {
                   await postJson(`/api/teacher/groups/${id}/assignments`, {
-                    kind,
+                    kind: kind === 'lesson' ? lessonKind(cleanLessonTopic(topic) ?? '') : kind,
                     target: kind === 'review' ? target : null,
                     instructions,
                     dueAtUtc: localInputToUtc(due),
                   });
                   setInstructions('');
                   setDue('');
+                  setTopic('');
                 })
               }
             >
@@ -236,13 +247,14 @@ export function TeacherGroup({ id, go }: { id: string; go: (route: string) => vo
           {data.assignments.map((a) => (
             <div className="card" key={a.id} data-testid="assignment">
               <div className="spread">
-                <strong>{t.kinds[a.kind] ?? a.kind}{a.kind === 'review' && a.target ? ` · ${t.reviewTarget(a.target)}` : ''}</strong>
+                <strong>{kindLabel(t, a.kind)}{a.kind === 'review' && a.target ? ` · ${t.reviewTarget(a.target)}` : ''}</strong>
                 <span className="small">{t.doneOf(a.done, n)}</span>
               </div>
               {a.instructions && <p className="small" style={{ margin: '6px 0' }}>{a.instructions}</p>}
               <div className="muted tiny">
                 {t.createdAt(fmt(a.createdAtUtc))} · {a.dueAtUtc ? t.dueAt(fmt(a.dueAtUtc)) : t.noDue}
               </div>
+              {lessonTopic(a.kind) && <LessonInsights assignmentId={a.id} />}
               <button className="btn-link small quiet" onClick={() => window.confirm(t.confirmDeleteAssignment) && act(() => apiJson(`/api/teacher/assignments/${a.id}`, { method: 'DELETE' }))}>
                 {t.deleteAssignment}
               </button>
@@ -262,7 +274,7 @@ export function TeacherGroup({ id, go }: { id: string; go: (route: string) => vo
                   <tr>
                     <th>{t.student}</th>
                     {data.assignments.map((a) => (
-                      <th key={a.id} title={a.instructions}>{(t.kinds[a.kind] ?? a.kind).split(' ')[0]}<div className="muted tiny">{a.dueAtUtc ? fmt(a.dueAtUtc) : ''}</div></th>
+                      <th key={a.id} title={a.instructions}>{lessonTopic(a.kind) ?? kindLabel(t, a.kind).split(' ')[0]}<div className="muted tiny">{a.dueAtUtc ? fmt(a.dueAtUtc) : ''}</div></th>
                     ))}
                   </tr>
                 </thead>
@@ -283,7 +295,7 @@ export function TeacherGroup({ id, go }: { id: string; go: (route: string) => vo
                                 className="btn-link small"
                                 onClick={async () => {
                                   const res = await apiJson(`/api/teacher/assignments/${a.id}/students/${m.userId}`);
-                                  setViewing({ title: `${m.name} — ${t.kinds[a.kind] ?? a.kind}`, data: res });
+                                  setViewing({ title: `${m.name} — ${kindLabel(t, a.kind)}`, data: res });
                                 }}
                               >
                                 {cell}
