@@ -3457,3 +3457,16 @@ main > * {
   margin: 24px 0 8px;
   text-align: center;
 }
+
+/* AI ustoz: variant tugmalari (label emas, button) */
+.tutor-opt {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+.tutor-opt:disabled {
+  cursor: default;
+  opacity: 1;
+}
