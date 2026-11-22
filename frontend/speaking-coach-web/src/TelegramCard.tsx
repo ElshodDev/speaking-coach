@@ -13,10 +13,10 @@ export interface TelegramStatus {
   reminderHour: number | null;
 }
 
-export const REMINDER_HOURS = [8, 13, 18, 20, 21];
-export const hourLabel = (h: number) => `${String(h).padStart(2, '0')}:00`;
+const REMINDER_HOURS = [8, 13, 18, 20, 21];
+const hourLabel = (h: number) => `${String(h).padStart(2, '0')}:00`;
 
-export function useTelegramStatus(loggedIn: boolean) {
+function useTelegramStatus(loggedIn: boolean) {
   const [status, setStatus] = useState<TelegramStatus | null>(null);
   const refresh = useCallback(() => {
     if (!loggedIn) {
@@ -43,7 +43,7 @@ export function useTelegramStatus(loggedIn: boolean) {
  * Telegram'ni ulash: sayt bir martalik havola oladi (t.me/Bot?start=TOKEN), Telegram'ni ochadi va
  * START bosilguncha holatni tekshirib turadi (2 daqiqa, har 3 soniyada). Profil kartasi ham, bosh sahifadagi taklif ham shuni ishlatadi.
  */
-export function useTelegramConnect(refresh: () => Promise<TelegramStatus | null>) {
+function useTelegramConnect(refresh: () => Promise<TelegramStatus | null>) {
   const cm = useT(common);
   const { lang } = useLang();
   const [waiting, setWaiting] = useState(false);
@@ -245,7 +245,7 @@ export function TelegramPromo({ go }: { go: (route: string) => void }) {
 }
 
 /** Bot nima qila olishi — qisqa ro'yxat (profil kartasi va bosh sahifadagi taklifda). */
-export function BotFeatures() {
+function BotFeatures() {
   const t = useT(telegramMsg);
   return (
     <ul className="bot-features" data-testid="bot-features">

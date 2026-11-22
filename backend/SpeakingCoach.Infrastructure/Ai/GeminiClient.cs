@@ -93,7 +93,6 @@ public class GeminiClient : IGeminiClient
 
     private async Task<HttpResponseMessage> SendCoreAsync(byte[] body, CancellationToken ct)
     {
-        string? lastErrorBody = null;
         System.Net.HttpStatusCode? lastStatus = null;
         GeminiErrorInfo? lastFailure = null;
         DateTime? earliestUnblock = null;
@@ -147,7 +146,7 @@ public class GeminiClient : IGeminiClient
                     lastStatus = response.StatusCode;
                     retryAfter = response.Headers.RetryAfter?.Delta;
                 }
-                lastErrorBody = GeminiJson.Truncate(errorBody, MaxLoggedChars);
+                var lastErrorBody = GeminiJson.Truncate(errorBody, MaxLoggedChars);
                 var failure = GeminiErrors.Classify(lastStatus.Value, errorBody, retryAfter);
                 lastFailure = failure;
 

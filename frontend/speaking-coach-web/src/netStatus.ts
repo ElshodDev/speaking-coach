@@ -11,7 +11,7 @@ export const SLOW_AFTER_MS = 4000;
  * hisoblaymiz (Render ~15 daqiqada uxlaydi). Uyg'oq serverda AI so'rovlari
  * (baholash 5–30 soniya) sekin bo'lishi tabiiy — ular uchun banner chiqmaydi.
  */
-export const AWAKE_FOR_MS = 14 * 60 * 1000;
+const AWAKE_FOR_MS = 14 * 60 * 1000;
 
 type Listener = () => void;
 
@@ -38,7 +38,7 @@ export function noteServerResponse(now = Date.now()) {
   lastResponseAt = now;
 }
 
-export function serverLikelyAwake(now = Date.now()): boolean {
+function serverLikelyAwake(now = Date.now()): boolean {
   return lastResponseAt > 0 && now - lastResponseAt < AWAKE_FOR_MS;
 }
 

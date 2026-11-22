@@ -32,7 +32,7 @@ interface Store {
   queue: QueuedGrade[];
 }
 
-export function offlineReviewEnabled(): boolean {
+function offlineReviewEnabled(): boolean {
   return (import.meta.env.VITE_OFFLINE_REVIEW as string | undefined)?.trim().toLowerCase() !== 'off';
 }
 

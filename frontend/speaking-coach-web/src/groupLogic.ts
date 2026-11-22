@@ -16,8 +16,6 @@ export const ASSIGNMENT_KINDS = [
   'mock:cefr:speaking',
 ] as const;
 
-export type AssignmentKind = (typeof ASSIGNMENT_KINDS)[number];
-
 export interface AssignmentStatus {
   done: boolean;
   late: boolean;
@@ -30,7 +28,7 @@ export interface AssignmentStatus {
 
 // ---- AI dars vazifasi: "lesson:<mavzu>" (backend GroupLogic bilan bir xil qoidalar) ----
 
-export const LESSON_PREFIX = 'lesson:';
+const LESSON_PREFIX = 'lesson:';
 export const MAX_LESSON_TOPIC = 33;
 
 /** Mavzu: bo'shliqlar bir xil, 2..33 belgi, boshqaruv belgisiz; yaroqsiz bo'lsa null. */

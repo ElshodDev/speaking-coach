@@ -279,7 +279,7 @@ public class ShadowingTests
         Assert.Equal("Aytishlaricha, bu odat.", l.Tr!["uz"]);
         Assert.False(l.Tr.ContainsKey("ru"));
         Assert.False(l.Tr.ContainsKey("de"));
-        Assert.Equal(["habit", "Apparently"], l.Keys);
+        Assert.Equal(["habit", "Apparently"], l.Keys!);
         Assert.Null(ShadowingRules.Extras(new ShadowLine("Hi.", Tr: new() { ["de"] = "x" }, Keys: ["bye"])).Tr);
         Assert.Null(ShadowingRules.Extras(new ShadowLine("Hi.", Keys: ["bye"])).Keys);
         Assert.Equal(300, ShadowingRules.Extras(new ShadowLine("Hi.", Tr: new() { ["uz"] = new string('a', 400) })).Tr!["uz"].Length);

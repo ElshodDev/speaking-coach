@@ -163,7 +163,7 @@ function send(name: EventName, path: string, props?: Record<string, string>) {
 let lastPath = '';
 
 /** Sahifa ko'rinishi (faqat bo'lim nomi bilan). Ketma-ket bir xil bo'limda takrorlanmaydi. */
-export function trackPageview(route: string) {
+function trackPageview(route: string) {
   if (!analyticsEnabled()) return;
   const path = routeToPath(route);
   if (path === lastPath) return;

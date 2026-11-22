@@ -125,9 +125,8 @@ public class MockExamTests
     [Fact]
     public void Speaking_prompt_uses_feedback_language()
     {
-        var set = IeltsBank.FindSpeaking("s1")!;
-        Assert.Contains("Uzbek", GeminiIeltsEvaluator.BuildSpeakingPrompt(set, [], "uz"));
-        Assert.Contains("simple English", GeminiIeltsEvaluator.BuildSpeakingPrompt(set, [], "en"));
+        Assert.Contains("Uzbek", GeminiIeltsEvaluator.BuildSpeakingPrompt("uz"));
+        Assert.Contains("simple English", GeminiIeltsEvaluator.BuildSpeakingPrompt("en"));
     }
 
     private static BandWithReasoning B(int band) => new(band, "because");
@@ -180,8 +179,6 @@ public class MockExamTests
         Assert.Equal("writing", p.Module);
         Assert.Equal("a2", p.SetId);
         Assert.Equal("", MockQueries.ParsePrompt("not json").Module);
-        Assert.Equal(6.5m, MockQueries.ReadOverall("""{"overall":6.5}"""));
-        Assert.Null(MockQueries.ReadOverall("{}"));
     }
 
     [Fact]

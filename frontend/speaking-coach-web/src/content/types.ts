@@ -11,7 +11,7 @@ export interface L3 {
   en: string;
 }
 
-export interface GrammarQuestion {
+interface GrammarQuestion {
   /** Inglizcha gap yoki savol; bo'sh joy — "___". */
   prompt: string;
   /** 3–4 variant (inglizcha). */
@@ -56,8 +56,8 @@ export interface VocabTopic {
   words: TopicWord[];
 }
 
-export type SpeakingCategory = 'everyday' | 'ielts-part1' | 'ielts-part2' | 'ielts-part3' | 'cefr';
-export type WritingCategory = 'paragraph' | 'essay-opinion' | 'essay-discussion' | 'letter-informal' | 'letter-formal';
+type SpeakingCategory = 'everyday' | 'ielts-part1' | 'ielts-part2' | 'ielts-part3' | 'cefr';
+type WritingCategory = 'paragraph' | 'essay-opinion' | 'essay-discussion' | 'letter-informal' | 'letter-formal';
 
 export interface SpeakingTopic {
   id: string;

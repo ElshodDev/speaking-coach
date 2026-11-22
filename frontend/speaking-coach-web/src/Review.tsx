@@ -12,7 +12,7 @@ import { statsPath, type ReviewStats } from './reviewStats';
 import { Icon } from './Icon';
 import { FeedbackLink } from './RatingWidgets';
 
-export { statsPath, type ReviewStats };
+export type { ReviewStats };
 
 export interface ReviewCard {
   id: string;

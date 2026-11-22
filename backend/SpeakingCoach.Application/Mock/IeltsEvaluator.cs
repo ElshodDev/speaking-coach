@@ -84,7 +84,7 @@ public class GeminiIeltsEvaluator(IGeminiClient gemini) : IIeltsEvaluator
         an accurate estimate is what helps the learner.
         """;
 
-    public static string BuildSpeakingPrompt(SpeakingSet set, IReadOnlyList<SpokenAnswer> answers, string lang)
+    public static string BuildSpeakingPrompt(string lang)
     {
         var sb = new StringBuilder();
         sb.AppendLine(Honesty);
@@ -172,7 +172,7 @@ public class GeminiIeltsEvaluator(IGeminiClient gemini) : IIeltsEvaluator
     public async Task<SpeakingMockResult> EvaluateSpeakingAsync(SpeakingSet set, IReadOnlyList<SpokenAnswer> answers, string lang, CancellationToken ct = default)
     {
         var questions = set.Questions();
-        var parts = new List<object> { new { text = BuildSpeakingPrompt(set, answers, lang) } };
+        var parts = new List<object> { new { text = BuildSpeakingPrompt(lang) } };
         for (var i = 0; i < questions.Count; i++)
         {
             var a = answers.FirstOrDefault(x => x.Index == i);

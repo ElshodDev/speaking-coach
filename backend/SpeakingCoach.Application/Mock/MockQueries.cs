@@ -40,19 +40,6 @@ public static class MockQueries
             return new("ielts", "", "", null);
         }
     }
-
-    public static decimal? ReadOverall(string json)
-    {
-        try
-        {
-            using var doc = JsonDocument.Parse(json);
-            return doc.RootElement.TryGetProperty("overall", out var o) && o.TryGetDecimal(out var d) ? d : null;
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
-    }
 }
 
 /// <summary>

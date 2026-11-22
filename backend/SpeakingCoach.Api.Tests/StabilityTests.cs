@@ -191,14 +191,14 @@ public class AiGuardTests
     }
 
     [Fact]
-    public void Acquire_throws_busy_when_the_wait_is_long()
+    public async Task Acquire_throws_busy_when_the_wait_is_long()
     {
         var (guard, _) = Make(perMinute: 100, perDay: 1);
-        guard.AcquireAsync(CancellationToken.None).GetAwaiter().GetResult();
+        await guard.AcquireAsync(CancellationToken.None);
         AiBusyException? busy = null;
         try
         {
-            guard.AcquireAsync(CancellationToken.None).GetAwaiter().GetResult();
+            await guard.AcquireAsync(CancellationToken.None);
         }
         catch (AiBusyException ex)
         {

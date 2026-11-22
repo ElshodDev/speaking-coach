@@ -11,7 +11,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
  */
 export type Lang = 'uz' | 'ru' | 'en';
 
-export const LANGS: { id: Lang; label: string; short: string }[] = [
+const LANGS: { id: Lang; label: string; short: string }[] = [
   { id: 'uz', label: 'Oʻzbekcha', short: 'UZ' },
   { id: 'ru', label: 'Русский', short: 'RU' },
   { id: 'en', label: 'English', short: 'EN' },
@@ -20,7 +20,7 @@ export const LANGS: { id: Lang; label: string; short: string }[] = [
 const LANG_KEY = 'speakingCoach.lang';
 
 /** Brauzer tilidan taxmin: rus → ru, ingliz → en, qolgani (o'zbek va boshqalar) → uz. */
-export function detectLang(languages: readonly string[]): Lang {
+function detectLang(languages: readonly string[]): Lang {
   for (const l of languages) {
     const base = l.toLowerCase().split('-')[0];
     if (base === 'uz' || base === 'ru' || base === 'en') return base;

@@ -17,7 +17,7 @@ const SCRIPT_SRC = 'https://accounts.google.com/gsi/client';
 let scriptPromise: Promise<void> | null = null;
 
 /** Google skripti faqat kerak bo'lganda (Profil sahifasida) va bir marta yuklanadi. */
-export function loadGoogleScript(): Promise<void> {
+function loadGoogleScript(): Promise<void> {
   if (window.google?.accounts?.id) return Promise.resolve();
   scriptPromise ??= new Promise<void>((resolve, reject) => {
     const s = document.createElement('script');

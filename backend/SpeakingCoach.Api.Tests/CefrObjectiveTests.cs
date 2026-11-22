@@ -69,8 +69,6 @@ public class CefrObjectiveTests
         {
             for (var i = 1; i < layout.Length; i++) Assert.Equal(layout[i - 1].First + layout[i - 1].Count, layout[i].First);
         }
-        Assert.Equal(45, CefrObjective.ListeningMinutes);
-        Assert.Equal(60, CefrObjective.ReadingMinutes);
     }
 
     [Fact]

@@ -12,10 +12,16 @@ on:
 permissions:
   contents: read
 
+# Bir shoxga ketma-ket push qilinsa, eskisi to'xtatiladi (vaqt va daqiqalar tejaladi); main'da — hammasi tugaydi.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   backend:
     name: Backend (build + unit tests)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
@@ -32,6 +38,7 @@ jobs:
   frontend:
     name: Frontend (type check + build + tests)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: frontend/speaking-coach-web

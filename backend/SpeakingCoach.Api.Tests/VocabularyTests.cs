@@ -21,16 +21,6 @@ public class VocabularyTests
     }
 
     [Fact]
-    public void Only_words_and_own_phrases_belong_to_the_vocabulary()
-    {
-        Assert.True(Vocabulary.IsVocab(ReviewCardKind.Word));
-        Assert.True(Vocabulary.IsVocab(ReviewCardKind.Manual));
-        Assert.False(Vocabulary.IsVocab(ReviewCardKind.Correction));
-        Assert.False(Vocabulary.IsVocab(ReviewCardKind.Question));
-        Assert.All(Vocabulary.Kinds, k => Assert.True(Vocabulary.IsVocab(k)));
-    }
-
-    [Fact]
     public void Note_combines_part_of_speech_definition_and_example()
     {
         var note = Vocabulary.ComposeNote("noun", "a substance used to treat illness", "Take this medicine twice a day.");

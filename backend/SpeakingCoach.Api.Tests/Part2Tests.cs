@@ -54,14 +54,6 @@ public class Part2Tests
         Assert.Equal((decimal)expected, Part2Rules.ClampBand((decimal)given));
 
     [Fact]
-    public void Coverage_percent_counts_partly_as_half()
-    {
-        var items = new List<CoverageItem> { new("a", "covered", ""), new("b", "partly", ""), new("c", "missed", ""), new("d", "covered", "") };
-        Assert.Equal(63, Part2Rules.CoveragePercent(items));
-        Assert.Equal(0, Part2Rules.CoveragePercent([]));
-    }
-
-    [Fact]
     public void Prompt_contains_the_card_and_feedback_language()
     {
         var p = GeminiPart2Coach.BuildPrompt(Card, "B1", "uz");

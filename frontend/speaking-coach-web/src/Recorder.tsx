@@ -30,7 +30,7 @@ type Status = 'idle' | 'recording' | 'uploading' | 'done' | 'error';
  * (3 daqiqa webm/opus ≈ 1 MB), lekin uzun nutqni AI sifatsiz baholaydi va
  * so'rov sekinlashadi — 3 daqiqada avtomatik to'xtaymiz.
  */
-export const DEFAULT_MAX_SECONDS = 180;
+const DEFAULT_MAX_SECONDS = 180;
 /** Oxirgi shuncha soniyada "qolgan vaqt" ko'rsatiladi. */
 const WARN_SECONDS = 30;
 

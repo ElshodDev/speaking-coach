@@ -23,10 +23,6 @@ public static class Vocabulary
     /// <summary>Shu oraliqdan (kun) oshgan so'z "yodlangan" hisoblanadi.</summary>
     public const double KnownAfterDays = 21;
 
-    public static readonly ReviewCardKind[] Kinds = { ReviewCardKind.Word, ReviewCardKind.Manual };
-
-    public static bool IsVocab(ReviewCardKind kind) => kind is ReviewCardKind.Word or ReviewCardKind.Manual;
-
     public static VocabStatus StatusOf(DateTime? lastReviewedAtUtc, double intervalDays) =>
         lastReviewedAtUtc is null ? VocabStatus.New
         : intervalDays >= KnownAfterDays ? VocabStatus.Known

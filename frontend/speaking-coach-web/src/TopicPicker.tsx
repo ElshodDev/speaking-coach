@@ -18,7 +18,7 @@ export interface PickedTopic {
   ai?: boolean;
 }
 
-export const CATEGORIES: Record<TopicKind, string[]> = {
+const CATEGORIES: Record<TopicKind, string[]> = {
   speaking: ['everyday', 'ielts-part1', 'ielts-part2', 'ielts-part3', 'cefr'],
   writing: ['paragraph', 'essay-opinion', 'essay-discussion', 'letter-informal', 'letter-formal'],
 };
@@ -26,7 +26,7 @@ export const CATEGORIES: Record<TopicKind, string[]> = {
 const bankOf = (kind: TopicKind) => (kind === 'speaking' ? SPEAKING_TOPICS_BANK : WRITING_TOPICS_BANK);
 
 /** Tanlangan tur va daraja bo'yicha mavzular (darajada bo'lmasa — shu turdagi hammasi). */
-export function topicsFor(kind: TopicKind, category: string, level: string): PickedTopic[] {
+function topicsFor(kind: TopicKind, category: string, level: string): PickedTopic[] {
   const all = bankOf(kind).filter((t) => t.category === category);
   const atLevel = all.filter((t) => t.level === level);
   return (atLevel.length > 0 ? atLevel : all).map((t) => ({
@@ -39,7 +39,7 @@ export function topicsFor(kind: TopicKind, category: string, level: string): Pic
 }
 
 /** Darajaga mos boshlang'ich tur: boshlovchiga kundalik, yuqorida — imtihon uslubi. */
-export function defaultCategory(kind: TopicKind, level: string): string {
+function defaultCategory(kind: TopicKind, level: string): string {
   const basic = level === 'A2' || level === 'B1';
   if (kind === 'speaking') return basic ? 'everyday' : 'ielts-part2';
   return basic ? 'paragraph' : 'essay-opinion';

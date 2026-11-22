@@ -36,7 +36,7 @@ type StepState = 'asking' | 'recording' | 'prep';
  * haqiqiy imtihondagidek. Oxirida barcha javoblar bitta so'rovda baholanadi.
  */
 /** Kartochka: IELTS 2-qism mavzusi, CEFR rasmlari va bahs jadvali — bitta ko'rinishda. */
-export function SpeakingCard({ card }: { card: StepCard }) {
+function SpeakingCard({ card }: { card: StepCard }) {
   const t = useT(mockMsg);
   const c = useT(cefrMsg);
   return (

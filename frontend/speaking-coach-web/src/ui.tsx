@@ -17,13 +17,13 @@ export interface CorrectionItem {
 }
 
 /** Ballni darajaga aylantiradi: rang va qisqa so'z shunga qarab tanlanadi. */
-export function levelOf(score: number): { key: 'great' | 'good' | 'mid' | 'low'; label: string } {
+function levelOf(score: number): { key: 'great' | 'good' | 'mid' | 'low'; label: string } {
   const key = score >= 85 ? 'great' : score >= 70 ? 'good' : score >= 50 ? 'mid' : 'low';
   return { key, label: msg(uiMsg).level[key] };
 }
 
 /** Sana va vaqt joriy til formatida. */
-export const formatDateTime = (iso: string) => new Date(iso).toLocaleString(localeOf(getLang()));
+const formatDateTime = (iso: string) => new Date(iso).toLocaleString(localeOf(getLang()));
 
 export function PageHeader({
   title,

@@ -4,7 +4,7 @@ import { useT } from './i18n';
 import { planMsg } from './locales/plan';
 import { doneCount, mockParts, orderItems, type PlanItem, type TodayPlan as Plan } from './planLogic';
 
-export const planPath = () => `/api/plan/today?tzOffsetMinutes=${new Date().getTimezoneOffset()}`;
+const planPath = () => `/api/plan/today?tzOffsetMinutes=${new Date().getTimezoneOffset()}`;
 
 function useItemLabel() {
   const t = useT(planMsg);

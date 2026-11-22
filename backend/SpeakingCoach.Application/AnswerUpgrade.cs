@@ -87,7 +87,7 @@ public static partial class AnswerUpgradeRules
             {
                 Original = Cut(i.Original.Trim(), 200),
                 Upgraded = Cut(i.Upgraded.Trim(), 240),
-                Kind = Kinds.Contains(i.Kind?.Trim().ToLowerInvariant()) ? i.Kind.Trim().ToLowerInvariant() : "vocabulary",
+                Kind = i.Kind?.Trim().ToLowerInvariant() is { } kind && Kinds.Contains(kind) ? kind : "vocabulary",
                 Why = Cut((i.Why ?? "").Trim(), 300),
             })
             .Where(i => haystack.Contains(Norm(i.Original), StringComparison.Ordinal))

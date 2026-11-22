@@ -16,7 +16,7 @@ export interface CoverageItem {
   evidence: string;
 }
 
-export interface Part2Evaluation {
+interface Part2Evaluation {
   transcript: string;
   fluency: ScoreWithReasoning;
   grammar: ScoreWithReasoning;
@@ -40,8 +40,8 @@ export interface Part2Result {
 export type Phase = 'pick' | 'prep' | 'speak' | 'uploading' | 'result' | 'error';
 
 /** Imtihonchi kamida shuncha gapirishni kutadi; 1 daqiqadan kam — sezilarli kamchilik. */
-export const MIN_GOOD_SECONDS = 100;
-export const MIN_OK_SECONDS = 60;
+const MIN_GOOD_SECONDS = 100;
+const MIN_OK_SECONDS = 60;
 
 /** Gapirish vaqti bo'yicha xulosa: qisqa / o'rtacha / yaxshi. */
 export function timeVerdict(seconds: number): 'short' | 'fair' | 'good' {

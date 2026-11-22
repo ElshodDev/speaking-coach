@@ -7,13 +7,13 @@ export interface ClientQuestion {
   options: string[] | null;
 }
 
-export interface MapSpot {
+interface MapSpot {
   label: string;
   x: number;
   y: number;
 }
 
-export interface MapPlan {
+interface MapPlan {
   title: string;
   landmarks: MapSpot[];
   spots: MapSpot[];
@@ -32,7 +32,7 @@ export interface ClientGroup {
 
 export type Answers = Record<string, string>;
 
-export const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
 const FIXED: Record<string, string[]> = { tfng: ['TRUE', 'FALSE', 'NOT GIVEN'], ynng: ['YES', 'NO', 'NOT GIVEN'] };
 
 /** Javob harfi uchun matn: "B — Hotel" (natija sahifasida harfning o'zi yetarli emas). */
@@ -47,7 +47,7 @@ export function choiceLabel(group: ClientGroup | undefined, q: ClientQuestion | 
  * Xarita: 5×5 katak. Nomli mo'ljallar (kulrang) va harfli joylar (A–H,
  * ko'k doira). Tinglovchi yo'nalishlarga qarab harfni tanlaydi.
  */
-export function MapView({ map }: { map: MapPlan }) {
+function MapView({ map }: { map: MapPlan }) {
   const cell = 64;
   const size = cell * 5;
   const center = (v: number) => v * cell + cell / 2;

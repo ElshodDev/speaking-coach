@@ -108,7 +108,7 @@ public class TopicAdvisorTests
             .Concat(Many(2, "more better", "better", "comparative"))
             .ToArray();
         Assert.Equal(3, TopicAdvisor.Recommend(Report(facts)).Count);
-        Assert.Equal(1, TopicAdvisor.Recommend(Report(facts), null, 1).Count);
+        Assert.Single(TopicAdvisor.Recommend(Report(facts), null, 1));
         Assert.Equal(4, TopicAdvisor.Recommend(Report(facts), null, 10).Count);
         Assert.Empty(TopicAdvisor.Recommend(Report(facts), null, 0));
         Assert.Empty(TopicAdvisor.Recommend(Report()));

@@ -6,14 +6,14 @@ import { apiJson, getToken, postJson, setToken } from './api';
 import { useT } from './i18n';
 import { demoMsg } from './locales/demo';
 
-export const DEMO_DOMAIN = 'demo.speakingcoach.invalid';
+const DEMO_DOMAIN = 'demo.speakingcoach.invalid';
 
 export const isDemoEmail = (email: string | null | undefined) => !!email && email.endsWith('@' + DEMO_DOMAIN);
 
 let enabledPromise: Promise<boolean> | null = null;
 
 /** Serverda demo yoqilganmi (/api/auth/config, bir marta so'raladi). */
-export function useDemoEnabled(): boolean {
+function useDemoEnabled(): boolean {
   const [enabled, setEnabled] = useState(false);
   useEffect(() => {
     enabledPromise ??= apiJson<{ demo?: boolean }>('/api/auth/config')
@@ -31,7 +31,7 @@ export function useDemoEnabled(): boolean {
   return enabled;
 }
 
-export async function startDemo(): Promise<string> {
+async function startDemo(): Promise<string> {
   const r = await postJson<{ token: string; email: string }>('/api/auth/demo', { tzOffsetMinutes: new Date().getTimezoneOffset() });
   setToken(r.token);
   return r.email;

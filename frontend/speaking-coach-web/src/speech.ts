@@ -15,7 +15,7 @@ export function splitSentences(text: string): string[] {
   return (text.match(/[^.!?]+[.!?]+["')\]]*|[^.!?]+$/g) ?? [text]).map((s) => s.trim()).filter(Boolean);
 }
 
-export function pickEnglishVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | undefined {
+function pickEnglishVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | undefined {
   const english = voices.filter((v) => v.lang.toLowerCase().startsWith('en'));
   return (
     english.find((v) => /google|natural|neural/i.test(v.name) && /en[-_](us|gb)/i.test(v.lang)) ??

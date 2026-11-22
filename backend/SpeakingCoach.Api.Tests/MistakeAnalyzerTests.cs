@@ -51,7 +51,7 @@ public class MistakeAnalyzerTests
         var at = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc);
         var json = """{"overall":6.5,"topCorrections":[{"original":"I have car","corrected":"I have a car","explanation":"x"},{"original":"same","corrected":"Same","explanation":""},{"original":"","corrected":"a"}]}""";
         var facts = MistakeAnalyzer.FromResponse(json, at).ToList();
-        Assert.Equal(1, facts.Count);
+        Assert.Single(facts);
         Assert.Equal("I have car", facts[0].Original);
         Assert.Empty(MistakeAnalyzer.FromResponse("{broken", at));
         Assert.Empty(MistakeAnalyzer.FromResponse("""{"score":3}""", at));

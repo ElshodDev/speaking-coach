@@ -34,9 +34,9 @@ export interface PauseStats {
   speechSeconds: number;
 }
 
-export const FRAME_MS = 30;
+const FRAME_MS = 30;
 /** Shundan uzun jimlik — "uzun pauza" (IELTS'da sezilarli to'xtalish). */
-export const LONG_PAUSE_SECONDS = 1;
+const LONG_PAUSE_SECONDS = 1;
 
 /** Audio namunalaridan har FRAME_MS uchun o'rtacha kvadratik balandlik (RMS). */
 export function frameRms(samples: Float32Array, sampleRate: number, frameMs = FRAME_MS): number[] {
@@ -107,9 +107,9 @@ export function mixToMono(channels: Float32Array[]): Float32Array {
 export type FluencyTip = 'slow' | 'fast' | 'fillers' | 'pauses' | 'repeats' | 'great';
 
 /** Daqiqasiga shuncha to'ldiruvchi so'zdan ko'pi — sezilarli. */
-export const FILLERS_PER_MINUTE_HIGH = 4;
+const FILLERS_PER_MINUTE_HIGH = 4;
 /** Daqiqasiga shuncha uzun pauzadan ko'pi — sezilarli. */
-export const PAUSES_PER_MINUTE_HIGH = 3;
+const PAUSES_PER_MINUTE_HIGH = 3;
 
 /** Eng muhim 1–3 maslahat (tartib — ta'sir bo'yicha). Hammasi yaxshi bo'lsa — "great". */
 export function fluencyTips(m: FluencyStats): FluencyTip[] {

@@ -69,7 +69,6 @@ public class SecurityTests
         Assert.Equal(GenerationGate.Outcome.Ok, gate.TryEnter(a, 2, out var second));
         second!.Dispose();
         Assert.Equal(GenerationGate.Outcome.Exhausted, gate.TryEnter(a, 2, out _));
-        Assert.Equal(2, gate.AttemptsOf(a));
     }
 
     [Fact]

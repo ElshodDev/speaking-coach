@@ -1,0 +1,30 @@
+name: Bug report
+description: Something in the app does not work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not include passwords, tokens or other people's personal data. For security problems use the private report link on the "New issue" page.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect and what did you see instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Open ...\n2. Tap ...\n3. ..."
+  - type: input
+    id: where
+    attributes:
+      label: Where
+      description: Page or screen, and whether it was the website, the installed app or Telegram.
+  - type: input
+    id: env
+    attributes:
+      label: Device and browser
+      placeholder: "iPhone 14, Safari 18 / Windows, Chrome 131"

@@ -9,7 +9,7 @@ public class MockCatalogTests
         Assert.Equal("A short title", MockCatalog.Short("  A short   title \n"));
         var cut = MockCatalog.Short(new string('a', 30) + " " + new string('b', 30), 20);
         Assert.True(cut.Length <= 20);
-        Assert.True(cut.EndsWith("…"));
+        Assert.EndsWith("…", cut);
     }
 
     [Fact]

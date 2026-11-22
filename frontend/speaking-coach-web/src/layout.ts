@@ -4,7 +4,7 @@
 // (masalan tablar o'rniga ikki panel) komponent shu hook bilan tanlaydi.
 import { useSyncExternalStore } from 'react';
 
-export const WIDE_QUERY = '(min-width: 1024px)';
+const WIDE_QUERY = '(min-width: 1024px)';
 
 function subscribe(onChange: () => void) {
   if (typeof window === 'undefined' || !window.matchMedia) return () => undefined;

@@ -11,7 +11,7 @@ import { PageHeader } from './ui';
 import { TutorSuggest } from './TutorSuggest';
 import { Icon } from './Icon';
 
-export interface MistakeExample {
+interface MistakeExample {
   original: string;
   corrected: string;
   explanation: string;
@@ -33,7 +33,7 @@ export interface MistakeReport {
 }
 
 /** Xato turi → ilovadagi grammatika darsi (yo'q bo'lsa — mavzuli lug'at yoki hech narsa). */
-export const LESSON_FOR: Record<string, string | undefined> = {
+const LESSON_FOR: Record<string, string | undefined> = {
   articles: 'learn/grammar/a2-articles',
   prepositions: 'learn/grammar/a2-prepositions-time-place',
   agreement: 'learn/grammar/a2-present-simple-continuous',
