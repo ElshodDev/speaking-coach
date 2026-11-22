@@ -34,7 +34,12 @@
   }
 }
 body:has(.app.nn) {
-  background: var(--bg, #fbf8f1);
+  background: #fbf8f1;
+}
+@media (prefers-color-scheme: dark) {
+  body:has(.app.nn) {
+    background: #16120c;
+  }
 }
 
 /* Tepa panel: sarlavha + seriya, Fikr, Hammasi, avatar */
@@ -270,4 +275,138 @@ body:has(.app.nn) {
 .hub-empty {
   text-align: center;
   padding: 24px 0;
+}
+
+/* Bosh sahifa: sariq eslatma (maqsad) va kun chizig'i */
+.nn-note {
+  background: var(--nn-note);
+  color: #2a2218;
+  border-radius: 6px 6px 16px 6px;
+  padding: 12px 14px;
+  margin: 2px 0 16px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  transform: rotate(-0.8deg);
+  box-shadow: 3px 5px 0 rgba(42, 34, 24, 0.08);
+}
+.nn-note b {
+  font-family: Georgia, serif;
+  font-size: 1.05rem;
+}
+.nn-mark {
+  background: var(--nn-gold);
+  padding: 0 5px;
+  font-weight: 700;
+}
+.nn-note-sub {
+  margin-top: 4px;
+  font-size: 0.78rem;
+  opacity: 0.75;
+}
+.nn-note .btn-link {
+  color: #2a2218;
+  font-weight: 700;
+}
+.nn-dayhead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 4px 2px 10px;
+}
+.nn-dayhead span {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.nn-tl {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0 0 0 4px;
+  position: relative;
+}
+.nn-tl::before {
+  content: '';
+  position: absolute;
+  left: 13px;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  background: var(--border);
+}
+.nn-ev {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  position: relative;
+}
+.nn-dot {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 12px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  display: grid;
+  place-items: center;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #fff;
+  z-index: 1;
+}
+.nn-ev.done .nn-dot {
+  background: #16a34a;
+  border-color: #16a34a;
+}
+.nn-ev.now .nn-dot {
+  background: var(--nn-gold);
+  border-color: var(--text);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--nn-gold) 40%, transparent);
+}
+.nn-eb {
+  flex: 1;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+}
+.nn-ev.now .nn-eb {
+  border-color: var(--text);
+}
+.nn-ev.done .nn-eb {
+  opacity: 0.6;
+}
+.nn-eb small {
+  color: var(--muted);
+}
+.nn-eb .nn-nowtag {
+  color: var(--nn-accent);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.66rem;
+}
+.nn-eb .btn {
+  margin-top: 8px;
+}
+
+@media (prefers-color-scheme: dark) and (max-width: 1023px) {
+  .app.nn .nav button.nn-ai .icon {
+    color: #3b2a00;
+    background: var(--nn-gold);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .nn .nn-note,
+  .nn .nn-note .btn-link {
+    color: #fdf3c4;
+  }
+  .nn .nn-note .nn-mark {
+    color: #3b2a00;
+  }
 }

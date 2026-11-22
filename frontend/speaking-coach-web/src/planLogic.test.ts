@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { doneCount, examDateRange, localIso, mockParts, orderItems, shouldOnboard, stepsFor, targetsFor, type PlanItem } from './planLogic';
+import { doneCount, examDateRange, localIso, mockParts, nowKey, orderItems, shouldOnboard, stepsFor, targetsFor, type PlanItem } from './planLogic';
 import { planMsg } from './locales/plan';
 
 const item = (key: string, done: boolean): PlanItem => ({ key, kind: key.startsWith('mock') ? 'mock' : key === 'review' ? 'review' : 'practice', route: '', done, minutes: 10, progress: null, target: null });
@@ -34,6 +34,12 @@ describe('bugungi reja', () => {
     const items = [item('review', true), item('practice:writing', false), item('mock:cefr:reading', false)];
     expect(orderItems(items).map((i) => i.key)).toEqual(['practice:writing', 'mock:cefr:reading', 'review']);
     expect(doneCount(items)).toBe(1);
+  });
+  it('"Hozir" qadami: birinchi bajarilmagani; hammasi bajarilgan bo\'lsa — yo\'q', () => {
+    const items = [item('review', true), item('practice:writing', false), item('mock:cefr:reading', false)];
+    expect(nowKey(items)).toBe('practice:writing');
+    expect(nowKey([item('review', true)])).toBeNull();
+    expect(nowKey([])).toBeNull();
   });
   it('mock kaliti', () => {
     expect(mockParts('mock:cefr:reading')).toEqual(['cefr', 'reading']);
