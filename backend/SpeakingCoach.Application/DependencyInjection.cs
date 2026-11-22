@@ -21,6 +21,7 @@ public static class DependencyInjection
         services.AddSingleton<IAnswerUpgrader, GeminiAnswerUpgrader>();
         services.AddSingleton<ITalkAi, GeminiTalkAi>();
         services.AddSingleton<ITutorAi, GeminiTutorAi>();
+        services.AddSingleton<TutorLessonCache>();
         services.AddSingleton<IWritingEvaluationService, GeminiWritingService>();
         services.AddSingleton<IComprehensionService, GeminiComprehensionService>();
         services.AddSingleton<IWordService, GeminiWordService>();

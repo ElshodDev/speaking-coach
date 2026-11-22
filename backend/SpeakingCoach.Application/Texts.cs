@@ -582,6 +582,14 @@ public static class Texts
             "AI ustoz bilan oʻrganish uchun tizimga kiring — darslar va xatolaringiz hisobingizda saqlanadi.",
             "Чтобы учиться с ИИ-учителем, войдите — уроки и ошибки сохранятся в аккаунте.",
             "Log in to learn with the AI tutor — lessons and mistakes are saved to your account."),
+        ["tutor.bad_assignment"] = new(
+            "Vazifa topilmadi yoki u AI dars turida emas.",
+            "Задание не найдено или это не ИИ-урок.",
+            "Assignment not found or it is not an AI lesson."),
+        ["assignment.not_lesson"] = new(
+            "Bu vazifa AI dars turida emas.",
+            "Это задание не типа ИИ-урок.",
+            "This assignment is not an AI lesson."),
         ["tutor.disabled"] = new(
             "AI ustoz hozircha oʻchirilgan.",
             "ИИ-учитель сейчас отключён.",

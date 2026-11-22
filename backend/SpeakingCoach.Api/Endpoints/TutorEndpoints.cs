@@ -1,6 +1,6 @@
 namespace SpeakingCoach.Api.Endpoints;
 
-public record TutorStartRequest(string? Topic, string? Level);
+public record TutorStartRequest(string? Topic, string? Level, Guid? AssignmentId = null);
 public record TutorAnswerRequest(string? Section, int Index, int Option);
 public record TutorWriteRequest(string? Text);
 public record TutorAskRequest(string? Question);
@@ -46,7 +46,15 @@ public static class TutorEndpoints
             if (!flags.AiTutor) return Disabled(request);
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return LoginFirst(request);
-            if (Tutor.NormalizeTopic(body.Topic) is null) return Results.BadRequest(request.Error("tutor.bad_topic"));
+            // Ustoz vazifasi: mavzu vazifadan olinadi (o'quvchi o'zgartira olmaydi), dars sinf bo'yicha umumiy.
+            var topic = body.Topic;
+            if (body.AssignmentId is { } assignmentId)
+            {
+                var resolved = await tutor.ResolveAssignmentTopicAsync(assignmentId, user);
+                if (!resolved.Ok) return Failed(request, resolved.Fail!);
+                topic = resolved.Value;
+            }
+            if (Tutor.NormalizeTopic(topic) is null) return Results.BadRequest(request.Error("tutor.bad_topic"));
 
             // Bitta dars = bitta mashq (kunlik AI limiti).
             var limited = await quotas.CheckAsync(request, AiKind.Exercise);
@@ -54,7 +62,7 @@ public static class TutorEndpoints
 
             return await Guarded(request, logger, "dars yaratish", async () =>
             {
-                var r = await tutor.StartAsync(user, body.Topic, body.Level, RequestTexts.LangOf(request), request.HttpContext.RequestAborted);
+                var r = await tutor.StartAsync(user, topic, body.Level, RequestTexts.LangOf(request), request.HttpContext.RequestAborted, body.AssignmentId is not null);
                 if (!r.Ok) return Failed(request, r.Fail!);
                 await quotas.RecordAsync(request, AiKind.Exercise);
                 return Results.Ok(new { lessonId = r.Value!.LessonId, lesson = Tutor.View(r.Value.State) });

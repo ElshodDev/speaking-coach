@@ -22,7 +22,7 @@ public static class GroupQueries
         var types = GroupLogic.NeededTypes(assignments).ToList();
         var rows = types.Count == 0 ? [] : await db.Activities
             .Where(x => x.UserId != null && userIds.Contains(x.UserId.Value) && x.CreatedAtUtc >= since && types.Contains(x.Type))
-            .Select(x => new { x.Id, UserId = x.UserId!.Value, x.Type, x.CreatedAtUtc, PromptData = x.Type == ActivityType.MockExam ? x.PromptData : null })
+            .Select(x => new { x.Id, UserId = x.UserId!.Value, x.Type, x.CreatedAtUtc, PromptData = x.Type == ActivityType.MockExam || x.Type == ActivityType.Lesson ? x.PromptData : null })
             .ToListAsync();
         var byUser = rows.Select(x =>
         {
@@ -32,7 +32,8 @@ public static class GroupQueries
                 var p = MockQueries.ParsePrompt(x.PromptData ?? "");
                 (exam, module) = (p.Exam, p.Module);
             }
-            return (x.UserId, Ref: new ActivityRef(x.Id, x.Type, x.CreatedAtUtc, exam, module, null));
+            var topic = x.Type == ActivityType.Lesson ? LessonInsights.TopicOf(x.PromptData) : null;
+            return (x.UserId, Ref: new ActivityRef(x.Id, x.Type, x.CreatedAtUtc, exam, module, null, topic));
         }).ToLookup(x => x.UserId, x => x.Ref);
 
         var reviewsByUser = Enumerable.Empty<(Guid UserId, DateTime At)>().ToLookup(r => r.UserId, r => r.At);
