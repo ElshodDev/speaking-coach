@@ -207,3 +207,12 @@ O'qituvchi guruhga **"AI dars (mavzu)"** turidagi vazifa beradi ("Modal verbs").
 - **Limit:** o'quvchi uchun oddiy kunlik mashq limiti sarflanadi (`Ai__ExercisesPerDay`); o'qituvchi uchun qo'shimcha limit yo'q.
 - **O'chirish:** `Features__AiTutor=false` — vazifa turi ham ishlamaydi (o'quvchida "o'chirilgan").
 
+### AI ustoz tavsiyasi ("Xatolaringiz asosida sizga shu mavzu kerak")
+
+"Mening xatolarim" tahlili (AI'siz) xato turlarini AI ustoz mavzulariga bog'laydi: artikllar → *Articles (a/an/the)*, predloglar → *Prepositions of time and place*, ega-fe'l moslashuvi → *Subject-verb agreement*, zamonlar → *Past Simple vs Present Perfect*, ko'plik → *Countable and uncountable nouns*, qiyosiy daraja → *Comparatives and superlatives*, so'z tartibi → *English word order*. Imlo, so'z tanlash va "boshqa" turlariga mavzu tavsiya qilinmaydi.
+
+- **Qayerda ko'rinadi:** Bosh sahifa (1 ta), Xatolarim (3 tagacha), mock natijasi (1 ta), AI ustoz sahifasi (3 tagacha; bosilsa mavzu oldindan yoziladi, "Darsni boshlash"ni o'zi bosadi) va Telegram `/dars` (🎯 tugmalar, birinchi qatorlarda).
+- **Qoida:** tur bo'yicha kamida 2 ta xato; avval oxirgi 30 kundagilar; 14 kun ichida **yaxshi o'zlashtirilgan** (mini-test ≥75%) mavzu qayta tavsiya qilinmaydi.
+- **Baza sxemasi o'zgarmaydi, migratsiya kerak emas.** AI chaqirilmaydi va limit sarflanmaydi (faqat mavjud `Activities` o'qiladi). Yangi endpoint: `GET /api/tutor/recommendations`.
+- **O'chirish:** `Features__AiTutor=false` — tavsiyalar bo'sh qaytadi (kartalar ko'rinmaydi).
+
