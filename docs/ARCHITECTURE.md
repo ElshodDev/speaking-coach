@@ -23,13 +23,14 @@ flowchart LR
 - **Application** `HttpRequest`/`IResult`ni bilmaydi. HTTP so'rovdan token yoki til olish Api'dagi kengaytma metodlarida (`Web/HttpExtensions.cs`). Endpointlarda chaqiruvlar o'zgarmagan: `auth.GetCurrentUserAsync(request)`.
 - **Application** Postgres'ni bilmaydi: provayderga xos SQL (`MockRowsQuery`) va xatolar (`DbErrors.IsUniqueViolation`) Infrastructure'da.
 - Har bir qatlam o'z servislarini o'zi ro'yxatdan o'tkazadi: `AddApplication()` va `AddInfrastructure(config)`.
-- Yupqa endpoint: faqat HTTP (autentifikatsiya, so'rovni o'qish, `Outcome<T>` → javob). Mantiq va bazaga murojaat Application servisida. `GroupEndpoints`, `AccountEndpoints`, `ComprehensionEndpoints`, `HistoryQueries`, `MockEndpoints` va `TelegramEndpoints` shu yo'ldan ketgan; `ArchitectureTests` ularning konkret `AppDbContext`ga tegishini taqiqlaydi.
+- Yupqa endpoint: faqat HTTP (autentifikatsiya, so'rovni o'qish, `Outcome<T>` → javob). Mantiq va bazaga murojaat Application servisida: `GroupService`, `AccountDataService`, `ComprehensionPractice`, `MockExamService`, `TelegramLinkService`, `PracticeStore`, `FeedbackService`, `ProfileService`, `TalkSessions`. Provayderga xos so'rovlar (jsonb, `ExecuteDelete`) — `IPracticeHistory`/`IMockRows` orqali Infrastructure'da. `ArchitectureTests` HAMMA endpoint sinflarining konkret `AppDbContext`ga tegishini taqiqlaydi (sinflar avtomatik topiladi).
 - Qoidalar testlar bilan himoyalangan (`ArchitectureTests`): kimdir qatlam chegarasini buzsa, CI qizil bo'ladi. `Ef_model_matches_the_migrations_snapshot` testi esa model migratsiyalardan farq qilmasligini tekshiradi.
 
 ## Keyingi qadamlar (hali qilinmagan)
 
-- Hamon `AppDbContext` bilan to'g'ridan-to'g'ri ishlaydigan endpointlar: `TalkEndpoints`, `FeedbackEndpoints`, `SpeakingWritingEndpoints`, `UpgradeEndpoints`, `ProfileEndpoints`, `ShadowingEndpoints`, `RatingEndpoints`, `Part2Endpoints` va boshqa kichiklari. Har biri uchun yo'l bir xil: avval xarakter testlar (EF InMemory bilan, `MockExamServiceTests` kabi), keyin mantiqni servisga ko'chirish, javob shakllarini saqlash va `ArchitectureTests`dagi ro'yxatga qo'shish.
-- Funksiya bo'yicha buyruq/so'rov (CQRS) handler'lariga bo'lish va validatsiyani alohida qatlamga ajratish — servislar ko'payganda.
+- `Program.cs` dagi `/health` hamon `AppDbContext`ni to'g'ridan-to'g'ri ishlatadi (composition root, bazaga ulanishni tekshiradi) — alohida tekshiruv interfeysi bilan almashtirish mumkin.
+- Funksiya bo'yicha buyruq/so'rov (CQRS) handler'lariga bo'lish va validatsiyani alohida qatlamga ajratish — servislar ko'payganda. Katta servislar (`MockExamService`, `PracticeStore`) o'sib ketsa, mavzu bo'yicha bo'linadi.
+- Endpoint integratsiya testlari (HTTP qatlami: yuklashlar, 429/502 javoblari, AiInFlight limit joyi) hali yo'q; servis testlari EF InMemory bilan yoziladi (`MockExamServiceTests` kabi).
 
 ## Buyruqlar
 

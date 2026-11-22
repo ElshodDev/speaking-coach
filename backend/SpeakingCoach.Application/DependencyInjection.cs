@@ -67,6 +67,7 @@ public static class DependencyInjection
         services.AddScoped<PracticeStore>();
         services.AddScoped<FeedbackService>();
         services.AddScoped<ProfileService>();
+        services.AddScoped<TalkSessions>();
         services.AddScoped<ShadowingService>();
         services.AddScoped<ProgressService>();
         services.AddScoped<ReadinessService>();

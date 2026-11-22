@@ -1,5 +1,3 @@
-using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 namespace SpeakingCoach.Api.Endpoints;
 
 public record TalkStartRequest(string Scenario, string? Level);
@@ -23,23 +21,7 @@ public static class TalkEndpoints
         static IResult DailyLimit(HttpRequest r, int limit) =>
             Results.Json(r.Error("talk.daily_limit", limit), statusCode: StatusCodes.Status429TooManyRequests);
 
-        async Task<(PendingExercise Row, TalkState State)?> LoadAsync(AppDbContext db, Guid id, Guid userId)
-        {
-            var row = await db.PendingExercises.FirstOrDefaultAsync(p => p.Id == id && p.Type == ActivityType.Conversation);
-            if (row is null) return null;
-            TalkState? state;
-            try
-            {
-                state = JsonSerializer.Deserialize<TalkState>(row.Payload, Talk.Json);
-            }
-            catch (JsonException)
-            {
-                return null;
-            }
-            return state is null || state.UserId != userId ? null : (row, state);
-        }
-
-        app.MapPost("/api/talk/start", async (TalkStartRequest body, HttpRequest request, AuthService auth, AppDbContext db, AiQuotaService quotas,
+        app.MapPost("/api/talk/start", async (TalkStartRequest body, HttpRequest request, AuthService auth, TalkSessions talks, AiQuotaService quotas,
             AiQuotaOptions limits, AiDailyCaps caps, AdminOptions admins) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
@@ -55,26 +37,17 @@ public static class TalkEndpoints
             var limited = await quotas.CheckAsync(request, AiKind.Exercise);
             if (limited is not null) return limited;
 
-            var cutoff = DateTime.UtcNow.AddDays(-1);
-            await db.PendingExercises.Where(p => p.CreatedAtUtc < cutoff).ExecuteDeleteAsync();
+            await talks.CleanStaleAsync();
 
             var level = LearnerLevel.Normalize(body.Level ?? user.Level);
             var state = new TalkState(scenario.Id, level, user.Id, [new TalkLine("ai", scenario.Opening)], []);
-            var row = new PendingExercise
-            {
-                Id = Guid.NewGuid(),
-                Type = ActivityType.Conversation,
-                Payload = JsonSerializer.Serialize(state, Talk.Json),
-                CreatedAtUtc = DateTime.UtcNow,
-            };
-            db.PendingExercises.Add(row);
-            await db.SaveChangesAsync();
+            var talkId = await talks.StartAsync(state);
             await quotas.RecordAsync(request, AiKind.Exercise);
-            return Results.Ok(new { talkId = row.Id, scenario = scenario.Id, level, opening = scenario.Opening, maxTurns = Talk.MaxTurns });
+            return Results.Ok(new { talkId, scenario = scenario.Id, level, opening = scenario.Opening, maxTurns = Talk.MaxTurns });
         }).RequireRateLimiting(RateLimits.AiPolicy);
 
         // multipart: "audio" (ovoz) yoki "text" (yozib javob berish).
-        app.MapPost("/api/talk/{id:guid}/turn", async (Guid id, HttpRequest request, AuthService auth, AppDbContext db, ITalkAi ai,
+        app.MapPost("/api/talk/{id:guid}/turn", async (Guid id, HttpRequest request, AuthService auth, TalkSessions talks, ITalkAi ai,
             TalkLocks locks, AiDailyCaps caps, AiQuotaOptions limits, AdminOptions admins, ILogger<Program> logger) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
@@ -87,9 +60,10 @@ public static class TalkEndpoints
             using var turnLock = locks.TryEnter(id);
             if (turnLock is null) return Busy(request);
 
-            var loaded = await LoadAsync(db, id, user.Id);
-            if (loaded is not { } l) return Results.NotFound(request.Error("talk.not_found"));
-            var (row, state) = l;
+            var loaded = await talks.LoadAsync(id, user.Id);
+            if (loaded is null) return Results.NotFound(request.Error("talk.not_found"));
+            var row = loaded.Row;
+            var state = loaded.State;
             var scenario = Talk.Find(state.Scenario);
             if (scenario is null) return Results.NotFound(request.Error("talk.not_found"));
             if (Talk.UserTurns(state) >= Talk.MaxTurns) return Results.BadRequest(request.Error("talk.limit", Talk.MaxTurns));
@@ -150,12 +124,11 @@ public static class TalkEndpoints
             }
             state.Lines.Add(new TalkLine("ai", result.Reply));
             if (result.Tip is not null) state.Tips.Add(result.Tip);
-            row.Payload = JsonSerializer.Serialize(state, Talk.Json);
-            await db.SaveChangesAsync(CancellationToken.None);
+            await talks.SaveTurnAsync(row, state);
             return Results.Ok(new { heard = result.Heard, reply = result.Reply, tip = result.Tip, turn = Talk.UserTurns(state), maxTurns = Talk.MaxTurns });
         }).RequireRateLimiting(RateLimits.AiPolicy).WithBodyLimit(MaxBodyBytes);
 
-        app.MapPost("/api/talk/{id:guid}/finish", async (Guid id, HttpRequest request, AuthService auth, AppDbContext db, ITalkAi ai, ReviewService reviews,
+        app.MapPost("/api/talk/{id:guid}/finish", async (Guid id, HttpRequest request, AuthService auth, TalkSessions talks, ITalkAi ai,
             TalkLocks locks, ILogger<Program> logger) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
@@ -163,9 +136,9 @@ public static class TalkEndpoints
             // Navbat hali bajarilayotgan bo'lsa — yakunlamaymiz (oxirgi javob yo'qolmasin).
             using var turnLock = locks.TryEnter(id);
             if (turnLock is null) return Busy(request);
-            var loaded = await LoadAsync(db, id, user.Id);
-            if (loaded is not { } l) return Results.NotFound(request.Error("talk.not_found"));
-            var (row, state) = l;
+            var loaded = await talks.LoadAsync(id, user.Id);
+            if (loaded is null) return Results.NotFound(request.Error("talk.not_found"));
+            var state = loaded.State;
             var scenario = Talk.Find(state.Scenario);
             if (scenario is null) return Results.NotFound(request.Error("talk.not_found"));
             if (Talk.UserTurns(state) == 0) return Results.BadRequest(request.Error("talk.no_turns"));
@@ -188,31 +161,9 @@ public static class TalkEndpoints
                 .DistinctBy(c => c.Original.Trim().ToLowerInvariant())
                 .Take(8)
                 .ToList();
-            var activityId = Guid.NewGuid();
-            db.Activities.Add(new Activity
-            {
-                Id = activityId,
-                Type = ActivityType.Conversation,
-                UserId = user.Id,
-                CreatedAtUtc = DateTime.UtcNow,
-                PromptData = JsonSerializer.Serialize(new { scenario = scenario.Id, level = state.Level, lines = state.Lines }, Talk.Json),
-                ResponseData = metrics is null
-                    ? JsonSerializer.Serialize(summary with { TopCorrections = corrections }, Talk.Json)
-                    : FluencyMetrics.WithMetrics(summary with { TopCorrections = corrections }, metrics, Talk.Json),
-            });
-            db.PendingExercises.Remove(row);
-            // Kartalar suhbat yozuvi bilan bitta SaveChanges'da saqlanadi:
-            // AddCardsAsync faqat kontekstga qo'shadi, o'zi saqlamaydi.
-            var newCards = await reviews.AddCardsAsync(user.Id, ActivityType.Conversation, ReviewCardFactory.FromCorrections(corrections));
-            try
-            {
-                await db.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return Results.Conflict(request.Error("talk.not_found"));
-            }
-            return Results.Ok(new { id = activityId, result = summary with { TopCorrections = corrections }, turns = Talk.UserTurns(state), newCards, metrics });
+            var finished = await talks.FinishAsync(user.Id, loaded, scenario, summary, corrections, metrics);
+            if (finished is null) return Results.Conflict(request.Error("talk.not_found"));
+            return Results.Ok(new { id = finished.Value.ActivityId, result = summary with { TopCorrections = corrections }, turns = Talk.UserTurns(state), newCards = finished.Value.NewCards, metrics });
         }).RequireRateLimiting(RateLimits.AiPolicy);
     }
 }
