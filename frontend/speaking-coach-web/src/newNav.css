@@ -605,3 +605,113 @@ body:has(.app.nn) {
     color: #fdf3c4;
   }
 }
+
+/* O'qituvchi paneli */
+.nn .nn-gcard {
+  border-radius: 14px;
+  background: var(--surface);
+}
+.nn .nn-gcard strong {
+  font-family: Georgia, serif;
+  font-size: 1.05rem;
+}
+.nn .nn-code {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  background: var(--nn-note);
+  color: #2a2218;
+  padding: 3px 9px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.nn [data-testid='invite'] {
+  border-radius: 14px;
+  border-style: dashed;
+  border-color: var(--text);
+}
+.nn [data-testid='invite'] .nn-code {
+  font-size: 1.15rem;
+}
+.nn .segmented {
+  background: var(--surface-2);
+  border-radius: 14px;
+  padding: 4px;
+  border: 0;
+}
+.nn .segmented button {
+  border-radius: 10px;
+  color: var(--muted);
+}
+.nn .segmented button[aria-pressed='true'] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(42, 34, 24, 0.12);
+}
+.nn .nn-pill {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-weight: 800;
+  background: var(--surface-2);
+  color: var(--text);
+  white-space: nowrap;
+}
+.nn .nn-pill.ok {
+  background: #d9f2e1;
+  color: #14532d;
+}
+.nn .nn-pill.mid {
+  background: #fdf0c2;
+  color: #78350f;
+}
+.nn .nn-pill.low {
+  background: #fde2e4;
+  color: #9f1239;
+}
+.nn .nn-c {
+  display: inline-block;
+  min-width: 44px;
+  text-align: center;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+.nn .nn-c.ok {
+  background: #d9f2e1;
+  color: #14532d;
+}
+.nn .nn-c.mid {
+  background: #fdf0c2;
+  color: #78350f;
+}
+.nn .nn-c.no {
+  background: #fde2e4;
+  color: #9f1239;
+}
+.nn table.data th {
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+@media (prefers-color-scheme: dark) {
+  .nn .nn-code {
+    color: #fdf3c4;
+    background: #4a3f12;
+  }
+  .nn .nn-pill.ok,
+  .nn .nn-c.ok {
+    background: #123524;
+    color: #86efac;
+  }
+  .nn .nn-pill.mid,
+  .nn .nn-c.mid {
+    background: #43360c;
+    color: #fde68a;
+  }
+  .nn .nn-pill.low,
+  .nn .nn-c.no {
+    background: #4a1523;
+    color: #fda4af;
+  }
+}
