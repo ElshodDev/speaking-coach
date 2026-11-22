@@ -32,8 +32,6 @@ public record CefrPartLayout(int Part, int First, int Count);
 public static partial class CefrObjective
 {
     public const int Questions = 35;
-    public const int ListeningMinutes = 45;
-    public const int ReadingMinutes = 60;
 
     public static readonly CefrPartLayout[] ListeningLayout =
         [new(1, 1, 8), new(2, 9, 6), new(3, 15, 4), new(4, 19, 5), new(5, 24, 6), new(6, 30, 6)];

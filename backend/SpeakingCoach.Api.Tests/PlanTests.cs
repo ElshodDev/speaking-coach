@@ -40,7 +40,7 @@ public class PlanTests
         var practice = p.Items.Where(x => x.Kind == "practice").ToList();
         Assert.Equal(2, practice.Count);
         Assert.NotEqual(practice[0].Key, practice[1].Key);
-        Assert.Single(PlanLogic.Build(In(minutes: 10)).Items.Where(x => x.Kind == "practice"));
+        Assert.Single(PlanLogic.Build(In(minutes: 10)).Items, x => x.Kind == "practice");
     }
 
     [Fact]

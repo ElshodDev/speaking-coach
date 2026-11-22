@@ -81,7 +81,7 @@ public static class Part2Rules
         return points.Select((p, i) =>
         {
             var match = given.FirstOrDefault(c => Same(c.Point, p)) ?? (i < given.Count ? given[i] : null);
-            var status = match is not null && Statuses.Contains(match.Status?.Trim().ToLowerInvariant()) ? match.Status.Trim().ToLowerInvariant() : "missed";
+            var status = match?.Status?.Trim().ToLowerInvariant() is { } given1 && Statuses.Contains(given1) ? given1 : "missed";
             var evidence = status == "missed" ? "" : Cut(match?.Evidence ?? "", 200);
             return new CoverageItem(p, status, evidence);
         }).ToList();
@@ -89,10 +89,6 @@ public static class Part2Rules
 
     /// <summary>IELTS bali: 0–9, yarim ballik qadam.</summary>
     public static decimal ClampBand(decimal band) => Math.Clamp(Math.Round(band * 2, MidpointRounding.AwayFromZero) / 2, 0, 9);
-
-    /// <summary>Bandlar qamrovi foizda: covered — 1, partly — 0.5.</summary>
-    public static int CoveragePercent(IReadOnlyCollection<CoverageItem> items) =>
-        items.Count == 0 ? 0 : (int)Math.Round(100.0 * items.Sum(c => c.Status switch { "covered" => 1.0, "partly" => 0.5, _ => 0 }) / items.Count, MidpointRounding.AwayFromZero);
 
     private static bool Same(string? a, string b) =>
         string.Equals(Norm(a), Norm(b), StringComparison.OrdinalIgnoreCase);

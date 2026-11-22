@@ -154,7 +154,7 @@ public partial class TelegramBot
             await _quotas.RecordAsync(c.User, guestKey, AiKind.Exercise);
             await SetBotStateAsync(c, null, ct);
             var id = r.Value!.LessonId;
-            await _api.SendMessageAsync(c.ChatId, BotTutor.ExplainText(c.Lang, r.Value.State),
+            await _api.SendMessageAsync(c.ChatId, BotTutor.ExplainText(r.Value.State),
             [
                 [new TgButton(c.T("tutor.bot_to_practice"), BotLogic.Encode(new BotCallback.Tutor(id, "g")))],
                 [new TgButton(c.T("tutor.bot_ask_btn"), BotLogic.Encode(new BotCallback.Tutor(id, "q")))],

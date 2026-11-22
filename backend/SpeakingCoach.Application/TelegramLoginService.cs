@@ -70,36 +70,6 @@ public static partial class TelegramLoginRules
     [GeneratedRegex("^[A-Za-z0-9_-]+$")]
     private static partial Regex NonceChars();
 
-    /// <summary>
-    /// Botdagi 3 ta raqam: haqiqiy kod + 2 ta boshqa (bir-biridan farqli)
-    /// tasodifiy raqam, aralashtirilgan. next(min, maxExclusive) — tasodif
-    /// manbai (testda — aniq ketma-ketlik).
-    /// </summary>
-    public static IReadOnlyList<string> Choices(string code, Func<int, int, int>? next = null)
-    {
-        next ??= RandomNumberGenerator.GetInt32;
-        var set = new List<string> { code };
-        var guard = 0;
-        while (set.Count < 3 && guard++ < 1000)
-        {
-            var d = next(10, 100).ToString(System.Globalization.CultureInfo.InvariantCulture);
-            if (!set.Contains(d)) set.Add(d);
-        }
-        // Zaxira: tasodif manbai bir xil raqam qaytaraversa ham 3 ta farqli raqam bo'lsin.
-        for (var n = 10; set.Count < 3; n++)
-        {
-            var d = n.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            if (!set.Contains(d)) set.Add(d);
-        }
-        // Fisher–Yates.
-        for (var i = set.Count - 1; i > 0; i--)
-        {
-            var j = next(0, i + 1);
-            (set[i], set[j]) = (set[j], set[i]);
-        }
-        return set;
-    }
-
     /// <summary>Tugmadagi raqam saytdagi kodga tengmi.</summary>
     /// <summary>Botga yozilgan xabar — 2 xonali kod ("47", " 47 ")? Boshqa hech narsa emas.</summary>
     public static bool IsTypedCode(string? text) =>

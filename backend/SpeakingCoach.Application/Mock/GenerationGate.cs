@@ -50,12 +50,6 @@ public sealed class GenerationGate(TimeProvider? clock = null)
         }
     }
 
-    public int AttemptsOf(Guid userId)
-    {
-        var now = _clock.GetUtcNow().UtcDateTime;
-        lock (_lock) return _attempts.TryGetValue(userId, out var l) ? l.Count(t => now - t < Window) : 0;
-    }
-
     private void Prune(DateTime now)
     {
         foreach (var (id, list) in _attempts.ToList())

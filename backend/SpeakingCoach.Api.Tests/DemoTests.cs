@@ -72,7 +72,7 @@ public class DemoTests
     {
         var email = DemoAccount.NewEmail();
         Assert.True(DemoAccount.IsDemo(email));
-        Assert.True(email.EndsWith(".invalid", StringComparison.Ordinal));
+        Assert.EndsWith(".invalid", email, StringComparison.Ordinal);
         Assert.NotEqual(email, DemoAccount.NewEmail());
         Assert.False(DemoAccount.IsDemo("ali@mail.com"));
         Assert.False(DemoAccount.IsDemo("demo@speakingcoach.invalid.com"));

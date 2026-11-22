@@ -38,40 +38,6 @@ public class TelegramLoginTests
         }
     }
 
-    [Fact]
-    public void Choices_contain_the_code_and_two_distinct_decoys()
-    {
-        for (var i = 0; i < 300; i++)
-        {
-            var code = TelegramLoginRules.NewCode();
-            var choices = TelegramLoginRules.Choices(code);
-            Assert.Equal(3, choices.Count);
-            Assert.Equal(3, choices.Distinct().Count());
-            Assert.Contains(code, choices);
-            Assert.All(choices, c => Assert.True(int.Parse(c) is >= 10 and <= 99, c));
-        }
-    }
-
-    [Fact]
-    public void Choices_are_shuffled_so_the_code_is_not_always_first()
-    {
-        var positions = new HashSet<int>();
-        for (var i = 0; i < 300; i++)
-        {
-            positions.Add(TelegramLoginRules.Choices("42").ToList().IndexOf("42"));
-        }
-        Assert.Equal(new[] { 0, 1, 2 }, positions.OrderBy(p => p).ToArray());
-    }
-
-    [Fact]
-    public void Choices_stay_distinct_even_with_a_stuck_random_source()
-    {
-        // Tasodif manbai doim bir xil qiymat qaytarsa ham — 3 ta farqli raqam.
-        var choices = TelegramLoginRules.Choices("10", (min, max) => min);
-        Assert.Equal(3, choices.Distinct().Count());
-        Assert.Contains("10", choices);
-    }
-
     [Theory]
     [InlineData("42", 42, true)]
     [InlineData("42", 24, false)]
@@ -282,13 +248,11 @@ public class TelegramLoginTests
     }
 
     [Theory]
-    [InlineData(false, true, true)]    // email tasdiqlanmagan — parolni begona odam qo'ygan bo'lishi mumkin
-    [InlineData(false, false, true)]   // tasdiqlash o'chiq bo'lsa ham (aks holda hisobni oldindan egallab olish mumkin)
-    [InlineData(true, true, false)]
-    [InlineData(true, false, false)]
-    public void Google_sign_in_wipes_the_password_of_an_unverified_account(bool verified, bool verificationRequired, bool wipe)
+    [InlineData(false, true)]   // email tasdiqlanmagan — parolni begona odam qo'ygan bo'lishi mumkin (tasdiqlash o'chiq bo'lsa ham)
+    [InlineData(true, false)]
+    public void Google_sign_in_wipes_the_password_of_an_unverified_account(bool verified, bool wipe)
     {
-        Assert.Equal(wipe, AuthService.ShouldWipePasswordOnGoogle(verified, verificationRequired));
+        Assert.Equal(wipe, AuthService.ShouldWipePasswordOnGoogle(verified));
     }
 
     // ---------------- Kunlik xat limiti ----------------

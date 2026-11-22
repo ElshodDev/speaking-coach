@@ -97,15 +97,11 @@ public class AuthService
 
     /// <summary>
     /// Google bilan kirganda tasdiqlanmagan hisobning parolini o'chirish kerakmi.
-    /// Faqat email tasdiqlash yoqilgan bo'lsa: unda tasdiqlanmagan hisobdagi
-    /// parolni begona odam qo'ygan bo'lishi mumkin. Tasdiqlash o'chiq bo'lsa
-    /// (xat yuborib bo'lmaydi) — hech kim emailini tasdiqlay olmagan, parol
-    /// egasiniki; uni o'chirish odamni hisobidan qulflab qo'yardi.
+    /// Email tasdiqlash yoqilgan yoki o'chiqligidan qat'i nazar: tasdiqlanmagan hisobdagi
+    /// parolni email egasi emas, begona odam qo'ygan bo'lishi mumkin (hisobni oldindan egallash).
+    /// Egasi parolni Profil → "Kirish usullari"da qayta o'rnatadi.
     /// </summary>
-    public static bool ShouldWipePasswordOnGoogle(bool emailVerified, bool verificationRequired) =>
-        // Tasdiqlash o'chiq bo'lsa ham: tasdiqlanmagan hisobdagi parolni email egasi emas,
-        // begona odam qo'ygan bo'lishi mumkin. Egasi parolni Profil → "Kirish usullari"da qayta o'rnatadi.
-        !emailVerified;
+    public static bool ShouldWipePasswordOnGoogle(bool emailVerified) => !emailVerified;
 
     /// <summary>
     /// Sirpanuvchi sessiya: muddatiga <see cref="RenewBelow"/> dan kam qolgan
@@ -234,7 +230,7 @@ public class AuthService
             user.ReferredByUserId = await ReferrerForNewUserAsync(referralCode, google.Email);
             _db.Users.Add(user);
         }
-        else if (ShouldWipePasswordOnGoogle(user.EmailVerifiedAtUtc is not null, VerificationRequired))
+        else if (ShouldWipePasswordOnGoogle(user.EmailVerifiedAtUtc is not null))
         {
             // Email tasdiqlash yoqilgan, hisob ochilgan, lekin email hech qachon
             // tasdiqlanmagan — parolni begona odam (email egasi emas) qo'ygan

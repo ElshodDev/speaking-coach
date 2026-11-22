@@ -111,7 +111,7 @@ public class BotTutorTests
     public void Texts_escape_html_so_telegram_does_not_reject_them()
     {
         var s = State();
-        var explain = BotTutor.ExplainText("uz", s);
+        var explain = BotTutor.ExplainText(s);
         Assert.Contains("Modal &lt;verbs&gt; &amp; co", explain);
         Assert.Contains("&lt;b&gt;express&lt;/b&gt;", explain);
         Assert.DoesNotContain("<verbs>", explain);

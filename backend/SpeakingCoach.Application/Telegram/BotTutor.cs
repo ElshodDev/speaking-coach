@@ -83,7 +83,7 @@ public static partial class BotTutor
 
     private static string Html(string? s) => BotLogic.Html(s);
 
-    public static string ExplainText(string lang, TutorState s)
+    public static string ExplainText(TutorState s)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"📖 <b>{Html(s.Topic)}</b> · {Html(s.Level)}");

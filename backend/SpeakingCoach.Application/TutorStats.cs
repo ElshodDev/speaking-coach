@@ -49,8 +49,9 @@ public static class TutorStats
         // Mavzular: registrsiz birlashtiriladi; ko'rinadigan nom — eng ko'p uchragan yozuv.
         var topics = rows
             .Select(r => LessonInsights.TopicOf(r.PromptData)?.Trim())
-            .Where(t => !string.IsNullOrEmpty(t))
-            .GroupBy(t => t!, StringComparer.OrdinalIgnoreCase)
+            .OfType<string>()
+            .Where(t => t.Length > 0)
+            .GroupBy(t => t, StringComparer.OrdinalIgnoreCase)
             .Select(g => new TutorTopic(g.GroupBy(x => x).OrderByDescending(x => x.Count()).First().Key, g.Count()))
             .OrderByDescending(t => t.Lessons).ThenBy(t => t.Topic, StringComparer.OrdinalIgnoreCase)
             .Take(MaxTopics)

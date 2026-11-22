@@ -21,7 +21,7 @@ public class StatsRefactorTests
         return r;
     }
 
-    private static List<DateTime> Streak(int days, int tz, int skipRecent = 0, int perDay = 1, Random? rng = null)
+    private static List<DateTime> Streak(int days, int tz, int skipRecent = 0, Random? rng = null)
     {
         rng ??= new Random(1);
         var list = new List<DateTime>();
