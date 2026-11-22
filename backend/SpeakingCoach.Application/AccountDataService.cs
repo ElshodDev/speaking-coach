@@ -130,8 +130,8 @@ public class AccountDataService(IAppDbContext db)
             .ToListAsync();
 
         // Shaxsiy (faqat o'zi ko'radigan) darslar hisob bilan birga o'chadi; chop etilganlar bankda qoladi.
-        await db.MockTests.Where(m => m.CreatedByUserId == user.Id && m.Status == MockTestStatus.Personal).ExecuteDeleteAsync();
-        db.Users.Remove(user);
+        db.MockTests.RemoveRange(await db.MockTests.Where(m => m.CreatedByUserId == user.Id && m.Status == MockTestStatus.Personal).ToListAsync());
+        db.Users.Remove(user);   // bitta tranzaksiyada: hisob ham, shaxsiy darslar ham
         await db.SaveChangesAsync();
         return audioIds;
     }
