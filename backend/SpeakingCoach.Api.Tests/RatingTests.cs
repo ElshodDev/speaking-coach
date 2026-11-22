@@ -4,6 +4,8 @@ public class RatingTests
 {
     [Theory]
     [InlineData("first_practice:up")]
+    [InlineData("lesson:up")]
+    [InlineData("lesson:down")]
     [InlineData("first_practice:down")]
     [InlineData("ai_fair:speaking:fair")]
     [InlineData("ai_fair:writing:high")]
@@ -25,6 +27,10 @@ public class RatingTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData("first_practice:maybe")]
+    [InlineData("lesson:maybe")]
+    [InlineData("lesson_start:free")]                      // boshlanish hodisasini faqat server yozadi: soxtalashtirib bo'lmaydi
+    [InlineData("lesson_start:assigned")]
+    [InlineData("lesson:up\nlesson:down")]
     [InlineData("ai_fair:listening:fair")]
     [InlineData("ai_fair:speaking:great")]
     [InlineData("source:tiktok")]

@@ -46,6 +46,19 @@ public static partial class BotTutor
     public static Guid? ParseAssignmentArg(string arg) =>
         arg.Length == 33 && arg[0] == 'a' && Guid.TryParseExact(arg[1..], "N", out var g) ? g : null;
 
+    /// <summary>Xatolar asosidagi tavsiya tugmasi: "r&lt;indeks&gt;" (Tutor.AllTopics'ga). Oddiy tanlash — shunchaki indeks.</summary>
+    public static string RecommendedArg(int index) => "r" + index.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+    /// <summary>Mavzu tugmasining argumenti: (indeks, tavsiyadanmi); noto'g'ri bo'lsa — null.</summary>
+    public static (int Index, bool Recommended)? ParseTopicArg(string arg)
+    {
+        var recommended = arg.Length > 1 && arg[0] == 'r';
+        var digits = recommended ? arg[1..] : arg;
+        return int.TryParse(digits, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var n) && n < Tutor.AllTopics.Length
+            ? (n, recommended)
+            : null;
+    }
+
     public static bool IsAnswerArg(string arg) => AnswerArg().IsMatch(arg);
 
     public static (string Section, int Index, int Option) ParseAnswerArg(string arg)
@@ -153,8 +166,30 @@ public static partial class BotTutor
         return sb.ToString().TrimEnd();
     }
 
-    private static TgButton TopicButton(string label, int index) =>
-        new(label, BotLogic.Encode(new BotCallback.Tutor(null, "t", index.ToString(System.Globalization.CultureInfo.InvariantCulture))));
+    /// <summary>Dars baholash tugmalari (natija xabarida): "tu:r:u" / "tu:r:d".</summary>
+    public static IReadOnlyList<TgButton> RatingButtons(string lang) =>
+    [
+        new TgButton(Texts.Get(lang, "tutor.bot_rate_up"), BotLogic.Encode(new BotCallback.Tutor(null, "r", "u"))),
+        new TgButton(Texts.Get(lang, "tutor.bot_rate_down"), BotLogic.Encode(new BotCallback.Tutor(null, "r", "d"))),
+    ];
+
+    /// <summary>Natija xabaridagi tugmalar: takrorlash va yangi mavzu; baho berilmagan bo'lsa — baho qatori ham.</summary>
+    public static IReadOnlyList<IReadOnlyList<TgButton>> ResultButtons(string lang, bool withRating)
+    {
+        var rows = new List<IReadOnlyList<TgButton>>
+        {
+            new[]
+            {
+                new TgButton(Texts.Get(lang, "tutor.bot_review_btn"), BotLogic.Encode(new BotCallback.StartReview())),
+                new TgButton(Texts.Get(lang, "tutor.bot_new_btn"), BotLogic.Encode(new BotCallback.Tutor(null, "t", "new"))),
+            },
+        };
+        if (withRating) rows.Add(RatingButtons(lang));
+        return rows;
+    }
+
+    private static TgButton TopicButton(string label, int index, bool recommended = false) =>
+        new(label, BotLogic.Encode(new BotCallback.Tutor(null, "t", recommended ? RecommendedArg(index) : index.ToString(System.Globalization.CultureInfo.InvariantCulture))));
 
     /// <summary>
     /// Mavzu tugmalari: avval xatolar asosidagi tavsiyalar (🎯, har biri alohida qatorda), so'ng tavsiya etilgan mavzular
@@ -166,7 +201,7 @@ public static partial class BotTutor
         foreach (var topic in recommended ?? [])
         {
             var index = Array.FindIndex(Tutor.AllTopics, t => string.Equals(t, topic, StringComparison.OrdinalIgnoreCase));
-            if (index >= 0) rows.Add([TopicButton("🎯 " + topic, index)]);
+            if (index >= 0) rows.Add([TopicButton("🎯 " + topic, index, recommended: true)]);
         }
         rows.AddRange(Tutor.SuggestedTopics.Select((t, i) => TopicButton(t, i)).Chunk(2).Select(row => (IReadOnlyList<TgButton>)row));
         return rows;

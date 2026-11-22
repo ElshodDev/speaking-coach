@@ -127,7 +127,7 @@ public partial class TelegramBot
         }
     }
 
-    private async Task StartTutorLessonAsync(Ctx c, string topic, CancellationToken ct, Guid? assignmentId = null)
+    private async Task StartTutorLessonAsync(Ctx c, string topic, CancellationToken ct, Guid? assignmentId = null, string source = "free")
     {
         if (Tutor.NormalizeTopic(topic) is null)
         {
@@ -144,7 +144,7 @@ public partial class TelegramBot
         await SendPlainAsync(c, "tutor.bot_preparing", [], ct);
         await RunTutorAiAsync(c, ct, async () =>
         {
-            var r = await _tutor.StartAsync(c.User!, topic, null, c.Lang, ct, assignmentId is not null);
+            var r = await _tutor.StartAsync(c.User!, topic, null, c.Lang, ct, assignmentId is not null, source);
             if (!r.Ok)
             {
                 // Mavzudan tashqari bo'lsa — holat saqlanadi: foydalanuvchi boshqa mavzu yozishi mumkin.
@@ -184,8 +184,27 @@ public partial class TelegramBot
                 return null;
             }
             // Boshqa mavzu so'rovi ochiq bo'lsa ham, tugma bosilsa — tanlangan mavzu bilan boshlaymiz.
-            await StartTutorLessonAsync(c, Tutor.AllTopics[int.Parse(cb.Arg, System.Globalization.CultureInfo.InvariantCulture)], ct);
+            if (BotTutor.ParseTopicArg(cb.Arg) is not { } pick) return c.T("tutor.not_found");
+            await StartTutorLessonAsync(c, Tutor.AllTopics[pick.Index], ct, source: pick.Recommended ? "recommended" : "free");
             return null;
+        }
+
+        // Dars bahosi (natija xabaridan): mavjud baholar jadvaliga; ikki marta bosilmasin — baho qatori olib tashlanadi.
+        if (cb.Op == "r")
+        {
+            _db.Feedbacks.Add(new Feedback
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                Kind = FeedbackKinds.Rating,
+                Message = cb.Arg == "u" ? TutorStats.RatingUp : TutorStats.RatingDown,
+                Page = "#/tutor",
+                Lang = c.Lang,
+                CreatedAtUtc = DateTime.UtcNow,
+            });
+            await _db.SaveChangesAsync(ct);
+            if (messageId is not null) await _api.EditButtonsAsync(c.ChatId, messageId.Value, BotTutor.ResultButtons(c.Lang, withRating: false), ct);
+            return c.T("tutor.bot_thanks");
         }
 
         var id = cb.Id!.Value;
@@ -265,13 +284,7 @@ public partial class TelegramBot
             {
                 var f = await _tutor.FinishAsync(id, c.User!);
                 if (!f.Ok) return c.T(f.Fail!.Key, f.Fail.Args);
-                await _api.SendMessageAsync(c.ChatId, BotTutor.ResultText(c.Lang, f.Value!),
-                [
-                    [
-                        new TgButton(c.T("tutor.bot_review_btn"), BotLogic.Encode(new BotCallback.StartReview())),
-                        new TgButton(c.T("tutor.bot_new_btn"), BotLogic.Encode(new BotCallback.Tutor(null, "t", "new"))),
-                    ],
-                ], ct: ct);
+                await _api.SendMessageAsync(c.ChatId, BotTutor.ResultText(c.Lang, f.Value!), BotTutor.ResultButtons(c.Lang, withRating: true), ct: ct);
                 return null;
             }
         }

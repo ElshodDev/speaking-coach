@@ -139,7 +139,9 @@ public class TopicAdvisorTests
         {
             var cb = Assert.IsType<BotCallback.Tutor>(BotLogic.Decode(b.CallbackData));
             Assert.True(System.Text.Encoding.UTF8.GetByteCount(b.CallbackData!) <= 64);
-            Assert.Contains(Tutor.AllTopics[int.Parse(cb.Arg)], b.Text);
+            var pick = BotTutor.ParseTopicArg(cb.Arg)!.Value;
+            Assert.Contains(Tutor.AllTopics[pick.Index], b.Text);
+            Assert.Equal(b.Text.StartsWith("🎯"), pick.Recommended);       // tavsiya tugmasi boshqacha belgilanadi (o'lchov uchun)
         }
     }
 

@@ -106,6 +106,8 @@ public static partial class BotLogic
             ["au", "x"] => new BotCallback.AuthorCancel(),
             ["tu", "t", "new"] => new BotCallback.Tutor(null, "t", "new"),
             ["tu", "t", var x] when BotTutor.ParseAssignmentArg(x) is not null => new BotCallback.Tutor(null, "t", x),
+            ["tu", "t", var r] when r.Length > 1 && r[0] == 'r' && BotTutor.ParseTopicArg(r) is not null => new BotCallback.Tutor(null, "t", r),
+            ["tu", "r", var v] when v is "u" or "d" => new BotCallback.Tutor(null, "r", v),
             ["tu", "t", var i] when int.TryParse(i, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var n) && n < Tutor.AllTopics.Length
                 => new BotCallback.Tutor(null, "t", i),
             ["tu", var id, "a", var a, var o] when Guid.TryParseExact(id, "N", out var g) && BotTutor.IsAnswerArg($"{a}:{o}") => new BotCallback.Tutor(g, "a", $"{a}:{o}"),

@@ -85,7 +85,7 @@ public class TutorService(IAppDbContext db, ITutorAi ai, AiDailyCaps caps, AiQuo
     }
 
     /// <param name="assigned">Ustoz vazifasidan: dars umumiy keshdan olinadi va mavzu aynan vazifadagidek saqlanadi (vazifa bajarilganini aniqlash uchun).</param>
-    public async Task<TutorOutcome<TutorStarted>> StartAsync(User user, string? rawTopic, string? level, string lang, CancellationToken ct, bool assigned = false)
+    public async Task<TutorOutcome<TutorStarted>> StartAsync(User user, string? rawTopic, string? level, string lang, CancellationToken ct, bool assigned = false, string source = "free")
     {
         var topic = Tutor.NormalizeTopic(rawTopic);
         if (topic is null) return Fail<TutorStarted>("tutor.bad_topic", 400);
@@ -117,6 +117,17 @@ public class TutorService(IAppDbContext db, ITutorAi ai, AiDailyCaps caps, AiQuo
             CreatedAtUtc = DateTime.UtcNow,
         };
         db.PendingExercises.Add(row);
+        // O'lchov: dars boshlandi (mavjud Feedbacks jadvaliga Kind = rating bilan; adminning fikrlar ro'yxatiga kirmaydi).
+        db.Feedbacks.Add(new Feedback
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            Kind = FeedbackKinds.Rating,
+            Message = TutorStats.StartKey(assigned ? "assigned" : source),
+            Page = "#/tutor",
+            Lang = lang,
+            CreatedAtUtc = DateTime.UtcNow,
+        });
         await db.SaveChangesAsync(CancellationToken.None);
         return TutorOutcome<TutorStarted>.Success(new TutorStarted(row.Id, state));
     }
