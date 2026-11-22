@@ -59,6 +59,7 @@ Birinchi yozishdan oldin "ovoz Google Gemini'ga yuboriladi, saqlanmaydi" rozilig
 | Render o'zgaruvchisi | Nima qiladi |
 |---|---|
 | `Features__SpeakingFourCriteria` | Gapirish natijasi: 4 rasmiy IELTS mezoni (taxminiy band), talaffuz ("taxminiy") va bitta asosiy tuzatish. `false` — eski 3 mezonli ko'rinish. |
+| `Features__AiTutor` | AI ustoz (veb: Mashqlar → "AI ustoz"; Telegram: `/dars`): mavzu yozib mini-dars. `false` — o'chiq (`/api/tutor/*` 404, botda "o'chirilgan"). Standart — yoqiq. |
 | `Features__DayOneDiagnostic` | Birinchi kunlik boshlang'ich test: bosh sahifada 4 ta qisqa mashq kartasi va tayyorlik bahosi birinchi kundan (Reading/Listening — ilovaning tayyor mashqlari darajasi bo'yicha past ishonch bilan). `false` — o'chiq, tayyorlik avvalgidek faqat mock bo'yicha. |
 
 O'chirish uchun qiymatni `false` qiling va servisni qayta ishga tushiring. Yangi maydonlar mavjud javobga **qo'shimcha** (ixtiyoriy) — eski mijozlar va eski yozuvlar buzilmaydi.
@@ -84,6 +85,7 @@ Root directory: **`backend`**, Dockerfile path: **`./Dockerfile`**, Docker build
 | `Demo__Enabled` | `false` — demo hisobni o'chiradi (standart: yoqiq) |
 | `Ai__ExercisesPerDay`, `Ai__WordsPerDay`, `Ai__ShadowingPerDay`, `Ai__Guest*PerDay` | Foydalanuvchi/mehmon uchun kunlik AI limitlari (ixtiyoriy) |
 | `Ai__TalkTurnsPerDay` | AI suhbatda kuniga nechta javob (standart: 40) |
+| `Ai__TutorCallsPerDay` | AI ustozda kuniga nechta savol/yozma baholash (standart: 30; darsning o'zi — oddiy mashq limitidan) |
 | `Ai__AuthoringPerDay` | Bot orqali test tayyorlash, kuniga (standart: 10) |
 | `Ai__GlobalPerMinute`, `Ai__GlobalPerDay` | Butun server bo'yicha Gemini so'rovlari: daqiqasiga 12, kuniga 1400 (Toshkent kuni). Oshsa — foydalanuvchiga "AI hozir band" (503) |
 | `Ai__BreakerFailures`, `Ai__BreakerSeconds`, `Ai__QuotaCooldownMinutes` | Gemini ketma-ket xato qilsa — 5 xatodan keyin 60 s dam; kvotasi tugagan model 30 daqiqa chetlab o'tiladi |
@@ -185,3 +187,12 @@ Foydalanuvchi fikrini faol yig'ish uchun kichik, rad etish oson so'rovlar (hamma
 
 **Natijani o'qish:** Admin → "Bir bosishli baholar": birinchi mashq foydali/foydasiz ulushi, AI adolatliligi (har ko'nikma uchun Adolatli/Yuqori/Past %, n bilan), manba bo'yicha sonlar. Namuna hajmi (n) kichik bo'lsa, xulosa chiqarmang.
 
+## AI ustoz (mavzu bo'yicha mini-dars)
+
+Foydalanuvchi mavzu yozadi ("Modal verbs") — AI bitta so'rovda butun dars yaratadi: 3 qisqa tushuntirish → 6 mashq → o'z gaplari (ixtiyoriy) → 4 ta mini-test. Javoblar **serverda** tekshiriladi (AI'siz), to'g'ri javob brauzerga/botga faqat javob berilgandan keyin ketadi. Xatolar avtomatik takrorlash kartalariga tushadi.
+
+- **Veb:** Mashqlar → "AI ustoz" (`/api/tutor/*`). **Telegram:** `/dars` yoki `/dars Modal verbs`; mashq variantlari tugma sifatida.
+- **Baza sxemasi o'zgarmaydi, migratsiya kerak emas:** dars holati `PendingExercises`da (1 kundan keyin tozalanadi), natija `Activities`da (tur matn — `Lesson`).
+- **Limitlar:** dars boshlash — oddiy kunlik mashq limitidan (`Ai__ExercisesPerDay`); savol va yozma baholash — `Ai__TutorCallsPerDay` (standart 30); darsga ko'pi bilan 5 ta savol. Mavzudan tashqari (inglizcha o'rganishga oid bo'lmagan) so'rov limit sarflamaydi.
+- **O'chirish:** Render'da `Features__AiTutor=false` va qayta ishga tushirish.
+- **Lokal/e2e sinov:** `Gemini__BaseUrl` va `Telegram__ApiBaseUrl` soxta serverga yo'naltiriladi (production'da bo'sh qoldiriladi).

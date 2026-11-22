@@ -81,12 +81,16 @@ public class TelegramOptions
     public string? CronSecret { get; }
     public string FrontendUrl { get; }
 
+    /// <summary>Faqat lokal/e2e test uchun (soxta Telegram serveri): Telegram:ApiBaseUrl. Production'da bo'sh — api.telegram.org.</summary>
+    public string ApiBase { get; }
+
     public TelegramOptions(IConfiguration config)
     {
         Token = Blank(config["Telegram:BotToken"]);
         BotUsername = (Blank(config["Telegram:BotUsername"]) ?? "SpeakingCoachUzBot").TrimStart('@');
         PublicUrl = (Blank(config["Telegram:PublicUrl"]) ?? Blank(config["RENDER_EXTERNAL_URL"]))?.TrimEnd('/');
         CronSecret = Blank(config["Telegram:CronSecret"]);
+        ApiBase = (Blank(config["Telegram:ApiBaseUrl"]) ?? "https://api.telegram.org").TrimEnd('/');
         // Botdagi sayt tugmalari — asosiy (birinchi) manzilga.
         FrontendUrl = FrontendOrigins.Parse(config["FrontendOrigin"])[0];
         AdminIds = ParseAdminIds(config["Telegram:Admins"]);

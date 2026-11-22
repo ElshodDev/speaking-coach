@@ -37,6 +37,7 @@ public class TelegramStartup : BackgroundService
                     var commands = new[]
                     {
                         ("today", Texts.Get(lang, "bot.cmd_today")),
+                        ("dars", Texts.Get(lang, "tutor.bot_cmd")),
                         ("word", Texts.Get(lang, "bot.cmd_word")),
                         ("review", Texts.Get(lang, "bot.cmd_review")),
                         ("stats", Texts.Get(lang, "bot.cmd_stats")),
