@@ -133,7 +133,7 @@ Hammasi bepul tariflarda ishlaydi.
 - **Asosiy mantiq sof funksiyalarda.** SM-2, IELTS ballini yaxlitlash, CEFR jadvallari, XP va nishonlar, eslatma vaqti va demo ma'lumotlari bazaga ham, HTTP'ga ham tegmaydi. 1100 dan ortiq backend test taxminan bir soniyada o'tishining sababi shu.
 - **XP saqlanmaydi, hisoblanadi.** Daraja, nishon va musobaqa tarixdan hisoblanadi. Shuning uchun hech narsa "sinxrondan chiqmaydi", qoida o'zgarsa eski natijalar ham o'zi qayta hisoblanadi.
 - **Kutubxonasiz, tipga qat'iy tarjimalar.** Har bir sahifa matnlarini bir marta o'zbekcha yozadi, rus va ingliz variantlari esa aynan shu shaklda bo'lishi shart. Bitta tarjima tushib qolsa, build yiqiladi.
-- **Bitta dizayn, uch xil ekran.** Asosiy loyiha telefon uchun, menyu pastda. Planshetda menyu tepaga chiqadi. Noutbukda chap menyu, ikki ustunli sahifalar va yonma-yon imtihon paydo bo'ladi, klaviatura tugmalari ham ishlaydi: Probel — javob yoki tinglash, 1–4 — baho, ← → — gaplar orasida yurish, R — yozish.
+- **Bitta dizayn, uch xil ekran.** Asosiy loyiha telefon uchun, menyu pastda. Muqobil “kundalik reja” ko'rinishi (pastda 5 tugma va o'rtada AI ustoz, qidiruvli “Hammasi” oynasi, tepada Fikr tugmasi, bosh sahifada maqsad eslatmasi va bugungi reja chizig'i) `VITE_NEW_NAV` bayrog'i ortida ([docs/deploy.md](docs/deploy.md)). Planshetda menyu tepaga chiqadi. Noutbukda chap menyu, ikki ustunli sahifalar va yonma-yon imtihon paydo bo'ladi, klaviatura tugmalari ham ishlaydi: Probel — javob yoki tinglash, 1–4 — baho, ← → — gaplar orasida yurish, R — yozish.
 
 ## Xavfsizlik va ishonchlilik
 
@@ -145,7 +145,7 @@ Hammasi bepul tariflarda ishlaydi.
 
 ## Sifat
 
-- **Clean Architecture backend**: Domain, Application, Infrastructure va Api loyihalari. Bog'liqlik qoidasini arxitektura testlari tekshiradi ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)).
+- **Clean Architecture backend**: Domain, Application, Infrastructure va Api loyihalari. Bog'liqlik qoidasini arxitektura testlari tekshiradi ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)). Endpointlar yupqa saqlanmoqda: guruh, hisob ma'lumotlari va O'qish/Tinglash mantiqi Application servislarida (`GroupService`, `AccountDataService`, `ComprehensionPractice`); maxsus test bu endpointlarning konkret baza kontekstiga tegishiga yo'l qo'ymaydi.
 - **Backend'da 1100 dan ortiq unit test** (xUnit). Ular takrorlash jadvali, baholash jadvallari, validatorlar, qat'iy o'qish, xavfsizlik qoidalari, bot mantiqi, tarjimalar (har bir xabar uch tilda, bir xil parametrlar bilan), demo ma'lumotlari va ilovadagi har bir tayyor materialni (mock testlar, mashqlar) tekshiradi.
 - **Frontend'da 330 dan ortiq unit test** (Vitest): grafiklar, matn bilan ishlash, shadowing va diktant mantiqi, tarmoq xatolari va kutish muddati, Telegram'dan ochilish va kirish holati, ilova ichidagi brauzerni aniqlash, har bir tarjimadagi o'zbek imlosi, ilovadagi darslar, lug'at va mavzular (to'g'ri javob harflari teng taqsimlangani ham).
 - **CI** har bir push'da ikkala qismni tip tekshiruvidan, lintdan, build va testlardan o'tkazadi, ma'lum zaifligi bor paket bo'lsa yiqiladi. Skrinshotlar va demo GIF ishlayotgan ilovadan alohida olinadi (Playwright, soxta API); brauzer end-to-end testlari hozircha shu repozitoriyda yo'q.

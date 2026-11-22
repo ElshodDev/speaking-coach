@@ -133,7 +133,7 @@ Everything runs on free tiers.
 - **Pure core logic.** The SM-2 scheduler, IELTS band rounding, the CEFR score tables, XP and badges, reminder timing and the demo seed never touch the database or HTTP. That is why more than 1,100 backend tests run in about a second.
 - **XP is derived, not stored.** Levels, badges and the leaderboard are computed from the history, so nothing drifts out of sync and rule changes re-score the past automatically.
 - **Type-safe translations without a library.** Each screen declares its texts once in Uzbek, and the Russian and English versions must have the same shape, so a missing translation fails the build.
-- **One layout, three screen sizes.** Phone first, with bottom navigation. On a tablet the menu moves to the top. On a laptop the app switches to a sidebar with two-column pages and split-screen exams, and keyboard shortcuts appear: Space to reveal or play, 1–4 to grade, ← → to move between lines, R to record.
+- **One layout, three screen sizes.** Phone first, with bottom navigation. An alternative “daily planner” layout — five-button bottom menu with the AI tutor in the centre, an “All” sheet with search, Feedback in the header, a goal note and a today’s-plan timeline on the home page — ships behind the `VITE_NEW_NAV` flag (see [docs/deploy.md](docs/deploy.md)). On a tablet the menu moves to the top. On a laptop the app switches to a sidebar with two-column pages and split-screen exams, and keyboard shortcuts appear: Space to reveal or play, 1–4 to grade, ← → to move between lines, R to record.
 
 ## Security and reliability
 
@@ -145,7 +145,7 @@ Everything runs on free tiers.
 
 ## Quality
 
-- **Clean Architecture backend** — Domain / Application / Infrastructure / Api projects; the dependency rule is enforced by architecture tests ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)).
+- **Clean Architecture backend** — Domain / Application / Infrastructure / Api projects; the dependency rule is enforced by architecture tests ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)) Endpoints are being kept thin: group, account-data and reading/listening logic live in Application services (`GroupService`, `AccountDataService`, `ComprehensionPractice`), and a test keeps those endpoints from touching the concrete DB context.
 - **More than 1,100 backend unit tests** (xUnit) cover scheduling, scoring tables, validators, strict parsing, the security rules, bot logic, localisation (every message in all three languages with matching placeholders), the demo seed and every piece of built-in content (mock tests, exercises).
 - **More than 330 frontend unit tests** (Vitest) cover charts, text handling, shadowing and dictation logic, network errors and timeouts, the Telegram launch check and sign-in state, in-app browser detection, Uzbek spelling in every translation, and the built-in lessons, vocabulary and topics (including an even spread of correct answer letters).
 - **CI** type-checks, lints, builds and tests both halves on every push and fails on known vulnerable packages. The screenshots and the demo GIF are captured separately from the running app (Playwright, mocked API); browser end-to-end tests are not part of this repository yet.
