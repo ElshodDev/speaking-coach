@@ -142,40 +142,41 @@ public class ReviewService
     private const int ShortStreakWindowDays = 120;
     private const int LongStreakWindowDays = 800;
 
+    /// <summary>Seriya oynalari: avval 30 kun (ko'pchilik uchun yetadi), kerak bo'lsa 120, keyin 800.</summary>
+    private static readonly int[] StreakWindows = [30, ShortStreakWindowDays, LongStreakWindowDays];
+
     public async Task<ReviewStats> GetStatsAsync(Guid userId, int tzOffsetMinutes)
     {
         var now = DateTime.UtcNow;
 
-        var due = await _db.ReviewCards.CountAsync(c => c.UserId == userId && c.DueAtUtc <= now);
-        var total = await _db.ReviewCards.CountAsync(c => c.UserId == userId);
+        // Navbatdagi va jami kartalar — bitta so'rovda.
+        var counts = await _db.ReviewCards
+            .Where(c => c.UserId == userId)
+            .GroupBy(_ => 1)
+            .Select(g => new { Total = g.Count(), Due = g.Count(c => c.DueAtUtc <= now) })
+            .FirstOrDefaultAsync();
+        var due = counts?.Due ?? 0;
+        var total = counts?.Total ?? 0;
 
-        async Task<List<DateTime>> TimesSince(DateTime since) =>
-            (await _db.ReviewLogs
+        // Takrorlash va mashq vaqtlari — bitta so'rovda (UNION ALL), oyna kichikdan kattaga o'sadi.
+        // Seriya shu chegaraga yetgan kamdan-kam foydalanuvchi uchungina uzoqroq tarix o'qiladi
+        // (aks holda seriya oyna chetida "to'xtab" qolardi).
+        async Task<IReadOnlyList<DateTime>> TimesSince(int windowDays)
+        {
+            var since = now.AddDays(-windowDays);
+            return await _db.ReviewLogs
                 .Where(l => l.UserId == userId && l.ReviewedAtUtc >= since)
                 .Select(l => l.ReviewedAtUtc)
-                .ToListAsync())
-            .Concat(await _db.Activities
-                .Where(a => a.UserId == userId && a.CreatedAtUtc >= since)
-                .Select(a => a.CreatedAtUtc)
-                .ToListAsync())
-            .ToList();
-
-        // Odatda 120 kun yetarli; seriya shu chegaraga yetgan kamdan-kam
-        // foydalanuvchi uchungina uzoqroq tarix o'qiladi (aks holda seriya 120 da "to'xtab" qolardi).
-        var times = await TimesSince(now.AddDays(-ShortStreakWindowDays));
-        var streak = ReviewScheduler.ComputeStreak(times, now, tzOffsetMinutes);
-        if (streak >= ShortStreakWindowDays - 1)
-        {
-            times = await TimesSince(now.AddDays(-LongStreakWindowDays));
-            streak = ReviewScheduler.ComputeStreak(times, now, tzOffsetMinutes);
+                .Concat(_db.Activities
+                    .Where(a => a.UserId == userId && a.CreatedAtUtc >= since)
+                    .Select(a => a.CreatedAtUtc))
+                .ToListAsync();
         }
+        var streak = await ReviewScheduler.ComputeStreakProgressiveAsync(TimesSince, now, tzOffsetMinutes, StreakWindows);
 
-        var today = ReviewScheduler.ToLocalDate(now, tzOffsetMinutes);
-        var reviewedToday = await _db.ReviewLogs
-            .Where(l => l.UserId == userId && l.ReviewedAtUtc >= now.AddDays(-2))
-            .Select(l => l.ReviewedAtUtc)
-            .ToListAsync();
-        var reviewedTodayCount = reviewedToday.Count(t => ReviewScheduler.ToLocalDate(t, tzOffsetMinutes) == today);
+        // Bugungi takrorlashlar: mahalliy kun chegaralari bo'yicha sanaladi (qatorlar tortilmaydi).
+        var (dayStart, dayEnd) = ReviewScheduler.LocalDayBoundsUtc(now, tzOffsetMinutes);
+        var reviewedTodayCount = await _db.ReviewLogs.CountAsync(l => l.UserId == userId && l.ReviewedAtUtc >= dayStart && l.ReviewedAtUtc < dayEnd);
 
         return new ReviewStats(due, total, reviewedTodayCount, DailyGoal, streak);
     }

@@ -97,6 +97,32 @@ public static class ReviewScheduler
         return streak;
     }
 
+    /// <summary>
+    /// Seriyani kichikdan kattaga o'sib boruvchi oynalar bilan hisoblaydi: avval qisqa oyna (odatdagi foydalanuvchida
+    /// seriya qisqa — kam qator o'qiladi), seriya oynaning chetiga yetgan (<c>windowDays - 1</c> va undan ko'p) bo'lsa —
+    /// keyingi, kattaroq oyna. Natija butun tarix bo'yicha <see cref="ComputeStreak"/> bilan bir xil: kun-kunma-kun
+    /// sanash birinchi bo'sh kunda to'xtaydi, oyna chetidagi (to'liq bo'lmagan) kunga esa yetmasdan oldin kengayadi.
+    /// </summary>
+    /// <param name="loadSince">Berilgan oynada (oxirgi N kun) bo'lgan faoliyat vaqtlarini qaytaradi.</param>
+    public static async Task<int> ComputeStreakProgressiveAsync(
+        Func<int, Task<IReadOnlyList<DateTime>>> loadSince, DateTime nowUtc, int tzOffsetMinutes, IReadOnlyList<int> windowDays)
+    {
+        var streak = 0;
+        foreach (var window in windowDays)
+        {
+            streak = ComputeStreak(await loadSince(window), nowUtc, tzOffsetMinutes);
+            if (streak < window - 1) break;
+        }
+        return streak;
+    }
+
+    /// <summary>Mahalliy "bugun" kunining UTC chegaralari: [boshi, ertangi boshi).</summary>
+    public static (DateTime StartUtc, DateTime EndUtc) LocalDayBoundsUtc(DateTime nowUtc, int tzOffsetMinutes)
+    {
+        var start = ToLocalDate(nowUtc, tzOffsetMinutes).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc).AddMinutes(tzOffsetMinutes);
+        return (start, start.AddDays(1));
+    }
+
     /// <summary>Takroriy baho oynasi: shu vaqt ichidagi ikkinchi baho — ikki marta bosish.</summary>
     public static readonly TimeSpan DuplicateGradeWindow = TimeSpan.FromSeconds(5);
 
