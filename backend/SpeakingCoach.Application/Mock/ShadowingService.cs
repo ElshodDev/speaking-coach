@@ -60,6 +60,17 @@ public class ShadowingService(IAppDbContext db)
         return Number(ShadowingBank.Lessons.Concat(stored));
     }
 
+    /// <summary>Foydalanuvchining shaxsiy videolari (yangisi birinchi), raqamsiz: umumiy seriyalar raqamiga ta'sir qilmaydi.</summary>
+    public async Task<List<ShadowingSummary>> MineAsync(Guid userId)
+    {
+        var rows = await db.MockTests
+            .Where(t => t.Exam == Exam && t.Status == MockTestStatus.Personal && t.CreatedByUserId == userId)
+            .OrderByDescending(t => t.CreatedAtUtc)
+            .Select(t => new { t.Id, t.Payload })
+            .ToListAsync();
+        return rows.Select(r => Parse(r.Id, r.Payload)).OfType<ShadowingLesson>().Select(l => Summarize(l)).ToList();
+    }
+
     /// <summary>Faoliyat PromptData'sidan dars ID'si (yo'q yoki buzilgan bo'lsa — null).</summary>
     public static string? LessonIdOf(string promptJson)
     {
@@ -96,12 +107,17 @@ public class ShadowingService(IAppDbContext db)
         }
     }
 
-    public async Task<ShadowingLesson?> FindAsync(string? id)
+    /// <summary>
+    /// Dars: tayyor, chop etilgan yoki (userId berilgan bo'lsa) shu foydalanuvchining SHAXSIY darsi.
+    /// Boshqa birovning shaxsiy darsi — topilmadi.
+    /// </summary>
+    public async Task<ShadowingLesson?> FindAsync(string? id, Guid? userId = null)
     {
         if (ShadowingBank.Find(id) is { } builtIn) return builtIn;
         if (!Guid.TryParseExact(id, "N", out var gid)) return null;
         var row = await db.MockTests
-            .Where(t => t.Id == gid && t.Exam == Exam && t.Status == MockTestStatus.Published)
+            .Where(t => t.Id == gid && t.Exam == Exam
+                && (t.Status == MockTestStatus.Published || (userId != null && t.Status == MockTestStatus.Personal && t.CreatedByUserId == userId)))
             .Select(t => new { t.Id, t.Payload })
             .FirstOrDefaultAsync();
         return row is null ? null : Parse(row.Id, row.Payload);

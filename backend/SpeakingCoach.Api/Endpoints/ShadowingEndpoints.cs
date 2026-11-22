@@ -18,6 +18,10 @@ public static class ShadowingEndpoints
     {
         app.MapGet("/api/shadowing", async (ShadowingService lessons) => Results.Ok(await lessons.SummariesAsync()));
 
+        // Mening videolarim: foydalanuvchining shaxsiy (botda qo'shgan) darslari. Mehmon — bo'sh.
+        app.MapGet("/api/shadowing/mine", async (HttpRequest request, AuthService auth, ShadowingService lessons) =>
+            await auth.GetCurrentUserIdAsync(request) is { } uid ? Results.Ok(await lessons.MineAsync(uid)) : Results.Ok(Array.Empty<ShadowingSummary>()));
+
         // Foydalanuvchining natijalari: qaysi darslar bajarilgan va eng yaxshi ball (mehmon — bo'sh).
         app.MapGet("/api/shadowing/progress", async (HttpRequest request, AuthService auth, AppDbContext db) =>
         {
@@ -30,11 +34,12 @@ public static class ShadowingEndpoints
             return Results.Ok(ShadowingService.ProgressOf(rows.Select(r => (r.PromptData, r.ResponseData))));
         });
 
-        app.MapGet("/api/shadowing/{id}", async (string id, HttpRequest request, ShadowingService lessons) =>
-            await lessons.FindAsync(id) is { } l ? Results.Ok(l) : Results.NotFound(request.Error("shadowing.not_found")));
+        app.MapGet("/api/shadowing/{id}", async (string id, HttpRequest request, AuthService auth, ShadowingService lessons) =>
+            await lessons.FindAsync(id, await auth.GetCurrentUserIdAsync(request)) is { } l ? Results.Ok(l) : Results.NotFound(request.Error("shadowing.not_found")));
 
         app.MapPost("/api/shadowing/check", async (
             HttpRequest request,
+            AuthService auth,
             ShadowingService lessons,
             IShadowingCoach coach,
             AiQuotaService quotas,
@@ -50,7 +55,7 @@ public static class ShadowingEndpoints
             var audio = form.Files.GetFile("audio");
             if (audio is null || audio.Length == 0 || audio.Length > MaxAudioBytes) return Results.BadRequest(request.Error("shadowing.bad_audio"));
 
-            var lesson = await lessons.FindAsync(form["lessonId"].ToString());
+            var lesson = await lessons.FindAsync(form["lessonId"].ToString(), await auth.GetCurrentUserIdAsync(request));
             if (lesson is null || !int.TryParse(form["line"], out var index) || index < 0 || index >= lesson.Lines.Count)
             {
                 return Results.NotFound(request.Error("shadowing.not_found"));
@@ -83,9 +88,9 @@ public static class ShadowingEndpoints
             AuthService auth,
             AppDbContext db) =>
         {
-            var lesson = await lessons.FindAsync(id);
-            if (lesson is null) return Results.NotFound(request.Error("shadowing.not_found"));
             var userId = await auth.GetCurrentUserIdAsync(request);
+            var lesson = await lessons.FindAsync(id, userId);
+            if (lesson is null) return Results.NotFound(request.Error("shadowing.not_found"));
             if (userId is null) return Results.Ok(new { saved = false });
 
             var since = DateTime.UtcNow.AddHours(-20);

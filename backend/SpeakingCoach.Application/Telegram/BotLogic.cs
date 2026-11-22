@@ -43,6 +43,9 @@ public abstract record BotCallback
     /// "g" keyingi qadam, "w" o'z gaplarini yozish, "s" mini-testga o'tish, "q" savol berish.
     /// </summary>
     public sealed record Tutor(Guid? Id, string Op, string Arg = "") : BotCallback;
+
+    /// <summary>Shaxsiy podcast (/podcast): videoni o'chirish.</summary>
+    public sealed record PodcastDelete(Guid Id) : BotCallback;
 }
 
 /// <summary>
@@ -73,6 +76,7 @@ public static partial class BotLogic
         BotCallback.AuthorModePick m => $"au:m:{m.Key}:{(m.Generate ? "g" : "s")}",
         BotCallback.AuthorCancel => "au:x",
         BotCallback.TestCmd t => $"au:{BotAuthoring.Code(t.Action)}:{t.Id:N}",
+        BotCallback.PodcastDelete d => $"pc:d:{d.Id:N}",
         BotCallback.Tutor { Id: null } t => $"tu:{t.Op}:{t.Arg}",
         BotCallback.Tutor t => t.Arg.Length > 0 ? $"tu:{t.Id:N}:{t.Op}:{t.Arg}" : $"tu:{t.Id:N}:{t.Op}",
         _ => throw new ArgumentOutOfRangeException(nameof(cb)),
@@ -104,6 +108,7 @@ public static partial class BotLogic
             ["au", "k", var e, var m, var v] when Mock.AuthorKind.Parse($"{e}:{m}:{v}") is { } k => new BotCallback.AuthorKindPick(k.Key),
             ["au", "m", var e, var m, var v, "g" or "s"] when Mock.AuthorKind.Parse($"{e}:{m}:{v}") is { } k => new BotCallback.AuthorModePick(k.Key, p[5] == "g"),
             ["au", "x"] => new BotCallback.AuthorCancel(),
+            ["pc", "d", var id] when Guid.TryParseExact(id, "N", out var g) => new BotCallback.PodcastDelete(g),
             ["tu", "t", "new"] => new BotCallback.Tutor(null, "t", "new"),
             ["tu", "t", var x] when BotTutor.ParseAssignmentArg(x) is not null => new BotCallback.Tutor(null, "t", x),
             ["tu", "t", var r] when r.Length > 1 && r[0] == 'r' && BotTutor.ParseTopicArg(r) is not null => new BotCallback.Tutor(null, "t", r),

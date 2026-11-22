@@ -34,12 +34,14 @@ public partial class TelegramBot
     private readonly AdminService _adminStats;
     private readonly AuthService _auth;
     private readonly TutorService _tutor;
+    private readonly PersonalShadowingService _podcasts;
     private readonly FeatureFlags _flags;
 
     public TelegramBot(IAppDbContext db, ITelegramApi api, TelegramOptions options, ReviewService reviews,
         IWordService words, AiQuotaService quotas, TodayService today, ILogger<TelegramBot> logger,
-        AdminOptions admins, AuthoringRunner runner, AdminService adminStats, AuthService auth, TutorService tutor, FeatureFlags flags)
+        AdminOptions admins, AuthoringRunner runner, AdminService adminStats, AuthService auth, TutorService tutor, FeatureFlags flags, PersonalShadowingService podcasts)
     {
+        _podcasts = podcasts;
         _tutor = tutor;
         _flags = flags;
         _auth = auth;
@@ -186,13 +188,18 @@ public partial class TelegramBot
             }
             if (BotLogic.IsCommand(text, "/cancel"))
             {
-                if (BotTutor.ParseState(c.Account?.BotState) is not null)
+                if (BotPodcast.IsFlowState(c.Account?.BotState))
                 {
                     await SetBotStateAsync(c, null, ct);
                     await _api.SendMessageAsync(c.ChatId, c.T("tutor.bot_cancelled"), replyKeyboard: BotLogic.MainMenu(c.Lang), ct: ct);
                     return;
                 }
                 await CancelAuthoringAsync(c, null, ct);
+                return;
+            }
+            if (BotLogic.IsCommand(text, "/podcast") || BotLogic.IsCommand(text, "/video"))
+            {
+                await PodcastEntryAsync(c, ct);
                 return;
             }
             if (BotLogic.IsCommand(text, "/dars") || BotLogic.IsCommand(text, "/tutor"))
@@ -218,6 +225,13 @@ public partial class TelegramBot
                 case MenuAction.Help:
                     await _api.SendMessageAsync(c.ChatId, c.T("bot.help"), [GuideRow(c)], ct: ct);
                     return;
+            }
+
+            // /podcast dan keyin kutilayotgan YouTube havolasi.
+            if (!text.StartsWith('/') && text.Length > 0 && BotPodcast.IsAwaitingLink(c.Account?.BotState))
+            {
+                await ReceivePodcastInputAsync(c, msg, ct);
+                return;
             }
 
             // /dars dan keyin kutilayotgan mavzu, o'z gaplari yoki savol.
@@ -630,6 +644,10 @@ public partial class TelegramBot
 
                 case BotCallback.AuthorExam or BotCallback.AuthorKindPick or BotCallback.AuthorModePick or BotCallback.AuthorCancel or BotCallback.TestCmd:
                     toast = await HandleAuthorCallbackAsync(c, action, messageId, ct);
+                    break;
+
+                case BotCallback.PodcastDelete podcastDelete:
+                    toast = await HandlePodcastDeleteAsync(c, podcastDelete, messageId, ct);
                     break;
 
                 case BotCallback.Tutor tutorCb:

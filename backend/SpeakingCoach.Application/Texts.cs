@@ -326,9 +326,9 @@ public static class Texts
             "🔒 Эта команда только для администраторов.",
             "🔒 This command is for admins only."),
         ["bot.help"] = new(
-            "<b>Bot nima qila oladi</b>\n\n📚 Inglizcha soʻz yuboring — maʼnosi, misol va “Lugʻatga qoʻshish” tugmasi.\n🌟 /word — kunlik soʻz.\n📋 <b>Bugun</b> — bugungi reja, imtihongacha kunlar va oʻqituvchi vazifalari.\n🔁 <b>Takrorlash</b> — navbatdagi kartalar: javobni koʻrasiz va qanchalik eslaganingizni belgilaysiz.\n📊 <b>Natijalar</b> — seriya, bugungi maqsad va kartalar.\n⚙️ <b>Sozlamalar</b> — eslatma vaqti, til, hisobni uzish.\n🎓 /dars — AI ustoz: mavzu yozasiz, bot dars, mashq va mini-test beradi.\n🌐 /lang — bot tili: oʻzbek, rus yoki ingliz.\n🧭 /guide — saytda nimalar bor; boʻlimlar Telegram ichida ochiladi.\n📝 /add — mock test yoki shadowing darsi qoʻshish (oʻqituvchi va admin), /bank — qoʻshilganlar roʻyxati.\n👥 /admin — foydalanuvchilar soni (faqat admin).\n\nHammasi saytdagi hisobingiz bilan bir xil: bu yerda takrorlagan kartangiz saytda ham takrorlangan boʻladi.",
-            "<b>Что умеет бот</b>\n\n📚 Пришлите английское слово — значение, пример и кнопка «Добавить в словарь».\n🌟 /word — слово дня.\n📋 <b>Сегодня</b> — план на день, дни до экзамена и задания учителя.\n🔁 <b>Повторение</b> — карточки на сегодня: смотрите ответ и отмечаете, насколько хорошо вспомнили.\n📊 <b>Прогресс</b> — серия, цель на сегодня и карточки.\n⚙️ <b>Настройки</b> — время напоминания, язык, отключение аккаунта.\n🎓 /dars — ИИ-учитель: пишете тему, бот даёт урок, упражнения и мини-тест.\n🌐 /lang — язык бота: узбекский, русский или английский.\n🧭 /guide — что есть на сайте; разделы открываются прямо в Telegram.\n📝 /add — добавить mock-тест или урок shadowing (учитель и админ), /bank — список добавленного.\n👥 /admin — число пользователей (только админ).\n\nВсё синхронизировано с сайтом: карточка, повторённая здесь, повторена и на сайте.",
-            "<b>What the bot can do</b>\n\n📚 Send an English word — meaning, an example and an “Add to vocabulary” button.\n🌟 /word — word of the day.\n📋 <b>Today</b> — today's plan, days to your exam and teacher assignments.\n🔁 <b>Review</b> — your due cards: see the answer and rate how well you remembered.\n📊 <b>Progress</b> — streak, today's goal and cards.\n⚙️ <b>Settings</b> — reminder time, language, disconnect.\n🎓 /dars — AI tutor: type a topic and the bot gives a lesson, exercises and a mini-test.\n🌐 /lang — bot language: Uzbek, Russian or English.\n🧭 /guide — what's on the website; sections open right inside Telegram.\n📝 /add — add a mock test or a shadowing lesson (teachers and admin), /bank — list of what you added.\n👥 /admin — user counts (admins only).\n\nEverything is synced with the website: a card reviewed here is reviewed there too."),
+            "<b>Bot nima qila oladi</b>\n\n📚 Inglizcha soʻz yuboring — maʼnosi, misol va “Lugʻatga qoʻshish” tugmasi.\n🌟 /word — kunlik soʻz.\n📋 <b>Bugun</b> — bugungi reja, imtihongacha kunlar va oʻqituvchi vazifalari.\n🔁 <b>Takrorlash</b> — navbatdagi kartalar: javobni koʻrasiz va qanchalik eslaganingizni belgilaysiz.\n📊 <b>Natijalar</b> — seriya, bugungi maqsad va kartalar.\n⚙️ <b>Sozlamalar</b> — eslatma vaqti, til, hisobni uzish.\n🎓 /dars — AI ustoz: mavzu yozasiz, bot dars, mashq va mini-test beradi.\n🎬 /podcast — oʻz YouTube videongizdan shadowing darsi (faqat sizga).\n🌐 /lang — bot tili: oʻzbek, rus yoki ingliz.\n🧭 /guide — saytda nimalar bor; boʻlimlar Telegram ichida ochiladi.\n📝 /add — mock test yoki shadowing darsi qoʻshish (oʻqituvchi va admin), /bank — qoʻshilganlar roʻyxati.\n👥 /admin — foydalanuvchilar soni (faqat admin).\n\nHammasi saytdagi hisobingiz bilan bir xil: bu yerda takrorlagan kartangiz saytda ham takrorlangan boʻladi.",
+            "<b>Что умеет бот</b>\n\n📚 Пришлите английское слово — значение, пример и кнопка «Добавить в словарь».\n🌟 /word — слово дня.\n📋 <b>Сегодня</b> — план на день, дни до экзамена и задания учителя.\n🔁 <b>Повторение</b> — карточки на сегодня: смотрите ответ и отмечаете, насколько хорошо вспомнили.\n📊 <b>Прогресс</b> — серия, цель на сегодня и карточки.\n⚙️ <b>Настройки</b> — время напоминания, язык, отключение аккаунта.\n🎓 /dars — ИИ-учитель: пишете тему, бот даёт урок, упражнения и мини-тест.\n🎬 /podcast — урок shadowing из вашего видео YouTube (только для вас).\n🌐 /lang — язык бота: узбекский, русский или английский.\n🧭 /guide — что есть на сайте; разделы открываются прямо в Telegram.\n📝 /add — добавить mock-тест или урок shadowing (учитель и админ), /bank — список добавленного.\n👥 /admin — число пользователей (только админ).\n\nВсё синхронизировано с сайтом: карточка, повторённая здесь, повторена и на сайте.",
+            "<b>What the bot can do</b>\n\n📚 Send an English word — meaning, an example and an “Add to vocabulary” button.\n🌟 /word — word of the day.\n📋 <b>Today</b> — today's plan, days to your exam and teacher assignments.\n🔁 <b>Review</b> — your due cards: see the answer and rate how well you remembered.\n📊 <b>Progress</b> — streak, today's goal and cards.\n⚙️ <b>Settings</b> — reminder time, language, disconnect.\n🎓 /dars — AI tutor: type a topic and the bot gives a lesson, exercises and a mini-test.\n🎬 /podcast — a shadowing lesson from your own YouTube video (only for you).\n🌐 /lang — bot language: Uzbek, Russian or English.\n🧭 /guide — what's on the website; sections open right inside Telegram.\n📝 /add — add a mock test or a shadowing lesson (teachers and admin), /bank — list of what you added.\n👥 /admin — user counts (admins only).\n\nEverything is synced with the website: a card reviewed here is reviewed there too."),
         ["bot.no_cards"] = new(
             "🗂 Hali kartalar yoʻq. Saytda mashq qiling yoki menga inglizcha soʻz yuboring — ular shu yerga tushadi.",
             "🗂 Карточек пока нет. Позанимайтесь на сайте или пришлите мне английское слово — они появятся здесь.",
@@ -642,6 +642,54 @@ public static class Texts
         ["tutor.bot_rate_up"] = new("👍 Dars foydali", "👍 Урок полезен", "👍 Helpful lesson"),
         ["tutor.bot_rate_down"] = new("👎 Unchalik", "👎 Не очень", "👎 Not really"),
         ["tutor.bot_thanks"] = new("Rahmat!", "Спасибо!", "Thank you!"),
+        ["pc.intro"] = new(
+            "🎬 <b>Shaxsiy podcast</b>\nYouTube videoni yuboring: men uni gaplarga boʻlib, shadowing darsi qilaman. Dars faqat sizga koʻrinadi.\n\nMasalan: <code>https://youtu.be/VIDEO_ID 1:20-3:40</code>\nKoʻpi bilan 5 daqiqa; vaqt yozilmasa — boshidan 3 daqiqa. Darajani ham yozishingiz mumkin (masalan: B1). Video ochiq va inglizcha nutqli boʻlsin.\nKuniga {0} ta, jami {1} tagacha. Bekor qilish: /cancel",
+            "🎬 <b>Личный подкаст</b>\nПришлите видео с YouTube: я разобью его на фразы и сделаю урок shadowing. Урок увидите только вы.\n\nНапример: <code>https://youtu.be/VIDEO_ID 1:20-3:40</code>\nНе более 5 минут; без времени — первые 3 минуты. Можно указать уровень (например: B1). Видео должно быть открытым, с английской речью.\nВ день — {0}, всего — до {1}. Отмена: /cancel",
+            "🎬 <b>Personal podcast</b>\nSend a YouTube video: I'll split it into sentences and make a shadowing lesson. Only you can see it.\n\nFor example: <code>https://youtu.be/VIDEO_ID 1:20-3:40</code>\nUp to 5 minutes; without a time range — the first 3 minutes. You can add a level (e.g. B1). The video must be public with English speech.\n{0} per day, up to {1} in total. Cancel: /cancel"),
+        ["pc.mine_head"] = new(
+            "Sizning videolaringiz:",
+            "Ваши видео:",
+            "Your videos:"),
+        ["pc.working"] = new(
+            "⏳ Video tayyorlanmoqda… (1–3 daqiqa). Tayyor boʻlgach yozaman.",
+            "⏳ Готовим видео… (1–3 минуты). Напишу, когда будет готово.",
+            "⏳ Preparing the video… (1–3 minutes). I'll message you when it's ready."),
+        ["pc.ready"] = new(
+            "✅ <b>{0}</b>\n{1} ta gap · ≈{2} soniya\n\nMashq qilish uchun tugmani bosing: video va gaplar Telegram ichida ochiladi.",
+            "✅ <b>{0}</b>\nФраз: {1} · ≈{2} сек.\n\nНажмите кнопку для практики: видео и фразы откроются прямо в Telegram.",
+            "✅ <b>{0}</b>\n{1} sentences · ≈{2} sec\n\nTap the button to practise: the video and sentences open right inside Telegram."),
+        ["pc.practice_btn"] = new(
+            "▶️ Mashq qilish",
+            "▶️ Практика",
+            "▶️ Practise"),
+        ["pc.delete_btn"] = new(
+            "🗑 Oʻchirish",
+            "🗑 Удалить",
+            "🗑 Delete"),
+        ["pc.deleted"] = new(
+            "🗑 Oʻchirildi.",
+            "🗑 Удалено.",
+            "🗑 Deleted."),
+        ["pc.not_found"] = new(
+            "Video topilmadi (allaqachon oʻchirilgan).",
+            "Видео не найдено (уже удалено).",
+            "Video not found (already deleted)."),
+        ["pc.limit"] = new(
+            "Bugungi limit tugadi (kuniga {0} ta video). Ertaga davom eting.",
+            "Дневной лимит исчерпан ({0} видео в день). Продолжите завтра.",
+            "You've reached today's limit ({0} videos a day). Continue tomorrow."),
+        ["pc.full"] = new(
+            "Sizda {0} ta video bor. Yangisini qoʻshishdan oldin eskisini oʻchiring: /podcast.",
+            "У вас уже {0} видео. Удалите старое, прежде чем добавлять новое: /podcast.",
+            "You already have {0} videos. Delete an old one before adding a new one: /podcast."),
+        ["pc.disabled"] = new(
+            "Shaxsiy podcast hozircha oʻchirilgan.",
+            "Личные подкасты сейчас отключены.",
+            "Personal podcasts are turned off right now."),
+        ["pc.cmd"] = new(
+            "Shaxsiy podcast: YouTube videoni shadowing qilish",
+            "Личный подкаст: видео YouTube для shadowing",
+            "Personal podcast: shadowing from a YouTube video"),
         ["tutor.bot_preparing"] = new(
             "⏳ Dars tayyorlanmoqda… (10–20 soniya)",
             "⏳ Готовим урок… (10–20 секунд)",

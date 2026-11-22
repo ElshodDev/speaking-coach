@@ -38,6 +38,7 @@ public class TelegramStartup : BackgroundService
                     {
                         ("today", Texts.Get(lang, "bot.cmd_today")),
                         ("dars", Texts.Get(lang, "tutor.bot_cmd")),
+                        ("podcast", Texts.Get(lang, "pc.cmd")),
                         ("word", Texts.Get(lang, "bot.cmd_word")),
                         ("review", Texts.Get(lang, "bot.cmd_review")),
                         ("stats", Texts.Get(lang, "bot.cmd_stats")),

@@ -75,7 +75,7 @@ public partial class TelegramBot
         {
             var since = DateTime.UtcNow.AddHours(-24);
             var userId = c.User.Id;
-            var made = await _db.MockTests.CountAsync(t => t.CreatedByUserId == userId && t.Title != null && t.CreatedAtUtc > since, ct);
+            var made = await _db.MockTests.CountAsync(t => t.CreatedByUserId == userId && t.Title != null && t.Status != MockTestStatus.Personal && t.CreatedAtUtc > since, ct);
             if (made >= BotAuthoring.TeacherPerDay)
             {
                 await _api.SendMessageAsync(c.ChatId, c.T("bot.author_limit", BotAuthoring.TeacherPerDay), ct: ct);
@@ -328,7 +328,7 @@ public partial class TelegramBot
 
         var userId = c.User!.Id;
         var mine = await _db.MockTests
-            .Where(t => t.CreatedByUserId == userId && t.Title != null && t.Status != MockTestStatus.Deleted)
+            .Where(t => t.CreatedByUserId == userId && t.Title != null && t.Status != MockTestStatus.Deleted && t.Status != MockTestStatus.Personal)
             .OrderByDescending(t => t.CreatedAtUtc)
             .Take(10)
             .ToListAsync(ct);

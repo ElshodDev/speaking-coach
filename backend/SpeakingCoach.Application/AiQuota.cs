@@ -36,6 +36,7 @@ public class AiQuotaOptions
     public int TalkTurns { get; }
     public int Authoring { get; }
     public int TutorCalls { get; }
+    public int Podcasts { get; }
 
     /// <summary>Barcha mehmonlar birgalikda kuniga (har bir tur uchun) — IP almashtirib umumiy Gemini byudjetini tugatib bo'lmasin.</summary>
     public int GuestTotalExercises { get; }
@@ -54,6 +55,7 @@ public class AiQuotaOptions
         TalkTurns = Read("Ai:TalkTurnsPerDay", 40);
         Authoring = Read("Ai:AuthoringPerDay", 10);
         TutorCalls = Read("Ai:TutorCallsPerDay", 30);
+        Podcasts = Read("Ai:PodcastsPerDay", 3);
         GuestTotalExercises = Read("Ai:GuestTotalExercisesPerDay", 300);
         GuestTotalWords = Read("Ai:GuestTotalWordsPerDay", 1000);
         GuestTotalShadowing = Read("Ai:GuestTotalShadowingPerDay", 500);
@@ -143,6 +145,7 @@ public class AiDailyCaps
     }
 
     public static string TalkKey(Guid userId) => "talk:" + userId.ToString("N");
+    public static string PodcastKey(Guid userId) => "podcast:" + userId.ToString("N");
     public static string TutorKey(Guid userId) => "tutor:" + userId.ToString("N");
     public static string AuthoringKey(Guid userId) => "author:" + userId.ToString("N");
 }

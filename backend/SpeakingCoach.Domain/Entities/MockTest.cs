@@ -46,6 +46,12 @@ public static class MockTestStatus
     public const string Pending = "pending";
     public const string Rejected = "rejected";
 
+    /// <summary>
+    /// Shaxsiy dars (masalan, foydalanuvchi botda qo'shgan YouTube shadowing): faqat muallifiga ko'rinadi, umumiy ro'yxatga
+    /// va admin ko'rib chiqishiga kirmaydi. Hisob o'chirilsa — o'chiriladi.
+    /// </summary>
+    public const string Personal = "personal";
+
     /// <summary>O'chirilgan (yumshoq): o'tgan natijalar tarixi buzilmasin va kunlik limit to'g'ri hisoblansin.</summary>
     public const string Deleted = "deleted";
 }
