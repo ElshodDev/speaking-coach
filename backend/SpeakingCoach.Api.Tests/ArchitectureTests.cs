@@ -79,6 +79,9 @@ public class ArchitectureTests
     [InlineData(typeof(SpeakingCoach.Api.Endpoints.UpgradeEndpoints))]
     [InlineData(typeof(SpeakingCoach.Api.Endpoints.ShadowingEndpoints))]
     [InlineData(typeof(SpeakingCoach.Api.Endpoints.SpeakingWritingEndpoints))]
+    [InlineData(typeof(SpeakingCoach.Api.Endpoints.FeedbackEndpoints))]
+    [InlineData(typeof(SpeakingCoach.Api.Endpoints.RatingEndpoints))]
+    [InlineData(typeof(SpeakingCoach.Api.Endpoints.TutorEndpoints))]
     public void Thin_endpoints_do_not_touch_the_concrete_db_context(Type endpoints)
     {
         const BindingFlags all = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly;

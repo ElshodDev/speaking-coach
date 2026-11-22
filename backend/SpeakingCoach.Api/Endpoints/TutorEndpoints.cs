@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 namespace SpeakingCoach.Api.Endpoints;
 
 public record TutorStartRequest(string? Topic, string? Level, Guid? AssignmentId = null, string? Source = null);
@@ -47,26 +46,12 @@ public static class TutorEndpoints
         });
 
         // Admin: AI ustoz o'lchovlari (boshlangan/tugagan darslar, mini-test, o'zlashtirish, mavzular, baho). 401 — kirmagan; 403 — admin emas.
-        app.MapGet("/api/admin/tutor", async (HttpRequest request, AuthService auth, AdminOptions admins, AppDbContext db, int days = 30) =>
+        app.MapGet("/api/admin/tutor", async (HttpRequest request, AuthService auth, AdminOptions admins, TutorService tutor, int days = 30) =>
         {
             var user = await auth.GetCurrentUserAsync(request);
             if (user is null) return Results.Json(request.Error("login.required"), statusCode: StatusCodes.Status401Unauthorized);
             if (!admins.IsAdmin(user)) return Results.Json(request.Error("admin.only"), statusCode: StatusCodes.Status403Forbidden);
-
-            days = Math.Clamp(days, 1, 365);
-            var since = DateTime.UtcNow.AddDays(-days);
-            var lessons = await db.Activities
-                .Where(a => a.Type == ActivityType.Lesson && a.CreatedAtUtc >= since)
-                .OrderByDescending(a => a.CreatedAtUtc).Take(5000)
-                .Select(a => new LessonRow(a.UserId, a.PromptData, a.ResponseData))
-                .ToListAsync();
-            var events = await db.Feedbacks
-                .Where(f => f.Kind == FeedbackKinds.Rating && f.CreatedAtUtc >= since && (f.Message.StartsWith("lesson_start:") || f.Message.StartsWith("lesson:")))
-                .GroupBy(f => f.Message)
-                .Select(g => new { key = g.Key, count = g.Count() })
-                .ToListAsync();
-            var assignments = await db.Assignments.CountAsync(a => a.CreatedAtUtc >= since && a.Kind.StartsWith("lesson:"));
-            return Results.Ok(TutorStats.Build(days, lessons, events.ToDictionary(e => e.key, e => e.count), assignments));
+            return Results.Ok(await tutor.AdminStatsAsync(days));
         });
 
         // AI chaqiradigan amal: AI xatosi — 502 (kunlik limit servis ichida qaytariladi); AiBusy — markaziy middleware (503).

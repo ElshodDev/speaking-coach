@@ -18,12 +18,12 @@ public class TutorStatsTests
     [Fact]
     public void Keys_are_consistent_with_the_rating_allow_list()
     {
-        Assert.True(SpeakingCoach.Api.Endpoints.RatingRules.IsValid(TutorStats.RatingUp));
-        Assert.True(SpeakingCoach.Api.Endpoints.RatingRules.IsValid(TutorStats.RatingDown));
+        Assert.True(SpeakingCoach.Application.RatingRules.IsValid(TutorStats.RatingUp));
+        Assert.True(SpeakingCoach.Application.RatingRules.IsValid(TutorStats.RatingDown));
         foreach (var s in TutorStats.Sources)
         {
             Assert.StartsWith(TutorStats.StartPrefix, TutorStats.StartKey(s));
-            Assert.False(SpeakingCoach.Api.Endpoints.RatingRules.IsValid(TutorStats.StartKey(s)));   // ichki hodisa: tashqaridan yozib bo'lmaydi
+            Assert.False(SpeakingCoach.Application.RatingRules.IsValid(TutorStats.StartKey(s)));   // ichki hodisa: tashqaridan yozib bo'lmaydi
         }
         Assert.Equal("lesson_start:free", TutorStats.StartKey("weird"));
     }
