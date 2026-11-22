@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { activeNav2, HUB, normalizeQuery, searchHub } from './newNav';
+import { activeNav2, goalShort, HUB, normalizeQuery, searchHub } from './newNav';
 import { hubMsg } from './locales/hub';
 
 const uz = (id: string) => hubMsg.uz.items[id];
@@ -40,5 +40,17 @@ describe('new nav: Hammasi search', () => {
       for (const i of HUB) expect(hubMsg[lang].items[i.id]?.title, `${lang}:${i.id}`).toBeTruthy();
     }
     expect(new Set(HUB.map((i) => i.id)).size).toBe(HUB.length);
+  });
+});
+
+describe('profile head: goal label', () => {
+  const label = (g: string) => (g === 'general' ? 'General' : g);
+  it('shows exam + target, plain label for general, null when unset', () => {
+    expect(goalShort({ goal: 'ielts', targetScore: '6.5' }, label)).toBe('IELTS 6.5');
+    expect(goalShort({ goal: 'cefr', targetScore: 'B2' }, label)).toBe('CEFR B2');
+    expect(goalShort({ goal: 'ielts' }, label)).toBe('IELTS');
+    expect(goalShort({ goal: 'general', targetScore: '5.0' }, label)).toBe('General');
+    expect(goalShort({ goal: null }, label)).toBeNull();
+    expect(goalShort(null, label)).toBeNull();
   });
 });

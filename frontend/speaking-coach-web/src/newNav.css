@@ -410,3 +410,330 @@ body:has(.app.nn) {
     color: #3b2a00;
   }
 }
+
+/* Profil */
+.nn-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+.nn-pcard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px;
+}
+.nn-pcard b {
+  font-family: Georgia, serif;
+  font-size: 1.25rem;
+}
+.nn-pav {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  font-size: 1.3rem;
+  cursor: default;
+}
+.nn-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.nn-stats div {
+  background: var(--surface-2);
+  border-radius: 14px;
+  padding: 8px 6px;
+  text-align: center;
+}
+.nn-stats b {
+  display: block;
+  font-size: 1.05rem;
+}
+.nn-stats small {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+.nn-big3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.nn-big3 button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 4px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--nn-gold);
+  color: var(--nn-gold-ink);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.nn-gh {
+  margin: 14px 4px 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.nn-danger {
+  margin-top: 10px;
+  padding-top: 6px;
+  border-top: 1px dashed color-mix(in srgb, #e11d48 55%, transparent);
+}
+.nn-danger .nn-gh {
+  color: #e11d48;
+}
+.nn-profile .card {
+  margin: 0;
+}
+
+/* Bannerlar: to'q ko'k o'rniga qog'oz-eslatma uslubi (sariq fon, qora matn, qora tugma) */
+.nn .hero,
+.nn .page-header.hero {
+  --ink: #2a2218;
+  background: var(--nn-note);
+  color: #2a2218;
+  border: 1px solid color-mix(in srgb, #2a2218 18%, transparent);
+  border-radius: 8px 8px 24px 8px;
+  box-shadow: 3px 5px 0 rgba(42, 34, 24, 0.08);
+}
+.nn .hero h1,
+.nn .hero h2,
+.nn .hero p,
+.nn .page-header.hero h1,
+.nn .page-header.hero p {
+  color: inherit;
+}
+.nn .hero h1,
+.nn .page-header.hero h1 {
+  font-family: Georgia, 'Times New Roman', serif;
+}
+.nn .hero .btn-primary,
+.nn .hero .btn-primary:hover:not(:disabled) {
+  background: #2a2218;
+  color: #fbf8f1;
+  box-shadow: none;
+}
+.nn .hero .btn-ghost-light {
+  background: transparent;
+  color: #2a2218;
+  border: 1.5px solid #2a2218;
+}
+.nn .hero .btn-ghost-light:hover:not(:disabled) {
+  background: rgba(42, 34, 24, 0.08);
+}
+.nn .hero .hero-note,
+.nn .hero .hero-note .btn-link {
+  color: #2a2218;
+}
+.nn .goal-ring {
+  background: conic-gradient(#2a2218 calc(var(--p) * 1%), rgba(42, 34, 24, 0.15) 0);
+}
+.nn .goal-ring span {
+  background: var(--nn-note);
+  color: #2a2218;
+}
+@media (prefers-color-scheme: dark) {
+  .nn .hero,
+  .nn .page-header.hero,
+  .nn .hero .hero-note,
+  .nn .hero .hero-note .btn-link,
+  .nn .hero .btn-ghost-light {
+    color: #fdf3c4;
+  }
+  .nn .hero .btn-ghost-light {
+    border-color: #fdf3c4;
+  }
+  .nn .hero .btn-primary,
+  .nn .hero .btn-primary:hover:not(:disabled) {
+    background: #fde047;
+    color: #2a1f00;
+  }
+  .nn .goal-ring {
+    background: conic-gradient(#fde047 calc(var(--p) * 1%), rgba(253, 243, 196, 0.18) 0);
+  }
+  .nn .goal-ring span {
+    color: #fdf3c4;
+  }
+}
+
+/* Bosiladigan kartalar (cta) va xabar chiziqlari: ko'k tus o'rniga qog'oz tusi */
+.nn .cta {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.nn button.card.cta:hover {
+  border-color: var(--text);
+}
+.nn .btn-primary {
+  background: var(--text);
+  color: var(--bg);
+  box-shadow: none;
+}
+.nn .btn-primary:hover:not(:disabled) {
+  background: var(--text);
+  filter: none;
+}
+.nn .btn-outline {
+  border-color: var(--text);
+  color: var(--text);
+}
+.nn .demo-banner {
+  background: var(--nn-note);
+  color: #2a2218;
+  border-color: color-mix(in srgb, #2a2218 18%, transparent);
+}
+.nn .demo-banner .btn-link {
+  color: #2a2218;
+  font-weight: 700;
+}
+@media (prefers-color-scheme: dark) {
+  .nn .demo-banner,
+  .nn .demo-banner .btn-link {
+    color: #fdf3c4;
+  }
+}
+
+/* O'qituvchi paneli */
+.nn .nn-gcard {
+  border-radius: 14px;
+  background: var(--surface);
+}
+.nn .nn-gcard strong {
+  font-family: Georgia, serif;
+  font-size: 1.05rem;
+}
+.nn .nn-code {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  background: var(--nn-note);
+  color: #2a2218;
+  padding: 3px 9px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.nn [data-testid='invite'] {
+  border-radius: 14px;
+  border-style: dashed;
+  border-color: var(--text);
+}
+.nn [data-testid='invite'] .nn-code {
+  font-size: 1.15rem;
+}
+.nn .segmented {
+  background: var(--surface-2);
+  border-radius: 14px;
+  padding: 4px;
+  border: 0;
+}
+.nn .segmented button {
+  border-radius: 10px;
+  color: var(--muted);
+}
+.nn .segmented button[aria-pressed='true'] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(42, 34, 24, 0.12);
+}
+.nn .nn-pill {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-weight: 800;
+  background: var(--surface-2);
+  color: var(--text);
+  white-space: nowrap;
+}
+.nn .nn-pill.ok {
+  background: #d9f2e1;
+  color: #14532d;
+}
+.nn .nn-pill.mid {
+  background: #fdf0c2;
+  color: #78350f;
+}
+.nn .nn-pill.low {
+  background: #fde2e4;
+  color: #9f1239;
+}
+.nn .nn-c {
+  display: inline-block;
+  min-width: 44px;
+  text-align: center;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+.nn .nn-c.ok {
+  background: #d9f2e1;
+  color: #14532d;
+}
+.nn .nn-c.mid {
+  background: #fdf0c2;
+  color: #78350f;
+}
+.nn .nn-c.no {
+  background: #fde2e4;
+  color: #9f1239;
+}
+.nn table.data th {
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+@media (prefers-color-scheme: dark) {
+  .nn .nn-code {
+    color: #fdf3c4;
+    background: #4a3f12;
+  }
+  .nn .nn-pill.ok,
+  .nn .nn-c.ok {
+    background: #123524;
+    color: #86efac;
+  }
+  .nn .nn-pill.mid,
+  .nn .nn-c.mid {
+    background: #43360c;
+    color: #fde68a;
+  }
+  .nn .nn-pill.low,
+  .nn .nn-c.no {
+    background: #4a1523;
+    color: #fda4af;
+  }
+}
+
+/* Kompyuter: nom yozuvi ko'rsatilmaydi (faqat belgi), kun rejasi o'qishga qulay kenglikda */
+.nn .brand-name {
+  display: none;
+}
+[data-testid='day-plan'] {
+  max-width: 760px;
+}
+
+/* Ichki sahifalar: tanlangan chiplar va to'q-fonli elementlarda matn rangi fon bilan moslashsin */
+.nn .chips button[aria-pressed='true'],
+.nn .shadow-speeds button[aria-pressed='true'],
+.nn .level-num,
+.nn .bubble.user,
+.nn .avatar {
+  color: var(--on-primary);
+}
+@media (prefers-color-scheme: dark) {
+  html:has(.app.nn) {
+    background: #16120c;
+  }
+}

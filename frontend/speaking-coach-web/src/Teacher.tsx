@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiJson, postJson } from './api';
-import { ASSIGNMENT_KINDS, cleanLessonTopic, joinUrl, kindLabel, lessonKind, lessonTopic, localInputToUtc, MAX_LESSON_TOPIC, type AssignmentStatus, formatDue } from './groupLogic';
+import { ASSIGNMENT_KINDS, cleanLessonTopic, doneTone, joinUrl, kindLabel, lessonKind, lessonTopic, localInputToUtc, MAX_LESSON_TOPIC, type AssignmentStatus, formatDue } from './groupLogic';
 import { LessonInsights } from './LessonInsights';
 import { localeOf, useLang, useT } from './i18n';
 import { teacherMsg } from './locales/teacher';
@@ -71,10 +71,10 @@ export function TeacherHome({ go }: { go: (route: string) => void }) {
       </form>
       {groups && groups.length === 0 && <p className="muted">{t.noGroups}</p>}
       {groups?.map((g) => (
-        <button key={g.id} className="card" style={{ display: 'block', width: '100%', textAlign: 'left', cursor: 'pointer' }} onClick={() => go(`teacher/${g.id}`)}>
+        <button key={g.id} className="card nn-gcard" style={{ display: 'block', width: '100%', textAlign: 'left', cursor: 'pointer' }} onClick={() => go(`teacher/${g.id}`)}>
           <div className="spread">
             <strong>{g.name}</strong>
-            <span className="muted small">{g.joinCode}</span>
+            <span className="nn-code small">{g.joinCode}</span>
           </div>
           <div className="muted small">{t.members(g.members)} · {t.assignmentsCount(g.assignments)}</div>
         </button>
@@ -153,7 +153,7 @@ export function TeacherGroup({ id, go }: { id: string; go: (route: string) => vo
           <strong>{t.invite}</strong>
           <span>
             <span className="muted small">{t.code}: </span>
-            <strong style={{ letterSpacing: 2 }}>{data.group.joinCode}</strong>
+            <strong className="nn-code" style={{ letterSpacing: 2 }}>{data.group.joinCode}</strong>
           </span>
         </div>
         <p className="muted small" style={{ margin: 0 }}>{t.inviteText}</p>
@@ -248,7 +248,7 @@ export function TeacherGroup({ id, go }: { id: string; go: (route: string) => vo
             <div className="card" key={a.id} data-testid="assignment">
               <div className="spread">
                 <strong>{kindLabel(t, a.kind)}{a.kind === 'review' && a.target ? ` · ${t.reviewTarget(a.target)}` : ''}</strong>
-                <span className="small">{t.doneOf(a.done, n)}</span>
+                <span className={`small nn-pill ${doneTone(a.done, n)}`}>{t.doneOf(a.done, n)}</span>
               </div>
               {a.instructions && <p className="small" style={{ margin: '6px 0' }}>{a.instructions}</p>}
               <div className="muted tiny">
@@ -301,7 +301,7 @@ export function TeacherGroup({ id, go }: { id: string; go: (route: string) => vo
                                 {cell}
                               </button>
                             ) : (
-                              <span className={s?.done ? (s.late ? 'txt-mid' : 'txt-great') : 'muted'}>{cell}</span>
+                              <span className={`nn-c ${s?.done ? (s.late ? 'mid' : 'ok') : s && s.progress ? 'mid' : 'no'} ${s?.done ? (s.late ? 'txt-mid' : 'txt-great') : 'muted'}`}>{cell}</span>
                             )}
                           </td>
                         );

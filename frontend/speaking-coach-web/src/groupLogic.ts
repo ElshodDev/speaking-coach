@@ -130,3 +130,10 @@ export function takePendingJoin(): string | null {
 export function formatDue(iso: string, locale: string): string {
   return new Date(iso).toLocaleString(locale, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
+
+/** Vazifa bajarilish ulushi → rang toifasi (o'qituvchi ro'yxatida): 75%+ — yaxshi, 40%+ — o'rta, undan past — past; o'quvchi yo'q — none. */
+export function doneTone(done: number, total: number): 'ok' | 'mid' | 'low' | 'none' {
+  if (total <= 0) return 'none';
+  const r = done / total;
+  return r >= 0.75 ? 'ok' : r >= 0.4 ? 'mid' : 'low';
+}

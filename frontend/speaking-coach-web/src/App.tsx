@@ -36,6 +36,7 @@ import {
 import { ServerWake } from './ServerWake';
 import { Footer, FeedbackDialog } from './Footer';
 import { Hub } from './Hub';
+import { ProfileHead } from './ProfileHead';
 import { hubMsg } from './locales/hub';
 import { activeNav2, NAV2, NEW_NAV } from './newNav';
 import './newNav.css';
@@ -458,6 +459,7 @@ function App() {
         profile={profile}
         onAuthChange={onAuthChange}
         onProfileSaved={setProfile}
+        streak={stats?.streakDays ?? 0}
         onEmailChanged={(next) => {
           setEmail(next);
           reloadProfile();
@@ -495,7 +497,7 @@ function App() {
           <header className="topbar nn-top">
             <div className="nn-title">
               {section === 'home' && (profile?.displayName || email) && <small>{tHub.hello(profile?.displayName || accountLabel(email).split('@')[0])}</small>}
-              <b>{section === 'home' ? tHub.today : tHub.items[section]?.title ?? (t.nav as Record<string, string>)[section] ?? t.profile}</b>
+              <b>{section === 'home' ? tHub.today : tHub.items[section === 'welcome' ? 'goal' : section]?.title ?? (t.nav as Record<string, string>)[section] ?? t.profile}</b>
             </div>
             <div className="topbar-right">
               {loggedIn && stats && stats.streakDays > 0 && <span className="badge streak"><Icon name="flame" size={14} className="streak-ico" /> {stats.streakDays}</span>}
@@ -633,7 +635,9 @@ function Profile({
   onReloadProfile,
   go,
   authMode = 'login',
+  streak = 0,
 }: {
+  streak?: number;
   authMode?: 'login' | 'register';
   email: string | null;
   profile: ProfileData | null;
@@ -646,6 +650,7 @@ function Profile({
   const tt = useT(teacherMsg);
   const tp = useT(planMsg);
   const t = useT(appMsg);
+  const h = useT(hubMsg);
   const goalText = profile?.goal
     ? [
         tp.goals[profile.goal]?.[0] ?? profile.goal,
@@ -664,6 +669,64 @@ function Profile({
           <summary className="small" style={{ cursor: 'pointer' }}>{t.guestSettings}</summary>
           <Settings key="guest" profile={null} onSaved={onProfileSaved} bare />
         </details>
+      </div>
+    );
+  }
+  if (NEW_NAV) {
+    const name = profile?.displayName?.trim() || accountLabel(email).split('@')[0];
+    const real = !isDemoEmail(email);
+    const group = (title: string) => <h3 className="nn-gh">{title}</h3>;
+    return (
+      <div className="nn-profile">
+        <ProfileHead profile={profile} name={name} streak={streak} go={go} onSettings={() => document.getElementById('nn-settings')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} />
+        {group(h.groups.learn)}
+        {profile && (
+          <div className="card cta" data-testid="goal-card">
+            <div>
+              <strong>{tp.goalCard}</strong>
+              <div className="muted small">{goalText}</div>
+            </div>
+            <button className="btn btn-outline" onClick={() => go('welcome')}>{tp.change}</button>
+          </div>
+        )}
+        <div id="nn-settings">{profile && <Settings key="user" profile={profile} onSaved={onProfileSaved} />}</div>
+        {group(h.groups.community)}
+        <div className="card cta" data-testid="teacher-entry">
+          <div>
+            <strong>{tt.panelTitle}</strong>
+            <div className="muted small">{tt.panelText}</div>
+          </div>
+          <button className="btn btn-primary" onClick={() => go('teacher')}>{tt.groupsTitle}</button>
+        </div>
+        <JoinByCode go={go} />
+        {real && <TelegramCard key={email} />}
+        {real && <ReferralCard key={`ref-${email}`} />}
+        {group(h.groups.account)}
+        <AuthPanel email={email} onChange={onAuthChange} displayName={profile?.displayName} />
+        {profile?.signIn && real && <SignInMethods methods={profile.signIn} onEmailChanged={onEmailChanged} onPasswordSaved={onReloadProfile} />}
+        {profile?.isAdmin && (
+          <div className="card cta">
+            <div>
+              <strong>{t.adminTitle}</strong>
+              <div className="muted small">{t.adminText}</div>
+            </div>
+            <button className="btn btn-primary" onClick={() => go('admin')}>{t.open}</button>
+          </div>
+        )}
+        {group(h.pApp)}
+        <div className="card">
+          <h3>{t.installTitle}</h3>
+          <p className="muted small">{t.installText}</p>
+          <ul className="small" style={{ paddingLeft: 18, margin: 0 }}>
+            <li><strong>{t.installAndroid}</strong> {t.installAndroidSteps}</li>
+            <li><strong>{t.installIphone}</strong> {t.installIphoneSteps}</li>
+          </ul>
+        </div>
+        <div className="card soft small muted">{t.themeNote}</div>
+        <div className="nn-danger">
+          <h3 className="nn-gh">{h.pDanger}</h3>
+          <AccountData email={email} onDeleted={() => onAuthChange(null)} />
+        </div>
       </div>
     );
   }

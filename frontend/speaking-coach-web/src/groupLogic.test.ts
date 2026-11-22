@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cleanCode, cleanLessonTopic, formatDue, isOverdue, joinUrl, kindLabel, lessonKind, lessonTopic, localInputToUtc, MAX_LESSON_TOPIC, routeFor, savePendingJoin, sortTasks, takePendingJoin, ASSIGNMENT_KINDS, type AssignmentStatus } from './groupLogic';
+import { cleanCode, cleanLessonTopic, doneTone, formatDue, isOverdue, joinUrl, kindLabel, lessonKind, lessonTopic, localInputToUtc, MAX_LESSON_TOPIC, routeFor, savePendingJoin, sortTasks, takePendingJoin, ASSIGNMENT_KINDS, type AssignmentStatus } from './groupLogic';
 import { teacherMsg } from './locales/teacher';
 
 const st = (done: boolean): AssignmentStatus => ({ done, late: false, doneAtUtc: null, activityId: null, score: null, progress: null, target: null });
@@ -104,5 +104,15 @@ describe('AI dars vazifasi', () => {
     const keys = (o: object) => Object.keys(o).sort();
     expect(keys(teacherMsg.ru)).toEqual(keys(teacherMsg.uz));
     expect(keys(teacherMsg.en)).toEqual(keys(teacherMsg.uz));
+  });
+});
+
+describe('doneTone', () => {
+  it('maps completion ratio to a tone', () => {
+    expect(doneTone(0, 0)).toBe('none');
+    expect(doneTone(3, 4)).toBe('ok');
+    expect(doneTone(2, 4)).toBe('mid');
+    expect(doneTone(1, 4)).toBe('low');
+    expect(doneTone(0, 5)).toBe('low');
   });
 });
