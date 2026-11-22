@@ -126,8 +126,8 @@ public static class SpeakingWritingEndpoints
             }
         }).RequireRateLimiting(RateLimits.AiPolicy).WithBodyLimit(SpeakingBodyBytes);
 
-        app.MapGet("/api/speaking/history", (HttpRequest request, AppDbContext db, AuthService auth) =>
-            HistoryQueries.GetHistoryAsync(ActivityType.Speaking, request, db, auth));
+        app.MapGet("/api/speaking/history", (HttpRequest request, ComprehensionPractice practice, AuthService auth) =>
+            HistoryQueries.GetHistoryAsync(ActivityType.Speaking, request, practice, auth));
 
         // Ravonlik dinamikasi (Progress grafigi): Speaking mashqi, Speaking imtihoni va AI suhbat —
         // oxirgi urinishlardagi o'lchovlar, eski → yangi. Faqat o'lchovli yozuvlar ("metrics" kaliti
@@ -233,7 +233,7 @@ public static class SpeakingWritingEndpoints
             }
         }).RequireRateLimiting(RateLimits.AiPolicy);
 
-        app.MapGet("/api/writing/history", (HttpRequest request, AppDbContext db, AuthService auth) =>
-            HistoryQueries.GetHistoryAsync(ActivityType.Writing, request, db, auth));
+        app.MapGet("/api/writing/history", (HttpRequest request, ComprehensionPractice practice, AuthService auth) =>
+            HistoryQueries.GetHistoryAsync(ActivityType.Writing, request, practice, auth));
     }
 }
