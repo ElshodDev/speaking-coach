@@ -28,6 +28,23 @@ public static class LessonInsights
         }
     }
 
+    /// <summary>Dars natijasidagi o'zlashtirish darajasi ("strong" | "ok" | "weak"); buzuq yozuv — null.</summary>
+    public static string? MasteryOf(string? responseJson)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(responseJson ?? "");
+            return doc.RootElement.ValueKind == JsonValueKind.Object && doc.RootElement.TryGetProperty("result", out var r) && r.ValueKind == JsonValueKind.Object
+                && r.TryGetProperty("mastery", out var m) && m.ValueKind == JsonValueKind.String
+                ? m.GetString()
+                : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
     /// <summary>Har bir bajargan o'quvchining dars natijasi (ResponseData) bo'yicha jamlama. Buzuq yozuvlar e'tiborsiz.</summary>
     public static LessonInsightsResult Build(int members, IEnumerable<string> responseJsons)
     {

@@ -635,6 +635,10 @@ public static class Texts
             "📚 <b>AI ustoz</b>\nQaysi mavzuni oʻrganmoqchisiz? Mavzuni yozing (masalan: <i>Modal verbs</i>) yoki pastdan tanlang.\nBekor qilish: /cancel",
             "📚 <b>ИИ-учитель</b>\nКакую тему хотите выучить? Напишите тему (например: <i>Modal verbs</i>) или выберите ниже.\nОтмена: /cancel",
             "📚 <b>AI tutor</b>\nWhat do you want to learn? Type a topic (for example: <i>Modal verbs</i>) or pick one below.\nCancel: /cancel"),
+        ["tutor.bot_recommend"] = new(
+            "🎯 Xatolaringiz asosida tavsiya — pastdagi birinchi tugmalar.",
+            "🎯 Рекомендация по вашим ошибкам — первые кнопки ниже.",
+            "🎯 Recommended from your mistakes — the first buttons below."),
         ["tutor.bot_preparing"] = new(
             "⏳ Dars tayyorlanmoqda… (10–20 soniya)",
             "⏳ Готовим урок… (10–20 секунд)",

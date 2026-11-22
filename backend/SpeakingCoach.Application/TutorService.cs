@@ -67,7 +67,7 @@ public class TutorLessonCache
 /// (tur — Lesson), natija Activities'da. Kvota tekshiruvi (mashq limiti) chaqiruvchida; kunlik "savol/yozma" limiti
 /// (Ai:TutorCallsPerDay) shu yerda. AI xatolari yuqoriga uzatiladi (kunlik limit qaytariladi).
 /// </summary>
-public class TutorService(IAppDbContext db, ITutorAi ai, AiDailyCaps caps, AiQuotaOptions limits, AdminOptions admins, TalkLocks locks, ReviewService reviews, TutorLessonCache cache)
+public class TutorService(IAppDbContext db, ITutorAi ai, AiDailyCaps caps, AiQuotaOptions limits, AdminOptions admins, TalkLocks locks, ReviewService reviews, TutorLessonCache cache, IMistakeSource mistakes)
 {
     private static TutorOutcome<T> Fail<T>(string key, int status, params object?[] args) => TutorOutcome<T>.Failure(key, status, args);
 
@@ -119,6 +119,31 @@ public class TutorService(IAppDbContext db, ITutorAi ai, AiDailyCaps caps, AiQuo
         db.PendingExercises.Add(row);
         await db.SaveChangesAsync(CancellationToken.None);
         return TutorOutcome<TutorStarted>.Success(new TutorStarted(row.Id, state));
+    }
+
+    /// <summary>Yaqinda (shu kunlar ichida) yaxshi o'zlashtirilgan mavzular qayta tavsiya qilinmaydi.</summary>
+    public const int MasteredDays = 14;
+
+    /// <summary>
+    /// "Xatolaringiz asosida sizga shu mavzu kerak": xato turlari (AI'siz) → mavzular. Yaqinda yaxshi
+    /// o'zlashtirilgan mavzular chiqarib tashlanadi. Limit sarflanmaydi.
+    /// </summary>
+    public async Task<List<TopicRecommendation>> RecommendAsync(User user, int max = TopicAdvisor.DefaultMax, CancellationToken ct = default)
+    {
+        var facts = await mistakes.RecentAsync(user.Id, ct);
+        var report = MistakeAnalyzer.Summarize(facts, DateTime.UtcNow);
+        var since = DateTime.UtcNow.AddDays(-MasteredDays);
+        var lessons = await db.Activities
+            .Where(a => a.UserId == user.Id && a.Type == ActivityType.Lesson && a.CreatedAtUtc >= since)
+            .OrderByDescending(a => a.CreatedAtUtc).Take(50)
+            .Select(a => new { a.PromptData, a.ResponseData })
+            .ToListAsync(ct);
+        var mastered = lessons
+            .Where(l => LessonInsights.MasteryOf(l.ResponseData) == "strong")
+            .Select(l => LessonInsights.TopicOf(l.PromptData))
+            .OfType<string>()
+            .ToList();
+        return TopicAdvisor.Recommend(report, mastered, max);
     }
 
     public async Task<(PendingExercise Row, TutorState State)?> LoadAsync(Guid id, Guid userId)
