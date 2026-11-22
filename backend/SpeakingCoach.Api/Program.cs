@@ -124,6 +124,7 @@ app.MapPart2Endpoints();
 app.MapUpgradeEndpoints();
 app.MapDictationEndpoints();
 app.MapFeedbackEndpoints();
+app.MapRatingEndpoints();
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 app.Run($"http://0.0.0.0:{port}");

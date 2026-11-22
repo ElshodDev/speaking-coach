@@ -142,7 +142,9 @@ public static class FeedbackEndpoints
             if (!admins.IsAdmin(user)) return Results.Json(request.Error("admin.only"), statusCode: StatusCodes.Status403Forbidden);
 
             take = Math.Clamp(take, 1, 200);
+            // Bir bosishli baholar (Kind = "rating") alohida xulosada (/api/admin/ratings), bu ro'yxatni to'ldirmasin.
             var rows = await db.Feedbacks
+                .Where(f => f.Kind != RatingRules.Kind)
                 .OrderByDescending(f => f.CreatedAtUtc)
                 .Take(take)
                 .ToListAsync();

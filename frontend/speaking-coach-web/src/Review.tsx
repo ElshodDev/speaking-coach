@@ -10,6 +10,7 @@ import { parseNote } from './Vocab';
 import { focusedButton, typingTarget, useWide } from './layout';
 import { statsPath, type ReviewStats } from './reviewStats';
 import { Icon } from './Icon';
+import { FeedbackLink } from './RatingWidgets';
 
 export { statsPath, type ReviewStats };
 
@@ -305,6 +306,7 @@ export function Review({
       <>
         <CommuteMode dueCards={cards} scopeQuery={scopeQuery} />
         {!vocab && <AddCardForm onAdded={() => { load(); onChanged(); }} />}
+        <FeedbackLink />
       </>
     }
     main={

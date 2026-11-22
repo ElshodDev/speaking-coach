@@ -4,6 +4,7 @@ import { useT } from './i18n';
 import { homeMsg } from './locales/home';
 import { UsageNote } from './Usage';
 import { TelegramPromo } from './TelegramCard';
+import { SourceCard } from './RatingWidgets';
 import { TasksCard } from './StudentTasks';
 import { Icon } from './Icon';
 import { TodayPlan } from './TodayPlan';
@@ -210,7 +211,12 @@ export function Home({
       <ExerciseTiles onOpen={open} />
     </>
   );
-  const promo = !isDemoEmail(email) && <TelegramPromo go={go} />;
+  const promo = !isDemoEmail(email) && (
+    <>
+      <TelegramPromo go={go} />
+      <SourceCard />
+    </>
+  );
 
   // Kompyuter: chapda reja va mashqlar, o'ngda holat (seriya, navbatdagi kartalar, so'z).
   if (wide) {

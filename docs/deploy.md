@@ -169,3 +169,19 @@ Doʻstni taklif qilish: profilda havola (`https://fluentuz.app/?ref=KOD`), doʻs
 
 Bosh sahifadagi "Telegramda eslatma" taklifi: "Ulash" Telegram'ni darhol ochadi (profilga o'tkazmaydi); "Keyinroq" 7 kunga yashiradi (`localStorage["sc.tgPromo.dismissedAt"]`).
 
+## Fikr so'rovlari (bir bosishli baholar)
+
+Foydalanuvchi fikrini faol yig'ish uchun kichik, rad etish oson so'rovlar (hammasi ixtiyoriy):
+- **Birinchi mashqdan keyin** (har qurilmada bir marta): "Bu mashq foydali bo'ldimi?" — 👍/👎. 👎 bo'lsa, ixtiyoriy izoh so'raladi (mavjud `/api/feedback` orqali, adminga Telegram xabari bilan). 15 soniya javobsiz qolsa o'zi yopiladi va qayta so'ralmaydi.
+- **AI natijasi ostida** (gapirish, yozish, Part 2): "AI bahosi adolatli tuyuldimi?" — Adolatli / Yuqori / Past. Maqsad: AI bahosi odamniki bilan qanchalik mosligini o'lchash.
+- **Bosh sahifada** (bir marta): "Bizni qayerdan topdingiz?" — Instagram, Telegram, do'st, o'qituvchi, qidiruv, boshqa (UTM'ni ko'rmaydigan Plausible o'rniga).
+- Mashqlar, Takrorlash va Natijalar sahifalari oxirida "Fikr bildirish" havolasi (footer telefonda ishchi ekranlarda yashirin).
+
+**Texnik:** yangi additiv `POST /api/rating {key, page}` (mehmon ham yuboradi; `write` limiti) va admin uchun `GET /api/admin/ratings?days=30`. Mavjud `/api/feedback` o'zgarmagan (u `rating` turini qabul QILMAYDI). Baholar mavjud `Feedbacks` jadvaliga `Kind = "rating"` bilan yoziladi — **sxema o'zgarmaydi, migratsiya kerak emas**. Kalit qat'iy ro'yxatdan (`RatingRules`; erkin matn yo'q), birinchi mashq va manba bir foydalanuvchidan bir marta qabul qilinadi. Baholar adminning fikrlar ro'yxatiga va "Fikrlar (7 kun)" sonoqchisiga kirmaydi, adminga Telegram xabari ham yuborilmaydi; ular Admin sahifasidagi "Bir bosishli baholar" kartasida jamlanadi.
+
+**Feature flag:** Vercel'da `VITE_FEEDBACK_PROMPTS=off` va Redeploy — hamma so'rovlar o'chadi (qo'lda "Fikr bildirish" qoladi). Standart — yoqiq. Backend'da o'chirgich kerak emas (endpoint faqat so'rov kelganda ishlaydi).
+
+**Maxfiylik:** ovoz va shaxsiy ma'lumot yuborilmaydi; faqat tanlov kaliti, bo'lim nomi (`#/practice`, identifikatorsiz), til va (kirgan bo'lsa) hisob. Hisob o'chirilsa, baholar ham o'chadi. `privacy.html` yangilangan.
+
+**Natijani o'qish:** Admin → "Bir bosishli baholar": birinchi mashq foydali/foydasiz ulushi, AI adolatliligi (har ko'nikma uchun Adolatli/Yuqori/Past %, n bilan), manba bo'yicha sonlar. Namuna hajmi (n) kichik bo'lsa, xulosa chiqarmang.
+
