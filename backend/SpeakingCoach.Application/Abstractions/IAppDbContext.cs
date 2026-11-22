@@ -31,4 +31,7 @@ public interface IAppDbContext
     ChangeTracker ChangeTracker { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Saqlashda noyoblik buzildimi (parallel so'rov bir xil yozuvni yozib ulgurdi). Provayderga xos tekshiruv Infrastructure'da.</summary>
+    bool IsUniqueViolation(DbUpdateException ex);
 }
