@@ -180,7 +180,7 @@ public class CefrObjectiveTests
         answers["15"] = "A"; answers["16"] = "B"; answers["17"] = "B";     // 3-qism: 2 ta to'g'ri
         answers["19"] = "A";                                               // 4-qism: 1 ta
         answers["30"] = "Museum";                                          // 6-qism: 1 ta
-        var r = MockEndpoints.GradeCefrObjective("listening", test, answers, 1200);
+        var r = MockGrading.GradeCefrObjective("listening", test, answers, 1200);
         Assert.Equal(12, r.Score);
         Assert.Equal(35, r.Total);
         Assert.Equal(CefrObjective.Score(12), r.Overall);

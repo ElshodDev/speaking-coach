@@ -62,6 +62,7 @@ public static class DependencyInjection
         services.AddScoped<PersonalShadowingService>();
         services.AddScoped<TodayService>();
         services.AddScoped<MockSets>();
+        services.AddScoped<MockExamService>();
         services.AddScoped<ShadowingService>();
         services.AddScoped<ProgressService>();
         services.AddScoped<ReadinessService>();

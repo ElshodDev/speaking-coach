@@ -70,6 +70,7 @@ public class ArchitectureTests
     [InlineData(typeof(SpeakingCoach.Api.Endpoints.AccountEndpoints))]
     [InlineData(typeof(SpeakingCoach.Api.Endpoints.ComprehensionEndpoints))]
     [InlineData(typeof(SpeakingCoach.Api.Endpoints.HistoryQueries))]
+    [InlineData(typeof(SpeakingCoach.Api.Endpoints.MockEndpoints))]
     public void Thin_endpoints_do_not_touch_the_concrete_db_context(Type endpoints)
     {
         const BindingFlags all = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly;
