@@ -4,9 +4,9 @@ import { useT } from './i18n';
 import { planMsg } from './locales/plan';
 import { doneCount, mockParts, orderItems, type PlanItem, type TodayPlan as Plan } from './planLogic';
 
-const planPath = () => `/api/plan/today?tzOffsetMinutes=${new Date().getTimezoneOffset()}`;
+export const planPath = () => `/api/plan/today?tzOffsetMinutes=${new Date().getTimezoneOffset()}`;
 
-function useItemLabel() {
+export function useItemLabel() {
   const t = useT(planMsg);
   return (item: PlanItem): string => {
     if (item.kind === 'review') return t.items.review(item.progress ?? 0, item.target ?? 0);

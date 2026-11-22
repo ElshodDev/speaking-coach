@@ -73,3 +73,8 @@ export function mockParts(key: string): [string, string] {
   const [, exam = 'ielts', module = ''] = key.split(':');
   return [exam, module];
 }
+
+/** Hozir qilinadigan qadam: tartib bo'yicha birinchi bajarilmagan vazifa (hammasi bajarilgan bo'lsa — null). */
+export function nowKey(items: PlanItem[]): string | null {
+  return orderItems(items).find((i) => !i.done)?.key ?? null;
+}

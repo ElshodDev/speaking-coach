@@ -9,6 +9,8 @@ import { TasksCard } from './StudentTasks';
 import { TutorSuggest } from './TutorSuggest';
 import { Icon } from './Icon';
 import { TodayPlan } from './TodayPlan';
+import { DayPlan } from './DayPlan';
+import { NEW_NAV } from './newNav';
 import { DiagnosticCard } from './DiagnosticCard';
 import { QuizTile, WordOfDay } from './WordOfDay';
 import { DemoHeroButton, isDemoEmail } from './Demo';
@@ -135,7 +137,7 @@ export function Home({
   const name = displayName?.trim() || (isDemoEmail(email) ? td.name : '');
   const goal = stats ? Math.min(100, Math.round((stats.reviewedToday / stats.dailyGoal) * 100)) : 0;
 
-  const header = (
+  const header = NEW_NAV ? null : (
     <div className="page-header hero">
       <div>
         <h1>{name ? t.hello(name) : t.helloAnon}</h1>
@@ -156,7 +158,7 @@ export function Home({
   const plan = (
     <>
       <DiagnosticCard go={go} />
-      <TodayPlan go={go} />
+      {NEW_NAV ? <DayPlan go={go} stats={stats} /> : <TodayPlan go={go} />}
       <TasksCard loggedIn go={go} />
       <TutorSuggest loggedIn go={go} limit={1} />
     </>
@@ -221,7 +223,7 @@ export function Home({
   );
 
   // Kompyuter: chapda reja va mashqlar, o'ngda holat (seriya, navbatdagi kartalar, so'z).
-  if (wide) {
+  if (wide && !NEW_NAV) {
     return (
       <>
         {header}

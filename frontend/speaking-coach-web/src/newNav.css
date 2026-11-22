@@ -1,0 +1,412 @@
+/* Yangi menyu — "Kundalik" dizayni (VITE_NEW_NAV=true). Hammasi .nn ichida: bayroq o'chiq bo'lsa, hech narsa o'zgarmaydi. */
+.app.nn {
+  --bg: #fbf8f1;
+  --surface: #fffdf8;
+  --surface-2: #f3ecdc;
+  --border: #e9e1d0;
+  --text: #2a2218;
+  --muted: #7a6f5b;
+  --primary: #2a2218;
+  --primary-strong: #14100a;
+  --primary-soft: #f3ecdc;
+  --on-primary: #fbf8f1;
+  --nn-note: #fff3a8;
+  --nn-gold: #fde047;
+  --nn-gold-ink: #3b2a00;
+  --nn-accent: #b45309;
+  background: var(--bg);
+  color: var(--text);
+}
+@media (prefers-color-scheme: dark) {
+  .app.nn {
+    --bg: #16120c;
+    --surface: #1f1a12;
+    --surface-2: #2a2318;
+    --border: #3a3122;
+    --text: #f3ecdc;
+    --muted: #b3a88f;
+    --primary: #f3ecdc;
+    --primary-strong: #fff;
+    --primary-soft: #2a2318;
+    --on-primary: #16120c;
+    --nn-note: #4a3f12;
+    --nn-accent: #fbbf24;
+  }
+}
+body:has(.app.nn) {
+  background: #fbf8f1;
+}
+@media (prefers-color-scheme: dark) {
+  body:has(.app.nn) {
+    background: #16120c;
+  }
+}
+
+/* Tepa panel: sarlavha + seriya, Fikr, Hammasi, avatar */
+.nn-top {
+  align-items: center;
+}
+.nn-title {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  min-width: 0;
+}
+.nn-title small {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.nn-title b {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.45rem;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nn-ib {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+}
+.nn-ib:hover {
+  background: var(--surface-2);
+}
+.nn .avatar {
+  background: var(--text);
+  color: var(--bg);
+}
+
+/* Pastki menyu: markazda katta AI ustoz tugmasi */
+.nn .nav {
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.nn .nav button[aria-current='page']::before {
+  display: none;
+}
+.nn .nav button[aria-current='page'] {
+  color: var(--nn-accent);
+}
+.nn .nav button.nn-ai {
+  color: var(--text);
+  font-weight: 700;
+}
+@media (max-width: 1023px) {
+  .nn .nav button.nn-ai .icon {
+    width: 54px;
+    height: 54px;
+    margin-top: -26px;
+    border-radius: 50%;
+    background: var(--text);
+    color: var(--nn-gold);
+    box-shadow: 0 0 0 5px var(--bg), 0 10px 18px -8px rgba(42, 34, 24, 0.55);
+  }
+  .nn .nav button.nn-ai {
+    justify-content: flex-end;
+    padding-bottom: 8px;
+  }
+}
+@media (min-width: 1024px) {
+  .nn .topbar.nn-top {
+    justify-content: space-between;
+  }
+  .nn .nav button.nn-ai .icon {
+    color: var(--nn-accent);
+  }
+}
+
+/* Takrorlash ichida: Kartalar | Lug'at */
+.nn-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  margin: 4px 0 14px;
+  background: var(--surface-2);
+  border-radius: 14px;
+}
+.nn-seg button {
+  border: 0;
+  border-radius: 10px;
+  padding: 9px 0;
+  font: inherit;
+  font-weight: 650;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.nn-seg button[aria-selected='true'] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(42, 34, 24, 0.12);
+}
+
+/* "Hammasi" oynasi */
+.hub-back {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(20, 16, 10, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.hub {
+  width: 100%;
+  max-width: 560px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 22px 22px 0 0;
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+}
+@media (min-width: 760px) {
+  .hub-back {
+    align-items: center;
+  }
+  .hub {
+    border-radius: 22px;
+  }
+}
+.hub-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.hub-head h2 {
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: 1.3rem;
+}
+.hub-x {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.hub-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 4px;
+  padding: 0 14px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--muted);
+}
+.hub-search input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--text);
+  outline: none;
+  min-width: 0;
+}
+.hub-body {
+  overflow-y: auto;
+  padding-top: 4px;
+}
+.hub-group {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 16px 4px 6px;
+}
+.hub-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  padding: 9px 12px;
+  margin-bottom: 6px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.hub-row:hover {
+  background: var(--surface-2);
+}
+.hub-ico {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  flex: none;
+}
+.hub-txt {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.hub-txt small {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.hub-arr {
+  color: var(--muted);
+}
+.hub-empty {
+  text-align: center;
+  padding: 24px 0;
+}
+
+/* Bosh sahifa: sariq eslatma (maqsad) va kun chizig'i */
+.nn-note {
+  background: var(--nn-note);
+  color: #2a2218;
+  border-radius: 6px 6px 16px 6px;
+  padding: 12px 14px;
+  margin: 2px 0 16px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  transform: rotate(-0.8deg);
+  box-shadow: 3px 5px 0 rgba(42, 34, 24, 0.08);
+}
+.nn-note b {
+  font-family: Georgia, serif;
+  font-size: 1.05rem;
+}
+.nn-mark {
+  background: var(--nn-gold);
+  padding: 0 5px;
+  font-weight: 700;
+}
+.nn-note-sub {
+  margin-top: 4px;
+  font-size: 0.78rem;
+  opacity: 0.75;
+}
+.nn-note .btn-link {
+  color: #2a2218;
+  font-weight: 700;
+}
+.nn-dayhead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 4px 2px 10px;
+}
+.nn-dayhead span {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.nn-tl {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0 0 0 4px;
+  position: relative;
+}
+.nn-tl::before {
+  content: '';
+  position: absolute;
+  left: 13px;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  background: var(--border);
+}
+.nn-ev {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  position: relative;
+}
+.nn-dot {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 12px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  display: grid;
+  place-items: center;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #fff;
+  z-index: 1;
+}
+.nn-ev.done .nn-dot {
+  background: #16a34a;
+  border-color: #16a34a;
+}
+.nn-ev.now .nn-dot {
+  background: var(--nn-gold);
+  border-color: var(--text);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--nn-gold) 40%, transparent);
+}
+.nn-eb {
+  flex: 1;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+}
+.nn-ev.now .nn-eb {
+  border-color: var(--text);
+}
+.nn-ev.done .nn-eb {
+  opacity: 0.6;
+}
+.nn-eb small {
+  color: var(--muted);
+}
+.nn-eb .nn-nowtag {
+  color: var(--nn-accent);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.66rem;
+}
+.nn-eb .btn {
+  margin-top: 8px;
+}
+
+@media (prefers-color-scheme: dark) and (max-width: 1023px) {
+  .app.nn .nav button.nn-ai .icon {
+    color: #3b2a00;
+    background: var(--nn-gold);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .nn .nn-note,
+  .nn .nn-note .btn-link {
+    color: #fdf3c4;
+  }
+  .nn .nn-note .nn-mark {
+    color: #3b2a00;
+  }
+}
