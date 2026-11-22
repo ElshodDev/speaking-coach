@@ -18,5 +18,8 @@ public class FeatureFlags(IConfiguration config)
     /// <summary>AI ustoz: mavzu yozib o'rganish (mini-dars), veb va Telegram. Env: Features__AiTutor.</summary>
     public bool AiTutor => Read("Features:AiTutor");
 
+    /// <summary>Shaxsiy podcast: har bir foydalanuvchi botda YouTube videoni o'ziga shadowing darsi qilib qo'shadi. Env: Features__PersonalPodcasts.</summary>
+    public bool PersonalPodcasts => Read("Features:PersonalPodcasts");
+
     private bool Read(string key) => !bool.TryParse(config[key], out var on) || on;
 }

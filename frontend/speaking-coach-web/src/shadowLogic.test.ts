@@ -200,3 +200,14 @@ describe('series and next lesson', () => {
     expect(progressMap([{ lessonId: 'a', times: 2, best: 80 }]).a.best).toBe(80);
   });
 });
+
+describe('Mening videolarim (shaxsiy darslar)', () => {
+  it('uch tilda tarjimalar bor', async () => {
+    const { shadowingMsg } = await import('./locales/shadowing');
+    for (const lang of ['uz', 'ru', 'en'] as const) {
+      expect(shadowingMsg[lang].mineTitle).toBeTruthy();
+      expect(shadowingMsg[lang].mineHint).toBeTruthy();
+      expect(shadowingMsg[lang].mineEmpty).toContain('/podcast');
+    }
+  });
+});

@@ -182,6 +182,8 @@ public static class AccountEndpoints
                 .Select(a => a.Id)
                 .ToListAsync();
 
+            // Shaxsiy (faqat o'zi ko'radigan) darslar hisob bilan birga o'chadi; chop etilganlar bankda qoladi.
+            await db.MockTests.Where(m => m.CreatedByUserId == user.Id && m.Status == MockTestStatus.Personal).ExecuteDeleteAsync();
             db.Users.Remove(user);
             await db.SaveChangesAsync();
 
