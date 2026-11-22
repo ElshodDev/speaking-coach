@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddScoped<IMistakeSource, EfMistakeSource>();
         services.AddScoped<IMockRows, MockRowsQuery>();
+        services.AddScoped<IPracticeHistory, PracticeHistory>();
         services.AddScoped<ISchemaInspector, SchemaInspector>();
 
         // Tashqi xizmatlar.
