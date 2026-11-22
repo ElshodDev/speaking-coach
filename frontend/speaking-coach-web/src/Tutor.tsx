@@ -6,6 +6,7 @@ import { cardsMessage } from './cards';
 import { common, useT } from './i18n';
 import { tutorMsg } from './locales/tutor';
 import { lessonTopic } from './groupLogic';
+import { LessonRating } from './RatingWidgets';
 import { PageHeader } from './ui';
 import { TutorSuggest } from './TutorSuggest';
 import {
@@ -147,7 +148,7 @@ export function TutorPage({
     setError('');
     try {
       const fromTask = !forTopic && task ? task.id : undefined;
-      const d = await postJson<{ lessonId: string; lesson: LessonView }>('/api/tutor/start', fromTask ? { assignmentId: fromTask, level } : { topic: value, level });
+      const d = await postJson<{ lessonId: string; lesson: LessonView }>('/api/tutor/start', fromTask ? { assignmentId: fromTask, level } : { topic: value, level, ...(presetTopic && value === presetTopic ? { source: 'recommended' } : {}) });
       if (alive.current) open(d.lessonId, d.lesson);
     } catch (err) {
       if (alive.current) setError(err instanceof Error ? err.message : cm.error);
@@ -349,6 +350,7 @@ export function TutorPage({
             )}
           </div>
           {result.newCards > 0 && <p className="muted small" style={{ margin: 0 }}>{cardsMessage(result.newCards)}</p>}
+          <LessonRating key={lessonId} topic={lesson.topic} />
           <div className="rate-row">
             {result.newCards > 0 && <button className="btn btn-primary" onClick={() => go('review')}>{t.review}</button>}
             {r.mastery === 'weak' && <button className="btn btn-outline" onClick={() => void start(undefined, lesson.topic)} disabled={busy === 'start'}>{t.again}</button>}

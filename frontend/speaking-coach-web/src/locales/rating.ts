@@ -31,6 +31,11 @@ export const ratingMsg = defineMessages(
       search: 'Internetda qidirdim',
       other: 'Boshqa',
     },
+    // AI ustoz darsi
+    lessonTitle: 'Dars foydali boʻldimi?',
+    lessonUp: 'Ha, foydali',
+    lessonDown: 'Unchalik emas',
+    lessonThanks: 'Rahmat! Bu darslarni yaxshilashga yordam beradi.',
     // Havola
     feedbackLink: 'Fikr bildirish',
     // Admin
@@ -72,6 +77,10 @@ export const ratingMsg = defineMessages(
         search: 'Нашёл(-ла) в интернете',
         other: 'Другое',
       },
+      lessonTitle: 'Урок был полезен?',
+      lessonUp: 'Да, полезен',
+      lessonDown: 'Не очень',
+      lessonThanks: 'Спасибо! Это помогает улучшать уроки.',
       feedbackLink: 'Оставить отзыв',
       adminTitle: 'Оценки в один клик',
       adminDays: (n: number) => `последние ${n} дн.`,
@@ -110,6 +119,10 @@ export const ratingMsg = defineMessages(
         search: 'Searched online',
         other: 'Other',
       },
+      lessonTitle: 'Was this lesson useful?',
+      lessonUp: 'Yes, useful',
+      lessonDown: 'Not really',
+      lessonThanks: 'Thanks! This helps us improve the lessons.',
       feedbackLink: 'Send feedback',
       adminTitle: 'One-tap ratings',
       adminDays: (n: number) => `last ${n} days`,

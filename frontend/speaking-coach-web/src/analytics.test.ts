@@ -115,3 +115,23 @@ describe('analytics: yuborish', () => {
     expect(() => track('signup')).not.toThrow();
   });
 });
+
+describe('AI ustoz hodisalari', () => {
+  it('dars boshlandi va tugatildi — identifikatorsiz, xossasiz', () => {
+    expect(apiEvent('POST', '/api/tutor/start')).toEqual({ name: 'tutor_started' });
+    expect(apiEvent('POST', '/api/tutor/0b7e6b0e-4c4b-4a53-9a43-1b2f3c4d5e6f/finish')).toEqual({ name: 'tutor_completed' });
+  });
+
+  it('boshqa ustoz so‘rovlari hodisa bermaydi', () => {
+    expect(apiEvent('GET', '/api/tutor/start')).toBeNull();
+    expect(apiEvent('POST', '/api/tutor/0b7e6b0e-4c4b-4a53-9a43-1b2f3c4d5e6f/answer')).toBeNull();
+    expect(apiEvent('POST', '/api/tutor/0b7e6b0e-4c4b-4a53-9a43-1b2f3c4d5e6f/ask')).toBeNull();
+    expect(apiEvent('POST', '/api/tutor/finish')).toBeNull();
+    expect(apiEvent('POST', '/api/tutor/../x/finish')).toBeNull();
+  });
+
+  it('hodisalar xossa qabul qilmaydi (identifikator sizib chiqmaydi)', () => {
+    expect(cleanProps('tutor_started', { topic: 'Modal verbs', id: 'abc' })).toBeUndefined();
+    expect(cleanProps('tutor_completed', { email: 'a@b.uz' })).toBeUndefined();
+  });
+});

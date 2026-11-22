@@ -16,6 +16,8 @@ export type EventName =
   | 'mock_started'
   | 'mock_completed'
   | 'mic_consent_accepted'
+  | 'tutor_started'
+  | 'tutor_completed'
   | 'pwa_installed';
 
 /** Har bir hodisa uchun ruxsat etilgan xossa nomlari. Qiymatlar qisqa va umumiy (shaxsiy emas). */
@@ -28,6 +30,8 @@ const ALLOWED: Record<EventName, readonly string[]> = {
   mock_started: ['section'],
   mock_completed: ['section'],
   mic_consent_accepted: [],
+  tutor_started: [],
+  tutor_completed: [],
   pwa_installed: [],
 };
 
@@ -90,6 +94,9 @@ export function apiEvent(method: string, path: string): RouteEvent | null {
   for (const [re, kind] of practice) {
     if (re.test(p)) return { name: 'first_practice_completed', props: { kind }, once: true };
   }
+  // AI ustoz: dars boshlandi / tugatildi (identifikatorsiz, xossasiz).
+  if (p === '/api/tutor/start') return { name: 'tutor_started' };
+  if (/^\/api\/tutor\/[0-9a-f-]{36}\/finish$/i.test(p)) return { name: 'tutor_completed' };
   const mock = /^\/api\/mock\/(ielts|cefr)\/(speaking|writing|listening|reading)$/.exec(p);
   if (mock) return { name: 'mock_completed', props: { section: `${mock[1]}-${mock[2]}` } };
   return null;

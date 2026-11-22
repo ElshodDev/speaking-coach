@@ -8,6 +8,7 @@ import {
   firstPracticeKey,
   isFirstPracticeRequest,
   isRatingKey,
+  lessonKey,
   markAsked,
   noteRatingTrigger,
   percent,
@@ -156,5 +157,21 @@ describe('birinchi mashq tetigi', () => {
     vi.stubEnv('VITE_FEEDBACK_PROMPTS', 'off');
     noteRatingTrigger('POST', '/api/speaking/submit');
     expect(events).toEqual([]);
+  });
+});
+
+describe('AI ustoz darsi bahosi', () => {
+  it('lessonKey yaroqli kalit; "lesson_start:*" ni foydalanuvchi yubora olmaydi', () => {
+    expect(lessonKey(true)).toBe('lesson:up');
+    expect(lessonKey(false)).toBe('lesson:down');
+    expect(isRatingKey(lessonKey(true))).toBe(true);
+    expect(isRatingKey(lessonKey(false))).toBe(true);
+    for (const bad of ['lesson:maybe', 'lesson_start:free', 'lesson:up\nlesson:down', 'LESSON:up']) expect(isRatingKey(bad)).toBe(false);
+  });
+
+  it('admin xulosasi dars baholarini (boshqa bo‘limlarga aralashtirmasdan) e‘tiborsiz qoldiradi', () => {
+    const s = ratingsSummary([{ key: 'lesson:up', count: 5 }, { key: 'first_practice:up', count: 2 }]);
+    expect(s.firstPractice).toEqual({ up: 2, down: 0, total: 2 });
+    expect(s.aiAll.total + s.sourceTotal).toBe(0);
   });
 });

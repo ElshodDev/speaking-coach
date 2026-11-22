@@ -1,4 +1,5 @@
 import { AdminRatings } from './AdminRatings';
+import { AdminTutor } from './AdminTutor';
 import { useEffect, useState } from 'react';
 import { AdminSystem } from './AdminSystem';
 import { apiJson } from './api';
@@ -194,6 +195,7 @@ export function Admin() {
       </div>
 
       <AdminRatings />
+      <AdminTutor />
 
       <div className="card stack" data-testid="admin-feedback">
         <h3 style={{ margin: 0 }}>{t.feedbackTitle}</h3>
