@@ -30,12 +30,18 @@ flowchart LR
 
 - `Program.cs` dagi `/health` hamon `AppDbContext`ni to'g'ridan-to'g'ri ishlatadi (composition root, bazaga ulanishni tekshiradi) — alohida tekshiruv interfeysi bilan almashtirish mumkin.
 - Funksiya bo'yicha buyruq/so'rov (CQRS) handler'lariga bo'lish va validatsiyani alohida qatlamga ajratish — servislar ko'payganda. Katta servislar (`MockExamService`, `PracticeStore`) o'sib ketsa, mavzu bo'yicha bo'linadi.
-- Endpoint integratsiya testlari (HTTP qatlami: yuklashlar, 429/502 javoblari, AiInFlight limit joyi) hali yo'q; servis testlari EF InMemory bilan yoziladi (`MockExamServiceTests` kabi).
+- Integratsiya testlari faqat soxta AI va xotiradagi SQLite bilan ishlaydi: Postgres'ga xos so'rovlar (jsonb: `IMockRows`, `IPracticeHistory`) testlarda xotirada qayta yozilgan, shuning uchun ularning haqiqiy SQL'i va migratsiyalar bilan bog'liq xatolar bu testlarda ko'rinmaydi (migratsiya snapshot'i alohida `Ef_model_matches_the_migrations_snapshot` testida). Haqiqiy Postgres bilan (Testcontainers) smoke-test qo'shish mumkin.
+
+## Testlar
+
+- **Birlik testlar** — toza mantiq (Domain/Application qoidalari).
+- **Servis testlari** — Application servislari xotiradagi baza (EF InMemory) bilan (`MockExamServiceTests`, `PracticeStoreTests`, ...).
+- **HTTP integratsiya testlari** (`Integration/`) — butun ilova `WebApplicationFactory<Program>` bilan: marshrutlar, status kodlari, xato matnlari va tillari, JSON shakllari, CORS, rate limiting, xato xaritasi (502/503/413), Telegram webhook sirlari. Baza — xotiradagi SQLite (`ExecuteUpdate`/`ExecuteDelete` ishlaydi), Gemini va Telegram — soxta (`Integration/Fakes.cs`).
 
 ## Buyruqlar
 
 ```bash
-dotnet test backend/SpeakingCoach.slnx
+dotnet test backend/SpeakingCoach.slnx                      # birlik + servis + HTTP integratsiya testlari (Integration/)
 dotnet ef migrations add <Nom> --project backend/SpeakingCoach.Infrastructure --startup-project backend/SpeakingCoach.Api
 dotnet ef database update --project backend/SpeakingCoach.Infrastructure --startup-project backend/SpeakingCoach.Api
 docker build -t speaking-coach-api backend    # Render ham shunday build qiladi (Root Directory: backend)

@@ -142,3 +142,6 @@ app.MapRatingEndpoints();
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 app.Run($"http://0.0.0.0:{port}");
+
+// Integratsiya testlari (WebApplicationFactory<Program>) uchun ochiq.
+public partial class Program;
