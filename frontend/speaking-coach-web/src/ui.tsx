@@ -1,9 +1,10 @@
 // Bir nechta ekranda takrorlanadigan kichik UI bo'laklari. Ranglar va
 // o'lchamlar styles.css'dagi o'zgaruvchilardan keladi.
-import type { ReactNode } from 'react';
+import { useContext, useEffect, type ReactNode } from 'react';
 import type { HistoryItem } from './api';
 import { common, getLang, localeOf, msg, useT } from './i18n';
 import { uiMsg } from './locales/ui';
+import { PageTitleContext } from './pageTitle';
 
 export interface ScoreWithReasoning {
   score: number;
@@ -37,6 +38,13 @@ export function PageHeader({
   backLabel?: string;
 }) {
   const t = useT(uiMsg);
+  // Yangi menyu: sarlavha tepa panelda — bu yerda faqat ekran o'qiydigan dasturlar uchun qoladi.
+  const pageTitle = useContext(PageTitleContext);
+  useEffect(() => {
+    if (!pageTitle) return;
+    pageTitle.set(title);
+    return () => pageTitle.set(null);
+  }, [pageTitle, title]);
   return (
     <div className="page-header">
       {onBack && (
@@ -44,7 +52,7 @@ export function PageHeader({
           ← {backLabel ?? t.practiceBack}
         </button>
       )}
-      <h1>{title}</h1>
+      <h1 className={pageTitle ? 'nn-sr' : undefined}>{title}</h1>
       {subtitle && <p>{subtitle}</p>}
     </div>
   );
