@@ -33,6 +33,7 @@ Yangi menyu bayrog'i yoqilganda `.app.nn` sinfi qo'shiladi va `src/newNav.css` a
 2. **Menyu.** Pastda 5 ta tugma: Asosiy · Takrorlash · **AI ustoz** (o'rtada, katta doira) · Mashqlar · Natijalar.
    Lug'at alohida tugma emas, Takrorlash ichida "Kartalar | Lug'at" segmenti. Kompyuterda chap menyu (nom yozuvisiz, faqat logo).
 3. **Tepa panel.** Chapda sarlavha (bosh sahifada "Salom, ism / Bugun"), o'ngda seriya, **Fikr**, **Hammasi** va avatar.
+   Sahifa sarlavhasi tepa panelda: sahifaning `<PageHeader>`i uni `PageTitleContext` orqali uzatadi va o'z `<h1>`ini ko'rinmas (`.nn-sr`) qiladi, shuning uchun sarlavha ikki marta chiqmaydi (orqaga tugmasi va izoh sahifada qoladi).
    "Hammasi" — qidiruvli oyna; ilovadagi barcha bo'limlar (`HUB` ro'yxati, `src/newNav.ts`). Yangi joy qo'shilsa, shu ro'yxatga ham qo'shiladi.
 4. **Banner = eslatma.** Katta bannerlar (`.hero`, demo-banner) to'q ko'k o'rniga sariq "yopishqoq eslatma": qora matn, qora tugma, Georgia sarlavha.
 5. **Tugmalar.** `.btn-primary` — qora (tungi rejimda sariq), soyasiz; `.btn-outline` — qora chegara. Tanlangan chip va tab — qog'oz tusida.

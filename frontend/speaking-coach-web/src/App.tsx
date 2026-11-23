@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onRoute } from './analytics';
 import { MicConsentHost } from './consent';
 import { FeedbackLink, RatePrompt } from './RatingWidgets';
@@ -36,6 +36,7 @@ import {
 import { ServerWake } from './ServerWake';
 import { Footer, FeedbackDialog } from './Footer';
 import { Hub } from './Hub';
+import { PageTitleContext } from './pageTitle';
 import { ProfileHead } from './ProfileHead';
 import { hubMsg } from './locales/hub';
 import { activeNav2, NAV2, NEW_NAV } from './newNav';
@@ -138,6 +139,9 @@ function App() {
   const c = useT(common);
   const tHub = useT(hubMsg);
   const [hubOpen, setHubOpen] = useState(false);
+  // Yangi menyu: sahifaning o'z sarlavhasi tepa panelda ko'rsatiladi (PageHeader uzatadi).
+  const [pageTitle, setPageTitle] = useState<string | null>(null);
+  const pageTitleCtx = useMemo(() => (NEW_NAV ? { set: setPageTitle } : null), []);
   const [fbOpen, setFbOpen] = useState(false);
   const [route, go] = useRoute();
   // Analitika: sahifa ko'rinishi va marshrutdan kelib chiqadigan hodisalar (faqat VITE_PLAUSIBLE_DOMAIN berilganda).
@@ -497,7 +501,7 @@ function App() {
           <header className="topbar nn-top">
             <div className="nn-title">
               {section === 'home' && (profile?.displayName || email) && <small>{tHub.hello(profile?.displayName || accountLabel(email).split('@')[0])}</small>}
-              <b>{section === 'home' ? tHub.today : tHub.items[section === 'welcome' ? 'goal' : section]?.title ?? (t.nav as Record<string, string>)[section] ?? t.profile}</b>
+              <b>{pageTitle ?? (section === 'home' ? tHub.today : tHub.items[section === 'welcome' ? 'goal' : section]?.title ?? (t.nav as Record<string, string>)[section] ?? t.profile)}</b>
             </div>
             <div className="topbar-right">
               {loggedIn && stats && stats.streakDays > 0 && <span className="badge streak"><Icon name="flame" size={14} className="streak-ico" /> {stats.streakDays}</span>}
@@ -589,9 +593,11 @@ function App() {
               <button role="tab" aria-selected={section === 'vocab'} onClick={() => go('vocab')}>{tHub.items.vocab.title}</button>
             </div>
           )}
-          <ErrorBoundary resetKey={route} onHome={() => go('home')}>
-            <Suspense fallback={<p className="muted" role="status" style={{ marginTop: 24 }}>…</p>}>{page}</Suspense>
-          </ErrorBoundary>
+          <PageTitleContext.Provider value={pageTitleCtx}>
+            <ErrorBoundary resetKey={route} onHome={() => go('home')}>
+              <Suspense fallback={<p className="muted" role="status" style={{ marginTop: 24 }}>…</p>}>{page}</Suspense>
+            </ErrorBoundary>
+          </PageTitleContext.Provider>
         </main>
         <Footer section={section} />
       </div>
