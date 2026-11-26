@@ -144,6 +144,10 @@ Domen o'zgarsa, uchta joyni yangilang: Render'dagi `FrontendOrigin` (birinchisi 
 - PWA nomi: `manifest.webmanifest` → "FluentUZ". Ilova ichidagi sarlavha, ulashish kartasi, maxfiylik/shartlar sahifalari, email va Telegram matnlari ham "FluentUZ".
 - Qaytarish: `index.html` va `manifest.webmanifest` ni oldingi holatga qaytarish kifoya (funksiya yoki ma'lumotga ta'sir yo'q).
 
+## PWA o'rnatish va yangilanish
+
+Foydalanuvchilar FluentUZ'ni telefon brauzeri menyusidan **Install app / Add to Home Screen** orqali o'rnatishi mumkin; do'konga joylash yoki qayta o'rnatish shart emas. Vercel'ga yangi frontend deploy qilinganda ilova internetga ulangan paytda yangi versiyani oladi. Ilova ochiq turgan vaqtda yangilanish tayyor bo'lsa, **Yangilash** tugmasi chiqadi; foydalanuvchi bosganda sahifa yangi versiya bilan qayta ochiladi. Oflaynda oxirgi keshdagi versiya ishlashda davom etadi.
+
 ## Oflayn takrorlash
 
 Internet bo'lmaganda ham bugungi kartalarni takrorlash mumkin (faqat frontend; API va baza o'zgarmagan).

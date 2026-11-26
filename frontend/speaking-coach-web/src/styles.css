@@ -3453,6 +3453,36 @@ main > * {
   margin: 24px 0 8px;
   text-align: center;
 }
+.pwa-update {
+  position: fixed;
+  z-index: 80;
+  left: 50%;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(460px, calc(100vw - 32px));
+  padding: 12px 14px;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 16px;
+  background: var(--card, #fff);
+  color: inherit;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  transform: translateX(-50%);
+}
+.pwa-update span {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.9rem;
+}
+.pwa-update .btn-link {
+  white-space: nowrap;
+}
+@media (max-width: 1023px) {
+  .pwa-update {
+    bottom: calc(86px + env(safe-area-inset-bottom));
+  }
+}
 
 /* AI ustoz: variant tugmalari (label emas, button) */
 .tutor-opt {

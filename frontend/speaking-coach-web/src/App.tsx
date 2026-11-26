@@ -49,6 +49,7 @@ import { Icon } from './Icon';
 import { homeMsg } from './locales/home';
 import { planMsg } from './locales/plan';
 import { shouldOnboard } from './planLogic';
+import { PwaUpdateNotice } from './PwaUpdateNotice';
 
 // Kam ochiladigan og'ir sahifalar — alohida fayllarda, faqat kerak bo'lganda
 // yuklanadi (bosh sahifa tezroq ochiladi). Ularning matnlari (locales) ham birga keladi.
@@ -497,6 +498,7 @@ function App() {
     <>
       <ServerWake />
       <div className={NEW_NAV ? 'app nn' : 'app'}>
+        <PwaUpdateNotice />
         {NEW_NAV ? (
           <header className="topbar nn-top">
             <div className="nn-title">

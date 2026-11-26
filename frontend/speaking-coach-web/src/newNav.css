@@ -590,6 +590,17 @@ body:has(.app.nn) {
   border-color: var(--text);
   color: var(--text);
 }
+.nn .chip-btn {
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--text);
+}
+.nn .chip-btn:hover,
+.nn .chip-btn:focus-visible {
+  background: var(--surface);
+  border-color: var(--text);
+  color: var(--text);
+}
 .nn .demo-banner {
   background: var(--nn-note);
   color: #2a2218;
@@ -722,6 +733,11 @@ body:has(.app.nn) {
 }
 [data-testid='day-plan'] {
   max-width: 760px;
+}
+.nn .pwa-update {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
 }
 
 /* Ichki sahifalar: tanlangan chiplar va to'q-fonli elementlarda matn rangi fon bilan moslashsin */
