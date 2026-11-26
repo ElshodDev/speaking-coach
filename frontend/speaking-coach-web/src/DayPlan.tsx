@@ -1,10 +1,8 @@
-import { useEffect, useState } from 'react';
-import { apiJson } from './api';
 import { useT } from './i18n';
 import { hubMsg } from './locales/hub';
 import { planMsg } from './locales/plan';
-import { doneCount, nowKey, orderItems, type TodayPlan as Plan } from './planLogic';
-import { planPath, useItemLabel } from './TodayPlan';
+import { doneCount, nowKey, orderItems } from './planLogic';
+import { PlanStatusNotice, useItemLabel, useTodayPlan } from './TodayPlan';
 import type { ReviewStats } from './reviewStats';
 
 /**
@@ -15,13 +13,9 @@ export function DayPlan({ go, stats }: { go: (route: string) => void; stats: Rev
   const t = useT(planMsg);
   const h = useT(hubMsg);
   const label = useItemLabel();
-  const [plan, setPlan] = useState<Plan | null>(null);
+  const { plan, loading, failed, reload } = useTodayPlan();
 
-  useEffect(() => {
-    apiJson<Plan>(planPath()).then(setPlan).catch(() => setPlan(null));
-  }, []);
-
-  if (!plan) return null;
+  if (!plan) return <PlanStatusNotice loading={loading} failed={failed} onRetry={() => void reload()} go={go} />;
   const items = orderItems(plan.items);
   const now = nowKey(plan.items);
   const exam = plan.goal === 'ielts' ? 'IELTS' : plan.goal === 'cefr' ? 'CEFR' : null;

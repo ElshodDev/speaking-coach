@@ -1,10 +1,68 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { apiJson } from './api';
 import { useT } from './i18n';
 import { planMsg } from './locales/plan';
 import { doneCount, mockParts, orderItems, type PlanItem, type TodayPlan as Plan } from './planLogic';
 
 export const planPath = () => `/api/plan/today?tzOffsetMinutes=${new Date().getTimezoneOffset()}`;
+
+export function useTodayPlan() {
+  const [plan, setPlan] = useState<Plan | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+
+  const reload = useCallback(async () => {
+    setLoading(true);
+    setFailed(false);
+    try {
+      setPlan(await apiJson<Plan>(planPath()));
+    } catch {
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void reload();
+  }, [reload]);
+
+  return { plan, loading, failed, reload };
+}
+
+export function PlanStatusNotice({
+  loading,
+  failed,
+  onRetry,
+  go,
+}: {
+  loading: boolean;
+  failed: boolean;
+  onRetry: () => void;
+  go: (route: string) => void;
+}) {
+  const t = useT(planMsg);
+  if (!loading && !failed) return null;
+
+  return (
+    <div className="card plan-status" role={loading ? 'status' : 'alert'} data-testid="plan-status">
+      <div>
+        <strong>{loading ? t.planLoadingTitle : t.planErrorTitle}</strong>
+        <p className="muted small">{loading ? t.planLoadingText : t.planErrorText}</p>
+      </div>
+      <div className="row">
+        <button type="button" className="btn btn-primary" onClick={() => go('practice')}>
+          {t.browsePractice}
+        </button>
+        {failed && (
+          <button type="button" className="btn btn-outline" onClick={onRetry}>
+            {t.retryPlan}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function useItemLabel() {
   const t = useT(planMsg);
@@ -27,13 +85,9 @@ export function useItemLabel() {
 export function TodayPlan({ go }: { go: (route: string) => void }) {
   const t = useT(planMsg);
   const label = useItemLabel();
-  const [plan, setPlan] = useState<Plan | null>(null);
+  const { plan, loading, failed, reload } = useTodayPlan();
 
-  useEffect(() => {
-    apiJson<Plan>(planPath()).then(setPlan).catch(() => setPlan(null));
-  }, []);
-
-  if (!plan) return null;
+  if (!plan) return <PlanStatusNotice loading={loading} failed={failed} onRetry={() => void reload()} go={go} />;
   const done = doneCount(plan.items);
   const all = plan.items.length;
   const exam = plan.goal === 'ielts' ? 'IELTS' : plan.goal === 'cefr' ? 'CEFR' : null;

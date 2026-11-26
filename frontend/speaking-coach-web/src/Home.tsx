@@ -211,6 +211,7 @@ export function Home({
   const practice = (
     <>
       <h2 style={{ marginTop: 24 }}>{t.practice}</h2>
+      <p className="muted small">{t.practiceHint}</p>
       <UsageNote userKey={email} />
       <ExerciseTiles onOpen={open} />
     </>
