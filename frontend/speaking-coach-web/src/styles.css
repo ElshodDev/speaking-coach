@@ -17,10 +17,12 @@
   --on-primary: #ffffff;
   --success: #15803d;
   --success-soft: #e6f6ec;
+  --on-success: #ffffff;
   --warning: #b45309;
   --warning-soft: #fdf3e1;
   --danger: #dc2626;
   --danger-soft: #fdecec;
+  --on-danger: #ffffff;
   --teal: #0f766e;
   --radius: 16px;
   --radius-sm: 10px;
@@ -57,10 +59,12 @@
     --on-primary: #0b1120;
     --success: #4ade80;
     --success-soft: #11301f;
+    --on-success: #0b1120;
     --warning: #fbbf24;
     --warning-soft: #33280e;
     --danger: #f87171;
     --danger-soft: #3a1717;
+    --on-danger: #0b1120;
     --teal: #2dd4bf;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.25);
     --series-1: #3987e5;
@@ -162,7 +166,7 @@ p {
   border-radius: 50%;
   border: 2px solid transparent;
   background: var(--primary);
-  color: #fff;
+  color: var(--on-primary);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
@@ -224,7 +228,7 @@ p {
   padding: 0 5px;
   border-radius: 9px;
   background: var(--danger);
-  color: #fff;
+  color: var(--on-danger);
   font-size: 0.68rem;
   font-weight: 700;
   line-height: 18px;
@@ -378,7 +382,7 @@ p {
 }
 .btn-danger {
   background: var(--danger);
-  color: #fff;
+  color: var(--on-danger);
 }
 .btn-teal {
   background: var(--teal);
@@ -733,11 +737,13 @@ table.data td {
 .g-again {
   background: #dc2626;
 }
-.g-hard {
+.grades .g-hard {
   background: #d97706;
+  color: #0c111b;
 }
-.g-good {
+.grades .g-good {
   background: #16a34a;
+  color: #0c111b;
 }
 .g-easy {
   background: #2563eb;
@@ -895,7 +901,7 @@ table.data td {
   display: grid;
   place-items: center;
   background: var(--primary);
-  color: #fff;
+  color: var(--on-primary);
   font-weight: 800;
   font-size: 1.5rem;
 }
@@ -1005,7 +1011,7 @@ table.data td {
 .chips button[aria-pressed='true'] {
   background: var(--primary);
   border-color: var(--primary);
-  color: #fff;
+  color: var(--on-primary);
   font-weight: 600;
 }
 .chips .n {
@@ -1275,7 +1281,7 @@ table.data td {
   bottom: 6px;
   right: 6px;
   background: var(--success);
-  color: #fff;
+  color: var(--on-success);
 }
 .shadow-card-body {
   display: flex;
@@ -1702,7 +1708,7 @@ table.data td {
 .shadow-speeds button[aria-pressed='true'] {
   background: var(--primary);
   border-color: var(--primary);
-  color: #fff;
+  color: var(--on-primary);
   font-weight: 600;
 }
 
@@ -2657,11 +2663,11 @@ main > *:nth-child(4) { animation-delay: 0.09s; }
 }
 .bubble.user {
   background: var(--grad);
-  color: #fff;
+  color: var(--on-primary);
   border-bottom-right-radius: 6px;
 }
 .bubble.user .who {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--on-primary);
 }
 .bubble .btn-link {
   align-self: flex-start;
@@ -3387,8 +3393,8 @@ main > * {
   border: 1px solid var(--border);
   border-left: 3px solid var(--primary);
   border-radius: 8px;
-  background: var(--card, #fff);
-  color: var(--ink-text, inherit);
+  background: var(--surface-2);
+  color: var(--text);
 }
 
 /* ---- Bir bosishli baholar va fikr so'rovlari ---- */
@@ -3436,8 +3442,8 @@ main > * {
 }
 .chip-btn {
   border: 1px solid var(--border);
-  background: var(--card, #fff);
-  color: inherit;
+  background: var(--surface);
+  color: var(--text);
   font: inherit;
   font-size: 0.92rem;
   padding: 8px 14px;
@@ -3465,8 +3471,8 @@ main > * {
   padding: 12px 14px;
   border: 1px solid var(--border, #ddd);
   border-radius: 16px;
-  background: var(--card, #fff);
-  color: inherit;
+  background: var(--surface);
+  color: var(--text);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
   transform: translateX(-50%);
 }

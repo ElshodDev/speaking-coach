@@ -590,6 +590,13 @@ body:has(.app.nn) {
   border-color: var(--text);
   color: var(--text);
 }
+.nn .bubble.user {
+  background: var(--text);
+  color: var(--bg);
+}
+.nn .bubble.user .who {
+  color: var(--bg);
+}
 .nn .chip-btn {
   background: var(--surface-2);
   border-color: var(--border);
