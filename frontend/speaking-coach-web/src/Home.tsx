@@ -215,12 +215,8 @@ export function Home({
       <ExerciseTiles onOpen={open} />
     </>
   );
-  const promo = !isDemoEmail(email) && (
-    <>
-      <TelegramPromo go={go} />
-      <SourceCard />
-    </>
-  );
+  const promo = !isDemoEmail(email) && <TelegramPromo go={go} />;
+  const source = !isDemoEmail(email) && <SourceCard />;
 
   // Kompyuter: chapda reja va mashqlar, o'ngda holat (seriya, navbatdagi kartalar, so'z).
   if (wide && !NEW_NAV) {
@@ -239,6 +235,7 @@ export function Home({
             <QuizTile go={go} />
             {league}
             {promo}
+            {source}
           </aside>
         </div>
       </>
@@ -256,6 +253,7 @@ export function Home({
       <WordOfDay loggedIn />
       <QuizTile go={go} />
       {league}
+      {source}
     </>
   );
 }
