@@ -7,6 +7,7 @@ Bu ilovalarda sokin fon, bitta asosiy rang va chiziqli ikonkalar ishlatiladi, ma
 
 1. **Rang.** Bitta asosiy rang bor: `--primary` (#1d4ed8, tungi rejimda #6e9bff). Bannerlar to'q ko'k `--ink` rangida.
    Binafsha yoki ko'p rangli gradientlar ishlatilmaydi. Ko'nikma ranglari (`--k-*`) faqat ikonka va uning foni uchun.
+   Rangli fondagi matn mos kontrast tokenidan foydalanadi: `--on-primary`, `--on-danger` yoki `--on-success`.
 2. **Ikonkalar.** Interfeysda emoji ishlatilmaydi, `src/Icon.tsx` dagi chiziqli SVG ikonkalar ishlatiladi
    (24×24, `currentColor`). Yangi ikonka kerak bo'lsa, `PATHS` ga qo'shiladi.
    Istisnolar: nishon (badge) rasmlari, reyting medallari, 🔊 / ✓ / ✕ kabi kichik belgi-tugmalar.
